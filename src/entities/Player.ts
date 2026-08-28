@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameConfig } from '../game/GameConfig';
 import { EventBus } from '../utils/EventBus';
 import { MathUtils } from '../utils/MathUtils';
+import { Drone } from './Drone';
 import type { PlayerStats, WeaponConfig } from '../types';
 import type { InputManager } from '../systems/InputManager';
 
@@ -14,6 +15,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private stats: PlayerStats;
   // 武器列表
   private weapons: Map<string, { config: WeaponConfig; level: number; cooldown: number }> = new Map();
+  // 被动技能列表
+  private passives: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
+  // 无人机列表（summon 类型武器）
+  private drones: Drone[] = [];
+  // 生命恢复计时器
+  private regenTimer: number = 0;
   // 无敌状态
   private invincible = false;
   private invincibleTimer = 0;
@@ -99,10 +106,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.expFlashTimer > 0) {
       this.expFlashTimer -= delta;
     }
+
+    // 被动：生命恢复（每秒恢复 1+level 点）
+    const regenLevel = this.getPassiveLevel('passive_regen');
+    if (regenLevel > 0 && this.stats.health < this.stats.maxHealth) {
+      this.regenTimer += delta;
+      if (this.regenTimer >= 1000) {
+        this.regenTimer -= 1000;
+        this.heal(1 + regenLevel);
+      }
+    }
   }
 
   private updateWeapons(time: number, delta: number): void {
     this.weapons.forEach((weapon) => {
+      // summon 类型（无人机）由独立实体管理，不走冷却射击
+      if (weapon.config.type === 'summon') return;
+
       weapon.cooldown -= delta;
       if (weapon.cooldown <= 0) {
         this.fireWeapon(weapon.config, weapon.level);
@@ -111,7 +131,28 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
+  /** 按武器类型分发攻击逻辑 */
   private fireWeapon(config: WeaponConfig, level: number): void {
+    switch (config.type) {
+      case 'melee':
+        this.fireMelee(config, level);
+        break;
+      case 'aoe':
+        if (config.boomerang) {
+          this.fireBoomerang(config, level);
+        } else {
+          this.fireProjectile(config, level); // 火箭筒走弹道，命中后爆炸
+        }
+        break;
+      case 'ranged':
+      default:
+        this.fireProjectile(config, level);
+        break;
+    }
+  }
+
+  /** 弹道武器：基础射击、机枪、霰弹、激光、火箭筒 */
+  private fireProjectile(config: WeaponConfig, level: number): void {
     const scene = this.scene as any;
     if (!scene || !scene.getObjectPool) return;
 
@@ -125,9 +166,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       angle = MathUtils.angle(this.x, this.y, nearestEnemy.x, nearestEnemy.y);
     }
 
+    // 获取武器视觉参数
+    const visual = this.getWeaponVisual(config.id);
+
     // 发射子弹
     const count = config.projectileCount || 1;
-    const spread = count > 1 ? 0.3 : 0;
+    const spread = count > 1 ? (config.spread || 0.3) : 0;
     for (let i = 0; i < count; i++) {
       const bulletAngle = angle + (i - (count - 1) / 2) * spread;
       pool.spawnBullet(
@@ -137,9 +181,114 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         config.projectileSpeed || 500,
         damage,
         config.range,
-        config.texture || 'bullet'
+        config.texture || 'bullet',
+        {
+          pierce: config.pierce,
+          explosive: config.explosive,
+          aoeRadius: config.aoeRadius,
+          color: visual.color,
+          scaleX: visual.scaleX,
+          scaleY: visual.scaleY,
+        }
       );
     }
+  }
+
+  /** 获取武器视觉参数（颜色/缩放），用于区分不同武器子弹 */
+  private getWeaponVisual(weaponId: string): { color?: number; scaleX?: number; scaleY?: number } {
+    switch (weaponId) {
+      case 'machine_gun':
+        return { color: 0xffcc00, scaleX: 0.7, scaleY: 0.7 }; // 橙黄小弹
+      case 'shotgun':
+        return { color: 0xff5555, scaleX: 0.9, scaleY: 0.9 }; // 红色散弹
+      case 'laser':
+        return { color: 0x00ffff, scaleX: 2.5, scaleY: 0.4 }; // 青色细长激光
+      case 'default_gun':
+        return { color: 0xffffff }; // 白色默认
+      default:
+        return {};
+    }
+  }
+
+  /** 回旋镖：穿透 + 飞出后返回 */
+  private fireBoomerang(config: WeaponConfig, level: number): void {
+    const scene = this.scene as any;
+    if (!scene || !scene.getObjectPool) return;
+
+    const pool = scene.getObjectPool();
+    const damage = config.damage * (1 + level * 0.2) * this.stats.attackPower / 10;
+
+    const nearestEnemy = this.findNearestEnemy();
+    let angle = this.facingAngle;
+    if (nearestEnemy) {
+      angle = MathUtils.angle(this.x, this.y, nearestEnemy.x, nearestEnemy.y);
+    }
+
+    pool.spawnBullet(
+      this.x,
+      this.y,
+      angle,
+      config.projectileSpeed || 300,
+      damage,
+      config.range,
+      config.texture || 'bullet',
+      {
+        pierce: true,
+        boomerang: true,
+        aoeRadius: config.aoeRadius,
+      }
+    );
+  }
+
+  /** 近战武器：光剑扇形范围攻击 */
+  private fireMelee(config: WeaponConfig, level: number): void {
+    const scene = this.scene as any;
+    if (!scene || !scene.getEnemies) return;
+
+    const damage = config.damage * (1 + level * 0.2) * this.stats.attackPower / 10;
+    const range = config.range || 80;
+    const enemies = scene.getEnemies();
+
+    // 朝最近敌人方向，或朝向方向
+    const nearestEnemy = this.findNearestEnemy();
+    let angle = this.facingAngle;
+    if (nearestEnemy) {
+      angle = MathUtils.angle(this.x, this.y, nearestEnemy.x, nearestEnemy.y);
+    }
+
+    // 扇形范围（120度）内的敌人受伤
+    const halfArc = Math.PI / 3; // 60度半边，总共120度
+    enemies.children.each((enemy: any) => {
+      if (!enemy.active) return true;
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, enemy.x, enemy.y);
+      if (dist > range) return true;
+      const enemyAngle = MathUtils.angle(this.x, this.y, enemy.x, enemy.y);
+      let angleDiff = Math.abs(enemyAngle - angle);
+      if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+      if (angleDiff <= halfArc) {
+        enemy.takeDamage(damage, false);
+      }
+      return true;
+    });
+
+    // 近战挥砍视觉效果
+    this.createMeleeSlash(angle, range);
+  }
+
+  /** 近战挥砍视觉效果 */
+  private createMeleeSlash(angle: number, range: number): void {
+    const gfx = this.scene.add.graphics();
+    const halfArc = Math.PI / 3;
+    gfx.fillStyle(0x00ffff, 0.3);
+    gfx.slice(this.x, this.y, range, angle - halfArc, angle + halfArc, false);
+    gfx.fillPath();
+    gfx.setDepth(9);
+    this.scene.tweens.add({
+      targets: gfx,
+      alpha: 0,
+      duration: 150,
+      onComplete: () => gfx.destroy(),
+    });
   }
 
   private findNearestEnemy(): Phaser.GameObjects.Sprite | null {
@@ -172,6 +321,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.invincibleTimer = GameConfig.PLAYER.invincibleTime;
     this.setTint(0xff4444);
 
+    // 被动：荆棘（受击时反弹伤害给最近敌人）
+    const thornsLevel = this.getPassiveLevel('passive_thorns');
+    if (thornsLevel > 0) {
+      const reflectDamage = actualDamage * (0.2 + thornsLevel * 0.05);
+      const nearest = this.findNearestEnemy();
+      if (nearest) {
+        (nearest as any).takeDamage?.(reflectDamage, false);
+      }
+    }
+
     EventBus.emit('player:damage', actualDamage);
 
     if (this.stats.health <= 0) {
@@ -194,6 +353,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // ========== 经验与升级 ==========
 
   addExp(amount: number): void {
+    // 被动：经验加成（+25% + level*10%）
+    const expBoostLevel = this.getPassiveLevel('passive_exp_boost');
+    if (expBoostLevel > 0) {
+      amount *= 1 + 0.25 + expBoostLevel * 0.1;
+    }
+
     this.stats.exp += amount;
     this.expFlashTimer = 200;
 
@@ -228,13 +393,89 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     } else {
       this.weapons.set(config.id, { config, level: 1, cooldown: 0 });
     }
+
+    // summon 类型武器：同步无人机数量
+    if (config.type === 'summon') {
+      this.syncDrones();
+    }
   }
 
   upgradeWeapon(weaponId: string): boolean {
     const w = this.weapons.get(weaponId);
     if (!w || w.level >= w.config.maxLevel) return false;
     w.level++;
+
+    // summon 类型武器：同步无人机数量
+    if (w.config.type === 'summon') {
+      this.syncDrones();
+    }
     return true;
+  }
+
+  /** 同步无人机数量和等级（summon 武器升级时调用） */
+  private syncDrones(): void {
+    const droneWeapon = Array.from(this.weapons.values()).find((w) => w.config.type === 'summon');
+    if (!droneWeapon) return;
+
+    const targetCount = droneWeapon.level; // 1级1架，2级2架...
+    const currentCount = this.drones.length;
+
+    // 增加无人机
+    for (let i = currentCount; i < targetCount; i++) {
+      const drone = new Drone(this.scene, this, droneWeapon.config, droneWeapon.level, i, targetCount);
+      this.drones.push(drone);
+    }
+
+    // 更新所有无人机的等级和总数
+    this.drones.forEach((drone, i) => {
+      drone.upgrade(droneWeapon.level, this.drones.length);
+    });
+  }
+
+  /** 更新所有无人机（由外部 update 调用） */
+  updateDrones(time: number, delta: number): void {
+    this.drones.forEach((drone) => drone.update(time, delta));
+  }
+
+  /** 获取当前所有武器列表（供 UI 增益列表使用） */
+  getWeapons(): Array<{ id: string; name: string; level: number; maxLevel: number; type: string }> {
+    return Array.from(this.weapons.values()).map((w) => ({
+      id: w.config.id,
+      name: w.config.name,
+      level: w.level,
+      maxLevel: w.config.maxLevel,
+      type: w.config.type,
+    }));
+  }
+
+  // ========== 被动技能管理 ==========
+
+  /** 添加或升级被动技能 */
+  addPassive(id: string, name: string, maxLevel: number = 5): void {
+    if (this.passives.has(id)) {
+      const p = this.passives.get(id)!;
+      if (p.level < p.maxLevel) {
+        p.level++;
+      }
+    } else {
+      this.passives.set(id, { id, name, level: 1, maxLevel });
+    }
+  }
+
+  /** 是否拥有某被动技能 */
+  hasPassive(id: string): boolean {
+    return this.passives.has(id);
+  }
+
+  /** 获取某被动技能等级（0 表示未拥有） */
+  getPassiveLevel(id: string): number {
+    const p = this.passives.get(id);
+    return p ? p.level : 0;
+  }
+
+  /** 获取所有被动技能列表（供 UI 增益列表使用） */
+  getPassives(): Array<{ id: string; name: string; level: number; maxLevel: number }> {
+    return Array.from(this.passives.values());
   }
 
   // ========== 属性修改 ==========

@@ -132,9 +132,9 @@ export class UpgradeScene extends Phaser.Scene {
       }
     }
 
-    // 被动技能（TODO: 实现被动技能系统）
+    // 被动技能
     if (option.type === 'passive') {
-      console.log(`[Upgrade] 获得被动技能: ${option.name}`);
+      player.addPassive(option.id, option.name, 5);
     }
   }
 

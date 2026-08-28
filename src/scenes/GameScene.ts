@@ -225,6 +225,11 @@ export class GameScene extends Phaser.Scene {
       this.scene.launch('UpgradeScene');
     });
 
+    // 子弹爆炸（火箭筒等）：范围伤害 + 视觉效果
+    EventBus.on('bullet:explode', (data: { x: number; y: number; damage: number; radius: number }) => {
+      this.handleExplosion(data.x, data.y, data.damage, data.radius);
+    });
+
     // 暂停/恢复：同步暂停物理引擎和补间动画
     // （仅 update return 不够，Arcade 物理世界会独立继续运行）
     EventBus.on('run:pause', (paused: boolean) => {
@@ -255,6 +260,9 @@ export class GameScene extends Phaser.Scene {
 
     // 更新玩家
     this.player.update(time, delta, this.inputManager);
+
+    // 更新无人机
+    this.player.updateDrones(time, delta);
 
     // 更新波次
     this.waveManager.update(time, delta);
@@ -300,6 +308,45 @@ export class GameScene extends Phaser.Scene {
       this.scene.stop('UIScene');
       this.scene.start('GameOverScene');
     });
+  }
+
+  /**
+   * 处理爆炸：范围伤害 + 视觉效果
+   */
+  private handleExplosion(x: number, y: number, damage: number, radius: number): void {
+    // 对范围内敌人造成伤害
+    this.enemies.children.each((enemy: any) => {
+      if (!enemy.active) return true;
+      const dist = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
+      if (dist <= radius) {
+        // 距离衰减：中心满伤害，边缘半伤害
+        const falloff = 1 - (dist / radius) * 0.5;
+        enemy.takeDamage(damage * falloff, false);
+      }
+      return true;
+    });
+
+    // 爆炸视觉效果：外圈 + 内圈
+    const outer = this.add.circle(x, y, radius, 0xff6600, 0.4).setDepth(50);
+    const inner = this.add.circle(x, y, radius * 0.5, 0xffff00, 0.6).setDepth(51);
+
+    this.tweens.add({
+      targets: outer,
+      scale: { from: 0.3, to: 1.2 },
+      alpha: { from: 0.6, to: 0 },
+      duration: 300,
+      onComplete: () => outer.destroy(),
+    });
+    this.tweens.add({
+      targets: inner,
+      scale: { from: 0.5, to: 1 },
+      alpha: { from: 0.8, to: 0 },
+      duration: 200,
+      onComplete: () => inner.destroy(),
+    });
+
+    // 屏幕震动
+    this.cameras.main.shake(100, 0.005);
   }
 
   // ========== 公共接口（供其他系统调用） ==========

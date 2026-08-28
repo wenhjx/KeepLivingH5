@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { HUD } from '../ui/HUD';
 import { VirtualJoystick } from '../ui/VirtualJoystick';
+import { DebugPanel } from '../ui/DebugPanel';
 import { GuideManager } from '../systems/GuideManager';
 import { EventBus } from '../utils/EventBus';
 
@@ -13,6 +14,7 @@ import { EventBus } from '../utils/EventBus';
 export class UIScene extends Phaser.Scene {
   private hud!: HUD;
   private joystick!: VirtualJoystick;
+  private debugPanel!: DebugPanel;
   private pauseButton!: Phaser.GameObjects.Text;
   private pauseOverlay!: Phaser.GameObjects.Container;
 
@@ -28,6 +30,9 @@ export class UIScene extends Phaser.Scene {
 
     // HUD
     this.hud = new HUD(this);
+
+    // 调试面板（按 ` 键切换）
+    this.debugPanel = new DebugPanel(this);
 
     // 移动端显示虚拟摇杆
     if (gm.isMobile) {

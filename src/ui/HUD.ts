@@ -22,10 +22,37 @@ export class HUD {
   private scoreText!: Phaser.GameObjects.Text;
   private timeText!: Phaser.GameObjects.Text;
 
+  // 增益列表（武器/被动）
+  private buffContainer!: Phaser.GameObjects.Container;
+  private buffIcons: Map<string, Phaser.GameObjects.Container> = new Map();
+  private lastBuffCount: number = -1;
+
+  // 武器视觉映射（图标 + 背景色）
+  private readonly weaponVisuals: Record<string, { icon: string; color: number }> = {
+    default_gun: { icon: '🔫', color: 0x444466 },
+    machine_gun: { icon: '🔫', color: 0x886600 },
+    shotgun: { icon: '💥', color: 0x882222 },
+    laser: { icon: '⚡', color: 0x006666 },
+    rocket: { icon: '🚀', color: 0x884400 },
+    boomerang: { icon: '🪃', color: 0x226622 },
+    lightsaber: { icon: '🗡️', color: 0x006688 },
+    drone: { icon: '🤖', color: 0x004466 },
+  };
+
+  // 被动技能视觉映射（图标 + 背景色）
+  private readonly passiveVisuals: Record<string, { icon: string; color: number }> = {
+    passive_regen: { icon: '💚', color: 0x226622 },
+    passive_thorns: { icon: '🌵', color: 0x664422 },
+    passive_exp_boost: { icon: '📈', color: 0x224466 },
+    passive_gold_boost: { icon: '💰', color: 0x665500 },
+  };
+
   // 尺寸常量
   private readonly barWidth = 220;
   private readonly barHeight = 16;
   private readonly padding = 16;
+  private readonly buffSize = 32;
+  private readonly buffSpacing = 6;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -107,6 +134,9 @@ export class HUD {
         fontStyle: 'bold',
       })
       .setOrigin(0.5, 0);
+
+    // ========== 左下角：增益列表（武器/被动） ==========
+    this.buffContainer = this.scene.add.container(this.padding, 0).setDepth(50);
   }
 
   /** 每帧更新 HUD */
@@ -128,8 +158,96 @@ export class HUD {
         this.updateHealthBar(player.getHealth(), player.getMaxHealth());
         this.updateExpBar(player.getExp(), player.getExpToNext());
         this.levelText.setText(`Lv.${player.getLevel()}`);
+        this.updateBuffs(player);
       }
     }
+  }
+
+  /** 更新增益列表（武器+被动） */
+  private updateBuffs(player: any): void {
+    const weapons = player.getWeapons?.() || [];
+    const passives = player.getPassives?.() || [];
+
+    // 合并为统一格式
+    const allBuffs = [
+      ...weapons.map((w: any) => ({
+        id: w.id,
+        name: w.name,
+        level: w.level,
+        maxLevel: w.maxLevel,
+        ...this.weaponVisuals[w.id],
+      })),
+      ...passives.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        level: p.level,
+        maxLevel: p.maxLevel,
+        ...this.passiveVisuals[p.id],
+      })),
+    ].filter((b) => b.icon); // 过滤掉没有图标的未知项
+
+    // 数量变化时重建列表
+    if (allBuffs.length !== this.lastBuffCount) {
+      this.rebuildBuffList(allBuffs);
+      this.lastBuffCount = allBuffs.length;
+    }
+
+    // 更新等级文字
+    allBuffs.forEach((b: any) => {
+      const icon = this.buffIcons.get(b.id);
+      if (icon) {
+        const levelText = icon.getAt(2) as Phaser.GameObjects.Text;
+        if (levelText) {
+          levelText.setText(`${b.level}`);
+        }
+      }
+    });
+  }
+
+  /** 重建增益列表 */
+  private rebuildBuffList(buffs: Array<{ id: string; level: number; icon: string; color: number }>): void {
+    // 清除旧图标
+    this.buffIcons.forEach((icon) => icon.destroy());
+    this.buffIcons.clear();
+
+    const startY = this.padding + this.barHeight + 6 + 8 + 20; // 经验条下方
+
+    buffs.forEach((b, index: number) => {
+      const x = index * (this.buffSize + this.buffSpacing);
+
+      const container = this.scene.add.container(x, startY).setDepth(51);
+
+      // 背景
+      const bg = this.scene.add.graphics();
+      bg.fillStyle(b.color, 0.8);
+      bg.fillRoundedRect(0, 0, this.buffSize, this.buffSize, 4);
+      bg.lineStyle(1, 0xffffff, 0.3);
+      bg.strokeRoundedRect(0, 0, this.buffSize, this.buffSize, 4);
+      container.add(bg);
+
+      // 图标
+      const iconText = this.scene.add
+        .text(this.buffSize / 2, this.buffSize / 2 - 2, b.icon, {
+          fontSize: '16px',
+        })
+        .setOrigin(0.5);
+      container.add(iconText);
+
+      // 等级
+      const levelText = this.scene.add
+        .text(this.buffSize - 2, this.buffSize - 1, `${b.level}`, {
+          fontSize: '10px',
+          color: '#ffffff',
+          fontStyle: 'bold',
+          stroke: '#000000',
+          strokeThickness: 2,
+        })
+        .setOrigin(1, 1);
+      container.add(levelText);
+
+      this.buffContainer.add(container);
+      this.buffIcons.set(b.id, container);
+    });
   }
 
   updateHealth(): void {
@@ -195,5 +313,6 @@ export class HUD {
     this.killsText.setVisible(visible);
     this.scoreText.setVisible(visible);
     this.timeText.setVisible(visible);
+    this.buffContainer?.setVisible(visible);
   }
 }

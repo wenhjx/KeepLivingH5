@@ -124,7 +124,16 @@ export class ObjectPool {
     speed: number,
     damage: number,
     range: number,
-    texture: string = 'bullet'
+    texture: string = 'bullet',
+    options?: {
+      pierce?: boolean;
+      explosive?: boolean;
+      boomerang?: boolean;
+      aoeRadius?: number;
+      color?: number;
+      scaleX?: number;
+      scaleY?: number;
+    }
   ): Bullet | null {
     let bullet = this.bulletPool.find((b) => !b.active);
 
@@ -138,7 +147,7 @@ export class ObjectPool {
       }
     }
 
-    bullet.spawnPlayerBullet(x, y, angle, speed, damage, range, texture);
+    bullet.spawnPlayerBullet(x, y, angle, speed, damage, range, texture, options);
     this.bulletGroup?.add(bullet);
     this.stats.bulletsSpawned++;
 

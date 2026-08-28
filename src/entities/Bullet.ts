@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { EventBus } from '../utils/EventBus';
 
 /**
  * 子弹实体
@@ -21,6 +22,12 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
   /** 缓存速度，每帧重设 */
   private vx: number = 0;
   private vy: number = 0;
+  // 武器行为标记
+  private explosive: boolean = false;
+  private boomerang: boolean = false;
+  private aoeRadius: number = 0;
+  // 回旋镖状态
+  private returning: boolean = false;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0, 'bullet');
@@ -30,7 +37,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.setVisible(false);
   }
 
-  /** 玩家子弹初始化（从对象池取出时调用） */
+  /** 玩家子弹初始化 */
   spawnPlayerBullet(
     x: number,
     y: number,
@@ -38,7 +45,16 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     speed: number,
     damage: number,
     range: number,
-    texture: string = 'bullet'
+    texture: string = 'bullet',
+    options?: {
+      pierce?: boolean;
+      explosive?: boolean;
+      boomerang?: boolean;
+      aoeRadius?: number;
+      color?: number;       // 子弹颜色（tint）
+      scaleX?: number;      // 水平缩放
+      scaleY?: number;      // 垂直缩放
+    }
   ): void {
     this.isEnemyBullet = false;
     this.damage = damage;
@@ -46,8 +62,12 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.traveled = 0;
     this.startX = x;
     this.startY = y;
-    this.pierceCount = 0;
+    this.pierceCount = options?.pierce ? 999 : 0;
     this.hitEnemies.clear();
+    this.explosive = options?.explosive || false;
+    this.boomerang = options?.boomerang || false;
+    this.aoeRadius = options?.aoeRadius || 0;
+    this.returning = false;
 
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
@@ -60,6 +80,23 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.setCircle(6);
     this.setRotation(angle);
     this.clearTint();
+    this.setScale(1);
+
+    // 应用自定义颜色和缩放（武器视觉区分）
+    if (options?.color !== undefined) {
+      this.setTint(options.color);
+    }
+    if (options?.scaleX !== undefined || options?.scaleY !== undefined) {
+      this.setScale(options?.scaleX || 1, options?.scaleY || 1);
+    }
+
+    // 爆炸子弹强制橙色放大（覆盖自定义颜色）
+    if (this.explosive) {
+      this.setTint(0xff6600);
+      this.setScale(1.5);
+    } else if (this.boomerang) {
+      this.setTint(0x66ff66);
+    }
 
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
@@ -69,7 +106,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  /** 敌人子弹初始化（从对象池取出时调用） */
+  /** 敌人子弹初始化 */
   spawnEnemyBullet(x: number, y: number, angle: number, speed: number, damage: number): void {
     this.isEnemyBullet = true;
     this.damage = damage;
@@ -77,6 +114,11 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.traveled = 0;
     this.startX = x;
     this.startY = y;
+    this.explosive = false;
+    this.boomerang = false;
+    this.aoeRadius = 0;
+    this.returning = false;
+    this.setScale(1);
 
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
@@ -88,6 +130,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.setCircle(6);
     this.setTint(0xff4444);
     this.setRotation(angle);
+    this.clearAlpha();
 
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
@@ -100,6 +143,28 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
   update(time: number, delta: number): void {
     if (!this.active) return;
 
+    // 回旋镖逻辑：飞到最大距离后返回
+    if (this.boomerang && !this.returning && this.traveled >= this.range * 0.8) {
+      this.returning = true;
+    }
+    if (this.boomerang && this.returning) {
+      // 朝玩家方向飞（通过场景获取玩家位置）
+      const scene = this.scene as any;
+      const player = scene?.getPlayer?.();
+      if (player) {
+        const angle = Math.atan2(player.y - this.y, player.x - this.x);
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.setRotation(angle);
+        // 回到玩家附近时销毁
+        if (Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y) < 30) {
+          this.despawn();
+          return;
+        }
+      }
+    }
+
     // 每帧重设速度，确保不被未知机制清零
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
@@ -111,8 +176,8 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     const dy = this.y - this.startY;
     this.traveled = Math.sqrt(dx * dx + dy * dy);
 
-    // 超出射程则回收到对象池
-    if (this.traveled >= this.range) {
+    // 超出射程则销毁（回旋镖返回阶段不销毁）
+    if (this.traveled >= this.range && !this.boomerang) {
       this.despawn();
     }
   }
@@ -124,6 +189,19 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
 
     this.hitEnemies.add(enemy);
 
+    // 爆炸子弹：命中时触发爆炸事件
+    if (this.explosive) {
+      EventBus.emit('bullet:explode', {
+        x: this.x,
+        y: this.y,
+        damage: this.damage,
+        radius: this.aoeRadius || 80,
+      });
+      this.despawn();
+      return true;
+    }
+
+    // 穿透子弹（pierceCount > 0）继续飞行，否则消失
     if (this.pierceCount <= 0) {
       this.despawn();
     } else {
@@ -144,6 +222,8 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     if (!this.active) return;
     this.setActive(false);
     this.setVisible(false);
+    this.setScale(1);
+    this.clearTint();
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
       body.enable = false;
@@ -163,5 +243,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
 
   setPierce(count: number): void {
     this.pierceCount = count;
+  }
+
+  isExplosive(): boolean {
+    return this.explosive;
   }
 }
