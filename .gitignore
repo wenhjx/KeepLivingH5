@@ -1,0 +1,81 @@
+# ========== 依赖 ==========
+node_modules
+.pnp
+.pnp.js
+.pnp.cjs
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# ========== 构建输出 ==========
+dist
+dist-ssr
+dist-electron
+release
+*.local
+
+# ========== 缓存 ==========
+.vite/*
+!.vite/README.md
+*.tsbuildinfo
+.turbo
+.cache
+.parcel-cache
+.eslintcache
+.stylelintcache
+
+# ========== 环境变量 ==========
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.development
+!.env.production
+
+# ========== 日志 ==========
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ========== 测试 / 覆盖率 ==========
+coverage
+*.lcov
+.nyc_output
+
+# ========== 编辑器 / IDE ==========
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+*~
+
+# ========== 操作系统 ==========
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ========== 进程 / 锁 ==========
+*.pid
+*.seed
+*.pid.lock
+
+# ========== 项目特定 ==========
+# Phaser 构建临时文件
+assets/*.bak

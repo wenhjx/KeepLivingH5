@@ -1,0 +1,342 @@
+import Phaser from 'phaser';
+import { GameManager } from '../game/GameManager';
+import { GameConfig } from '../game/GameConfig';
+import { Player } from '../entities/Player';
+import { ObjectPool } from '../systems/ObjectPool';
+import { WaveManager } from '../systems/WaveManager';
+import { InputManager } from '../systems/InputManager';
+import { CollisionSystem } from '../systems/CollisionSystem';
+import { AudioManager } from '../systems/AudioManager';
+import { GuideManager } from '../systems/GuideManager';
+import { EventBus } from '../utils/EventBus';
+import type { EnemyConfig, PickupConfig } from '../types';
+
+/**
+ * 游戏主场景
+ * 核心玩法场景，管理玩家、敌人、子弹、拾取物、波次等所有游戏实体
+ */
+export class GameScene extends Phaser.Scene {
+  // 核心系统
+  private player!: Player;
+  private objectPool!: ObjectPool;
+  private waveManager!: WaveManager;
+  private inputManager!: InputManager;
+  private collisionSystem!: CollisionSystem;
+  private audioManager!: AudioManager;
+
+  // 实体组
+  private enemies!: Phaser.Physics.Arcade.Group;
+  private bullets!: Phaser.Physics.Arcade.Group;
+  private pickups!: Phaser.Physics.Arcade.Group;
+  private particles!: Phaser.GameObjects.Group;
+
+  // 地图
+  private mapWidth = 3000;
+  private mapHeight = 3000;
+
+  // 计时器
+  private autoSaveTimer = 0;
+
+  constructor() {
+    super('GameScene');
+  }
+
+  init(): void {
+    const gm = GameManager.getInstance();
+    gm.startNewRun();
+  }
+
+  create(): void {
+    this.initSystems();
+    this.createMap();
+    this.createEntities();
+    this.setupCollisions();
+    this.setupCamera();
+    this.setupEventListeners();
+
+    // 启动第一波
+    this.waveManager.startWave(1);
+
+    // 延迟触发新手引导（等 UIScene 绑定 GuideManager 后）
+    this.time.delayedCall(800, () => {
+      this.triggerTutorial();
+    });
+
+    // 场景关闭兜底：如果本局尚未结束（非正常死亡），自动保存数据
+    // 防止通过暂停菜单或其他方式退出时丢失本局记录
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      const gm = GameManager.getInstance();
+      if (!gm.isGameOver) {
+        gm.endRun();
+      }
+    });
+  }
+
+  /**
+   * 触发新手引导队列
+   * 依次显示基础操作提示，玩家逐个点击"知道了"继续
+   */
+  private triggerTutorial(): void {
+    const guide = GuideManager.getInstance();
+    const isMobile = GameManager.getInstance().isMobile;
+
+    const moveDesc = isMobile
+      ? '拖动左侧虚拟摇杆控制角色移动'
+      : '按 W A S D 或方向键控制角色移动';
+
+    guide.queueAll([
+      {
+        title: '移动',
+        description: moveDesc,
+        icon: '🎮',
+        color: 0x00ffff,
+        position: 'top',
+      },
+      {
+        title: '自动攻击',
+        description: '武器会自动瞄准最近的敌人发射子弹\n你只需要走位躲避，无需手动攻击',
+        icon: '⚔️',
+        color: 0xff6b35,
+        position: 'top',
+      },
+      {
+        title: '经验与升级',
+        description: '击杀敌人掉落经验宝石，走过去自动拾取\n升级后可选择新武器或属性强化',
+        icon: '⬆️',
+        color: 0xffb347,
+        position: 'top',
+      },
+      {
+        title: '生存目标',
+        description: '波次每30秒推进，敌人越来越强\n每5波出现Boss，尽可能存活更久！\n按 ESC 可暂停游戏',
+        icon: '💀',
+        color: 0xff4466,
+        position: 'top',
+        duration: 6000,
+      },
+    ]);
+  }
+
+  private initSystems(): void {
+    // 对象池
+    this.objectPool = new ObjectPool(this);
+
+    // 输入管理
+    this.inputManager = new InputManager(this);
+
+    // 波次管理
+    this.waveManager = new WaveManager(this, this.objectPool);
+
+    // 碰撞系统
+    this.collisionSystem = new CollisionSystem(this);
+
+    // 音频管理
+    this.audioManager = AudioManager.getInstance();
+    this.audioManager.init(this);
+  }
+
+  private createMap(): void {
+    // 创建 tiled 地图（占位：使用纯色背景 + 网格）
+    const graphics = this.add.graphics();
+
+    // 背景
+    graphics.fillStyle(0x12121a, 1);
+    graphics.fillRect(0, 0, this.mapWidth, this.mapHeight);
+
+    // 网格线
+    graphics.lineStyle(1, 0x1e1e2a, 0.5);
+    const gridSize = 100;
+    for (let x = 0; x <= this.mapWidth; x += gridSize) {
+      graphics.lineBetween(x, 0, x, this.mapHeight);
+    }
+    for (let y = 0; y <= this.mapHeight; y += gridSize) {
+      graphics.lineBetween(0, y, this.mapWidth, y);
+    }
+
+    // 地图边界
+    this.physics.world.setBounds(0, 0, this.mapWidth, this.mapHeight);
+  }
+
+  private createEntities(): void {
+    const centerX = this.mapWidth / 2;
+    const centerY = this.mapHeight / 2;
+
+    // 创建玩家
+    this.player = new Player(this, centerX, centerY);
+
+    // 创建实体组
+    this.enemies = this.physics.add.group();
+    this.bullets = this.physics.add.group();
+    this.pickups = this.physics.add.group();
+    this.particles = this.add.group();
+
+    // 将对象池与组关联
+    this.objectPool.setGroups(this.enemies, this.bullets, this.pickups, this.particles);
+  }
+
+  private setupCollisions(): void {
+    // 玩家与敌人碰撞（受伤）
+    this.physics.add.overlap(
+      this.player,
+      this.enemies,
+      (player, enemy) => this.collisionSystem.playerEnemyCollision(player, enemy),
+      undefined,
+      this
+    );
+
+    // 子弹与敌人碰撞（伤害）
+    this.physics.add.overlap(
+      this.bullets,
+      this.enemies,
+      (bullet, enemy) => this.collisionSystem.bulletEnemyCollision(bullet, enemy),
+      undefined,
+      this
+    );
+
+    // 玩家与拾取物碰撞
+    this.physics.add.overlap(
+      this.player,
+      this.pickups,
+      (player, pickup) => this.collisionSystem.playerPickupCollision(player, pickup),
+      undefined,
+      this
+    );
+
+    // 敌人之间的分离（避免重叠）
+    this.physics.add.collider(this.enemies, this.enemies);
+  }
+
+  private setupCamera(): void {
+    const camera = this.cameras.main;
+    camera.startFollow(this.player, true, 0.1, 0.1);
+    camera.setBounds(0, 0, this.mapWidth, this.mapHeight);
+    camera.setZoom(1);
+  }
+
+  private setupEventListeners(): void {
+    // 玩家死亡
+    EventBus.on('player:death', () => this.onPlayerDeath());
+
+    // 玩家升级
+    EventBus.on('player:levelup', (level: number) => {
+      this.audioManager.playSfx('sfx_levelup');
+      // 暂停游戏，显示升级选择
+      GameManager.getInstance().setPaused(true);
+      this.scene.launch('UpgradeScene');
+    });
+
+    // 暂停/恢复：同步暂停物理引擎和补间动画
+    // （仅 update return 不够，Arcade 物理世界会独立继续运行）
+    EventBus.on('run:pause', (paused: boolean) => {
+      if (paused) {
+        this.physics.pause();
+        this.tweens.pauseAll();
+      } else {
+        this.physics.resume();
+        this.tweens.resumeAll();
+      }
+    });
+
+    // 暂停切换
+    this.input.keyboard?.on('keydown-ESC', () => {
+      const gm = GameManager.getInstance();
+      gm.setPaused(!gm.isPaused);
+    });
+  }
+
+  update(time: number, delta: number): void {
+    const gm = GameManager.getInstance();
+
+    // 暂停时不更新游戏逻辑
+    if (gm.isPaused || gm.isGameOver) return;
+
+    // 更新存活时间
+    gm.addSurvivalTime(delta);
+
+    // 更新玩家
+    this.player.update(time, delta, this.inputManager);
+
+    // 更新波次
+    this.waveManager.update(time, delta);
+
+    // 更新所有敌人
+    this.enemies.children.each((enemy: any) => {
+      if (enemy.active && enemy.update) {
+        enemy.update(time, delta, this.player);
+      }
+      return true;
+    });
+
+    // 更新所有子弹
+    this.bullets.children.each((bullet: any) => {
+      if (bullet.active && bullet.update) {
+        bullet.update(time, delta);
+      }
+      return true;
+    });
+
+    // 更新所有拾取物（磁吸效果）
+    this.pickups.children.each((pickup: any) => {
+      if (pickup.active && pickup.update) {
+        pickup.update(time, delta, this.player);
+      }
+      return true;
+    });
+
+    // 自动存档
+    this.autoSaveTimer += delta;
+    if (this.autoSaveTimer >= GameConfig.SAVE.autoSaveInterval) {
+      this.autoSaveTimer = 0;
+      GameManager.getInstance().saveProgress();
+    }
+  }
+
+  private onPlayerDeath(): void {
+    const gm = GameManager.getInstance();
+    gm.endRun();
+
+    // 延迟切换到结算场景
+    this.time.delayedCall(1500, () => {
+      this.scene.stop('UIScene');
+      this.scene.start('GameOverScene');
+    });
+  }
+
+  // ========== 公共接口（供其他系统调用） ==========
+
+  getPlayer(): Player {
+    return this.player;
+  }
+
+  getEnemies(): Phaser.Physics.Arcade.Group {
+    return this.enemies;
+  }
+
+  getBullets(): Phaser.Physics.Arcade.Group {
+    return this.bullets;
+  }
+
+  getPickups(): Phaser.Physics.Arcade.Group {
+    return this.pickups;
+  }
+
+  getObjectPool(): ObjectPool {
+    return this.objectPool;
+  }
+
+  getInputManager(): InputManager {
+    return this.inputManager;
+  }
+
+  getMapSize(): { width: number; height: number } {
+    return { width: this.mapWidth, height: this.mapHeight };
+  }
+
+  spawnEnemy(config: EnemyConfig, x: number, y: number): void {
+    this.waveManager.spawnEnemy(config, x, y);
+  }
+
+  spawnPickup(config: PickupConfig, x: number, y: number): void {
+    this.objectPool.spawnPickup(config, x, y);
+  }
+}

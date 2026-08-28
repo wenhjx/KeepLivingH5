@@ -1,0 +1,120 @@
+import type { WeaponConfig } from '../types';
+
+/**
+ * 武器配置数据
+ * 所有可用武器的基础属性定义
+ */
+export const WEAPONS: Record<string, WeaponConfig> = {
+  default_gun: {
+    id: 'default_gun',
+    name: '基础射击',
+    type: 'ranged',
+    texture: 'bullet',
+    damage: 10,
+    attackSpeed: 2,
+    range: 400,
+    projectileSpeed: 500,
+    projectileCount: 1,
+    description: '基础远程攻击，稳定输出',
+    maxLevel: 8,
+  },
+  shotgun: {
+    id: 'shotgun',
+    name: '霰弹枪',
+    type: 'ranged',
+    texture: 'bullet',
+    damage: 6,
+    attackSpeed: 1,
+    range: 250,
+    projectileSpeed: 450,
+    projectileCount: 5,
+    description: '近距离高伤害，发射5发散弹',
+    maxLevel: 6,
+  },
+  machine_gun: {
+    id: 'machine_gun',
+    name: '机枪',
+    type: 'ranged',
+    texture: 'bullet',
+    damage: 4,
+    attackSpeed: 8,
+    range: 350,
+    projectileSpeed: 600,
+    projectileCount: 1,
+    description: '极高射速，单发伤害低',
+    maxLevel: 6,
+  },
+  boomerang: {
+    id: 'boomerang',
+    name: '回旋镖',
+    type: 'aoe',
+    texture: 'bullet',
+    damage: 15,
+    attackSpeed: 0.8,
+    range: 300,
+    projectileSpeed: 300,
+    projectileCount: 1,
+    aoeRadius: 40,
+    description: '可穿透敌人的回旋攻击',
+    maxLevel: 6,
+  },
+  drone: {
+    id: 'drone',
+    name: '无人机',
+    type: 'summon',
+    texture: 'bullet',
+    damage: 8,
+    attackSpeed: 1.5,
+    range: 350,
+    projectileSpeed: 400,
+    projectileCount: 1,
+    description: '环绕玩家的自动攻击无人机',
+    maxLevel: 6,
+  },
+  lightsaber: {
+    id: 'lightsaber',
+    name: '光剑',
+    type: 'melee',
+    texture: 'weapon_sword',
+    damage: 25,
+    attackSpeed: 1.5,
+    range: 80,
+    aoeRadius: 80,
+    description: '近战范围攻击，高伤害',
+    maxLevel: 6,
+  },
+  rocket: {
+    id: 'rocket',
+    name: '火箭筒',
+    type: 'aoe',
+    texture: 'bullet',
+    damage: 50,
+    attackSpeed: 0.5,
+    range: 500,
+    projectileSpeed: 350,
+    projectileCount: 1,
+    aoeRadius: 100,
+    description: '范围爆炸伤害，攻速慢',
+    maxLevel: 5,
+  },
+  laser: {
+    id: 'laser',
+    name: '激光',
+    type: 'ranged',
+    texture: 'bullet',
+    damage: 3,
+    attackSpeed: 15,
+    range: 600,
+    projectileSpeed: 1000,
+    projectileCount: 1,
+    description: '超高速激光，穿透敌人',
+    maxLevel: 6,
+  },
+};
+
+/** 获取所有武器列表 */
+export const getAllWeapons = (): WeaponConfig[] => Object.values(WEAPONS);
+
+/** 根据类型筛选武器 */
+export const getWeaponsByType = (type: string): WeaponConfig[] =>
+  getAllWeapons().filter((w) => w.type === type);
