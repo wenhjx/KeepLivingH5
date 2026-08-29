@@ -302,19 +302,19 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private getCoinDrop(): { chance: number; min: number; max: number } | null {
     switch (this.config?.type) {
       case 'normal':
-        return { chance: 0.2, min: 1, max: 3 };
+        return { chance: 0.3, min: 2, max: 5 };
       case 'fast':
-        return { chance: 0.2, min: 1, max: 2 };
+        return { chance: 0.3, min: 2, max: 4 };
       case 'tank':
-        return { chance: 0.4, min: 3, max: 5 };
+        return { chance: 0.5, min: 4, max: 7 };
       case 'ranged':
-        return { chance: 0.25, min: 2, max: 3 };
+        return { chance: 0.35, min: 3, max: 5 };
       case 'elite':
-        return { chance: 1, min: 10, max: 20 };
+        return { chance: 1, min: 15, max: 25 };
       case 'boss':
-        return { chance: 1, min: 50, max: 100 };
+        return { chance: 1, min: 80, max: 150 };
       default:
-        return { chance: 0.2, min: 1, max: 3 };
+        return { chance: 0.3, min: 2, max: 5 };
     }
   }
 

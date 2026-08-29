@@ -47,36 +47,36 @@ function fromUpgrade(upgradeId: string, kind: ShopItemKind, price: number): Shop
 
 // ========== 商品池 ==========
 
-/** 武器类商品（价格档：普通 60 / 稀有 70 / 传说 100） */
+/** 武器类商品（价格档：普通 45 / 稀有 55 / 传说 80） */
 const WEAPON_ITEMS: ShopItem[] = [
-  fromUpgrade('weapon_shotgun', 'weapon', 60),
-  fromUpgrade('weapon_machine_gun', 'weapon', 60),
-  fromUpgrade('weapon_boomerang', 'weapon', 70),
-  fromUpgrade('weapon_drone', 'weapon', 70),
-  fromUpgrade('weapon_lightsaber', 'weapon', 70),
-  fromUpgrade('weapon_rocket', 'weapon', 100),
-  fromUpgrade('weapon_laser', 'weapon', 100),
+  fromUpgrade('weapon_shotgun', 'weapon', 45),
+  fromUpgrade('weapon_machine_gun', 'weapon', 45),
+  fromUpgrade('weapon_boomerang', 'weapon', 55),
+  fromUpgrade('weapon_drone', 'weapon', 55),
+  fromUpgrade('weapon_lightsaber', 'weapon', 55),
+  fromUpgrade('weapon_rocket', 'weapon', 80),
+  fromUpgrade('weapon_laser', 'weapon', 80),
 ];
 
 /** 被动类商品 */
 const PASSIVE_ITEMS: ShopItem[] = [
-  fromUpgrade('passive_gold_boost', 'passive', 40),
-  fromUpgrade('passive_exp_boost', 'passive', 50),
-  fromUpgrade('passive_regen', 'passive', 50),
-  fromUpgrade('passive_thorns', 'passive', 60),
+  fromUpgrade('passive_gold_boost', 'passive', 30),
+  fromUpgrade('passive_exp_boost', 'passive', 35),
+  fromUpgrade('passive_regen', 'passive', 35),
+  fromUpgrade('passive_thorns', 'passive', 45),
 ];
 
 /** 属性类商品 */
 const STAT_ITEMS: ShopItem[] = [
-  fromUpgrade('max_hp', 'stat', 35),
-  fromUpgrade('move_speed', 'stat', 35),
-  fromUpgrade('attack_power', 'stat', 45),
-  fromUpgrade('attack_speed', 'stat', 45),
-  fromUpgrade('crit_rate', 'stat', 45),
-  fromUpgrade('crit_damage', 'stat', 50),
-  fromUpgrade('pickup_radius', 'stat', 30),
-  fromUpgrade('defense', 'stat', 35),
-  fromUpgrade('luck', 'stat', 45),
+  fromUpgrade('max_hp', 'stat', 25),
+  fromUpgrade('move_speed', 'stat', 25),
+  fromUpgrade('attack_power', 'stat', 35),
+  fromUpgrade('attack_speed', 'stat', 35),
+  fromUpgrade('crit_rate', 'stat', 35),
+  fromUpgrade('crit_damage', 'stat', 40),
+  fromUpgrade('pickup_radius', 'stat', 20),
+  fromUpgrade('defense', 'stat', 25),
+  fromUpgrade('luck', 'stat', 35),
 ];
 
 /** 消耗品类（一次性） */
@@ -86,7 +86,7 @@ const CONSUMABLE_ITEMS: ShopItem[] = [
     name: '全屏炸弹',
     icon: '💣',
     desc: '立刻对全场敌人造成巨额伤害（救急清屏）',
-    price: 60,
+    price: 45,
     rarity: 'epic',
     kind: 'consumable',
     consumableEffect: (_player, gameScene) => {
@@ -105,7 +105,7 @@ const CONSUMABLE_ITEMS: ShopItem[] = [
     name: '能量护盾',
     icon: '🛡️',
     desc: '3 秒无敌护盾',
-    price: 40,
+    price: 30,
     rarity: 'rare',
     kind: 'consumable',
     consumableEffect: (player) => {
@@ -117,7 +117,7 @@ const CONSUMABLE_ITEMS: ShopItem[] = [
     name: '狂暴药水',
     icon: '⚗️',
     desc: '8 秒内攻速与攻击力 +50%',
-    price: 35,
+    price: 25,
     rarity: 'rare',
     kind: 'consumable',
     consumableEffect: (player) => {
@@ -129,7 +129,7 @@ const CONSUMABLE_ITEMS: ShopItem[] = [
     name: '大血包',
     icon: '🍗',
     desc: '立即恢复 50% 最大生命值',
-    price: 30,
+    price: 20,
     rarity: 'common',
     kind: 'consumable',
     consumableEffect: (player) => {
@@ -141,7 +141,7 @@ const CONSUMABLE_ITEMS: ShopItem[] = [
     name: '复活币',
     icon: '🌟',
     desc: '死亡时原地满血复活一次',
-    price: 100,
+    price: 80,
     rarity: 'legendary',
     kind: 'consumable',
     consumableEffect: (player) => {
@@ -155,11 +155,11 @@ export const SHOP_POOL: ShopItem[] = [...WEAPON_ITEMS, ...PASSIVE_ITEMS, ...STAT
 
 /** 高级位候选（高价值：传说武器 + 复活币） */
 const HIGH_VALUE_ITEMS: ShopItem[] = [
-  fromUpgrade('weapon_laser', 'weapon', 100),
-  fromUpgrade('weapon_rocket', 'weapon', 100),
-  fromUpgrade('weapon_boomerang', 'weapon', 70),
-  fromUpgrade('weapon_drone', 'weapon', 70),
-  fromUpgrade('weapon_lightsaber', 'weapon', 70),
+  fromUpgrade('weapon_laser', 'weapon', 80),
+  fromUpgrade('weapon_rocket', 'weapon', 80),
+  fromUpgrade('weapon_boomerang', 'weapon', 55),
+  fromUpgrade('weapon_drone', 'weapon', 55),
+  fromUpgrade('weapon_lightsaber', 'weapon', 55),
   CONSUMABLE_ITEMS.find((c) => c.id === 'consumable_revive')!,
 ];
 
