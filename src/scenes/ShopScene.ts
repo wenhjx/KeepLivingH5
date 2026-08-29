@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
 import { EventBus } from '../utils/EventBus';
+import { setupUICamera } from '../utils/CameraHelper';
 import { generateShopStock, applyShopItem, type ShopItem } from '../data/shop';
 import type { Player } from '../entities/Player';
 
@@ -27,17 +28,8 @@ export class ShopScene extends Phaser.Scene {
   }
 
   create(): void {
-    const zoom = GameConfig.renderScale;
-    this.cameras.main.setZoom(zoom);
-    // Phaser 相机以画布中心为缩放中心，zoom 后可视区域会偏移 (画布宽-逻辑宽)/2；
-    // 补偿 scroll 使可视区域恰好从世界 (0,0) 开始，960x640 逻辑布局才真正居中
-    const cam = this.cameras.main;
-    cam.setScroll(
-      -(cam.width - cam.width / zoom) / 2,
-      -(cam.height - cam.height / zoom) / 2
-    );
-    const width = GameConfig.GAME_WIDTH;
-    const height = GameConfig.GAME_HEIGHT;
+    // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
+    const { width, height } = setupUICamera(this);
 
     // 半透明背景
     this.add.rectangle(0, 0, width, height, 0x000000, 0.82).setOrigin(0);

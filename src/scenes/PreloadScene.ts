@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
 import { TextureGenerator } from '../utils/TextureGenerator';
+import { setupUICamera } from '../utils/CameraHelper';
 
 /**
  * 预加载场景
@@ -19,8 +20,8 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create(): void {
-    // 渲染分辨率倍率补偿（保持视觉比例，配合高分屏清晰渲染）
-    this.cameras.main.setZoom(GameConfig.renderScale);
+    // UI 相机统一设置（zoom + scroll 补偿）
+    setupUICamera(this);
     this.createLoadingUI();
 
     // 第一步：用程序生成所有游戏纹理（霓虹深渊主题）
@@ -39,7 +40,8 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private createLoadingUI(): void {
-    const { width, height } = this.scale;
+    const width = GameConfig.GAME_WIDTH;
+    const height = GameConfig.GAME_HEIGHT;
     const centerX = width / 2;
     const centerY = height / 2;
 

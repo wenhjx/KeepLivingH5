@@ -2,6 +2,7 @@ import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import type { UpgradeOption } from '../types';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 升级选择面板
@@ -24,13 +25,13 @@ export class UpgradePanel {
 
     // 半透明遮罩
     this.overlay = scene.add
-      .rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.7)
+      .rectangle(0, 0, GameConfig.GAME_WIDTH, GameConfig.GAME_HEIGHT, 0x000000, 0.7)
       .setOrigin(0)
       .setInteractive();
     this.container.add(this.overlay);
 
     // 标题
-    const title = createUIText(scene, scene.scale.width / 2, 80, '选择升级', {
+    const title = createUIText(scene, GameConfig.GAME_WIDTH / 2, 80, '选择升级', {
         fontSize: '36px',
         color: '#ffb347',
         fontStyle: 'bold',
@@ -68,10 +69,10 @@ export class UpgradePanel {
       .filter((obj) => obj.getData('isUpgradeCard'))
       .forEach((obj) => obj.destroy());
 
-    const { width } = this.scene.scale;
+    const width = GameConfig.GAME_WIDTH;
     const totalWidth = this.options.length * this.cardWidth + (this.options.length - 1) * this.cardSpacing;
     const startX = (width - totalWidth) / 2 + this.cardWidth / 2;
-    const cardY = this.scene.scale.height / 2;
+    const cardY = GameConfig.GAME_HEIGHT / 2;
 
     this.options.forEach((option, index) => {
       const x = startX + index * (this.cardWidth + this.cardSpacing);

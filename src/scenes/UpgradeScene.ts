@@ -8,6 +8,7 @@ import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
 import { EventBus } from '../utils/EventBus';
+import { setupUICamera } from '../utils/CameraHelper';
 import type { UpgradeOption } from '../types';
 import type { Player } from '../entities/Player';
 
@@ -24,9 +25,8 @@ export class UpgradeScene extends Phaser.Scene {
   }
 
   create(): void {
-    // 渲染分辨率倍率补偿（保持视觉比例，配合高分屏清晰渲染）
-    this.cameras.main.setZoom(GameConfig.renderScale);
-    const { width, height } = this.scale;
+    // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
+    const { width, height } = setupUICamera(this);
 
     // 半透明背景
     this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0);
