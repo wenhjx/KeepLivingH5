@@ -120,3 +120,12 @@
 
 
 
+
+
+## 地形系统 + 小地图（2026-08-29，已提交）
+- **地形系统**：数据驱动，`src/data/terrain.ts` 定义 `ObstacleConfig`/`TerrainConfig`，`DEFAULT_TERRAIN` 含 16 个障碍物（岩石/墙体/水晶，避开中心出生点 1500,1500）
+- **TerrainManager**：`src/systems/TerrainManager.ts`，消费配置创建静态物理物体组，提供 `getObstacleGroup()`/`getObstacles()`/`setTerrain()`（以后切换区域/新地图只需传新配置）
+- **碰撞**：玩家 collider 障碍物、敌人 collider 障碍物、子弹 overlap 障碍物（爆炸子弹先触发爆炸再销毁）
+- **小地图**：`src/ui/Minimap.ts` 纯渲染组件，每帧 Graphics 重绘（背景框/障碍物灰块/敌人红点/Boss 大红点/玩家青色三角），集成到 UIScene 右下角
+- **可扩展性**：以后新增区域只需新建 `TerrainConfig` 并调用 `terrainManager.setTerrain(newConfig)`，小地图自动消费新地图尺寸和障碍物数据，无需改组件
+- **验证**：障碍物渲染正常、敌人被障碍物阻挡（不穿过）、小地图实时显示玩家/敌人/障碍物分布

@@ -5,6 +5,7 @@ import { GameConfig } from '../game/GameConfig';
 import { HUD } from '../ui/HUD';
 import { VirtualJoystick } from '../ui/VirtualJoystick';
 import { DebugPanel } from '../ui/DebugPanel';
+import { Minimap } from '../ui/Minimap';
 import { GuideManager } from '../systems/GuideManager';
 import { EventBus } from '../utils/EventBus';
 
@@ -17,6 +18,7 @@ export class UIScene extends Phaser.Scene {
   private hud!: HUD;
   private joystick!: VirtualJoystick;
   private debugPanel!: DebugPanel;
+  private minimap!: Minimap;
   private pauseButton!: Phaser.GameObjects.Text;
   private pauseOverlay!: Phaser.GameObjects.Container;
   private uiRoot!: Phaser.GameObjects.Container;
@@ -45,6 +47,11 @@ export class UIScene extends Phaser.Scene {
 
     // 调试面板（按 ` 键切换）
     this.debugPanel = new DebugPanel(this);
+
+    // 小地图（右下角，数据驱动：以后新增区域/更大地图自动适配）
+    const gameScene = this.scene.get('GameScene') as any;
+    const mapSize = gameScene?.getMapSize?.() || { width: 3000, height: 3000 };
+    this.minimap = new Minimap(this, 800, 520, 140, 100, mapSize.width, mapSize.height);
 
     // 移动端显示虚拟摇杆
     if (gm.isMobile) {
@@ -171,5 +178,16 @@ export class UIScene extends Phaser.Scene {
   update(time: number, delta: number): void {
     // 每帧更新 HUD
     this.hud.update();
+
+    // 每帧更新小地图（玩家/敌人/Boss/地形）
+    const gameScene = this.scene.get('GameScene') as any;
+    if (gameScene && this.minimap) {
+      this.minimap.update(
+        gameScene.getPlayer(),
+        gameScene.getEnemies().getChildren(),
+        gameScene.getActiveBoss(),
+        gameScene.getTerrainManager()
+      );
+    }
   }
 }

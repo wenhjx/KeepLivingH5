@@ -10,6 +10,8 @@ import { CollisionSystem } from '../systems/CollisionSystem';
 import { AudioManager } from '../systems/AudioManager';
 import { GuideManager } from '../systems/GuideManager';
 import { DamageTextManager } from '../ui/DamageTextManager';
+import { TerrainManager } from '../systems/TerrainManager';
+import { DEFAULT_TERRAIN } from '../data/terrain';
 import { EventBus } from '../utils/EventBus';
 import type { EnemyConfig, PickupConfig } from '../types';
 
@@ -26,6 +28,7 @@ export class GameScene extends Phaser.Scene {
   private collisionSystem!: CollisionSystem;
   private audioManager!: AudioManager;
   private damageTextManager!: DamageTextManager;
+  private terrainManager!: TerrainManager;
   private activeBoss: Enemy | null = null;
   private pendingLevelUps = 0;
   private upgradeQueued = false;
@@ -153,6 +156,9 @@ export class GameScene extends Phaser.Scene {
     // 伤害数字
     this.damageTextManager = new DamageTextManager(this);
 
+    // 地形管理（数据驱动，可扩展；以后新增区域调用 setTerrain 切换）
+    this.terrainManager = new TerrainManager(this, DEFAULT_TERRAIN);
+
     // 音频管理
     this.audioManager = AudioManager.getInstance();
     this.audioManager.init(this);
@@ -178,6 +184,9 @@ export class GameScene extends Phaser.Scene {
 
     // 地图边界
     this.physics.world.setBounds(0, 0, this.mapWidth, this.mapHeight);
+
+    // 创建地形障碍物（在地图背景之上）
+    this.terrainManager.create();
   }
 
   private createEntities(): void {
@@ -246,6 +255,29 @@ export class GameScene extends Phaser.Scene {
 
     // 敌人之间的分离（避免重叠）
     this.physics.add.collider(this.enemies, this.enemies);
+
+    // ===== 地形障碍物碰撞 =====
+    const obstacleGroup = this.terrainManager.getObstacleGroup();
+    // 玩家/敌人被障碍物阻挡
+    this.physics.add.collider(this.player, obstacleGroup);
+    this.physics.add.collider(this.enemies, obstacleGroup);
+    // 子弹碰到障碍物销毁（爆炸子弹先触发爆炸）
+    this.physics.add.overlap(
+      this.bullets,
+      obstacleGroup,
+      (bullet) => {
+        const b = bullet as any;
+        if (b.explosive) {
+          EventBus.emit('bullet:explode', {
+            x: b.x,
+            y: b.y,
+            damage: b.damage,
+            radius: b.aoeRadius || 80,
+          });
+        }
+        b.despawn?.();
+      }
+    );
   }
 
   private setupCamera(): void {
@@ -509,6 +541,11 @@ export class GameScene extends Phaser.Scene {
 
   getMapSize(): { width: number; height: number } {
     return { width: this.mapWidth, height: this.mapHeight };
+  }
+
+  /** 地形管理器（供小地图渲染障碍物轮廓） */
+  getTerrainManager(): TerrainManager {
+    return this.terrainManager;
   }
 
   spawnEnemy(config: EnemyConfig, x: number, y: number): void {
