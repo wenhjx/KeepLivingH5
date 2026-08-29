@@ -7,6 +7,7 @@ import { GuideManager } from '../systems/GuideManager';
 import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
+import { EventBus } from '../utils/EventBus';
 import type { UpgradeOption } from '../types';
 import type { Player } from '../entities/Player';
 
@@ -116,5 +117,7 @@ export class UpgradeScene extends Phaser.Scene {
     // 恢复游戏
     GameManager.getInstance().setPaused(false);
     this.scene.stop('UpgradeScene');
+    // 通知 GameScene：本次选择完成，若有剩余升级（跨多级）则继续弹出下一个三选一
+    EventBus.emit('upgrade:chosen');
   }
 }

@@ -27,6 +27,8 @@ export class GameScene extends Phaser.Scene {
   private audioManager!: AudioManager;
   private damageTextManager!: DamageTextManager;
   private activeBoss: Enemy | null = null;
+  private pendingLevelUps = 0;
+  private upgradeQueued = false;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -253,12 +255,20 @@ export class GameScene extends Phaser.Scene {
     // 玩家死亡
     EventBus.on('player:death', () => this.onPlayerDeath());
 
-    // 玩家升级
+    // 玩家升级：跨多级时排队逐个弹出三选一（避免一次性升级丢失选择机会）
     EventBus.on('player:levelup', (level: number) => {
       this.audioManager.playSfx('sfx_levelup');
-      // 暂停游戏，显示升级选择
-      GameManager.getInstance().setPaused(true);
-      this.scene.launch('UpgradeScene');
+      this.pendingLevelUps++;
+      this.showNextUpgrade();
+    });
+
+    // 一次升级选择完成，继续弹出剩余待选升级
+    EventBus.on('upgrade:chosen', () => {
+      this.upgradeQueued = false;
+      this.pendingLevelUps = Math.max(0, this.pendingLevelUps - 1);
+      if (this.pendingLevelUps > 0) {
+        this.time.delayedCall(250, () => this.showNextUpgrade());
+      }
     });
 
     // 子弹爆炸（火箭筒等）：范围伤害 + 视觉效果
@@ -396,6 +406,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ========== 公共接口（供其他系统调用） ==========
+
+  /**
+   * 弹出一次升级选择（若有待选升级且当前未在显示中）
+   * 跨多级时由 upgrade:chosen 事件驱动逐个弹出
+   */
+  private showNextUpgrade(): void {
+    if (this.pendingLevelUps <= 0 || this.upgradeQueued) return;
+    if (this.scene.isActive('UpgradeScene')) return;
+
+    this.upgradeQueued = true;
+    GameManager.getInstance().setPaused(true);
+    this.scene.launch('UpgradeScene');
+  }
 
   /** 弹出浮动伤害数字（供碰撞系统调用） */
   spawnDamageText(x: number, y: number, damage: number, isCrit: boolean = false): void {
