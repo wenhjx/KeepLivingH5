@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
@@ -61,8 +62,7 @@ export class DebugPanel {
     this.container.add(bg);
 
     // 标题
-    const title = this.scene.add
-      .text(x + this.panelWidth / 2, y + 14, '🔧 调试面板  (按 ` 切换)', {
+    const title = createUIText(this.scene, x + this.panelWidth / 2, y + 14, '🔧 调试面板  (按 ` 切换)', {
         fontSize: '13px',
         color: '#ff6b35',
         fontStyle: 'bold',
@@ -139,8 +139,7 @@ export class DebugPanel {
 
   /** 添加分区标题 */
   private addSectionTitle(x: number, y: number, text: string): number {
-    const title = this.scene.add
-      .text(x, y, text, {
+    const title = createUIText(this.scene, x, y, text, {
         fontSize: '11px',
         color: '#ffb347',
         fontStyle: 'bold',
@@ -158,8 +157,7 @@ export class DebugPanel {
     bg.lineStyle(1, 0x444455, 0.6);
     bg.strokeRoundedRect(x, y, this.btnWidth, this.btnHeight, 4);
 
-    const txt = this.scene.add
-      .text(x + this.btnWidth / 2, y + this.btnHeight / 2, text, {
+    const txt = createUIText(this.scene, x + this.btnWidth / 2, y + this.btnHeight / 2, text, {
         fontSize: '11px',
         color: '#cccccc',
       })

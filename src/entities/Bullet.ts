@@ -178,6 +178,15 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
 
     // 超出射程则销毁（回旋镖返回阶段不销毁）
     if (this.traveled >= this.range && !this.boomerang) {
+      // 爆炸子弹到达射程尽头自动爆炸，而非静默消失（火箭筒手感）
+      if (this.explosive) {
+        EventBus.emit('bullet:explode', {
+          x: this.x,
+          y: this.y,
+          damage: this.damage,
+          radius: this.aoeRadius || 80,
+        });
+      }
       this.despawn();
     }
   }

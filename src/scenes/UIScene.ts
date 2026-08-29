@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -56,8 +57,7 @@ export class UIScene extends Phaser.Scene {
     }
 
     // 暂停按钮
-    this.pauseButton = this.add
-      .text(this.scale.width - 20, 20, 'II', {
+    this.pauseButton = createUIText(this, this.scale.width - 20, 20, 'II', {
         fontSize: '24px',
         color: '#ffffff',
         backgroundColor: '#1a1a25',
@@ -98,8 +98,7 @@ export class UIScene extends Phaser.Scene {
     this.pauseOverlay.add(bg);
 
     // 暂停文字
-    const title = this.add
-      .text(width / 2, height / 2 - 60, '游戏暂停', {
+    const title = createUIText(this, width / 2, height / 2 - 60, '游戏暂停', {
         fontSize: '48px',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -108,8 +107,7 @@ export class UIScene extends Phaser.Scene {
     this.pauseOverlay.add(title);
 
     // 继续按钮
-    const resumeBtn = this.add
-      .text(width / 2, height / 2, '继续游戏', {
+    const resumeBtn = createUIText(this, width / 2, height / 2, '继续游戏', {
         fontSize: '24px',
         color: '#e0e0e0',
         backgroundColor: '#1a1a25',
@@ -123,8 +121,7 @@ export class UIScene extends Phaser.Scene {
     this.pauseOverlay.add(resumeBtn);
 
     // 返回主菜单按钮
-    const menuBtn = this.add
-      .text(width / 2, height / 2 + 60, '返回主菜单', {
+    const menuBtn = createUIText(this, width / 2, height / 2 + 60, '返回主菜单', {
         fontSize: '20px',
         color: '#aaaaaa',
         backgroundColor: '#1a1a25',

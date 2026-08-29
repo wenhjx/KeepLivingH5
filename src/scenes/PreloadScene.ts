@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -43,8 +44,7 @@ export class PreloadScene extends Phaser.Scene {
     const centerY = height / 2;
 
     // 标题
-    this.add
-      .text(centerX, centerY - 80, 'KEEP LIVING', {
+    createUIText(this, centerX, centerY - 80, 'KEEP LIVING', {
         fontSize: '42px',
         fontFamily: 'Arial',
         color: '#00ffff',
@@ -55,8 +55,7 @@ export class PreloadScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // 副标题
-    this.add
-      .text(centerX, centerY - 45, 'NEON ABYSS', {
+    createUIText(this, centerX, centerY - 45, 'NEON ABYSS', {
         fontSize: '14px',
         color: '#ff00ff',
         letterSpacing: 6,
@@ -74,15 +73,13 @@ export class PreloadScene extends Phaser.Scene {
     this.progressBar = this.add.graphics();
 
     // 文字
-    this.loadingText = this.add
-      .text(centerX, centerY + 40, '正在生成霓虹纹理...', {
+    this.loadingText = createUIText(this, centerX, centerY + 40, '正在生成霓虹纹理...', {
         fontSize: '14px',
         color: '#888888',
       })
       .setOrigin(0.5);
 
-    this.percentText = this.add
-      .text(centerX, centerY + 10, '0%', {
+    this.percentText = createUIText(this, centerX, centerY + 10, '0%', {
         fontSize: '12px',
         color: '#00ffff',
         fontStyle: 'bold',

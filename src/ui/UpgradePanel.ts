@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import type { UpgradeOption } from '../types';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
@@ -29,8 +30,7 @@ export class UpgradePanel {
     this.container.add(this.overlay);
 
     // 标题
-    const title = scene.add
-      .text(scene.scale.width / 2, 80, '选择升级', {
+    const title = createUIText(scene, scene.scale.width / 2, 80, '选择升级', {
         fontSize: '36px',
         color: '#ffb347',
         fontStyle: 'bold',
@@ -100,8 +100,7 @@ export class UpgradePanel {
     cardContainer.add(bg);
 
     // 稀有度标签
-    const rarityText = this.scene.add
-      .text(0, -this.cardHeight / 2 + 20, option.rarity.toUpperCase(), {
+    const rarityText = createUIText(this.scene, 0, -this.cardHeight / 2 + 20, option.rarity.toUpperCase(), {
         fontSize: '12px',
         color: `#${borderColor.toString(16).padStart(6, '0')}`,
         fontStyle: 'bold',
@@ -115,16 +114,14 @@ export class UpgradePanel {
     iconBg.fillCircle(0, -40, 35);
     cardContainer.add(iconBg);
 
-    const iconText = this.scene.add
-      .text(0, -40, option.icon, {
+    const iconText = createUIText(this.scene, 0, -40, option.icon, {
         fontSize: '28px',
       })
       .setOrigin(0.5);
     cardContainer.add(iconText);
 
     // 名称
-    const nameText = this.scene.add
-      .text(0, 10, option.name, {
+    const nameText = createUIText(this.scene, 0, 10, option.name, {
         fontSize: '18px',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -134,8 +131,7 @@ export class UpgradePanel {
     cardContainer.add(nameText);
 
     // 描述
-    const descText = this.scene.add
-      .text(0, 50, option.description, {
+    const descText = createUIText(this.scene, 0, 50, option.description, {
         fontSize: '12px',
         color: '#aaaaaa',
         align: 'center',

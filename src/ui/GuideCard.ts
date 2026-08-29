@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 
 /**
@@ -99,8 +100,7 @@ export class GuideCard {
       const icon = this.scene.add.image(0, contentY + 16, this.config.iconTexture).setOrigin(0.5);
       this.container.add(icon);
     } else if (this.config.icon) {
-      const iconText = this.scene.add
-        .text(0, contentY + 16, this.config.icon, {
+      const iconText = createUIText(this.scene, 0, contentY + 16, this.config.icon, {
           fontSize: '32px',
         })
         .setOrigin(0.5);
@@ -109,8 +109,7 @@ export class GuideCard {
 
     // 标题
     const titleY = this.config.icon || this.config.iconTexture ? contentY + 42 : contentY + 8;
-    const title = this.scene.add
-      .text(0, titleY, this.config.title, {
+    const title = createUIText(this.scene, 0, titleY, this.config.title, {
         fontSize: '20px',
         color: `#${color.toString(16).padStart(6, '0')}`,
         fontStyle: 'bold',
@@ -122,8 +121,7 @@ export class GuideCard {
 
     // 描述
     const descY = titleY + 30;
-    const description = this.scene.add
-      .text(0, descY, this.config.description, {
+    const description = createUIText(this.scene, 0, descY, this.config.description, {
         fontSize: '14px',
         color: '#cccccc',
         align: 'center',
@@ -137,8 +135,7 @@ export class GuideCard {
     if (showButton) {
       const btnY = this.cardHeight / 2 - this.padding - 4;
       const btnText = this.config.buttonText ?? '知道了';
-      const button = this.scene.add
-        .text(0, btnY, btnText, {
+      const button = createUIText(this.scene, 0, btnY, btnText, {
           fontSize: '14px',
           color: '#ffffff',
           backgroundColor: `#${color.toString(16).padStart(6, '0')}`,

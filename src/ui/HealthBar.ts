@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 
 /**
@@ -44,8 +45,7 @@ export class HealthBar {
 
     // 文字
     if (showText) {
-      this.textObj = scene.add
-        .text(0, 0, '', {
+      this.textObj = createUIText(scene, 0, 0, '', {
           fontSize: '10px',
           color: '#ffffff',
           fontStyle: 'bold',

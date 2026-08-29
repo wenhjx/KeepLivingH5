@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 
@@ -75,8 +76,7 @@ export class HUD {
     this.healthBar = this.scene.add.graphics();
 
     // 血量文字
-    this.healthText = this.scene.add
-      .text(leftX + this.barWidth / 2, topY + this.barHeight / 2, '100/100', {
+    this.healthText = createUIText(this.scene, leftX + this.barWidth / 2, topY + this.barHeight / 2, '100/100', {
         fontSize: '12px',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -93,8 +93,7 @@ export class HUD {
     this.expBar = this.scene.add.graphics();
 
     // 等级文字
-    this.levelText = this.scene.add
-      .text(leftX + this.barWidth + 8, expY + 4, 'Lv.1', {
+    this.levelText = createUIText(this.scene, leftX + this.barWidth + 8, expY + 4, 'Lv.1', {
         fontSize: '14px',
         color: '#ffb347',
         fontStyle: 'bold',
@@ -104,31 +103,27 @@ export class HUD {
     // ========== 右上角：波次、击杀、分数 ==========
     const rightX = width - this.padding;
 
-    this.waveText = this.scene.add
-      .text(rightX, topY, '波次: 1', {
+    this.waveText = createUIText(this.scene, rightX, topY, '波次: 1', {
         fontSize: '16px',
         color: '#ff6b35',
         fontStyle: 'bold',
       })
       .setOrigin(1, 0);
 
-    this.killsText = this.scene.add
-      .text(rightX, topY + 24, '击杀: 0', {
+    this.killsText = createUIText(this.scene, rightX, topY + 24, '击杀: 0', {
         fontSize: '14px',
         color: '#cccccc',
       })
       .setOrigin(1, 0);
 
-    this.scoreText = this.scene.add
-      .text(rightX, topY + 46, '分数: 0', {
+    this.scoreText = createUIText(this.scene, rightX, topY + 46, '分数: 0', {
         fontSize: '14px',
         color: '#ffb347',
       })
       .setOrigin(1, 0);
 
     // ========== 顶部中间：存活时间 ==========
-    this.timeText = this.scene.add
-      .text(width / 2, topY, '00:00', {
+    this.timeText = createUIText(this.scene, width / 2, topY, '00:00', {
         fontSize: '20px',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -226,16 +221,14 @@ export class HUD {
       container.add(bg);
 
       // 图标
-      const iconText = this.scene.add
-        .text(this.buffSize / 2, this.buffSize / 2 - 2, b.icon, {
+      const iconText = createUIText(this.scene, this.buffSize / 2, this.buffSize / 2 - 2, b.icon, {
           fontSize: '16px',
         })
         .setOrigin(0.5);
       container.add(iconText);
 
       // 等级
-      const levelText = this.scene.add
-        .text(this.buffSize - 2, this.buffSize - 1, `${b.level}`, {
+      const levelText = createUIText(this.scene, this.buffSize - 2, this.buffSize - 1, `${b.level}`, {
           fontSize: '10px',
           color: '#ffffff',
           fontStyle: 'bold',

@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -24,8 +25,7 @@ export class GameOverScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x0a0a0f).setOrigin(0);
 
     // 标题
-    this.add
-      .text(centerX, height * 0.2, '游戏结束', {
+    createUIText(this, centerX, height * 0.2, '游戏结束', {
         fontSize: '52px',
         color: '#ff4444',
         fontStyle: 'bold',
@@ -46,15 +46,13 @@ export class GameOverScene extends Phaser.Scene {
 
     statsData.forEach((item, i) => {
       const y = dataY + i * lineHeight;
-      this.add
-        .text(centerX - 100, y, item.label, {
+      createUIText(this, centerX - 100, y, item.label, {
           fontSize: '20px',
           color: '#888888',
         })
         .setOrigin(0, 0.5);
 
-      this.add
-        .text(centerX + 100, y, item.value, {
+      createUIText(this, centerX + 100, y, item.value, {
           fontSize: '20px',
           color: '#ffffff',
           fontStyle: 'bold',
@@ -64,8 +62,7 @@ export class GameOverScene extends Phaser.Scene {
 
     // 新纪录提示
     if (runData.score >= stats.highScore && runData.score > 0) {
-      this.add
-        .text(centerX, dataY + statsData.length * lineHeight + 20, '新纪录！', {
+      createUIText(this, centerX, dataY + statsData.length * lineHeight + 20, '新纪录！', {
           fontSize: '24px',
           color: '#ffb347',
           fontStyle: 'bold',
@@ -80,8 +77,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   private createButton(x: number, y: number, text: string, callback: () => void): void {
-    const btn = this.add
-      .text(x, y, text, {
+    const btn = createUIText(this, x, y, text, {
         fontSize: '22px',
         color: '#e0e0e0',
         backgroundColor: '#1a1a25',

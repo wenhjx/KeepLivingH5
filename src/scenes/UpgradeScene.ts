@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -30,8 +31,7 @@ export class UpgradeScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0);
 
     // 标题
-    this.add
-      .text(width / 2, 70, 'LEVEL UP!', {
+    createUIText(this, width / 2, 70, 'LEVEL UP!', {
         fontSize: '42px',
         color: '#ffb347',
         fontStyle: 'bold',
@@ -41,8 +41,7 @@ export class UpgradeScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // 提示文字
-    this.add
-      .text(width / 2, 115, '选择一项升级', {
+    createUIText(this, width / 2, 115, '选择一项升级', {
         fontSize: '16px',
         color: '#aaaaaa',
       })

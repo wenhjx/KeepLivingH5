@@ -8,6 +8,7 @@ import { InputManager } from '../systems/InputManager';
 import { CollisionSystem } from '../systems/CollisionSystem';
 import { AudioManager } from '../systems/AudioManager';
 import { GuideManager } from '../systems/GuideManager';
+import { DamageTextManager } from '../ui/DamageTextManager';
 import { EventBus } from '../utils/EventBus';
 import type { EnemyConfig, PickupConfig } from '../types';
 
@@ -23,6 +24,7 @@ export class GameScene extends Phaser.Scene {
   private inputManager!: InputManager;
   private collisionSystem!: CollisionSystem;
   private audioManager!: AudioManager;
+  private damageTextManager!: DamageTextManager;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -139,6 +141,9 @@ export class GameScene extends Phaser.Scene {
 
     // 碰撞系统
     this.collisionSystem = new CollisionSystem(this);
+
+    // 伤害数字
+    this.damageTextManager = new DamageTextManager(this);
 
     // 音频管理
     this.audioManager = AudioManager.getInstance();
@@ -381,6 +386,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ========== 公共接口（供其他系统调用） ==========
+
+  /** 弹出浮动伤害数字（供碰撞系统调用） */
+  spawnDamageText(x: number, y: number, damage: number, isCrit: boolean = false): void {
+    this.damageTextManager?.show(x, y, damage, isCrit);
+  }
 
   getPlayer(): Player {
     return this.player;

@@ -1,3 +1,4 @@
+import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -43,8 +44,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x0a0a0f).setOrigin(0);
 
     // 标题
-    this.add
-      .text(centerX, height * 0.25, 'KEEP LIVING', {
+    createUIText(this, centerX, height * 0.25, 'KEEP LIVING', {
         fontSize: '56px',
         fontFamily: 'Arial',
         color: '#ff6b35',
@@ -55,8 +55,7 @@ export class MainMenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // 副标题
-    this.add
-      .text(centerX, height * 0.25 + 50, '2D 割草生存', {
+    createUIText(this, centerX, height * 0.25 + 50, '2D 割草生存', {
         fontSize: '20px',
         color: '#888888',
       })
@@ -72,16 +71,14 @@ export class MainMenuScene extends Phaser.Scene {
 
     // 底部信息
     const stats = gm.stats;
-    this.add
-      .text(centerX, height - 60, `最高分: ${stats.highScore}  |  总击杀: ${stats.totalKills}  |  游戏次数: ${stats.gamesPlayed}`, {
+    createUIText(this, centerX, height - 60, `最高分: ${stats.highScore}  |  总击杀: ${stats.totalKills}  |  游戏次数: ${stats.gamesPlayed}`, {
         fontSize: '14px',
         color: '#555555',
       })
       .setOrigin(0.5);
 
     // 版本号
-    this.add
-      .text(width - 10, height - 10, 'v0.1.0', {
+    createUIText(this, width - 10, height - 10, 'v0.1.0', {
         fontSize: '12px',
         color: '#333333',
       })
@@ -89,8 +86,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     // 设备标识
     if (gm.isMobile) {
-      this.add
-        .text(10, height - 10, `移动端 · ${gm.qualityLevel}`, {
+      createUIText(this, 10, height - 10, `移动端 · ${gm.qualityLevel}`, {
           fontSize: '12px',
           color: '#333333',
         })
@@ -102,8 +98,7 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private createMenuButton(x: number, y: number, text: string, callback: () => void): void {
-    const btn = this.add
-      .text(x, y, text, {
+    const btn = createUIText(this, x, y, text, {
         fontSize: '24px',
         color: '#e0e0e0',
         backgroundColor: '#1a1a25',
@@ -173,8 +168,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     // 标题
     this.settingsOverlay.add(
-      this.add
-        .text(cx, cy - panelH / 2 + 38, '设 置', { fontSize: '28px', color: '#00ffff', fontStyle: 'bold' })
+      createUIText(this, cx, cy - panelH / 2 + 38, '设 置', { fontSize: '28px', color: '#00ffff', fontStyle: 'bold' })
         .setOrigin(0.5)
     );
 
@@ -182,9 +176,8 @@ export class MainMenuScene extends Phaser.Scene {
 
     // ---------- 音乐音量 ----------
     const musicY = cy - panelH / 2 + 96;
-    this.settingsOverlay.add(this.add.text(cx - 170, musicY, '音乐音量', labelStyle).setOrigin(0, 0.5));
-    this.musicVolText = this.add
-      .text(cx - 20, musicY, `${this.musicVolume}%`, { fontSize: '16px', color: '#ffffff', fontStyle: 'bold' })
+    this.settingsOverlay.add(createUIText(this, cx - 170, musicY, '音乐音量', labelStyle).setOrigin(0, 0.5));
+    this.musicVolText = createUIText(this, cx - 20, musicY, `${this.musicVolume}%`, { fontSize: '16px', color: '#ffffff', fontStyle: 'bold' })
       .setOrigin(0.5);
     this.settingsOverlay.add(this.musicVolText);
     this.settingsOverlay.add(this.createSmallButton(cx + 40, musicY, '−', () => this.adjustMusic(-10)));
@@ -192,9 +185,8 @@ export class MainMenuScene extends Phaser.Scene {
 
     // ---------- 音效音量 ----------
     const sfxY = cy - panelH / 2 + 146;
-    this.settingsOverlay.add(this.add.text(cx - 170, sfxY, '音效音量', labelStyle).setOrigin(0, 0.5));
-    this.sfxVolText = this.add
-      .text(cx - 20, sfxY, `${this.sfxVolume}%`, { fontSize: '16px', color: '#ffffff', fontStyle: 'bold' })
+    this.settingsOverlay.add(createUIText(this, cx - 170, sfxY, '音效音量', labelStyle).setOrigin(0, 0.5));
+    this.sfxVolText = createUIText(this, cx - 20, sfxY, `${this.sfxVolume}%`, { fontSize: '16px', color: '#ffffff', fontStyle: 'bold' })
       .setOrigin(0.5);
     this.settingsOverlay.add(this.sfxVolText);
     this.settingsOverlay.add(this.createSmallButton(cx + 40, sfxY, '−', () => this.adjustSfx(-10)));
@@ -202,7 +194,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     // ---------- 画质 ----------
     const qualityY = cy - panelH / 2 + 196;
-    this.settingsOverlay.add(this.add.text(cx - 170, qualityY, '画质', labelStyle).setOrigin(0, 0.5));
+    this.settingsOverlay.add(createUIText(this, cx - 170, qualityY, '画质', labelStyle).setOrigin(0, 0.5));
     const qLabels: QualityLevel[] = ['low', 'medium', 'high'];
     const qNames: Record<QualityLevel, string> = { low: '低', medium: '中', high: '高' };
     qLabels.forEach((lvl, i) => {
@@ -213,17 +205,15 @@ export class MainMenuScene extends Phaser.Scene {
 
     // ---------- 静音 ----------
     const muteY = cy - panelH / 2 + 246;
-    this.settingsOverlay.add(this.add.text(cx - 170, muteY, '静音', labelStyle).setOrigin(0, 0.5));
-    this.muteText = this.add
-      .text(cx, muteY, this.muted ? '开' : '关', { fontSize: '16px', color: this.muted ? '#ff6b35' : '#ffffff', fontStyle: 'bold' })
+    this.settingsOverlay.add(createUIText(this, cx - 170, muteY, '静音', labelStyle).setOrigin(0, 0.5));
+    this.muteText = createUIText(this, cx, muteY, this.muted ? '开' : '关', { fontSize: '16px', color: this.muted ? '#ff6b35' : '#ffffff', fontStyle: 'bold' })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     this.muteText.on('pointerdown', () => this.toggleMute());
     this.settingsOverlay.add(this.muteText);
 
     // ---------- 关闭 ----------
-    const closeBtn = this.add
-      .text(cx, cy + panelH / 2 - 30, '关闭', {
+    const closeBtn = createUIText(this, cx, cy + panelH / 2 - 30, '关闭', {
         fontSize: '18px',
         color: '#e0e0e0',
         backgroundColor: '#1a1a25',
@@ -242,8 +232,7 @@ export class MainMenuScene extends Phaser.Scene {
 
   /** 创建小型文本按钮 */
   private createSmallButton(x: number, y: number, label: string, callback: () => void): Phaser.GameObjects.Text {
-    const btn = this.add
-      .text(x, y, label, {
+    const btn = createUIText(this, x, y, label, {
         fontSize: '16px',
         color: '#e0e0e0',
         backgroundColor: '#252530',

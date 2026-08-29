@@ -50,13 +50,20 @@ export class CollisionSystem {
     if (!bullet.hitEnemy(enemy)) return;
 
     const damage = bullet.getDamage();
-    const isCrit = Math.random() < 0.05; // 基础暴击率
-    const finalDamage = isCrit ? damage * 1.5 : damage;
+    // 暴击判定读取玩家属性（暴击精通/致命一击升级生效），而非硬编码
+    const gameScene = this.scene as any;
+    const playerStats = gameScene?.getPlayer?.()?.getStats?.();
+    const critRate = playerStats?.critRate ?? 0.05;
+    const critDamage = playerStats?.critDamage ?? 1.5;
+    const isCrit = Math.random() < critRate;
+    const finalDamage = isCrit ? damage * critDamage : damage;
 
     enemy.takeDamage(finalDamage, isCrit);
 
+    // 浮动伤害数字（暴击金色大字，普通白色）
+    gameScene?.spawnDamageText?.(bullet.x, bullet.y, finalDamage, isCrit);
+
     // 命中粒子
-    const gameScene = this.scene as any;
     gameScene.getObjectPool()?.spawnParticle(bullet.x, bullet.y, 0xffff00, 3);
 
     // 击杀统计
