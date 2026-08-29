@@ -250,6 +250,21 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       );
     }
 
+    // 金币掉落（按敌人类型配置掉率与数量）
+    const coinDrop = this.getCoinDrop();
+    if (coinDrop && MathUtils.chance(coinDrop.chance)) {
+      scene?.spawnPickup?.(
+        {
+          type: 'coin',
+          texture: 'pickup_coin',
+          value: MathUtils.randomInt(coinDrop.min, coinDrop.max),
+          magnetSpeed: 300,
+        },
+        this.x - 20,
+        this.y
+      );
+    }
+
     // 死亡粒子
     // TODO: 粒子特效
 
@@ -281,6 +296,26 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   getScoreReward(): number {
     return this.config?.scoreReward || 10;
+  }
+
+  /** 金币掉落配置（chance 0-1，min/max 金币数）；不掉的类型返回 null */
+  private getCoinDrop(): { chance: number; min: number; max: number } | null {
+    switch (this.config?.type) {
+      case 'normal':
+        return { chance: 0.2, min: 1, max: 3 };
+      case 'fast':
+        return { chance: 0.2, min: 1, max: 2 };
+      case 'tank':
+        return { chance: 0.4, min: 3, max: 5 };
+      case 'ranged':
+        return { chance: 0.25, min: 2, max: 3 };
+      case 'elite':
+        return { chance: 1, min: 10, max: 20 };
+      case 'boss':
+        return { chance: 1, min: 50, max: 100 };
+      default:
+        return { chance: 0.2, min: 1, max: 3 };
+    }
   }
 
   isBoss(): boolean {

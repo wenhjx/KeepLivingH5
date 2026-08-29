@@ -31,6 +31,7 @@ export interface PlayerStats extends EntityStats {
   critDamage: number;
   pickupRadius: number;
   luck: number;
+  coins: number;
 }
 
 export type EnemyType = 'normal' | 'fast' | 'tank' | 'ranged' | 'elite' | 'boss';

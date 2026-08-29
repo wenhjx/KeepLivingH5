@@ -206,8 +206,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
  * （数据仍保留在 UPGRADE_OPTIONS 中，调试面板可继续测试；只是不出现在游戏内升级选择里）
  */
 export const UPGRADE_POOL_EXCLUDED: string[] = [
-  // 金币加成：金币系统尚未实装（无掉落、无消费），避免玩家浪费升级位
-  'passive_gold_boost',
+  // 预留：暂无不实装项。金币加成已随商店系统实装回归升级池。
 ];
 
 /** 根据稀有度筛选 */

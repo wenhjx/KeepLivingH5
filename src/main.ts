@@ -7,6 +7,7 @@ import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
 import { GameOverScene } from './scenes/GameOverScene';
 import { UpgradeScene } from './scenes/UpgradeScene';
+import { ShopScene } from './scenes/ShopScene';
 import { GameManager } from './game/GameManager';
 
 // 隐藏加载界面
@@ -75,7 +76,7 @@ const config: Phaser.Types.Core.GameConfig = {
   input: {
     activePointers: 3,
   },
-  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene],
+  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene, ShopScene],
   callbacks: {
     postBoot: () => {
       hideLoading();

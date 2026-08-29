@@ -21,6 +21,7 @@ export class HUD {
   private waveText!: Phaser.GameObjects.Text;
   private killsText!: Phaser.GameObjects.Text;
   private scoreText!: Phaser.GameObjects.Text;
+  private coinText!: Phaser.GameObjects.Text;
   private timeText!: Phaser.GameObjects.Text;
 
   // Boss 血条（唯一 Boss 出现时显示）
@@ -132,6 +133,14 @@ export class HUD {
       })
       .setOrigin(1, 0);
 
+    // 金币
+    this.coinText = createUIText(this.scene, rightX, infoTop + 68, '💰 0', {
+        fontSize: '14px',
+        color: '#ffcc00',
+        fontStyle: 'bold',
+      })
+      .setOrigin(1, 0);
+
     // ========== 顶部中间：存活时间 ==========
     this.timeText = createUIText(this.scene, width / 2, topY, '00:00', {
         fontSize: '20px',
@@ -201,6 +210,7 @@ export class HUD {
         this.updateHealthBar(player.getHealth(), player.getMaxHealth());
         this.updateExpBar(player.getExp(), player.getExpToNext());
         this.levelText.setText(`Lv.${player.getLevel()}`);
+        this.coinText.setText(`💰 ${player.getCoins?.() ?? 0}`);
         this.updateBuffs(player);
       }
       // 唯一 Boss 顶部大血条
@@ -394,6 +404,7 @@ export class HUD {
     this.waveText.setVisible(visible);
     this.killsText.setVisible(visible);
     this.scoreText.setVisible(visible);
+    this.coinText.setVisible(visible);
     this.timeText.setVisible(visible);
     this.bossContainer?.setVisible(visible && this.bossContainer.visible);
     this.buffContainer?.setVisible(visible);

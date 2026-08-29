@@ -83,7 +83,7 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
         player.heal(this.config.value);
         break;
       case 'coin':
-        // TODO: 金币系统
+        player.addCoins(this.config.value);
         break;
       case 'item':
         // TODO: 道具系统

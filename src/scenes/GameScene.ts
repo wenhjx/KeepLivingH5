@@ -29,6 +29,8 @@ export class GameScene extends Phaser.Scene {
   private activeBoss: Enemy | null = null;
   private pendingLevelUps = 0;
   private upgradeQueued = false;
+  // Boss 战后待弹出的商店（与升级选择排队，避免同时弹出冲突）
+  private pendingShop = false;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -255,6 +257,12 @@ export class GameScene extends Phaser.Scene {
     // 玩家死亡
     EventBus.on('player:death', () => this.onPlayerDeath());
 
+    // 复活币生效：清空周围敌人 + 震屏反馈，避免复活瞬间被围死
+    EventBus.on('player:revive', () => {
+      this.handleExplosion(this.player.x, this.player.y, 9999, 400);
+      this.cameras.main.shake(200, 0.006);
+    });
+
     // 玩家升级：跨多级时排队逐个弹出三选一（避免一次性升级丢失选择机会）
     EventBus.on('player:levelup', (level: number) => {
       this.audioManager.playSfx('sfx_levelup');
@@ -262,12 +270,14 @@ export class GameScene extends Phaser.Scene {
       this.showNextUpgrade();
     });
 
-    // 一次升级选择完成，继续弹出剩余待选升级
+    // 一次升级选择完成，继续弹出剩余待选升级；全部选完后若 Boss 战后商店待开则弹出
     EventBus.on('upgrade:chosen', () => {
       this.upgradeQueued = false;
       this.pendingLevelUps = Math.max(0, this.pendingLevelUps - 1);
       if (this.pendingLevelUps > 0) {
         this.time.delayedCall(250, () => this.showNextUpgrade());
+      } else {
+        this.time.delayedCall(300, () => this.tryOpenShop());
       }
     });
 
@@ -281,7 +291,12 @@ export class GameScene extends Phaser.Scene {
       if (enemy?.isBoss?.()) this.activeBoss = enemy;
     });
     EventBus.on('enemy:death', (config: EnemyConfig) => {
-      if (config?.type === 'boss') this.activeBoss = null;
+      if (config?.type === 'boss') {
+        this.activeBoss = null;
+        // 唯一 Boss 死亡 → 弹出神秘商店（Boss 大额金币即时可花）
+        this.pendingShop = true;
+        this.tryOpenShop();
+      }
     });
 
     // 暂停/恢复：同步暂停物理引擎和补间动画
@@ -358,6 +373,7 @@ export class GameScene extends Phaser.Scene {
   private onPlayerDeath(): void {
     const gm = GameManager.getInstance();
     gm.endRun();
+    this.pendingShop = false;
 
     // 延迟切换到结算场景
     this.time.delayedCall(1500, () => {
@@ -420,6 +436,22 @@ export class GameScene extends Phaser.Scene {
     this.scene.launch('UpgradeScene');
   }
 
+  /**
+   * 弹出神秘商店（若 Boss 战后待开且当前无升级/商店在显示中）
+   * 保证与升级三选一排队，不冲突
+   */
+  private tryOpenShop(): void {
+    if (!this.pendingShop) return;
+    if (this.pendingLevelUps > 0 || this.upgradeQueued) return;
+    if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene')) return;
+    const gm = GameManager.getInstance();
+    if (gm.isGameOver) return;
+
+    this.pendingShop = false;
+    gm.setPaused(true);
+    this.scene.launch('ShopScene');
+  }
+
   /** 弹出浮动伤害数字（供碰撞系统调用） */
   spawnDamageText(x: number, y: number, damage: number, isCrit: boolean = false): void {
     this.damageTextManager?.show(x, y, damage, isCrit);
@@ -463,6 +495,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   spawnPickup(config: PickupConfig, x: number, y: number): void {
+    // 金币受幸运值影响（掉落量提升，幸运 +10 → 金币 +10%）
+    if (config.type === 'coin' && this.player) {
+      const luck = this.player.getStats().luck || 0;
+      if (luck > 0) {
+        config = { ...config, value: Math.max(1, Math.round(config.value * (1 + luck / 100))) };
+      }
+    }
     this.objectPool.spawnPickup(config, x, y);
   }
 }

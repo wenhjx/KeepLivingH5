@@ -25,6 +25,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // 无敌状态
   private invincible = false;
   private invincibleTimer = 0;
+  // 护盾（无敌 + 圆环视觉）
+  private shieldActive = false;
+  private shieldRing: Phaser.GameObjects.Arc | null = null;
+  // 狂暴药水临时增益
+  private rageTimer = 0;
+  private rageActive = false;
+  // 复活币（商店购买，死亡时原地复活）
+  private reviveTokens = 0;
   // 朝向
   private facingAngle = 0;
   // 经验特效
@@ -48,6 +56,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       critDamage: GameConfig.PLAYER.baseCritDamage,
       pickupRadius: GameConfig.PLAYER.pickupRadius,
       luck: 0,
+      coins: 0,
     };
 
     scene.add.existing(this);
@@ -65,18 +74,40 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   update(time: number, delta: number, input: InputManager): void {
     if (this.active === false) return;
 
-    // 无敌时间
+    // 无敌时间（护盾期间不闪烁，保持可见）
     if (this.invincible) {
       this.invincibleTimer -= delta;
       if (this.invincibleTimer <= 0) {
         this.invincible = false;
         this.clearTint();
-      } else {
-        // 闪烁效果
+        // 护盾到期移除圆环
+        if (this.shieldActive) {
+          this.shieldActive = false;
+          this.shieldRing?.destroy();
+          this.shieldRing = null;
+        }
+      } else if (!this.shieldActive) {
+        // 非护盾的受击无敌才闪烁
         this.setAlpha(Math.sin(time / 50) > 0 ? 1 : 0.3);
       }
     } else {
       this.setAlpha(1);
+    }
+
+    // 护盾圆环跟随玩家
+    if (this.shieldActive && this.shieldRing) {
+      this.shieldRing.setPosition(this.x, this.y);
+    }
+
+    // 狂暴药水计时
+    if (this.rageActive) {
+      this.rageTimer -= delta;
+      if (this.rageTimer <= 0) {
+        this.rageActive = false;
+        // 恢复基础攻速/攻击力（与增益时乘的系数相反）
+        this.stats.attackSpeed /= 1.5;
+        this.stats.attackPower /= 1.5;
+      }
     }
 
     // 移动
@@ -365,9 +396,78 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private die(): void {
+    // 复活币：死亡时原地复活一次（满血 + 短暂无敌 + 清空周围敌人）
+    if (this.reviveTokens > 0) {
+      this.reviveTokens--;
+      this.stats.health = this.stats.maxHealth;
+      this.invincible = true;
+      this.invincibleTimer = 2000;
+      this.setActive(true);
+      this.setVisible(true);
+      this.setAlpha(1);
+      EventBus.emit('player:revive');
+      return;
+    }
+
     this.setActive(false);
     this.setVisible(false);
+    this.shieldRing?.destroy();
+    this.shieldRing = null;
     EventBus.emit('player:death');
+  }
+
+  // ========== 金币 ==========
+
+  /** 获得金币（受「金币加成」被动影响） */
+  addCoins(amount: number): void {
+    const goldBoostLevel = this.getPassiveLevel('passive_gold_boost');
+    if (goldBoostLevel > 0) {
+      amount *= 1 + 0.5 + goldBoostLevel * 0.1;
+    }
+    this.stats.coins += Math.floor(amount);
+    EventBus.emit('player:coins', this.stats.coins);
+  }
+
+  getCoins(): number {
+    return this.stats.coins;
+  }
+
+  /** 消费金币（不足返回 false） */
+  spendCoins(amount: number): boolean {
+    if (this.stats.coins < amount) return false;
+    this.stats.coins -= amount;
+    EventBus.emit('player:coins', this.stats.coins);
+    return true;
+  }
+
+  // ========== 商店消耗品 ==========
+
+  /** 复活币 */
+  addReviveToken(): void {
+    this.reviveTokens++;
+  }
+  getReviveTokens(): number {
+    return this.reviveTokens;
+  }
+
+  /** 护盾：一段时间无敌 + 圆环视觉 */
+  applyShield(duration: number): void {
+    this.shieldActive = true;
+    this.invincible = true;
+    this.invincibleTimer = duration;
+    this.setAlpha(1);
+    if (this.shieldRing) this.shieldRing.destroy();
+    this.shieldRing = this.scene.add.circle(this.x, this.y, 26, 0x33ccff, 0.25);
+    this.shieldRing.setStrokeStyle(2, 0x66ddff, 0.9);
+    this.shieldRing.setDepth(11);
+  }
+
+  /** 狂暴药水：短时间攻速/攻击力 +50% */
+  applyRage(duration: number): void {
+    this.stats.attackSpeed *= 1.5;
+    this.stats.attackPower *= 1.5;
+    this.rageActive = true;
+    this.rageTimer = duration;
   }
 
   // ========== 经验与升级 ==========
@@ -587,6 +687,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   isWeaponMaxLevel(weaponId: string): boolean {
     const w = this.weapons.get(weaponId);
     return w ? w.level >= w.config.maxLevel : false;
+  }
+
+  /** 某被动是否已满级（未拥有返回 false，表示可购买） */
+  isPassiveMaxLevel(passiveId: string): boolean {
+    const p = this.passives.get(passiveId);
+    return p ? p.level >= p.maxLevel : false;
   }
 
   getExp(): number {
