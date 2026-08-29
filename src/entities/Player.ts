@@ -487,6 +487,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.drones.forEach((drone, i) => {
       drone.upgrade(droneWeapon.level, this.drones.length);
     });
+
+    // 新增无人机后重新均匀排布环绕角度（旧角度不重排会导致轨道不均、分布杂乱）
+    this.drones.forEach((drone, i) => {
+      drone.reposition(i, this.drones.length);
+    });
   }
 
   /** 更新所有无人机（由外部 update 调用） */

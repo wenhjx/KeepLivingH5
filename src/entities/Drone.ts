@@ -149,6 +149,11 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
     this.shootInterval = Math.max(600, 1000 - level * 50);
   }
 
+  /** 重新均匀排布环绕角度（新增无人机时由 Player 统一调用，保证轨道分布均匀美观） */
+  reposition(index: number, total: number): void {
+    this.orbitAngle = (index / total) * Math.PI * 2;
+  }
+
   /** 销毁无人机 */
   destroy(): void {
     super.destroy();
