@@ -160,9 +160,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 获取武器视觉参数
     const visual = this.getWeaponVisual(config.id);
 
-    // 发射子弹
-    const count = config.projectileCount || 1;
-    const spread = count > 1 ? (config.spread || 0.3) : 0;
+    // 发射子弹（霰弹等可随等级增加弹丸数）
+    const baseCount = config.projectileCount || 1;
+    const count = baseCount + (config.extraProjectilesPerLevel || 0) * (level - 1);
+    // 保持基础弹数的总扇面宽度，升级加弹只让弹更密集（不扩散到身后）
+    const totalArc = baseCount > 1 ? (config.spread || 0.3) * (baseCount - 1) : 0;
+    const spread = count > 1 ? totalArc / (count - 1) : 0;
     for (let i = 0; i < count; i++) {
       const bulletAngle = angle + (i - (count - 1) / 2) * spread;
       pool.spawnBullet(
@@ -264,6 +267,32 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // 近战挥砍视觉效果
     this.createMeleeSlash(angle, range);
+
+    // 剑气：光剑额外释放远程穿透波，具备远程输出能力
+    this.fireBladeWave(config, level, angle, damage);
+  }
+
+  /** 光剑剑气：远程穿透弹波 */
+  private fireBladeWave(config: WeaponConfig, level: number, angle: number, meleeDamage: number): void {
+    if (config.id !== 'lightsaber') return;
+    const scene = this.scene as any;
+    if (!scene || !scene.getObjectPool) return;
+    const pool = scene.getObjectPool();
+    pool.spawnBullet(
+      this.x + Math.cos(angle) * 30,
+      this.y + Math.sin(angle) * 30,
+      angle,
+      420,
+      meleeDamage * 0.7,
+      config.range + 200,
+      config.texture || 'bullet',
+      {
+        pierce: true,
+        color: 0x00ffff,
+        scaleX: 2.0,
+        scaleY: 0.45,
+      }
+    );
   }
 
   /** 近战挥砍视觉效果 */

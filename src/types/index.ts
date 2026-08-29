@@ -72,6 +72,7 @@ export interface WeaponConfig {
   explosive?: boolean;    // 命中后爆炸范围伤害
   boomerang?: boolean;    // 飞出后返回
   spread?: number;        // 散射角度（弧度），默认 0.3
+  extraProjectilesPerLevel?: number; // 每升一级额外增加的弹丸数（如霰弹枪）
 }
 
 export type UpgradeType = 'weapon' | 'passive' | 'stat';

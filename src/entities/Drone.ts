@@ -18,6 +18,8 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
   private damageCooldown: number = 0; // 伤害冷却（毫秒）
   private damageInterval: number = 400; // 每次伤害间隔
   private hitRadius: number = 24; // 接触伤害半径
+  private shootCooldown: number = 0; // 自动射击冷却（毫秒）
+  private shootInterval: number = 1000; // 自动射击间隔（毫秒）
 
   constructor(scene: Phaser.Scene, player: Player, config: WeaponConfig, level: number, index: number, total: number) {
     super(scene, player.x, player.y, 'bullet');
@@ -61,6 +63,59 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
       this.dealContactDamage();
       this.damageCooldown = this.damageInterval;
     }
+
+    // 自动射击：朝最近敌人发射弹道，提供远程救急火力
+    this.shootCooldown -= delta;
+    if (this.shootCooldown <= 0) {
+      this.shootCooldown = this.shootInterval;
+      this.autoShoot();
+    }
+  }
+
+  /** 自动索敌射击：朝最近敌人发射弹道 */
+  private autoShoot(): void {
+    const scene = this.scene as any;
+    if (!scene || !scene.getObjectPool || !scene.getEnemies) return;
+
+    const target = this.findNearestEnemy();
+    if (!target) return;
+
+    const angle = MathUtils.angle(this.x, this.y, target.x, target.y);
+    const damage = this.config.damage * (1 + this.level * 0.2) * this.player.getStats().attackPower / 10;
+
+    scene.getObjectPool().spawnBullet(
+      this.x,
+      this.y,
+      angle,
+      460,
+      damage,
+      340,
+      this.config.texture || 'bullet',
+      {
+        color: 0x66ffff,
+        scaleX: 0.65,
+        scaleY: 0.65,
+      }
+    );
+  }
+
+  /** 查找最近敌人 */
+  private findNearestEnemy(): any {
+    const scene = this.scene as any;
+    if (!scene || !scene.getEnemies) return null;
+    const enemies = scene.getEnemies();
+    let nearest: any = null;
+    let minDist = Infinity;
+    enemies.children.each((enemy: any) => {
+      if (!enemy.active) return true;
+      const d = Phaser.Math.Distance.Between(this.x, this.y, enemy.x, enemy.y);
+      if (d < minDist) {
+        minDist = d;
+        nearest = enemy;
+      }
+      return true;
+    });
+    return nearest;
   }
 
   /** 接触伤害：对范围内敌人造成伤害 */
@@ -88,9 +143,10 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
   /** 更新无人机等级（武器升级时调用） */
   upgrade(level: number, total: number): void {
     this.level = level;
-    // 升级时略微增加环绕速度和伤害半径
+    // 升级时略微增加环绕速度、伤害半径和射击频率
     this.orbitSpeed = 3.5 + level * 0.3;
     this.hitRadius = 24 + level * 2;
+    this.shootInterval = Math.max(600, 1000 - level * 50);
   }
 
   /** 销毁无人机 */

@@ -90,6 +90,15 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
 
   // ========== 武器升级 ==========
   {
+    id: 'weapon_default_gun',
+    name: '基础射击',
+    type: 'weapon',
+    description: '强化基础射击，伤害提升且可穿透敌人',
+    icon: '🔫',
+    rarity: 'common',
+    effect: { weaponId: 'default_gun', weaponLevel: 1 },
+  },
+  {
     id: 'weapon_shotgun',
     name: '霰弹枪',
     type: 'weapon',
@@ -142,6 +151,15 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     icon: '🔆',
     rarity: 'legendary',
     effect: { weaponId: 'laser', weaponLevel: 1 },
+  },
+  {
+    id: 'weapon_lightsaber',
+    name: '光剑',
+    type: 'weapon',
+    description: '获得光剑，近战范围攻击并释放穿透剑气',
+    icon: '🗡️',
+    rarity: 'epic',
+    effect: { weaponId: 'lightsaber', weaponLevel: 1 },
   },
 
   // ========== 被动技能 ==========
