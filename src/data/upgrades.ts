@@ -201,6 +201,15 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
   },
 ];
 
+/**
+ * 从升级三选一候选池中排除的选项 id
+ * （数据仍保留在 UPGRADE_OPTIONS 中，调试面板可继续测试；只是不出现在游戏内升级选择里）
+ */
+export const UPGRADE_POOL_EXCLUDED: string[] = [
+  // 金币加成：金币系统尚未实装（无掉落、无消费），避免玩家浪费升级位
+  'passive_gold_boost',
+];
+
 /** 根据稀有度筛选 */
 export const getUpgradesByRarity = (rarity: string): UpgradeOption[] =>
   UPGRADE_OPTIONS.filter((u) => u.rarity === rarity);

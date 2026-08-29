@@ -4,7 +4,7 @@ import { GameConfig } from '../game/GameConfig';
 import { UpgradePanel } from '../ui/UpgradePanel';
 import { GuideManager } from '../systems/GuideManager';
 import { WEAPONS } from '../data/weapons';
-import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
 import type { UpgradeOption } from '../types';
 import type { Player } from '../entities/Player';
@@ -63,6 +63,8 @@ export class UpgradeScene extends Phaser.Scene {
     if (!player) return UPGRADE_OPTIONS;
 
     return UPGRADE_OPTIONS.filter((option) => {
+      // 从升级候选池中排除的选项（如未实装系统的金币加成）
+      if (UPGRADE_POOL_EXCLUDED.includes(option.id)) return false;
       // 非武器选项始终可用
       if (option.type !== 'weapon' || !option.effect.weaponId) return true;
       // 武器选项：已满级则过滤掉
