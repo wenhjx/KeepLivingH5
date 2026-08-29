@@ -16,6 +16,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private isDead: boolean = false;
   private hitFlashTimer: number = 0;
   private difficultyMultiplier: number = 1;
+  private avoidSide: number = 1; // 障碍物避让方向：+1 右，-1 左（每个敌人固定，避免扎堆）
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0, 'enemy_normal');
@@ -34,6 +35,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.attackCooldown = 0;
     this.isDead = false;
     this.hitFlashTimer = 0;
+    this.avoidSide = Math.random() > 0.5 ? 1 : -1;
 
     this.setTexture(config.texture || 'enemy_normal');
     // 先启用物理体并 reset 到正确位置
@@ -112,7 +114,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private normalAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
     const speed = this.config.moveSpeed * this.difficultyMultiplier;
-    this.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+    const v = this.avoidObstacles(angle, speed);
+    this.setVelocity(v.vx, v.vy);
 
     // 接触攻击
     if (dist < this.config.attackRange && this.attackCooldown <= 0) {
@@ -127,7 +130,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const wobble = Math.sin(this.scene.time.now / 200 + this.x * 0.01) * 0.5;
     const angle = baseAngle + wobble;
     const speed = this.config.moveSpeed * this.difficultyMultiplier;
-    this.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+    const v = this.avoidObstacles(angle, speed);
+    this.setVelocity(v.vx, v.vy);
 
     if (dist < this.config.attackRange && this.attackCooldown <= 0) {
       this.attackPlayer(player);
@@ -140,16 +144,23 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const speed = this.config.moveSpeed * this.difficultyMultiplier;
     const preferredDist = 250;
 
+    let moveAngle = angle;
+    let moveSpeed = speed;
+
     if (dist > preferredDist + 50) {
       // 靠近
-      this.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+      moveAngle = angle;
     } else if (dist < preferredDist - 50) {
       // 远离
-      this.setVelocity(-Math.cos(angle) * speed, -Math.sin(angle) * speed);
+      moveAngle = angle + Math.PI;
     } else {
       // 横向移动
-      this.setVelocity(-Math.sin(angle) * speed * 0.5, Math.cos(angle) * speed * 0.5);
+      moveAngle = angle + Math.PI / 2;
+      moveSpeed = speed * 0.5;
     }
+
+    const v = this.avoidObstacles(moveAngle, moveSpeed);
+    this.setVelocity(v.vx, v.vy);
 
     // 远程攻击
     if (dist < this.config.attackRange && this.attackCooldown <= 0) {
@@ -161,9 +172,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private bossAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
     const speed = this.config.moveSpeed * this.difficultyMultiplier;
-
-    // Boss 缓慢追击
-    this.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+    const v = this.avoidObstacles(angle, speed);
+    this.setVelocity(v.vx, v.vy);
 
     // 接触伤害
     if (dist < this.config.attackRange && this.attackCooldown <= 0) {
@@ -174,6 +184,42 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (Math.floor(this.scene.time.now / 3000) !== Math.floor((this.scene.time.now - delta) / 3000)) {
       this.bossBarrage();
     }
+  }
+
+  /**
+   * 障碍物避让：探测前方是否有障碍物，被挡则侧向绕行
+   * 每个敌人有固定的 avoidSide，避免全部往同一边蹭
+   */
+  private avoidObstacles(targetAngle: number, speed: number): { vx: number; vy: number } {
+    const gs = this.scene as any;
+    const tm = gs?.getTerrainManager?.();
+    if (!tm) return { vx: Math.cos(targetAngle) * speed, vy: Math.sin(targetAngle) * speed };
+
+    const obstacles = tm.getObstacles();
+    const lookAhead = 55; // 前方探测距离
+    const fx = this.x + Math.cos(targetAngle) * lookAhead;
+    const fy = this.y + Math.sin(targetAngle) * lookAhead;
+
+    let blocked = false;
+    for (const obs of obstacles) {
+      if (
+        fx > obs.x - obs.width / 2 && fx < obs.x + obs.width / 2 &&
+        fy > obs.y - obs.height / 2 && fy < obs.y + obs.height / 2
+      ) {
+        blocked = true;
+        break;
+      }
+    }
+
+    if (!blocked) {
+      return { vx: Math.cos(targetAngle) * speed, vy: Math.sin(targetAngle) * speed };
+    }
+
+    // 被阻挡：侧向避让（约72度），混合目标方向30% + 避让方向70%
+    const avoidAngle = targetAngle + this.avoidSide * (Math.PI / 2.5);
+    const vx = Math.cos(targetAngle) * speed * 0.3 + Math.cos(avoidAngle) * speed * 0.7;
+    const vy = Math.sin(targetAngle) * speed * 0.3 + Math.sin(avoidAngle) * speed * 0.7;
+    return { vx, vy };
   }
 
   private bossBarrage(): void {
