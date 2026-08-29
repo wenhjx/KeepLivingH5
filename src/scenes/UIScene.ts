@@ -48,10 +48,10 @@ export class UIScene extends Phaser.Scene {
     // 调试面板（按 ` 键切换）
     this.debugPanel = new DebugPanel(this);
 
-    // 小地图（右下角，数据驱动：以后新增区域/更大地图自动适配）
+    // 小地图（左上角，数据驱动：以后新增区域/更大地图自动适配）
     const gameScene = this.scene.get('GameScene') as any;
     const mapSize = gameScene?.getMapSize?.() || { width: 3000, height: 3000 };
-    this.minimap = new Minimap(this, 800, 520, 140, 100, mapSize.width, mapSize.height);
+    this.minimap = new Minimap(this, 10, 10, 160, 120, mapSize.width, mapSize.height);
 
     // 移动端显示虚拟摇杆
     if (gm.isMobile) {

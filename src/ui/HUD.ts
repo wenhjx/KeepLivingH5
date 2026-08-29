@@ -24,6 +24,12 @@ export class HUD {
   private coinText!: Phaser.GameObjects.Text;
   private timeText!: Phaser.GameObjects.Text;
 
+  // 底部玩家状态条坐标（create 时计算，update 时复用）
+  private barLeftX = 0;
+  private barTopY = 0;
+  private barCenterY = 0;
+  private expBarY = 0;
+
   // Boss 血条（唯一 Boss 出现时显示）
   private bossContainer!: Phaser.GameObjects.Container;
   private bossNameText!: Phaser.GameObjects.Text;
@@ -57,8 +63,8 @@ export class HUD {
   };
 
   // 尺寸常量
-  private readonly barWidth = 220;
-  private readonly barHeight = 16;
+  private readonly barWidth = 380;
+  private readonly barHeight = 22;
   private readonly padding = 16;
   private readonly buffSize = 32;
   private readonly buffSpacing = 6;
@@ -71,44 +77,61 @@ export class HUD {
   }
 
   private create(): void {
-    const { width } = this.scene.scale;
+    const { width, height } = this.scene.scale;
+    const topY = this.padding; // 顶部基准线（右上角信息、Boss 血条用）
 
-    // ========== 左上角：血量和经验 ==========
-    const leftX = this.padding;
-    const topY = this.padding;
+    // ========== 底部中心：血量和经验（大气版） ==========
+    const centerX = width / 2;
+    const bottomY = height - 40; // 血条中心 y
+    const barLeft = centerX - this.barWidth / 2;
+    const barTop = bottomY - this.barHeight / 2;
+
+    // 缓存坐标供 update 方法使用
+    this.barLeftX = barLeft;
+    this.barTopY = barTop;
+    this.barCenterY = bottomY;
+    this.expBarY = bottomY + this.barHeight / 2 + 6;
 
     // 血量条背景
     this.healthBarBg = this.scene.add.graphics();
-    this.healthBarBg.fillStyle(0x1a1a25, 1);
-    this.healthBarBg.fillRoundedRect(leftX, topY, this.barWidth, this.barHeight, 4);
+    this.healthBarBg.fillStyle(0x1a1a25, 0.9);
+    this.healthBarBg.fillRoundedRect(barLeft, barTop, this.barWidth, this.barHeight, 6);
+    this.healthBarBg.lineStyle(2, 0x44ff44, 0.4);
+    this.healthBarBg.strokeRoundedRect(barLeft, barTop, this.barWidth, this.barHeight, 6);
 
     // 血量条
     this.healthBar = this.scene.add.graphics();
 
     // 血量文字
-    this.healthText = createUIText(this.scene, leftX + this.barWidth / 2, topY + this.barHeight / 2, '100/100', {
-        fontSize: '12px',
+    this.healthText = createUIText(this.scene, centerX, bottomY, '100/100', {
+        fontSize: '14px',
         color: '#ffffff',
         fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 3,
       })
       .setOrigin(0.5);
 
     // 经验条背景
-    const expY = topY + this.barHeight + 6;
+    const expY = bottomY + this.barHeight / 2 + 6;
     this.expBarBg = this.scene.add.graphics();
-    this.expBarBg.fillStyle(0x1a1a25, 1);
-    this.expBarBg.fillRoundedRect(leftX, expY, this.barWidth, 8, 4);
+    this.expBarBg.fillStyle(0x1a1a25, 0.9);
+    this.expBarBg.fillRoundedRect(barLeft, expY, this.barWidth, 8, 4);
+    this.expBarBg.lineStyle(1, 0x4488ff, 0.4);
+    this.expBarBg.strokeRoundedRect(barLeft, expY, this.barWidth, 8, 4);
 
     // 经验条
     this.expBar = this.scene.add.graphics();
 
-    // 等级文字
-    this.levelText = createUIText(this.scene, leftX + this.barWidth + 8, expY + 4, 'Lv.1', {
-        fontSize: '14px',
+    // 等级文字（血条左侧，放大）
+    this.levelText = createUIText(this.scene, barLeft - 12, bottomY, 'Lv.1', {
+        fontSize: '20px',
         color: '#ffb347',
         fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 4,
       })
-      .setOrigin(0, 0.5);
+      .setOrigin(1, 0.5);
 
     // ========== 右上角：波次、击杀、分数（暂停按钮下方，避免重叠） ==========
     const rightX = width - this.padding;
@@ -265,7 +288,7 @@ export class HUD {
     this.buffIcons.forEach((icon) => icon.destroy());
     this.buffIcons.clear();
 
-    const startY = this.padding + this.barHeight + 6 + 8 + 20; // 经验条下方
+    const startY = 148; // 小地图（160x120，位于 10,10）下方
 
     buffs.forEach((b, index: number) => {
       const x = index * (this.buffSize + this.buffSpacing);
@@ -373,7 +396,7 @@ export class HUD {
     else if (percent < 0.6) color = 0xffaa00;
 
     this.healthBar.fillStyle(color, 1);
-    this.healthBar.fillRoundedRect(this.padding + 2, this.padding + 2, (this.barWidth - 4) * percent, this.barHeight - 4, 3);
+    this.healthBar.fillRoundedRect(this.barLeftX + 3, this.barTopY + 3, (this.barWidth - 6) * percent, this.barHeight - 6, 4);
 
     this.healthText.setText(`${Math.ceil(current)}/${max}`);
   }
@@ -382,8 +405,7 @@ export class HUD {
     const percent = Math.max(0, Math.min(1, current / max));
     this.expBar.clear();
     this.expBar.fillStyle(0x4488ff, 1);
-    const expY = this.padding + this.barHeight + 6;
-    this.expBar.fillRoundedRect(this.padding + 2, expY + 2, (this.barWidth - 4) * percent, 4, 2);
+    this.expBar.fillRoundedRect(this.barLeftX + 3, this.expBarY + 2, (this.barWidth - 6) * percent, 4, 2);
   }
 
   private formatTime(ms: number): string {
