@@ -54,6 +54,14 @@
 - UpgradePanel 也改用 GameConfig.GAME_WIDTH/HEIGHT（不再依赖 scene.scale）
 - 例外：GameScene 相机跟随玩家（动态 scroll，不需补偿）；UIScene 采用反向缩放根容器方案（独立实现）
 
+**H. Boss 强度指数增长（2026-08-29）**
+- 问题：第10波 Boss 才 2350 血（线性增长 1+0.15/wave），玩家 build 乘法叠加后完全碾压，"Boss 不够打"
+- 修复：Boss 按层级指数增长——`bossTier = floor(wave/5)`，`difficultyMultiplier = 2.2^(tier-1)`
+- Boss 基础属性提升：血量 1000→2000，攻击 30→40
+- 血量曲线：第5波 2000 / 第10波 4400 / 第15波 9680 / 第20波 21296（每5波×2.2）
+- 修复 Boss 弹幕攻击未乘 difficultyMultiplier 的 bug
+- 普通敌人仍用线性增长（1+0.1/wave）
+
 ### ② 敌人多样化（机制挑战）
   - 新敌人：自爆怪（近身爆炸）、分裂怪（死后分裂）、盾牌怪（正面减伤）
   - 精英词缀：狂暴 / 护盾 / 分裂

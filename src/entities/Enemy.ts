@@ -183,7 +183,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 8方向弹幕
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2;
-      pool.spawnEnemyBullet(this.x, this.y, angle, 200, this.config.attackPower * 0.5);
+      pool.spawnEnemyBullet(this.x, this.y, angle, 200, this.config.attackPower * 0.5 * this.difficultyMultiplier);
     }
   }
 

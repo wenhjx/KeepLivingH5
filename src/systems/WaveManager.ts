@@ -160,12 +160,13 @@ export class WaveManager {
     if (!player) return;
 
     const spawnPos = this.getSpawnPosition(player.x, player.y);
-    const difficultyMultiplier = 1 + (this.currentWave - 1) * 0.15;
+    // Boss 按层级指数增长：第5波=tier1(×1.0), 第10波=tier2(×2.2), 第15波=tier3(×4.84)...
+    // 玩家 build 是乘法叠加，线性增长的 Boss 会被碾压，故用指数曲线
+    const bossTier = Math.max(1, Math.floor(this.currentWave / GameConfig.WAVE.bossWaveInterval));
+    const difficultyMultiplier = Math.pow(2.2, bossTier - 1);
 
     this.objectPool.spawnEnemy(config, spawnPos.x, spawnPos.y, difficultyMultiplier);
     this.bossActive = true;
-
-    // TODO: Boss 出现提示
   }
 
   /** 进入下一波 */
