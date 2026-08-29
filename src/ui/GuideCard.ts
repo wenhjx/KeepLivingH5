@@ -46,7 +46,10 @@ export class GuideCard {
     this.config = config;
     this.onClose = onClose;
 
+    // 高清渲染下 UIScene 有反向缩放根容器（uiRoot），卡片需加入其中保持视觉比例
+    const parent = (scene as any).uiRoot || scene;
     this.container = scene.add.container(0, 0).setDepth(500).setAlpha(0);
+    parent.add(this.container);
     this.bg = scene.add.graphics();
     this.container.add(this.bg);
 

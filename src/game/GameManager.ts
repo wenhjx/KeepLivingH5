@@ -1,7 +1,9 @@
 import { GameConfig, QualityLevel } from './GameConfig';
 import { EventBus } from '../utils/EventBus';
 import { SaveSystem } from '../systems/SaveSystem';
-import type { GameSaveData } from '../types';
+import { AudioManager } from '../systems/AudioManager';
+import type { GameSaveData, SavedRun } from '../types';
+import type { Player } from '../entities/Player';
 
 /**
  * 游戏全局管理器（单例）
@@ -27,6 +29,7 @@ export class GameManager {
     isGameOver: false,
   };
   private _saveSystem: SaveSystem | null = null;
+  private _pendingRun: SavedRun | null = null;
   private _initialized = false;
 
   private constructor() {}
@@ -94,6 +97,8 @@ export class GameManager {
       isPaused: false,
       isGameOver: false,
     };
+    this._pendingRun = null;
+    this.clearSavedRun();
     EventBus.emit('run:start', this._runData);
   }
 
@@ -105,6 +110,8 @@ export class GameManager {
     if (this._runData.score > this._stats.highScore) {
       this._stats.highScore = this._runData.score;
     }
+    // 对局结束，清除可继续的存档
+    this.clearSavedRun();
     this.saveProgress();
     EventBus.emit('run:end', { ...this._runData, highScore: this._stats.highScore });
   }
@@ -129,24 +136,119 @@ export class GameManager {
     EventBus.emit('run:pause', paused);
   }
 
+  /** 手动设置画质等级（设置面板调用） */
+  setQualityLevel(level: QualityLevel): void {
+    this._qualityLevel = level;
+    this.saveProgress();
+    EventBus.emit('quality:changed', level);
+  }
+
+  // ========== 进行中对局存档（继续游戏） ==========
+
+  /** 是否有可继续的对局 */
+  hasSavedRun(): boolean {
+    return !!this.getSavedRun();
+  }
+
+  /** 获取可继续的对局存档 */
+  getSavedRun(): SavedRun | null {
+    return this._saveSystem?.load()?.run ?? null;
+  }
+
+  /** 从存档恢复对局（设置 runData 与待恢复数据） */
+  restoreRun(): void {
+    const run = this.getSavedRun();
+    if (!run) return;
+    this._pendingRun = run;
+    this._runData = {
+      wave: run.wave,
+      kills: run.kills,
+      score: run.score,
+      survivalTime: run.survivalTime,
+      isPaused: false,
+      isGameOver: false,
+    };
+    EventBus.emit('run:start', this._runData);
+  }
+
+  /** 获取待恢复的对局数据 */
+  get pendingRun(): SavedRun | null {
+    return this._pendingRun;
+  }
+
+  /** 保存当前对局进度（供"继续游戏"恢复） */
+  saveRun(player: Player): void {
+    if (!this._saveSystem || !player) return;
+    const data = this._saveSystem.load() || this.buildSaveData();
+    data.run = {
+      wave: this._runData.wave,
+      score: this._runData.score,
+      kills: this._runData.kills,
+      survivalTime: this._runData.survivalTime,
+      player: {
+        stats: player.getStats(),
+        weapons: player.getWeapons().map((w) => ({ id: w.id, level: w.level })),
+        passives: player.getPassives().map((p) => ({ id: p.id, name: p.name, level: p.level })),
+      },
+    };
+    this._saveSystem.save(data);
+  }
+
+  /** 清除进行中对局存档 */
+  clearSavedRun(): void {
+    this._pendingRun = null;
+    if (!this._saveSystem) return;
+    const data = this._saveSystem.load();
+    if (data && data.run) {
+      data.run = undefined;
+      this._saveSystem.save(data);
+    }
+  }
+
+  /** 构造一份基础存档数据（无对局进度） */
+  private buildSaveData(): GameSaveData {
+    const audio = AudioManager.getInstance();
+    return {
+      version: 1,
+      timestamp: Date.now(),
+      stats: { ...this._stats },
+      settings: {
+        quality: this._qualityLevel,
+        soundVolume: audio.getSfxVolume(),
+        musicVolume: audio.getMusicVolume(),
+        muted: audio.isMuted(),
+      },
+    };
+  }
+
   private loadProgress(): void {
     if (!this._saveSystem) return;
     const data = this._saveSystem.load();
     if (data) {
       this._stats = { ...this._stats, ...data.stats };
+      // 恢复设置（画质、音量、静音）
+      if (data.settings) {
+        this._qualityLevel = data.settings.quality || 'medium';
+        const audio = AudioManager.getInstance();
+        audio.setSfxVolume(data.settings.soundVolume ?? 1);
+        audio.setMusicVolume(data.settings.musicVolume ?? 0.7);
+        audio.setMuted(data.settings.muted ?? false);
+      }
     }
   }
 
   saveProgress(): void {
     if (!this._saveSystem) return;
+    const audio = AudioManager.getInstance();
     const data: GameSaveData = {
       version: 1,
       timestamp: Date.now(),
       stats: { ...this._stats },
       settings: {
         quality: this._qualityLevel,
-        soundVolume: 1,
-        musicVolume: 0.7,
+        soundVolume: audio.getSfxVolume(),
+        musicVolume: audio.getMusicVolume(),
+        muted: audio.isMuted(),
       },
     };
     this._saveSystem.save(data);

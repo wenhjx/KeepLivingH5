@@ -222,13 +222,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.isDead = true;
     const scene = this.scene as any;
 
-    // 掉落经验
+    // 掉落经验（随波次难度成长，避免后期"需求指数涨、获取固定"导致升级断崖）
     if (scene && scene.spawnPickup) {
       scene.spawnPickup(
         {
           type: 'exp',
           texture: 'pickup_exp',
-          value: this.config.expReward,
+          value: Math.max(1, Math.floor(this.config.expReward * this.difficultyMultiplier)),
           magnetSpeed: 300,
         },
         this.x,

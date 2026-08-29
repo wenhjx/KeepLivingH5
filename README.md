@@ -15,46 +15,42 @@
 Keep Living H5/
 ├── public/                    # 静态资源
 │   └── assets/
-│       ├── images/            # 图片素材
-│       │   ├── characters/    # 角色
-│       │   ├── enemies/       # 怪物
-│       │   ├── weapons/       # 武器
-│       │   ├── effects/       # 特效
-│       │   ├── ui/            # UI
-│       │   └── tiles/         # 地图瓦片
-│       ├── audio/             # 音频
-│       └── data/              # JSON 配置数据
+│       └── data/              # 配置数据（仅作参考，实际数据源在 src/data）
 ├── src/
 │   ├── main.ts                # 游戏入口
 │   ├── game/                  # 游戏核心
-│   │   ├── GameConfig.ts      # 全局配置
-│   │   └── GameManager.ts     # 全局管理器(单例)
+│   │   ├── GameConfig.ts      # 全局配置（画质分级/对象池/波次等）
+│   │   └── GameManager.ts     # 全局管理器(单例，含对局存档)
 │   ├── scenes/                # 场景
 │   │   ├── BootScene.ts       # 启动场景
-│   │   ├── PreloadScene.ts    # 预加载场景
-│   │   ├── MainMenuScene.ts   # 主菜单
+│   │   ├── PreloadScene.ts    # 预加载场景（程序化生成纹理）
+│   │   ├── MainMenuScene.ts   # 主菜单（含设置面板）
 │   │   ├── GameScene.ts       # 游戏主场景
 │   │   ├── UIScene.ts         # UI叠加场景
-│   │   └── GameOverScene.ts   # 结算场景
+│   │   ├── GameOverScene.ts   # 结算场景
+│   │   └── UpgradeScene.ts    # 升级选择场景
 │   ├── entities/              # 实体
 │   │   ├── Player.ts          # 玩家
 │   │   ├── Enemy.ts           # 敌人(含AI)
 │   │   ├── Bullet.ts          # 子弹
-│   │   ├── Pickup.ts          # 拾取物
-│   │   └── Weapon.ts          # 武器系统
+│   │   ├── Drone.ts           # 无人机（召唤武器）
+│   │   └── Pickup.ts          # 拾取物
 │   ├── systems/               # 系统
 │   │   ├── InputManager.ts    # 输入管理(PC+触屏)
 │   │   ├── ObjectPool.ts      # 对象池
 │   │   ├── WaveManager.ts     # 波次管理
 │   │   ├── CollisionSystem.ts # 碰撞系统
 │   │   ├── SaveSystem.ts      # 存档系统
-│   │   └── AudioManager.ts    # 音频管理
+│   │   ├── AudioManager.ts    # 音频管理
+│   │   └── GuideManager.ts    # 新手引导队列
 │   ├── ui/                    # UI组件
 │   │   ├── HUD.ts             # 抬头显示
 │   │   ├── VirtualJoystick.ts # 虚拟摇杆
 │   │   ├── HealthBar.ts       # 血条
-│   │   └── UpgradePanel.ts    # 升级面板
-│   ├── data/                  # 数据配置
+│   │   ├── UpgradePanel.ts    # 升级面板
+│   │   ├── DebugPanel.ts      # 调试面板（反引号切换）
+│   │   └── GuideCard.ts       # 引导提示卡片
+│   ├── data/                  # 数据配置（实际数据源）
 │   │   ├── weapons.ts         # 武器配置
 │   │   ├── enemies.ts         # 敌人配置
 │   │   ├── waves.ts           # 波次配置
@@ -62,7 +58,8 @@ Keep Living H5/
 │   ├── utils/                 # 工具类
 │   │   ├── EventBus.ts        # 事件总线
 │   │   ├── MathUtils.ts       # 数学工具
-│   │   └── Logger.ts          # 日志
+│   │   ├── Logger.ts          # 日志
+│   │   └── TextureGenerator.ts# 程序化纹理生成（霓虹主题）
 │   └── types/                 # 类型定义
 │       └── index.ts
 ├── index.html
@@ -107,14 +104,17 @@ npm run preview
 ### 多端适配
 - **PC端**: WASD/方向键移动，鼠标瞄准
 - **移动端**: 虚拟摇杆触屏操作，自适应UI
-- **画质分级**: 自动检测设备性能，低/中/高三档画质
+- **画质分级**: 自动检测设备性能，低/中/高三档，可在设置面板手动调整
+- **玩家朝向**: 角色箭头实时指向移动方向
 
 ### 游戏系统
 - **割草核心**: 大量同屏怪物，对象池优化性能
 - **武器系统**: 多种武器类型（远程/近战/AOE/召唤）
 - **升级系统**: Roguelike 升级选择，每级随机3选项
 - **波次系统**: 递增难度，每5波Boss
-- **存档系统**: 本地存档 + 云端同步预留接口
+- **存档系统**: 本地存档 + 设置持久化（音量/画质/静音）
+- **继续游戏**: 自动保存进行中对局，可从中途继续
+- **设置面板**: 主菜单可调节音乐/音效音量、画质等级、静音开关
 
 ### 性能优化
 - **对象池**: 敌人/子弹/拾取物/粒子全部池化
@@ -128,6 +128,7 @@ npm run preview
 - `鼠标`: 瞄准（自动攻击最近敌人）
 - `ESC`: 暂停
 - `空格`: 攻击（备用）
+- `` ` ``: 切换调试面板
 
 ### 移动端
 - 左侧虚拟摇杆: 移动
@@ -137,8 +138,8 @@ npm run preview
 
 ### 添加新武器
 1. 在 `src/data/weapons.ts` 中添加武器配置
-2. 在 `src/entities/Weapon.ts` 的 `loadDefaultWeapons` 中注册
-3. 在 `src/data/upgrades.ts` 中添加对应的升级选项
+2. 在 `src/data/upgrades.ts` 中添加对应的升级选项
+3. （可选）在 `src/entities/Player.ts` 的 `getWeaponVisual` 中配置子弹视觉
 
 ### 添加新敌人
 1. 在 `src/data/enemies.ts` 中添加敌人配置
@@ -151,12 +152,8 @@ npm run preview
 
 ## 素材说明
 
-当前项目为框架代码，素材目录为空占位。实际开发时需要：
-1. 将图片素材放入 `public/assets/images/` 对应子目录
-2. 将音频素材放入 `public/assets/audio/`
-3. 在 `src/scenes/PreloadScene.ts` 中确认资源 key 与文件名对应
-
-缺失素材不会导致游戏崩溃，会在控制台输出警告。
+本项目的**全部游戏纹理均由代码程序化生成**（`src/utils/TextureGenerator.ts`，霓虹深渊主题），无需外部图片素材。
+游戏配置数据（武器/敌人/波次/升级）位于 `src/data/*.ts`，音频素材可放入 `public/assets/audio/`（可选，缺失不影响运行）。
 
 ## 后续扩展建议
 
@@ -166,9 +163,8 @@ npm run preview
 - [ ] 成就系统
 - [ ] 每日挑战模式
 - [ ] 排行榜
-- [ ] 音效和背景音乐
 - [ ] 粒子特效优化
-- [ ] 新手教程
+- [ ] 新手教程完善
 
 ## License
 

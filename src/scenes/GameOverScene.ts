@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 游戏结束场景
@@ -11,6 +12,8 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 渲染分辨率倍率补偿（保持视觉比例，配合高分屏清晰渲染）
+    this.cameras.main.setZoom(GameConfig.renderScale);
     const gm = GameManager.getInstance();
     const runData = gm.runData;
     const stats = gm.stats;

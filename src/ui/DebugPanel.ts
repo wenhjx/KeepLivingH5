@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
+import type { UpgradeOption } from '../types';
 import type { Player } from '../entities/Player';
 
 /**
@@ -41,9 +42,11 @@ export class DebugPanel {
     contentHeight += 20 + measure(2) + this.sectionSpacing;
     // 属性调整：2行
     contentHeight += 20 + measure(2) + this.sectionSpacing;
-    // 武器：4行（8个武器 / 2列）
-    contentHeight += 20 + measure(4) + this.sectionSpacing;
-    // 被动：2行（4个 / 2列）
+    // 属性升级：9个 / 2列 = 5行
+    contentHeight += 20 + measure(5) + this.sectionSpacing;
+    // 武器：6个 / 2列 = 3行
+    contentHeight += 20 + measure(3) + this.sectionSpacing;
+    // 被动：4个 / 2列 = 2行
     contentHeight += 20 + measure(2);
     contentHeight += this.padding;
 
@@ -90,39 +93,48 @@ export class DebugPanel {
 
     curY += this.sectionSpacing;
 
-    // ===== 武器列表 =====
-    curY = this.addSectionTitle(col1X, curY, '🔫 武器（点击添加/升级）');
-    const weaponList = Object.values(WEAPONS);
-    weaponList.forEach((weapon, i) => {
-      const colX = i % 2 === 0 ? col1X : col2X;
-      if (i % 2 === 0) {
-        curY = this.addButton(colX, curY, weapon.name, () => {
-          this.getPlayer()?.addWeapon(weapon as any);
-        });
-      } else {
-        this.addButton(colX, curY - (this.btnHeight + this.btnSpacing), weapon.name, () => {
-          this.getPlayer()?.addWeapon(weapon as any);
-        });
-      }
-    });
+    // ===== 属性升级（与游戏中 UPGRADE_OPTIONS.stat 对齐） =====
+    curY = this.addSectionTitle(col1X, curY, '📈 属性升级（点击应用）');
+    curY = this.renderOptions(
+      UPGRADE_OPTIONS.filter((o) => o.type === 'stat'),
+      col1X, col2X, curY
+    );
 
     curY += this.sectionSpacing;
 
-    // ===== 被动列表 =====
-    curY = this.addSectionTitle(col1X, curY, '✨ 被动技能（点击添加/升级）');
-    const passiveList = UPGRADE_OPTIONS.filter((o) => o.type === 'passive');
-    passiveList.forEach((passive, i) => {
+    // ===== 武器（与游戏中 UPGRADE_OPTIONS.weapon 对齐） =====
+    curY = this.addSectionTitle(col1X, curY, '🔫 武器（点击获取/升级）');
+    curY = this.renderOptions(
+      UPGRADE_OPTIONS.filter((o) => o.type === 'weapon'),
+      col1X, col2X, curY
+    );
+
+    curY += this.sectionSpacing;
+
+    // ===== 被动（与游戏中 UPGRADE_OPTIONS.passive 对齐） =====
+    curY = this.addSectionTitle(col1X, curY, '✨ 被动技能（点击获取/升级）');
+    curY = this.renderOptions(
+      UPGRADE_OPTIONS.filter((o) => o.type === 'passive'),
+      col1X, col2X, curY
+    );
+  }
+
+  /** 渲染一组升级选项按钮（两列布局），点击时应用与游戏一致的升级逻辑 */
+  private renderOptions(list: UpgradeOption[], col1X: number, col2X: number, curY: number): number {
+    list.forEach((option, i) => {
       const colX = i % 2 === 0 ? col1X : col2X;
+      const label = `${option.icon || "✨"} ${option.name}`;
+      const click = () => {
+        const player = this.getPlayer();
+        if (player) applyUpgradeToPlayer(player, option);
+      };
       if (i % 2 === 0) {
-        curY = this.addButton(colX, curY, `${passive.icon} ${passive.name}`, () => {
-          this.getPlayer()?.addPassive(passive.id, passive.name, 5);
-        });
+        curY = this.addButton(colX, curY, label, click);
       } else {
-        this.addButton(colX, curY - (this.btnHeight + this.btnSpacing), `${passive.icon} ${passive.name}`, () => {
-          this.getPlayer()?.addPassive(passive.id, passive.name, 5);
-        });
+        this.addButton(colX, curY - (this.btnHeight + this.btnSpacing), label, click);
       }
     });
+    return curY;
   }
 
   /** 添加分区标题 */

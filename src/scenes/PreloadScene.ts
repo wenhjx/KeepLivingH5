@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
+import { GameConfig } from '../game/GameConfig';
 import { TextureGenerator } from '../utils/TextureGenerator';
 
 /**
@@ -17,24 +18,20 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 渲染分辨率倍率补偿（保持视觉比例，配合高分屏清晰渲染）
+    this.cameras.main.setZoom(GameConfig.renderScale);
     this.createLoadingUI();
 
     // 第一步：用程序生成所有游戏纹理（霓虹深渊主题）
     const generator = new TextureGenerator(this);
     generator.generateAll();
 
-    // 第二步：加载 JSON 配置数据
-    this.load.json('weapons_data', 'assets/data/weapons.json');
-    this.load.json('enemies_data', 'assets/data/enemies.json');
-    this.load.json('waves_data', 'assets/data/waves.json');
-    this.load.json('upgrades_data', 'assets/data/upgrades.json');
+    // 说明：游戏配置（武器/敌人/波次/升级）实际由 src/data/*.ts 提供，
+    // 因此无需加载 public/assets/data 下的占位 JSON，避免无效网络请求
 
-    // 音频资源（可选，缺失不影响运行）
-    this.load.audio('sfx_hit', 'assets/audio/hit.mp3');
-    this.load.audio('sfx_death', 'assets/audio/death.mp3');
-    this.load.audio('sfx_levelup', 'assets/audio/levelup.mp3');
-    this.load.audio('sfx_pickup', 'assets/audio/pickup.mp3');
-    this.load.audio('bgm_main', 'assets/audio/bgm_main.mp3');
+    // 音频资源（可选）：当前仓库没有音频素材，故不加载。
+    // 若日后放置音频到 public/assets/audio/，请在此处恢复加载，例如：
+    // this.load.audio('sfx_hit', 'assets/audio/hit.mp3');
 
     this.setupLoadEvents();
     this.load.start();

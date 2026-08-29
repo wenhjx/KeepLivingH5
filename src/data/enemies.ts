@@ -50,7 +50,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   ranged: {
     type: 'ranged',
     name: '远程僵尸',
-    texture: 'enemy_normal',
+    texture: 'enemy_ranged',
     maxHealth: 25,
     moveSpeed: 50,
     attackPower: 10,

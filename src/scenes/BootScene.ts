@@ -13,13 +13,8 @@ export class BootScene extends Phaser.Scene {
   init(): void {
     const gm = GameManager.getInstance();
 
-    // 根据画质等级调整渲染参数
-    const quality = gm.qualitySettings;
-
-    // 设置像素比（移动端降低分辨率提升性能）
-    if (gm.isMobile && quality.resolutionScale < 1) {
-      this.scale.setZoom(1 / quality.resolutionScale);
-    }
+    // 注：渲染分辨率倍率已由 main.ts 统一配置（GameConfig.renderScale），
+    // 并在各场景 create 中通过 camera.setZoom 补偿视觉比例，无需在此处理
 
     // 禁用右键菜单（防止游戏中弹出）
     this.input.mouse?.disableContextMenu();

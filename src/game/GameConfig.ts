@@ -8,6 +8,8 @@ export class GameConfig {
   static readonly GAME_WIDTH = 960;
   /** 逻辑分辨率高度（设计基准） */
   static readonly GAME_HEIGHT = 640;
+  /** 当前渲染分辨率倍率（main.ts 启动时计算；渲染分辨率 = 逻辑分辨率 × 倍率） */
+  static renderScale = 1;
   /** 背景色 */
   static readonly BG_COLOR = '#0a0a0f';
   /** 是否像素风模式 */
@@ -28,9 +30,14 @@ export class GameConfig {
   };
 
   // ========== 经验与升级 ==========
+  // 升级需求曲线：expToNext = floor(baseExp × level^expGrowth)
+  // 采用温和的超线性(1.25)而非陡峭指数(1.5)，避免后期升级断崖：
+  //   前期(1-5级)升级快速有爽感，中期平稳，后期(20级+)每级所需经验缓慢拉长但不至于卡死。
+  // 参考同类割草肉鸽：Brotato 用二次多项式 (level+3)²，吸血鬼幸存者用线性增量+成长属性，
+  // 社区共识是指数 1.5 会过早导致"升不动"（如 deep-yellow issue#45 即因此调低）。
   static readonly LEVEL = {
     baseExp: 20,
-    expGrowth: 1.5,
+    expGrowth: 1.25,
     maxLevel: 100,
   };
 
@@ -56,11 +63,13 @@ export class GameConfig {
   };
 
   // ========== 性能分级（多端适配） ==========
+  // 注：resolutionScale 表示"渲染分辨率倍率上限"（低1.25/中1.5/高2）。
+  // 画布内部渲染分辨率 = 逻辑分辨率(960x640) × 渲染倍率，配合 camera zoom 补偿视觉比例
   static readonly QUALITY = {
     low: {
       maxEnemies: 60,
       particleScale: 0.4,
-      resolutionScale: 0.75,
+      resolutionScale: 1.25,
       targetFPS: 30,
       enableShadows: false,
       enablePostFX: false,
@@ -68,7 +77,7 @@ export class GameConfig {
     medium: {
       maxEnemies: 120,
       particleScale: 0.7,
-      resolutionScale: 1.0,
+      resolutionScale: 1.5,
       targetFPS: 60,
       enableShadows: true,
       enablePostFX: false,
@@ -76,7 +85,7 @@ export class GameConfig {
     high: {
       maxEnemies: 200,
       particleScale: 1.0,
-      resolutionScale: 1.0,
+      resolutionScale: 2,
       targetFPS: 60,
       enableShadows: true,
       enablePostFX: true,

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
+import { GameConfig } from '../game/GameConfig';
 import { HUD } from '../ui/HUD';
 import { VirtualJoystick } from '../ui/VirtualJoystick';
 import { DebugPanel } from '../ui/DebugPanel';
@@ -17,12 +18,22 @@ export class UIScene extends Phaser.Scene {
   private debugPanel!: DebugPanel;
   private pauseButton!: Phaser.GameObjects.Text;
   private pauseOverlay!: Phaser.GameObjects.Container;
+  private uiRoot!: Phaser.GameObjects.Container;
 
   constructor() {
     super('UIScene');
   }
 
   create(): void {
+    const z = GameConfig.renderScale;
+    // 高清渲染：camera zoom 提高渲染像素密度。
+    // UI 元素多为角落/绝对坐标定位，直接 zoom 会围绕画布中心外扩错位，
+    // 故创建"反向缩放根容器"（位置 = 中心×(1-1/z)、scale = 1/z）抵消 zoom，
+    // 使 UI 的视觉位置与尺寸保持逻辑基准下的效果。
+    this.cameras.main.setZoom(z);
+    this.uiRoot = this.add
+      .container((this.scale.width / 2) * (1 - 1 / z), (this.scale.height / 2) * (1 - 1 / z))
+      .setScale(1 / z);
     const gm = GameManager.getInstance();
 
     // 绑定引导提示管理器到 UI 场景
@@ -68,6 +79,11 @@ export class UIScene extends Phaser.Scene {
 
     // 事件监听
     this.setupEventListeners();
+
+    // 将场景已创建的全部 UI 对象移入反向缩放根容器（保持视觉位置/比例不变）
+    this.children.list.slice().forEach((child) => {
+      if (child !== this.uiRoot) this.uiRoot.add(child);
+    });
   }
 
   private createPauseOverlay(): void {

@@ -100,27 +100,4 @@ export class CollisionSystem {
     }
   }
 
-  /**
-   * 敌人之间的碰撞分离（避免完全重叠）
-   * 使用简单的分离力，性能优先
-   */
-  enemyEnemyCollision(enemy1Obj: any, enemy2Obj: any): void {
-    const enemy1 = enemy1Obj as Enemy;
-    const enemy2 = enemy2Obj as Enemy;
-
-    if (!enemy1.active || !enemy2.active) return;
-
-    // 计算分离方向
-    const dx = enemy2.x - enemy1.x;
-    const dy = enemy2.y - enemy1.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    if (dist < 1 && dist > 0) {
-      const pushForce = 20;
-      const nx = dx / dist;
-      const ny = dy / dist;
-      enemy1.setVelocity(enemy1.body!.velocity.x - nx * pushForce, enemy1.body!.velocity.y - ny * pushForce);
-      enemy2.setVelocity(enemy2.body!.velocity.x + nx * pushForce, enemy2.body!.velocity.y + ny * pushForce);
-    }
-  }
 }

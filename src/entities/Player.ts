@@ -3,6 +3,7 @@ import { GameConfig } from '../game/GameConfig';
 import { EventBus } from '../utils/EventBus';
 import { MathUtils } from '../utils/MathUtils';
 import { Drone } from './Drone';
+import { WEAPONS } from '../data/weapons';
 import type { PlayerStats, WeaponConfig } from '../types';
 import type { InputManager } from '../systems/InputManager';
 
@@ -57,20 +58,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCircle(16);
     this.setDepth(10);
 
-    // 初始武器（默认武器）
-    this.addWeapon({
-      id: 'default_gun',
-      name: '基础射击',
-      type: 'ranged',
-      texture: 'bullet',
-      damage: 10,
-      attackSpeed: 2,
-      range: 400,
-      projectileSpeed: 500,
-      projectileCount: 1,
-      description: '基础远程攻击',
-      maxLevel: 8,
-    });
+    // 初始武器（默认武器，配置来自统一数据源 src/data/weapons.ts）
+    this.addWeapon(WEAPONS['default_gun']);
   }
 
   update(time: number, delta: number, input: InputManager): void {
@@ -94,9 +83,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const moveDir = input.getMoveDirection();
     this.setVelocity(moveDir.x * this.stats.moveSpeed, moveDir.y * this.stats.moveSpeed);
 
-    // 更新朝向（朝最近敌人或移动方向）
+    // 更新朝向（朝移动方向），并旋转箭头指向移动方向
     if (moveDir.x !== 0 || moveDir.y !== 0) {
       this.facingAngle = Math.atan2(moveDir.y, moveDir.x);
+      // 玩家纹理箭头朝上（即 -90°），加上 PI/2 让尖端指向实际移动方向
+      this.setRotation(this.facingAngle + Math.PI / 2);
     }
 
     // 武器攻击
@@ -370,9 +361,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   private levelUp(): void {
     this.stats.level++;
-    this.stats.expToNext = Math.floor(
-      GameConfig.LEVEL.baseExp * Math.pow(GameConfig.LEVEL.expGrowth, this.stats.level - 1)
-    );
+    this.stats.expToNext = this.calcExpToNext(this.stats.level);
 
     // 升级属性提升
     this.stats.maxHealth += 5;
@@ -380,6 +369,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.stats.attackPower += 2;
 
     EventBus.emit('player:levelup', this.stats.level);
+  }
+
+  /** 计算指定等级升级所需经验（与 GameConfig.LEVEL 曲线一致） */
+  private calcExpToNext(level: number): number {
+    return Math.floor(
+      GameConfig.LEVEL.baseExp * Math.pow(level, GameConfig.LEVEL.expGrowth)
+    );
   }
 
   // ========== 武器管理 ==========
@@ -410,6 +406,38 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.syncDrones();
     }
     return true;
+  }
+
+  /** 从存档恢复玩家状态（继续游戏时调用） */
+  applySavedState(saved: {
+    stats: PlayerStats;
+    weapons: Array<{ id: string; level: number }>;
+    passives: Array<{ id: string; name: string; level: number }>;
+  }): void {
+    if (saved.stats) {
+      this.stats = { ...this.stats, ...saved.stats };
+    }
+    // 旧存档可能存了旧版本曲线(指数1.5)的 expToNext，按当前曲线重新计算，避免"继续游戏"后升级卡住
+    this.stats.expToNext = this.calcExpToNext(this.stats.level);
+    // 重建武器
+    this.weapons.clear();
+    if (saved.weapons) {
+      for (const w of saved.weapons) {
+        const config = WEAPONS[w.id];
+        if (config) {
+          this.weapons.set(w.id, { config, level: w.level, cooldown: 0 });
+        }
+      }
+    }
+    // 重建被动
+    this.passives.clear();
+    if (saved.passives) {
+      for (const p of saved.passives) {
+        this.passives.set(p.id, { id: p.id, name: p.name, level: p.level, maxLevel: 5 });
+      }
+    }
+    // 同步无人机数量
+    this.syncDrones();
   }
 
   /** 同步无人机数量和等级（summon 武器升级时调用） */

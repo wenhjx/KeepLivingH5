@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
+import { GameConfig } from '../game/GameConfig';
 import { UpgradePanel } from '../ui/UpgradePanel';
 import { GuideManager } from '../systems/GuideManager';
 import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
 import type { UpgradeOption } from '../types';
 import type { Player } from '../entities/Player';
 
@@ -20,6 +22,8 @@ export class UpgradeScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 渲染分辨率倍率补偿（保持视觉比例，配合高分屏清晰渲染）
+    this.cameras.main.setZoom(GameConfig.renderScale);
     const { width, height } = this.scale;
 
     // 半透明背景
@@ -79,7 +83,7 @@ export class UpgradeScene extends Phaser.Scene {
       : false;
 
     if (player) {
-      this.applyUpgrade(player, option);
+      applyUpgradeToPlayer(player, option);
     }
 
     // 新武器解锁提示（已有武器升级不提示）
@@ -111,37 +115,5 @@ export class UpgradeScene extends Phaser.Scene {
     // 恢复游戏
     GameManager.getInstance().setPaused(false);
     this.scene.stop('UpgradeScene');
-  }
-
-  /**
-   * 应用升级效果
-   */
-  private applyUpgrade(player: Player, option: UpgradeOption): void {
-    const effect = option.effect;
-
-    // 属性升级
-    if (effect.stat && effect.value !== undefined) {
-      player.modifyStat(effect.stat, effect.value, effect.isPercent);
-    }
-
-    // 武器升级/获取
-    if (effect.weaponId) {
-      const weaponConfig = this.getWeaponConfig(effect.weaponId);
-      if (weaponConfig) {
-        player.addWeapon(weaponConfig);
-      }
-    }
-
-    // 被动技能
-    if (option.type === 'passive') {
-      player.addPassive(option.id, option.name, 5);
-    }
-  }
-
-  /**
-   * 获取武器配置
-   */
-  private getWeaponConfig(weaponId: string): any {
-    return WEAPONS[weaponId];
   }
 }

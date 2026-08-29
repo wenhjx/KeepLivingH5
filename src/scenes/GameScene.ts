@@ -36,6 +36,8 @@ export class GameScene extends Phaser.Scene {
 
   // 计时器
   private autoSaveTimer = 0;
+  // 是否为"继续游戏"恢复模式
+  private resumeMode = false;
 
   constructor() {
     super('GameScene');
@@ -43,7 +45,14 @@ export class GameScene extends Phaser.Scene {
 
   init(): void {
     const gm = GameManager.getInstance();
-    gm.startNewRun();
+    // 存在进行中对局存档时进入恢复模式，否则开始新对局
+    if (gm.hasSavedRun()) {
+      this.resumeMode = true;
+      gm.restoreRun();
+    } else {
+      this.resumeMode = false;
+      gm.startNewRun();
+    }
   }
 
   create(): void {
@@ -54,8 +63,9 @@ export class GameScene extends Phaser.Scene {
     this.setupCamera();
     this.setupEventListeners();
 
-    // 启动第一波
-    this.waveManager.startWave(1);
+    // 启动波次（继续游戏时恢复到存档波次，否则第 1 波）
+    const startWave = this.resumeMode ? (GameManager.getInstance().pendingRun?.wave ?? 1) : 1;
+    this.waveManager.startWave(startWave);
 
     // 延迟触发新手引导（等 UIScene 绑定 GuideManager 后）
     this.time.delayedCall(800, () => {
@@ -172,6 +182,14 @@ export class GameScene extends Phaser.Scene {
 
     // 将对象池与组关联
     this.objectPool.setGroups(this.enemies, this.bullets, this.pickups, this.particles);
+
+    // 继续游戏：恢复玩家状态（等级/武器/被动/属性）
+    if (this.resumeMode) {
+      const pending = GameManager.getInstance().pendingRun;
+      if (pending) {
+        this.player.applySavedState(pending.player);
+      }
+    }
   }
 
   private setupCollisions(): void {
@@ -202,6 +220,17 @@ export class GameScene extends Phaser.Scene {
       this
     );
 
+    // 敌人子弹与玩家碰撞（受伤）
+    // 注意：Phaser overlap(sprite, group) 的回调参数顺序为 (sprite, groupChild)，
+    // 因此这里 player 在前、bullet 在后，回调内再交换回 (bullet, player)
+    this.physics.add.overlap(
+      this.player,
+      this.bullets,
+      (player, bullet) => this.collisionSystem.enemyBulletPlayerCollision(bullet, player),
+      undefined,
+      this
+    );
+
     // 敌人之间的分离（避免重叠）
     this.physics.add.collider(this.enemies, this.enemies);
   }
@@ -210,7 +239,7 @@ export class GameScene extends Phaser.Scene {
     const camera = this.cameras.main;
     camera.startFollow(this.player, true, 0.1, 0.1);
     camera.setBounds(0, 0, this.mapWidth, this.mapHeight);
-    camera.setZoom(1);
+    camera.setZoom(GameConfig.renderScale);
   }
 
   private setupEventListeners(): void {
@@ -291,11 +320,13 @@ export class GameScene extends Phaser.Scene {
       return true;
     });
 
-    // 自动存档
+    // 自动存档（统计信息 + 进行中对局进度）
     this.autoSaveTimer += delta;
     if (this.autoSaveTimer >= GameConfig.SAVE.autoSaveInterval) {
       this.autoSaveTimer = 0;
-      GameManager.getInstance().saveProgress();
+      const gm = GameManager.getInstance();
+      gm.saveProgress();
+      gm.saveRun(this.player);
     }
   }
 

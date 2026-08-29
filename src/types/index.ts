@@ -129,6 +129,8 @@ export interface GameSaveData {
   stats: SaveStats;
   settings: SaveSettings;
   unlocked?: string[];
+  /** 进行中的对局存档（用于"继续游戏"） */
+  run?: SavedRun;
 }
 
 export interface SaveStats {
@@ -142,4 +144,19 @@ export interface SaveSettings {
   quality: 'low' | 'medium' | 'high';
   soundVolume: number;
   musicVolume: number;
+  muted: boolean;
+}
+
+// ========== 进行中对局存档 ==========
+
+export interface SavedRun {
+  wave: number;
+  score: number;
+  kills: number;
+  survivalTime: number;
+  player: {
+    stats: PlayerStats;
+    weapons: Array<{ id: string; level: number }>;
+    passives: Array<{ id: string; name: string; level: number }>;
+  };
 }
