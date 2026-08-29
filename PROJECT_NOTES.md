@@ -34,4 +34,19 @@
 - **集成**：`GameScene` 注入 `damageTextManager` + 公开 `spawnDamageText`，碰撞系统命中时调用
 - **验证**：基础射击弹出白色 12；强制 critRate=1.0/critDamage=3.0 后弹出金色 36!
 
+## ✨ Boss 顶部大血条（2026-08-29，已提交）
+
+- **需求**：小怪不要血条；唯一的地图级 Boss 显示屏幕上方的独立大血条
+- **实现**：
+  - `GameScene` 维护 `activeBoss` 引用：监听 `enemy:spawn`（`isBoss()` 时记录）/ `enemy:death`（`type==='boss'` 时清空），公开 `getActiveBoss()`
+  - `HUD` 新增顶部居中 Boss 血条（容器 depth 60）：BOSS 名称 + 420px 大血条（高血量橙红 → 低血量暗红渐变）+ 实时数值 `当前/最大`；无 Boss 时隐藏
+- **验证**：跳 5 波 spawnBoss → 血条 1600/1600 出现；扣 800 → 800/1600 实时下降；击杀 → 血条消失、升级正常弹出
+
+## 🐛 顺带修复：Enemy.despawn body 崩溃（Boss 死亡路径）
+
+- **现象**：手动/触发 Boss 死亡时 `despawn()` 内 `setVelocity(0,0)` 因 `body` 为 null 抛 TypeError（`Cannot read properties of undefined`）
+- **修复**：`Enemy.despawn()` 将 `setVelocity` 移入 `if (this.body)` 保护内
+- **验证**：Boss 击杀后正常 despawn，无报错
+
+
 

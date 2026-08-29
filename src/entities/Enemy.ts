@@ -61,8 +61,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   despawn(): void {
     this.setActive(false);
     this.setVisible(false);
-    this.setVelocity(0, 0);
     if (this.body) {
+      this.setVelocity(0, 0);
       this.body.enable = false;
       this.body.reset(0, 0);
     }

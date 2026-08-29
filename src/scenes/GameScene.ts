@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
 import { Player } from '../entities/Player';
+import type { Enemy } from '../entities/Enemy';
 import { ObjectPool } from '../systems/ObjectPool';
 import { WaveManager } from '../systems/WaveManager';
 import { InputManager } from '../systems/InputManager';
@@ -25,6 +26,7 @@ export class GameScene extends Phaser.Scene {
   private collisionSystem!: CollisionSystem;
   private audioManager!: AudioManager;
   private damageTextManager!: DamageTextManager;
+  private activeBoss: Enemy | null = null;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -264,6 +266,14 @@ export class GameScene extends Phaser.Scene {
       this.handleExplosion(data.x, data.y, data.damage, data.radius);
     });
 
+    // Boss 唯一引用（供 HUD 顶部大血条使用）
+    EventBus.on('enemy:spawn', (enemy: Enemy) => {
+      if (enemy?.isBoss?.()) this.activeBoss = enemy;
+    });
+    EventBus.on('enemy:death', (config: EnemyConfig) => {
+      if (config?.type === 'boss') this.activeBoss = null;
+    });
+
     // 暂停/恢复：同步暂停物理引擎和补间动画
     // （仅 update return 不够，Arcade 物理世界会独立继续运行）
     EventBus.on('run:pause', (paused: boolean) => {
@@ -390,6 +400,11 @@ export class GameScene extends Phaser.Scene {
   /** 弹出浮动伤害数字（供碰撞系统调用） */
   spawnDamageText(x: number, y: number, damage: number, isCrit: boolean = false): void {
     this.damageTextManager?.show(x, y, damage, isCrit);
+  }
+
+  /** 当前唯一的 Boss（无则 null，供 HUD 顶部血条使用） */
+  getActiveBoss(): Enemy | null {
+    return this.activeBoss;
   }
 
   getPlayer(): Player {
