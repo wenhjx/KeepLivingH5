@@ -25,7 +25,10 @@
 3. **智能补货**：缺武器高权重补位、低血量加权大血包、已满级/无效项过滤
 4. 明码标价 + 效果描述
 
-**D. 出现时机**：每 5 波 Boss 死亡后自动弹出（与升级三选一排队：先选完升级再弹商店，GameScene.pendingShop + tryOpenShop）
+**D. 出现时机**：**Boss 战前补给点**（2026-08-29 用户反馈调整）——每 5 波 Boss 波**开始前**弹出（不是 Boss 死后）。WaveManager.nextWave 检测下一波是 Boss 波 → `openShopBeforeBoss(wave)` → 弹商店 → 关闭后 `startWave(boss 波)`。传统 RPG"重大事件前有补给点"逻辑，玩家用前 4 波攒的金币强化后再打 Boss。Boss 死后不再弹商店。
+- GameScene：`pendingShop` + `pendingBossWave` + `openShopBeforeBoss` + 监听 `shop:closed`（关闭后开始待开的 Boss 波）
+- ShopScene.leave() → emit `shop:closed`
+- 与升级三选一排队：升级选完再弹商店（复用 tryOpenShop guard）
 
 **E. 消耗品效果（Player 新增）**
 - 全屏炸弹：全场敌人 500 伤害

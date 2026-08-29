@@ -29,8 +29,10 @@ export class GameScene extends Phaser.Scene {
   private activeBoss: Enemy | null = null;
   private pendingLevelUps = 0;
   private upgradeQueued = false;
-  // Boss 战后待弹出的商店（与升级选择排队，避免同时弹出冲突）
+  // Boss 战前待弹出的商店（与升级选择排队，避免同时弹出冲突）
   private pendingShop = false;
+  // 商店关闭后要开始的 Boss 波（0 = 无待开始）
+  private pendingBossWave = 0;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -270,7 +272,7 @@ export class GameScene extends Phaser.Scene {
       this.showNextUpgrade();
     });
 
-    // 一次升级选择完成，继续弹出剩余待选升级；全部选完后若 Boss 战后商店待开则弹出
+    // 一次升级选择完成，继续弹出剩余待选升级；全部选完后若 Boss 战前商店待开则弹出
     EventBus.on('upgrade:chosen', () => {
       this.upgradeQueued = false;
       this.pendingLevelUps = Math.max(0, this.pendingLevelUps - 1);
@@ -278,6 +280,15 @@ export class GameScene extends Phaser.Scene {
         this.time.delayedCall(250, () => this.showNextUpgrade());
       } else {
         this.time.delayedCall(300, () => this.tryOpenShop());
+      }
+    });
+
+    // 商店关闭：若之前是为 Boss 波开的（战前补给），则开始该 Boss 波
+    EventBus.on('shop:closed', () => {
+      if (this.pendingBossWave > 0) {
+        const wave = this.pendingBossWave;
+        this.pendingBossWave = 0;
+        this.waveManager.startWave(wave);
       }
     });
 
@@ -293,9 +304,7 @@ export class GameScene extends Phaser.Scene {
     EventBus.on('enemy:death', (config: EnemyConfig) => {
       if (config?.type === 'boss') {
         this.activeBoss = null;
-        // 唯一 Boss 死亡 → 弹出神秘商店（Boss 大额金币即时可花）
-        this.pendingShop = true;
-        this.tryOpenShop();
+        // 商店改为 Boss 战前补给（WaveManager 在 Boss 波前触发），Boss 死后不再弹
       }
     });
 
@@ -374,6 +383,7 @@ export class GameScene extends Phaser.Scene {
     const gm = GameManager.getInstance();
     gm.endRun();
     this.pendingShop = false;
+    this.pendingBossWave = 0;
 
     // 延迟切换到结算场景
     this.time.delayedCall(1500, () => {
@@ -437,7 +447,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * 弹出神秘商店（若 Boss 战后待开且当前无升级/商店在显示中）
+   * 弹出神秘商店（若 Boss 战前待开且当前无升级/商店在显示中）
    * 保证与升级三选一排队，不冲突
    */
   private tryOpenShop(): void {
@@ -450,6 +460,17 @@ export class GameScene extends Phaser.Scene {
     this.pendingShop = false;
     gm.setPaused(true);
     this.scene.launch('ShopScene');
+  }
+
+  /**
+   * Boss 战前补给点：商店关闭后开始指定 Boss 波
+   * 由 WaveManager 在进入 Boss 波前调用
+   */
+  openShopBeforeBoss(wave: number): void {
+    if (this.scene.isActive('ShopScene')) return;
+    this.pendingShop = true;
+    this.pendingBossWave = wave;
+    this.tryOpenShop();
   }
 
   /** 弹出浮动伤害数字（供碰撞系统调用） */

@@ -172,9 +172,16 @@ export class WaveManager {
   private nextWave(): void {
     this.waveActive = false;
 
-    // 短暂间隔后开始下一波
+    const next = this.currentWave + 1;
+    const isBossWave = next % GameConfig.WAVE.bossWaveInterval === 0;
+
+    // 短暂间隔后开始下一波；Boss 波前先弹商店（战前补给点），商店关闭后再开打
     this.scene.time.delayedCall(2000, () => {
-      this.startWave(this.currentWave + 1);
+      if (isBossWave) {
+        (this.scene as any).openShopBeforeBoss?.(next);
+      } else {
+        this.startWave(next);
+      }
     });
   }
 

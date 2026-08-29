@@ -2,12 +2,13 @@ import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
+import { EventBus } from '../utils/EventBus';
 import { generateShopStock, applyShopItem, type ShopItem } from '../data/shop';
 import type { Player } from '../entities/Player';
 
 /**
  * 神秘商店场景
- * 每 5 波 Boss 战后弹出（GameScene 驱动），暂停游戏
+ * 每 5 波 Boss 战前弹出（战前补给点，GameScene 驱动），暂停游戏
  * 4 格货架：3 常规 + 1 高级位保底；可刷新（1 次免费 + 金币付费）；整格点击购买
  */
 export class ShopScene extends Phaser.Scene {
@@ -44,7 +45,7 @@ export class ShopScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    createUIText(this, width / 2, 108, '击败精英与 Boss 获得金币，强化你的 build', {
+    createUIText(this, width / 2, 108, 'Boss 将至，用金币强化自己！', {
         fontSize: '14px',
         color: '#aaaaaa',
       })
@@ -70,7 +71,7 @@ export class ShopScene extends Phaser.Scene {
     this.createLeaveButton();
 
     // 提示
-    createUIText(this, width / 2, height - 34, '点击商品购买 · 每 5 波出现一次', {
+    createUIText(this, width / 2, height - 34, '点击商品购买 · Boss 战前补给', {
         fontSize: '12px',
         color: '#666666',
       })
@@ -309,5 +310,7 @@ export class ShopScene extends Phaser.Scene {
   private leave(): void {
     GameManager.getInstance().setPaused(false);
     this.scene.stop('ShopScene');
+    // 通知 GameScene：商店关闭，若有 Boss 战前补给待开则开始该波次
+    EventBus.emit('shop:closed');
   }
 }
