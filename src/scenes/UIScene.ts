@@ -56,12 +56,11 @@ export class UIScene extends Phaser.Scene {
       }
     }
 
-    // 暂停按钮
-    this.pauseButton = createUIText(this, this.scale.width - 20, 20, 'II', {
-        fontSize: '24px',
-        color: '#ffffff',
+    // 暂停按钮（右上角，HUD 波次信息下移让位，避免重叠）
+    this.pauseButton = createUIText(this, this.scale.width - 16, 16, '⏸️', {
+        fontSize: '20px',
         backgroundColor: '#1a1a25',
-        padding: { left: 12, right: 12, top: 6, bottom: 6 },
+        padding: { left: 10, right: 10, top: 5, bottom: 5 },
       })
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true });

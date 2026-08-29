@@ -109,23 +109,24 @@ export class HUD {
       })
       .setOrigin(0, 0.5);
 
-    // ========== 右上角：波次、击杀、分数 ==========
+    // ========== 右上角：波次、击杀、分数（暂停按钮下方，避免重叠） ==========
     const rightX = width - this.padding;
+    const infoTop = topY + 44;
 
-    this.waveText = createUIText(this.scene, rightX, topY, '波次: 1', {
+    this.waveText = createUIText(this.scene, rightX, infoTop, '波次: 1', {
         fontSize: '16px',
         color: '#ff6b35',
         fontStyle: 'bold',
       })
       .setOrigin(1, 0);
 
-    this.killsText = createUIText(this.scene, rightX, topY + 24, '击杀: 0', {
+    this.killsText = createUIText(this.scene, rightX, infoTop + 24, '击杀: 0', {
         fontSize: '14px',
         color: '#cccccc',
       })
       .setOrigin(1, 0);
 
-    this.scoreText = createUIText(this.scene, rightX, topY + 46, '分数: 0', {
+    this.scoreText = createUIText(this.scene, rightX, infoTop + 46, '分数: 0', {
         fontSize: '14px',
         color: '#ffb347',
       })
