@@ -6,6 +6,7 @@ import { HUD } from '../ui/HUD';
 import { VirtualJoystick } from '../ui/VirtualJoystick';
 import { DebugPanel } from '../ui/DebugPanel';
 import { Minimap } from '../ui/Minimap';
+import { InventoryUI } from '../ui/InventoryUI';
 import { GuideManager } from '../systems/GuideManager';
 import { EventBus } from '../utils/EventBus';
 
@@ -19,9 +20,12 @@ export class UIScene extends Phaser.Scene {
   private joystick!: VirtualJoystick;
   private debugPanel!: DebugPanel;
   private minimap!: Minimap;
+  private inventoryUI!: InventoryUI;
   private pauseButton!: Phaser.GameObjects.Text;
   private pauseOverlay!: Phaser.GameObjects.Container;
   private uiRoot!: Phaser.GameObjects.Container;
+  // EventBus 监听器取消函数（场景关闭时统一清理）
+  private eventUnsubscribers: Array<() => void> = [];
 
   constructor() {
     super('UIScene');
@@ -52,6 +56,9 @@ export class UIScene extends Phaser.Scene {
     const gameScene = this.scene.get('GameScene') as any;
     const mapSize = gameScene?.getMapSize?.() || { width: 3000, height: 3000 };
     this.minimap = new Minimap(this, 10, 10, 160, 120, mapSize.width, mapSize.height);
+
+    // 物品栏（右下角，点击或按 1-4 使用消耗品）
+    this.inventoryUI = new InventoryUI(this);
 
     // 移动端显示虚拟摇杆
     if (gm.isMobile) {
@@ -136,11 +143,8 @@ export class UIScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     menuBtn.on('pointerdown', () => {
-      // 返回主菜单前保存本局数据（否则本局击杀/分数会丢失）
-      const gm = GameManager.getInstance();
-      if (!gm.isGameOver) {
-        gm.endRun();
-      }
+      // 存档由 GameScene SHUTDOWN 统一处理（saveRun + exitRun，保留进行中对局）
+      // 此处不调用 endRun，否则会 clearSavedRun 导致"继续游戏"失效
       this.scene.stop('GameScene');
       this.scene.stop('UIScene');
       this.scene.start('MainMenuScene');
@@ -149,29 +153,37 @@ export class UIScene extends Phaser.Scene {
   }
 
   private setupEventListeners(): void {
-    EventBus.on('run:pause', (paused: boolean) => {
+    const sub = (fn: () => void) => this.eventUnsubscribers.push(fn);
+
+    sub(EventBus.on('run:pause', (paused: boolean) => {
       this.pauseOverlay.setVisible(paused);
       this.pauseButton.setVisible(!paused);
-    });
+    }));
 
-    EventBus.on('run:kill', () => {
+    sub(EventBus.on('run:kill', () => {
       this.hud.update();
-    });
+    }));
 
-    EventBus.on('run:wave', () => {
+    sub(EventBus.on('run:wave', () => {
       this.hud.update();
-    });
+    }));
 
-    EventBus.on('player:damage', () => {
+    sub(EventBus.on('player:damage', () => {
       this.hud.updateHealth();
-    });
+    }));
 
-    EventBus.on('player:heal', () => {
+    sub(EventBus.on('player:heal', () => {
       this.hud.updateHealth();
-    });
+    }));
 
-    EventBus.on('player:levelup', () => {
+    sub(EventBus.on('player:levelup', () => {
       this.hud.updateLevel();
+    }));
+
+    // 场景关闭时清理所有 EventBus 监听器
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.eventUnsubscribers.forEach((unsub) => unsub());
+      this.eventUnsubscribers = [];
     });
   }
 

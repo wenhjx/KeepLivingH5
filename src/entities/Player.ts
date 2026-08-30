@@ -4,6 +4,7 @@ import { EventBus } from '../utils/EventBus';
 import { MathUtils } from '../utils/MathUtils';
 import { Drone } from './Drone';
 import { WEAPONS } from '../data/weapons';
+import { USABLE_ITEMS } from '../data/items';
 import type { PlayerStats, WeaponConfig } from '../types';
 import type { InputManager } from '../systems/InputManager';
 
@@ -31,8 +32,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // 狂暴药水临时增益
   private rageTimer = 0;
   private rageActive = false;
+  private rageRing: Phaser.GameObjects.Arc | null = null;
   // 复活币（商店购买，死亡时原地复活）
   private reviveTokens = 0;
+  // 待激活的 Boss 战 buff（商店购买，接近 Boss 时自动触发）
+  private pendingBossBuffs: Array<(player: Player) => void> = [];
+  // 物品栏（可主动使用的消耗品）
+  private inventory: Map<string, number> = new Map();
   // 朝向
   private facingAngle = 0;
   // 经验特效
@@ -107,6 +113,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // 恢复基础攻速/攻击力（与增益时乘的系数相反）
         this.stats.attackSpeed /= 1.5;
         this.stats.attackPower /= 1.5;
+        this.rageRing?.destroy();
+        this.rageRing = null;
+      } else if (this.rageRing) {
+        // 光晕跟随玩家 + 呼吸脉动
+        const pulse = 1 + Math.sin(time / 150) * 0.08;
+        this.rageRing.setPosition(this.x, this.y);
+        this.rageRing.setScale(pulse);
       }
     }
 
@@ -450,6 +463,56 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.reviveTokens;
   }
 
+  /** 添加待激活的 Boss 战 buff（接近 Boss 时自动触发） */
+  addPendingBossBuff(effect: (player: Player) => void): void {
+    this.pendingBossBuffs.push(effect);
+  }
+
+  /** 是否有待激活的 Boss 战 buff */
+  hasPendingBossBuffs(): boolean {
+    return this.pendingBossBuffs.length > 0;
+  }
+
+  /** 触发所有待激活的 Boss 战 buff（接近 Boss 时由 GameScene 调用） */
+  triggerPendingBossBuffs(): void {
+    for (const effect of this.pendingBossBuffs) {
+      effect(this);
+    }
+    this.pendingBossBuffs = [];
+  }
+
+  // ========== 物品栏 ==========
+
+  /** 添加物品到物品栏 */
+  addItem(id: string, count: number = 1): void {
+    this.inventory.set(id, (this.inventory.get(id) || 0) + count);
+    EventBus.emit('player:inventoryChanged');
+  }
+
+  /** 获取物品数量 */
+  getItemCount(id: string): number {
+    return this.inventory.get(id) || 0;
+  }
+
+  /** 使用物品（数量不足返回 false） */
+  useItem(id: string, gameScene: any): boolean {
+    const count = this.inventory.get(id) || 0;
+    if (count <= 0) return false;
+    const item = (USABLE_ITEMS as any)[id];
+    if (!item) return false;
+    item.use(this, gameScene);
+    this.inventory.set(id, count - 1);
+    EventBus.emit('player:inventoryChanged');
+    return true;
+  }
+
+  /** 获取物品栏快照（供 UI 渲染） */
+  getInventory(): Array<{ id: string; count: number }> {
+    return Array.from(this.inventory.entries())
+      .filter(([, count]) => count > 0)
+      .map(([id, count]) => ({ id, count }));
+  }
+
   /** 护盾：一段时间无敌 + 圆环视觉 */
   applyShield(duration: number): void {
     this.shieldActive = true;
@@ -462,12 +525,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.shieldRing.setDepth(11);
   }
 
-  /** 狂暴药水：短时间攻速/攻击力 +50% */
+  /** 狂暴药水：短时间攻速/攻击力 +50% + 红色光晕视觉 */
   applyRage(duration: number): void {
     this.stats.attackSpeed *= 1.5;
     this.stats.attackPower *= 1.5;
     this.rageActive = true;
     this.rageTimer = duration;
+    if (this.rageRing) this.rageRing.destroy();
+    this.rageRing = this.scene.add.circle(this.x, this.y, 24, 0xff4444, 0.2);
+    this.rageRing.setStrokeStyle(2, 0xff6666, 0.8);
+    this.rageRing.setDepth(11);
   }
 
   // ========== 经验与升级 ==========

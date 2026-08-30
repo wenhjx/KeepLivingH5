@@ -7,6 +7,7 @@ import type { Vector2 } from '../types';
  * 输入管理器
  * 统一处理 PC 键鼠和移动端触屏输入，对外提供一致的输入接口
  * 上层游戏逻辑无需关心设备类型
+ * 支持 AI 自动玩方向覆盖（setAIDirection）
  */
 export class InputManager {
   private scene: Phaser.Scene;
@@ -22,6 +23,8 @@ export class InputManager {
 
   // 移动端虚拟摇杆状态（由 UIScene 的 VirtualJoystick 设置）
   private joystickVector: Vector2 = { x: 0, y: 0 };
+  // AI 自动玩方向覆盖（非零时优先于键盘/摇杆）
+  private aiVector: Vector2 = { x: 0, y: 0 };
   private isMobile: boolean;
 
   // 鼠标/触摸瞄准
@@ -62,10 +65,14 @@ export class InputManager {
 
   /**
    * 获取移动方向向量（归一化）
-   * PC: 键盘 WASD / 方向键
-   * 移动端: 虚拟摇杆
+   * 优先级：AI 覆盖 > 移动端虚拟摇杆 > PC 键盘
    */
   getMoveDirection(): Vector2 {
+    // AI 自动玩优先
+    if (this.aiVector.x !== 0 || this.aiVector.y !== 0) {
+      return { ...this.aiVector };
+    }
+
     let x = 0;
     let y = 0;
 
@@ -96,6 +103,16 @@ export class InputManager {
     }
 
     return { x, y };
+  }
+
+  /** 设置 AI 自动玩方向（归一化向量），传 0,0 清除 */
+  setAIDirection(x: number, y: number): void {
+    this.aiVector = { x, y };
+  }
+
+  /** 清除 AI 方向覆盖 */
+  clearAIDirection(): void {
+    this.aiVector = { x: 0, y: 0 };
   }
 
   /** 获取瞄准点（世界坐标） */

@@ -110,10 +110,26 @@ export class GameManager {
     if (this._runData.score > this._stats.highScore) {
       this._stats.highScore = this._runData.score;
     }
-    // 对局结束，清除可继续的存档
+    // 对局结束（死亡），清除可继续的存档
     this.clearSavedRun();
     this.saveProgress();
     EventBus.emit('run:end', { ...this._runData, highScore: this._stats.highScore });
+  }
+
+  /**
+   * 玩家主动退出（暂停菜单回主菜单）：保存统计，但保留进行中对局存档，
+   * 使玩家可以通过"继续游戏"恢复。与 endRun() 的区别是不清除 run 存档。
+   */
+  exitRun(): void {
+    this._runData.isGameOver = true;
+    this._stats.gamesPlayed++;
+    this._stats.totalKills += this._runData.kills;
+    this._stats.totalPlayTime += this._runData.survivalTime;
+    if (this._runData.score > this._stats.highScore) {
+      this._stats.highScore = this._runData.score;
+    }
+    // 注意：不调用 clearSavedRun()，保留进行中对局供"继续游戏"恢复
+    this.saveProgress();
   }
 
   addKill(score: number = 10): void {
@@ -240,6 +256,8 @@ export class GameManager {
   saveProgress(): void {
     if (!this._saveSystem) return;
     const audio = AudioManager.getInstance();
+    // 先读取已有存档，保留进行中对局（run），避免 saveProgress 覆盖 saveRun 的数据
+    const existing = this._saveSystem.load() || {};
     const data: GameSaveData = {
       version: 1,
       timestamp: Date.now(),
@@ -250,6 +268,8 @@ export class GameManager {
         musicVolume: audio.getMusicVolume(),
         muted: audio.isMuted(),
       },
+      // 保留已有的进行中对局存档（endRun 会先 clearSavedRun 再调用，所以死亡时不会残留）
+      run: (existing as any).run,
     };
     this._saveSystem.save(data);
   }

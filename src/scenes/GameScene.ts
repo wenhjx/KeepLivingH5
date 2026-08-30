@@ -51,6 +51,16 @@ export class GameScene extends Phaser.Scene {
   private autoSaveTimer = 0;
   // 是否为"继续游戏"恢复模式
   private resumeMode = false;
+  // 页面刷新/关闭前的存档回调
+  private beforeUnloadHandler: (() => void) | null = null;
+  // EventBus 监听器取消函数（场景关闭时统一清理，防止重复注册导致事件多次触发）
+  private eventUnsubscribers: Array<() => void> = [];
+  // AI 自动玩模式（__debug.autoPlay() 开启）
+  private autoPlayEnabled = false;
+  // AI 人类化：决策间隔（不每帧重新计算方向）
+  private aiDecisionTimer = 0;
+  private aiCurrentDir = { x: 0, y: 0 };
+  private aiHesitateTimer = 0;
 
   constructor() {
     super('GameScene');
@@ -76,21 +86,47 @@ export class GameScene extends Phaser.Scene {
     this.setupCamera();
     this.setupEventListeners();
 
+    // 页面刷新/关闭前强制存档（Phaser SHUTDOWN 在页面卸载时可能来不及执行）
+    this.beforeUnloadHandler = () => {
+      const gm = GameManager.getInstance();
+      if (!gm.isGameOver) {
+        gm.saveRun(this.player);
+        gm.saveProgress();
+      }
+    };
+    window.addEventListener('beforeunload', this.beforeUnloadHandler);
+
     // 启动波次（继续游戏时恢复到存档波次，否则第 1 波）
     const startWave = this.resumeMode ? (GameManager.getInstance().pendingRun?.wave ?? 1) : 1;
     this.waveManager.startWave(startWave);
 
     // 延迟触发新手引导（等 UIScene 绑定 GuideManager 后）
-    this.time.delayedCall(800, () => {
-      this.triggerTutorial();
-    });
+    // 新手引导仅新游戏触发，恢复模式不弹
+    if (!this.resumeMode) {
+      this.time.delayedCall(800, () => {
+        this.triggerTutorial();
+      });
+    }
 
-    // 场景关闭兜底：如果本局尚未结束（非正常死亡），自动保存数据
-    // 防止通过暂停菜单或其他方式退出时丢失本局记录
+    // 场景关闭兜底：
+    // - 死亡时：onPlayerDeath 已调用 endRun()（清除存档），此处不再重复处理
+    // - 主动离开时：保存最新对局状态 + 统计，但保留 run 存档，供"继续游戏"恢复
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      // 清理 EventBus 监听器
+      this.eventUnsubscribers.forEach((unsub) => unsub());
+      this.eventUnsubscribers = [];
+
+      // 移除页面卸载前的存档监听
+      if (this.beforeUnloadHandler) {
+        window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+        this.beforeUnloadHandler = null;
+      }
+
       const gm = GameManager.getInstance();
       if (!gm.isGameOver) {
-        gm.endRun();
+        // 主动离开：先保存最新对局状态（避免丢失最近一次自动存档后的进度）
+        gm.saveRun(this.player);
+        gm.exitRun();
       }
     });
   }
@@ -288,24 +324,26 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupEventListeners(): void {
+    const sub = (fn: () => void) => this.eventUnsubscribers.push(fn);
+
     // 玩家死亡
-    EventBus.on('player:death', () => this.onPlayerDeath());
+    sub(EventBus.on('player:death', () => this.onPlayerDeath()));
 
     // 复活币生效：清空周围敌人 + 震屏反馈，避免复活瞬间被围死
-    EventBus.on('player:revive', () => {
+    sub(EventBus.on('player:revive', () => {
       this.handleExplosion(this.player.x, this.player.y, 9999, 400);
       this.cameras.main.shake(200, 0.006);
-    });
+    }));
 
     // 玩家升级：跨多级时排队逐个弹出三选一（避免一次性升级丢失选择机会）
-    EventBus.on('player:levelup', (level: number) => {
+    sub(EventBus.on('player:levelup', (level: number) => {
       this.audioManager.playSfx('sfx_levelup');
       this.pendingLevelUps++;
       this.showNextUpgrade();
-    });
+    }));
 
     // 一次升级选择完成，继续弹出剩余待选升级；全部选完后若 Boss 战前商店待开则弹出
-    EventBus.on('upgrade:chosen', () => {
+    sub(EventBus.on('upgrade:chosen', () => {
       this.upgradeQueued = false;
       this.pendingLevelUps = Math.max(0, this.pendingLevelUps - 1);
       if (this.pendingLevelUps > 0) {
@@ -313,36 +351,35 @@ export class GameScene extends Phaser.Scene {
       } else {
         this.time.delayedCall(300, () => this.tryOpenShop());
       }
-    });
+    }));
 
     // 商店关闭：若之前是为 Boss 波开的（战前补给），则开始该 Boss 波
-    EventBus.on('shop:closed', () => {
+    sub(EventBus.on('shop:closed', () => {
       if (this.pendingBossWave > 0) {
         const wave = this.pendingBossWave;
         this.pendingBossWave = 0;
         this.waveManager.startWave(wave);
       }
-    });
+    }));
 
     // 子弹爆炸（火箭筒等）：范围伤害 + 视觉效果
-    EventBus.on('bullet:explode', (data: { x: number; y: number; damage: number; radius: number }) => {
+    sub(EventBus.on('bullet:explode', (data: { x: number; y: number; damage: number; radius: number }) => {
       this.handleExplosion(data.x, data.y, data.damage, data.radius);
-    });
+    }));
 
     // Boss 唯一引用（供 HUD 顶部大血条使用）
-    EventBus.on('enemy:spawn', (enemy: Enemy) => {
+    sub(EventBus.on('enemy:spawn', (enemy: Enemy) => {
       if (enemy?.isBoss?.()) this.activeBoss = enemy;
-    });
-    EventBus.on('enemy:death', (config: EnemyConfig) => {
+    }));
+    sub(EventBus.on('enemy:death', (config: EnemyConfig) => {
       if (config?.type === 'boss') {
         this.activeBoss = null;
-        // 商店改为 Boss 战前补给（WaveManager 在 Boss 波前触发），Boss 死后不再弹
       }
-    });
+    }));
 
     // 暂停/恢复：同步暂停物理引擎和补间动画
     // （仅 update return 不够，Arcade 物理世界会独立继续运行）
-    EventBus.on('run:pause', (paused: boolean) => {
+    sub(EventBus.on('run:pause', (paused: boolean) => {
       if (paused) {
         this.physics.pause();
         this.tweens.pauseAll();
@@ -350,7 +387,7 @@ export class GameScene extends Phaser.Scene {
         this.physics.resume();
         this.tweens.resumeAll();
       }
-    });
+    }));
 
     // 暂停切换
     this.input.keyboard?.on('keydown-ESC', () => {
@@ -367,6 +404,11 @@ export class GameScene extends Phaser.Scene {
 
     // 更新存活时间
     gm.addSurvivalTime(delta);
+
+    // AI 自动玩：计算移动方向（躲敌人 / 捡经验）
+    if (this.autoPlayEnabled) {
+      this.updateAIDirection(delta);
+    }
 
     // 更新玩家
     this.player.update(time, delta, this.inputManager);
@@ -400,6 +442,17 @@ export class GameScene extends Phaser.Scene {
       }
       return true;
     });
+
+    // 接近 Boss 时自动激活商店购买的待生效 buff（护盾/狂暴），避免赶路时浪费持续时间
+    if (this.activeBoss && this.activeBoss.active && this.player.hasPendingBossBuffs()) {
+      const dist = Phaser.Math.Distance.Between(
+        this.player.x, this.player.y,
+        this.activeBoss.x, this.activeBoss.y
+      );
+      if (dist < 450) {
+        this.player.triggerPendingBossBuffs();
+      }
+    }
 
     // 自动存档（统计信息 + 进行中对局进度）
     this.autoSaveTimer += delta;
@@ -546,6 +599,142 @@ export class GameScene extends Phaser.Scene {
   /** 地形管理器（供小地图渲染障碍物轮廓） */
   getTerrainManager(): TerrainManager {
     return this.terrainManager;
+  }
+
+  // ========== AI 自动玩 ==========
+
+  /** 开关自动玩模式 */
+  setAutoPlay(enabled: boolean): void {
+    this.autoPlayEnabled = enabled;
+    this.aiDecisionTimer = 0;
+    this.aiHesitateTimer = 0;
+    this.aiCurrentDir = { x: 0, y: 0 };
+    if (!enabled) {
+      this.inputManager.clearAIDirection();
+    }
+  }
+
+  isAutoPlay(): boolean {
+    return this.autoPlayEnabled;
+  }
+
+  /**
+   * AI 移动决策（人类化版本）：
+   * - 每 120-200ms 重新决策一次（不每帧精确转向）
+   * - 方向上加 15% 随机噪声（不会走完美直线）
+   * - 偶尔短暂"犹豫"（停止 0.3-0.8s）
+   * 决策逻辑：危险时躲敌人，安全时捡经验
+   */
+  private updateAIDirection(delta: number): void {
+    // 犹豫中：不移动
+    if (this.aiHesitateTimer > 0) {
+      this.aiHesitateTimer -= delta;
+      this.inputManager.clearAIDirection();
+      return;
+    }
+
+    // 决策间隔：120-200ms 重新计算一次
+    this.aiDecisionTimer -= delta;
+    if (this.aiDecisionTimer > 0) {
+      // 保持当前方向（已设置过）
+      return;
+    }
+    this.aiDecisionTimer = 120 + Math.random() * 80;
+
+    // 5% 概率触发犹豫（安全时才犹豫，危险时不犹豫）
+    const nearestEnemyDist = this.getNearestEnemyDist();
+    if (nearestEnemyDist > 200 && Math.random() < 0.05) {
+      this.aiHesitateTimer = 300 + Math.random() * 500;
+      this.inputManager.clearAIDirection();
+      return;
+    }
+
+    const px = this.player.x;
+    const py = this.player.y;
+    const SAFE_DIST = 160;
+    let targetX = 0;
+    let targetY = 0;
+
+    if (nearestEnemyDist < SAFE_DIST) {
+      // 危险：躲避所有附近敌人的合力
+      let avoidX = 0;
+      let avoidY = 0;
+      this.enemies.children.each((enemy: any) => {
+        if (!enemy.active) return true;
+        const dx = px - enemy.x;
+        const dy = py - enemy.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < SAFE_DIST && dist > 0.1) {
+          const weight = (SAFE_DIST - dist) / SAFE_DIST;
+          avoidX += (dx / dist) * weight;
+          avoidY += (dy / dist) * weight;
+        }
+        return true;
+      });
+      targetX = avoidX;
+      targetY = avoidY;
+    } else {
+      // 安全：找最近的经验宝石
+      const nearestExp = this.getNearestExp();
+      if (nearestExp) {
+        targetX = nearestExp.x - px;
+        targetY = nearestExp.y - py;
+      }
+    }
+
+    // 归一化 + 加噪声（人类化）
+    const len = Math.sqrt(targetX * targetX + targetY * targetY);
+    if (len > 0.01) {
+      let nx = targetX / len;
+      let ny = targetY / len;
+      // 加 15% 随机噪声
+      const noise = 0.15;
+      nx += (Math.random() - 0.5) * noise;
+      ny += (Math.random() - 0.5) * noise;
+      const nlen = Math.sqrt(nx * nx + ny * ny);
+      if (nlen > 0.01) {
+        nx /= nlen;
+        ny /= nlen;
+      }
+      this.aiCurrentDir = { x: nx, y: ny };
+      this.inputManager.setAIDirection(nx, ny);
+    } else {
+      this.aiCurrentDir = { x: 0, y: 0 };
+      this.inputManager.clearAIDirection();
+    }
+  }
+
+  /** 获取最近敌人距离 */
+  private getNearestEnemyDist(): number {
+    let nearest = Infinity;
+    this.enemies.children.each((enemy: any) => {
+      if (!enemy.active) return true;
+      const dx = this.player.x - enemy.x;
+      const dy = this.player.y - enemy.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < nearest) nearest = dist;
+      return true;
+    });
+    return nearest;
+  }
+
+  /** 获取最近的经验宝石 */
+  private getNearestExp(): any {
+    let nearest: any = null;
+    let nearestDist = Infinity;
+    this.pickups.children.each((pickup: any) => {
+      if (!pickup.active) return true;
+      if (pickup.getType?.() !== 'exp') return true;
+      const dx = pickup.x - this.player.x;
+      const dy = pickup.y - this.player.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearest = pickup;
+      }
+      return true;
+    });
+    return nearest;
   }
 
   spawnEnemy(config: EnemyConfig, x: number, y: number): void {

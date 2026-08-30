@@ -12,6 +12,8 @@ import type { Player } from '../entities/Player';
  */
 
 export type ShopItemKind = 'weapon' | 'passive' | 'stat' | 'consumable';
+/** 消耗品生效时机：immediate=购买即生效；onShopClose=商店关闭（Boss战开打）时生效 */
+export type ConsumableTiming = 'immediate' | 'onShopClose';
 
 export interface ShopItem {
   id: string;
@@ -23,6 +25,10 @@ export interface ShopItem {
   kind: ShopItemKind;
   /** 复用升级项时，对应 UPGRADE_OPTIONS 的 id（weapon/passive/stat） */
   upgradeId?: string;
+  /** 消耗品生效时机（仅 consumable 有效，默认 immediate） */
+  timing?: ConsumableTiming;
+  /** 可主动使用的物品 id（进入物品栏，与 USABLE_ITEMS 对应） */
+  itemId?: string;
   /** 消耗品类一次性效果（在 GameScene 上下文执行） */
   consumableEffect?: (player: Player, gameScene: any) => void;
 }
@@ -85,65 +91,55 @@ const CONSUMABLE_ITEMS: ShopItem[] = [
     id: 'consumable_bomb',
     name: '全屏炸弹',
     icon: '💣',
-    desc: '立刻对全场敌人造成巨额伤害（救急清屏）',
+    desc: '存入物品栏，使用时对全场敌人造成 500 伤害',
     price: 45,
     rarity: 'epic',
     kind: 'consumable',
-    consumableEffect: (_player, gameScene) => {
-      const enemies = gameScene?.getEnemies?.();
-      if (!enemies) return;
-      const list = enemies.getChildren() as any[];
-      list.forEach((e: any) => {
-        if (e.active && typeof e.takeDamage === 'function') {
-          e.takeDamage(500, true);
-        }
-      });
-    },
+    timing: 'immediate',
+    itemId: 'bomb',
   },
   {
     id: 'consumable_shield',
     name: '能量护盾',
     icon: '🛡️',
-    desc: '3 秒无敌护盾',
+    desc: '存入物品栏，使用后获得 8 秒无敌护盾',
     price: 30,
     rarity: 'rare',
     kind: 'consumable',
-    consumableEffect: (player) => {
-      player.applyShield(3000);
-    },
+    timing: 'immediate',
+    itemId: 'shield',
   },
   {
     id: 'consumable_rage',
     name: '狂暴药水',
     icon: '⚗️',
-    desc: '8 秒内攻速与攻击力 +50%',
+    desc: '存入物品栏，使用后 15 秒攻速与攻击力 +50%',
     price: 25,
     rarity: 'rare',
     kind: 'consumable',
-    consumableEffect: (player) => {
-      player.applyRage(8000);
-    },
+    timing: 'immediate',
+    itemId: 'rage',
   },
   {
     id: 'consumable_big_heal',
     name: '大血包',
     icon: '🍗',
-    desc: '立即恢复 50% 最大生命值',
+    desc: '存入物品栏，使用后恢复 50% 最大生命值',
     price: 20,
     rarity: 'common',
     kind: 'consumable',
-    consumableEffect: (player) => {
-      player.heal(player.getMaxHealth() * 0.5);
-    },
+    timing: 'immediate',
+    itemId: 'heal',
   },
   {
     id: 'consumable_revive',
     name: '复活币',
     icon: '🌟',
-    desc: '死亡时原地满血复活一次',
+    desc: '死亡时原地满血复活一次（被动触发）',
     price: 80,
     rarity: 'legendary',
     kind: 'consumable',
+    timing: 'immediate',
     consumableEffect: (player) => {
       player.addReviveToken();
     },

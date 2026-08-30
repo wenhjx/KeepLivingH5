@@ -14,6 +14,7 @@ export class DebugPanel {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
   private visible: boolean = false;
+  private autoPlayText: Phaser.GameObjects.Text | null = null;
   private readonly panelWidth = 340;
   private readonly btnWidth = 152;
   private readonly btnHeight = 30;
@@ -39,8 +40,8 @@ export class DebugPanel {
 
     // 标题
     contentHeight += 28;
-    // 快捷操作：2行
-    contentHeight += 20 + measure(2) + this.sectionSpacing;
+    // 快捷操作：3行
+    contentHeight += 20 + measure(3) + this.sectionSpacing;
     // 属性调整：2行
     contentHeight += 20 + measure(2) + this.sectionSpacing;
     // 属性升级：9个 / 2列 = 5行
@@ -81,6 +82,8 @@ export class DebugPanel {
     curY = this.addButton(col2X, curY - (this.btnHeight + this.btnSpacing), '⭐ +1 级', () => this.addLevel(1));
     curY = this.addButton(col1X, curY, '🌟 +5 级', () => this.addLevel(5));
     curY = this.addButton(col2X, curY - (this.btnHeight + this.btnSpacing), '💀 清空敌人', () => this.clearEnemies());
+    // AI 托管按钮（占两列宽度，文字随状态变化）
+    curY = this.addAutoPlayButton(col1X, curY, col2X);
 
     curY += this.sectionSpacing;
 
@@ -187,6 +190,66 @@ export class DebugPanel {
 
     this.container.add([bg, txt, hitArea]);
     return y + this.btnHeight + this.btnSpacing;
+  }
+
+  /** AI 托管按钮（占两列宽度，点击切换，文字显示状态） */
+  private addAutoPlayButton(x: number, y: number, col2X: number): number {
+    const fullWidth = this.btnWidth * 2 + this.btnSpacing;
+
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(0x252530, 1);
+    bg.fillRoundedRect(x, y, fullWidth, this.btnHeight, 4);
+    bg.lineStyle(1, 0x444455, 0.6);
+    bg.strokeRoundedRect(x, y, fullWidth, this.btnHeight, 4);
+
+    this.autoPlayText = createUIText(this.scene, x + fullWidth / 2, y + this.btnHeight / 2, '🤖 AI 托管：关闭', {
+        fontSize: '11px',
+        color: '#cccccc',
+      })
+      .setOrigin(0.5);
+
+    const hitArea = this.scene.add
+      .rectangle(x + fullWidth / 2, y + this.btnHeight / 2, fullWidth, this.btnHeight, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+
+    const updateState = (enabled: boolean) => {
+      if (this.autoPlayText) {
+        this.autoPlayText.setText(enabled ? '🤖 AI 托管：开启中（点击停止）' : '🤖 AI 托管：关闭（点击开启）');
+        this.autoPlayText.setColor(enabled ? '#66ff99' : '#cccccc');
+      }
+      bg.clear();
+      bg.fillStyle(enabled ? 0x1a3a2a : 0x252530, 1);
+      bg.fillRoundedRect(x, y, fullWidth, this.btnHeight, 4);
+      bg.lineStyle(1, enabled ? 0x66ff99 : 0x444455, 0.8);
+      bg.strokeRoundedRect(x, y, fullWidth, this.btnHeight, 4);
+    };
+
+    hitArea.on('pointerover', () => {
+      const gs = this.getGameScene();
+      const enabled = gs?.isAutoPlay?.() || false;
+      updateState(enabled);
+      this.autoPlayText?.setColor('#ffffff');
+    });
+    hitArea.on('pointerout', () => {
+      const gs = this.getGameScene();
+      const enabled = gs?.isAutoPlay?.() || false;
+      updateState(enabled);
+    });
+    hitArea.on('pointerdown', () => {
+      const gs = this.getGameScene();
+      if (!gs) return;
+      const next = !gs.isAutoPlay?.();
+      gs.setAutoPlay?.(next);
+      updateState(next);
+    });
+
+    this.container.add([bg, this.autoPlayText, hitArea]);
+    return y + this.btnHeight + this.btnSpacing;
+  }
+
+  /** 获取 GameScene */
+  private getGameScene(): any {
+    return this.scene.scene.get('GameScene');
   }
 
   /** 设置快捷键 */

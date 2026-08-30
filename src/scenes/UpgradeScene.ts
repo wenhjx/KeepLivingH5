@@ -54,6 +54,101 @@ export class UpgradeScene extends Phaser.Scene {
     // 升级面板
     this.upgradePanel = new UpgradePanel(this);
     this.upgradePanel.show((option: UpgradeOption) => this.onSelect(option), availableOptions);
+
+    // AI 自动玩：从显示的3个选项中智能选择
+    // 流程：延迟0.8秒选中（显示"即将选择..."）→ 再延迟1秒自动确认
+    const gameScene = this.scene.get('GameScene') as any;
+    if (gameScene?.isAutoPlay?.()) {
+      this.time.delayedCall(800, () => {
+        const shownOptions = this.upgradePanel.getOptions();
+        const best = this.selectBestUpgrade(shownOptions, gameScene.getPlayer?.());
+        if (best) {
+          const idx = shownOptions.indexOf(best);
+          if (idx >= 0) {
+            console.log(`[AI 托管] 选中升级: ${best.icon} ${best.name}`);
+            this.upgradePanel.setSelectedIndex(idx, true);
+            // 1秒后自动确认
+            this.time.delayedCall(1000, () => {
+              if (this.upgradePanel.isVisible() && this.upgradePanel.getSelectedIndex() === idx) {
+                console.log(`[AI 托管] 确认选择: ${best.icon} ${best.name}`);
+                this.upgradePanel.confirmSelection();
+              }
+            });
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * AI 升级选择策略：
+   * 1. 血量低于 40% → 优先生命强化
+   * 2. 已有武器 < 3 把 → 优先解锁新武器（高稀有度优先）
+   * 3. 已有武器 >= 3 把 → 优先升级已有武器（高稀有度武器优先升级，打造核心）
+   * 4. 都没有 → 按稀有度选属性
+   */
+  private selectBestUpgrade(options: any[], player: any): any {
+    if (!options || options.length === 0) return null;
+    if (!player) return options[0];
+
+    const ownedWeapons = (player.getWeapons?.() || []) as any[];
+    const ownedIds = new Set(ownedWeapons.map((w: any) => w.id));
+    const hpPercent = player.stats?.hp / player.stats?.maxHealth;
+
+    // 血量危急时优先生命强化
+    if (hpPercent < 0.4) {
+      const heal = options.find(o => o.id === 'max_hp');
+      if (heal) return heal;
+    }
+
+    // 武器稀有度映射（用于决定哪把是"核心武器"）
+    const weaponRarity: Record<string, number> = {
+      default_gun: 1, shotgun: 2, machine_gun: 2,
+      boomerang: 3, drone: 3, rocket: 4, laser: 4, lightsaber: 3,
+    };
+
+    const newWeapons = options.filter(o =>
+      o.type === 'weapon' && o.effect?.weaponLevel === 1 && !ownedIds.has(o.effect?.weaponId)
+    );
+    const weaponUpgrades = options.filter(o =>
+      o.type === 'weapon' && o.effect?.weaponLevel > 1
+    );
+
+    if (ownedWeapons.length < 3 && newWeapons.length > 0) {
+      // 前期：优先解锁新武器，高稀有度优先
+      return newWeapons.sort((a, b) => this.rarityScore(b.rarity) - this.rarityScore(a.rarity))[0];
+    }
+
+    if (weaponUpgrades.length > 0) {
+      // 后期：优先升级已有武器，高稀有度武器（核心）优先
+      return weaponUpgrades.sort((a, b) => {
+        const ra = weaponRarity[a.effect?.weaponId] || 1;
+        const rb = weaponRarity[b.effect?.weaponId] || 1;
+        return rb - ra;
+      })[0];
+    }
+
+    // 还能解锁新武器但已有3把以上：也可以解锁，但优先级低于升级
+    if (newWeapons.length > 0) {
+      return newWeapons.sort((a, b) => this.rarityScore(b.rarity) - this.rarityScore(a.rarity))[0];
+    }
+
+    // 属性升级按稀有度
+    const stats = options.filter(o => o.type === 'stat')
+      .sort((a, b) => this.rarityScore(b.rarity) - this.rarityScore(a.rarity));
+    if (stats.length > 0) return stats[0];
+
+    return options[0];
+  }
+
+  private rarityScore(rarity: string): number {
+    switch (rarity) {
+      case 'legendary': return 4;
+      case 'epic': return 3;
+      case 'rare': return 2;
+      case 'common': return 1;
+      default: return 0;
+    }
   }
 
   /** 获取可用的升级选项（过滤已满级武器） */
@@ -79,9 +174,12 @@ export class UpgradeScene extends Phaser.Scene {
     const gameScene = this.scene.get('GameScene') as any;
     const player = gameScene?.getPlayer() as Player | undefined;
 
-    // 记录选择前是否已有该武器（用于判断是新获取还是升级）
+    // 记录选择前是否已有该武器/被动（用于判断是新获取还是升级）
     const isNewWeapon = option.type === 'weapon' && option.effect.weaponId
       ? !player?.hasWeapon(option.effect.weaponId)
+      : false;
+    const isNewPassive = option.type === 'passive'
+      ? !player?.hasPassive(option.id)
       : false;
 
     if (player) {
@@ -102,7 +200,8 @@ export class UpgradeScene extends Phaser.Scene {
           showButton: false,
         });
       }
-    } else if (option.type === 'passive') {
+    } else if (isNewPassive) {
+      // 新被动解锁提示（已有被动升级不提示）
       GuideManager.getInstance().show({
         title: `新技能: ${option.name}`,
         description: option.description,

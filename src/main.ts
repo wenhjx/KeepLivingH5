@@ -9,6 +9,7 @@ import { GameOverScene } from './scenes/GameOverScene';
 import { UpgradeScene } from './scenes/UpgradeScene';
 import { ShopScene } from './scenes/ShopScene';
 import { GameManager } from './game/GameManager';
+import { initDebugAPI } from './utils/DebugAPI';
 
 // 隐藏加载界面
 const hideLoading = () => {
@@ -78,8 +79,9 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene, ShopScene],
   callbacks: {
-    postBoot: () => {
+    postBoot: (game) => {
       hideLoading();
+      initDebugAPI(game);
     },
   },
 };

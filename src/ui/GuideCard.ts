@@ -125,7 +125,7 @@ export class GuideCard {
         fontSize: '14px',
         color: '#cccccc',
         align: 'center',
-        wordWrap: { width: this.cardWidth - this.padding * 2 },
+        wordWrap: { width: this.cardWidth - this.padding * 2, useAdvancedWrap: true },
       })
       .setOrigin(0.5, 0);
     this.container.add(description);

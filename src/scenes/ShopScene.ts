@@ -5,6 +5,7 @@ import { GameConfig } from '../game/GameConfig';
 import { EventBus } from '../utils/EventBus';
 import { setupUICamera } from '../utils/CameraHelper';
 import { generateShopStock, applyShopItem, type ShopItem } from '../data/shop';
+import { createOptionCard } from '../ui/OptionCard';
 import type { Player } from '../entities/Player';
 
 /**
@@ -75,6 +76,12 @@ export class ShopScene extends Phaser.Scene {
         color: '#666666',
       })
       .setOrigin(0.5);
+
+    // AI 自动玩：延迟自动离开商店
+    const gameScene = this.scene.get('GameScene') as any;
+    if (gameScene?.isAutoPlay?.()) {
+      this.time.delayedCall(800, () => this.leave());
+    }
   }
 
   private getPlayer(): Player | undefined {
@@ -103,93 +110,18 @@ export class ShopScene extends Phaser.Scene {
 
   /** 创建单个商品卡片（整格点击购买） */
   private createCard(x: number, y: number, item: ShopItem, index: number): void {
-    const card = this.add.container(x, y).setData('isShopCard', true);
-
-    const rarityColors: Record<string, number> = {
-      common: 0x888888,
-      rare: 0x3399ff,
-      epic: 0xaa44ff,
-      legendary: 0xffaa00,
-    };
-    const borderColor = rarityColors[item.rarity] || 0x888888;
-
-    const bg = this.add.graphics();
-    bg.fillStyle(0x1a1a25, 1);
-    bg.fillRoundedRect(-this.cardWidth / 2, -this.cardHeight / 2, this.cardWidth, this.cardHeight, 12);
-    bg.lineStyle(3, borderColor, 1);
-    bg.strokeRoundedRect(-this.cardWidth / 2, -this.cardHeight / 2, this.cardWidth, this.cardHeight, 12);
-    card.add(bg);
-
-    // 稀有度标签
-    const rarityText = createUIText(this, 0, -this.cardHeight / 2 + 20, item.rarity.toUpperCase(), {
-        fontSize: '12px',
-        color: `#${borderColor.toString(16).padStart(6, '0')}`,
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
-    card.add(rarityText);
-
-    // 图标
-    const iconBg = this.add.graphics();
-    iconBg.fillStyle(0x2a2a35, 1);
-    iconBg.fillCircle(0, -78, 38);
-    card.add(iconBg);
-
-    const iconText = createUIText(this, 0, -78, item.icon, { fontSize: '30px' }).setOrigin(0.5);
-    card.add(iconText);
-
-    // 名称
-    const nameText = createUIText(this, 0, -20, item.name, {
-        fontSize: '18px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-        wordWrap: { width: this.cardWidth - 20 },
-      })
-      .setOrigin(0.5);
-    card.add(nameText);
-
-    // 描述
-    const descText = createUIText(this, 0, 18, item.desc, {
-        fontSize: '12px',
-        color: '#aaaaaa',
-        align: 'center',
-        wordWrap: { width: this.cardWidth - 30 },
-      })
-      .setOrigin(0.5, 0);
-    card.add(descText);
-
-    // 价格
-    const priceText = createUIText(this, 0, this.cardHeight / 2 - 40, `💰 ${item.price}`, {
-        fontSize: '20px',
-        color: '#ffcc00',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
-    card.add(priceText);
-
-    // 交互区域（整格点击）
-    const hitArea = this.add
-      .rectangle(0, 0, this.cardWidth, this.cardHeight, 0xffffff, 0)
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-    card.add(hitArea);
-
-    hitArea.on('pointerover', () => {
-      bg.clear();
-      bg.fillStyle(0x2a2a40, 1);
-      bg.fillRoundedRect(-this.cardWidth / 2, -this.cardHeight / 2, this.cardWidth, this.cardHeight, 12);
-      bg.lineStyle(3, borderColor, 1);
-      bg.strokeRoundedRect(-this.cardWidth / 2, -this.cardHeight / 2, this.cardWidth, this.cardHeight, 12);
+    const card = createOptionCard(this, x, y, {
+      name: item.name,
+      icon: item.icon,
+      desc: item.desc,
+      rarity: item.rarity,
+      cardWidth: this.cardWidth,
+      cardHeight: this.cardHeight,
+      footerText: `💰 ${item.price}`,
+      footerColor: '#ffcc00',
+      onClick: () => this.tryBuy(item, card),
     });
-    hitArea.on('pointerout', () => {
-      bg.clear();
-      bg.fillStyle(0x1a1a25, 1);
-      bg.fillRoundedRect(-this.cardWidth / 2, -this.cardHeight / 2, this.cardWidth, this.cardHeight, 12);
-      bg.lineStyle(3, borderColor, 1);
-      bg.strokeRoundedRect(-this.cardWidth / 2, -this.cardHeight / 2, this.cardWidth, this.cardHeight, 12);
-    });
-
-    hitArea.on('pointerdown', () => this.tryBuy(item, card));
+    card.setData('isShopCard', true);
   }
 
   // ========== 购买 ==========
@@ -203,7 +135,12 @@ export class ShopScene extends Phaser.Scene {
       return;
     }
 
-    applyShopItem(player, item, this.scene.get('GameScene'));
+    // 可主动使用的消耗品进入物品栏；复活币等无 itemId 的立即生效
+    if (item.kind === 'consumable' && item.itemId) {
+      player.addItem(item.itemId);
+    } else {
+      applyShopItem(player, item, this.scene.get('GameScene'));
+    }
     this.updateCoin();
 
     // 该格标记已售
