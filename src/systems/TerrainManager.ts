@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import {
   type TerrainConfig,
   type ObstacleConfig,
-  OBSTACLE_COLORS,
 } from '../data/terrain';
 
 /**
@@ -27,20 +26,28 @@ export class TerrainManager {
     this.config = config;
   }
 
+  /** 障碍物类型 → 纹理 key 映射 */
+  private static readonly TEXTURE_MAP: Record<string, string> = {
+    rock: 'obstacle_rock',
+    wall: 'obstacle_wall',
+    crate: 'obstacle_rock', // 暂用岩石纹理代替木箱
+    crystal: 'obstacle_crystal',
+  };
+
   /** 创建所有障碍物（在 GameScene.create 中调用） */
   create(): void {
     this.obstacleGroup = this.scene.physics.add.staticGroup();
 
     for (const obs of this.config.obstacles) {
-      const color = obs.color ?? OBSTACLE_COLORS[obs.type];
-      const rect = this.scene.add
-        .rectangle(obs.x, obs.y, obs.width, obs.height, color)
-        .setStrokeStyle(2, 0x222222)
+      const textureKey = TerrainManager.TEXTURE_MAP[obs.type] || 'obstacle_rock';
+      const img = this.scene.add
+        .image(obs.x, obs.y, textureKey)
+        .setDisplaySize(obs.width, obs.height)
         .setDepth(1);
 
       // 加入静态物理组
-      this.obstacleGroup.add(rect);
-      const body = rect.body as Phaser.Physics.Arcade.StaticBody | null;
+      this.obstacleGroup.add(img);
+      const body = img.body as Phaser.Physics.Arcade.StaticBody | null;
       if (body) {
         body.setSize(obs.width, obs.height);
         body.updateFromGameObject();

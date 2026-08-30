@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 /**
  * 霓虹深渊 (Neon Abyss) 主题纹理生成器
  * 用程序生成所有游戏素材，无需外部图片文件
- * 风格：深色背景 + 霓虹发光 + 几何图形
+ * 风格：深色背景 + 霓虹发光 + 多层细节几何图形
  */
 export class TextureGenerator {
   private scene: Phaser.Scene;
@@ -13,6 +13,7 @@ export class TextureGenerator {
     bg: 0x0a0a15,
     player: 0x00ffff,
     playerGlow: 0x00ffff,
+    playerAccent: 0xff6600,
     enemyNormal: 0x00ff88,
     enemyFast: 0x4488ff,
     enemyTank: 0xff8844,
@@ -42,38 +43,87 @@ export class TextureGenerator {
     this.generateUI();
     this.generateWeapons();
     this.generateTiles();
+    this.generateObstacles();
   }
 
   // ========== 玩家 ==========
   private generatePlayer(): void {
     const size = 64;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
 
-    // 外发光
-    g.fillStyle(TextureGenerator.COLORS.playerGlow, 0.3);
-    g.fillCircle(size / 2, size / 2, 28);
+    // 最外层光晕
+    g.fillStyle(TextureGenerator.COLORS.playerGlow, 0.12);
+    g.fillCircle(cx, cy, 30);
+    g.fillStyle(TextureGenerator.COLORS.playerGlow, 0.2);
+    g.fillCircle(cx, cy, 24);
 
-    // 主体三角形（朝上的箭头/飞船）
-    g.fillStyle(TextureGenerator.COLORS.player, 1);
+    // 引擎尾焰（底部渐变三角形）
+    g.fillStyle(TextureGenerator.COLORS.playerAccent, 0.6);
     g.beginPath();
-    g.moveTo(size / 2, 8);
-    g.lineTo(size - 12, size - 10);
-    g.lineTo(size / 2, size - 18);
-    g.lineTo(12, size - 10);
+    g.moveTo(cx - 6, cy + 14);
+    g.lineTo(cx, cy + 28);
+    g.lineTo(cx + 6, cy + 14);
+    g.closePath();
+    g.fillPath();
+    g.fillStyle(0xffff00, 0.5);
+    g.beginPath();
+    g.moveTo(cx - 3, cy + 14);
+    g.lineTo(cx, cy + 22);
+    g.lineTo(cx + 3, cy + 14);
     g.closePath();
     g.fillPath();
 
-    // 内部高光
-    g.fillStyle(0xffffff, 0.6);
-    g.fillCircle(size / 2, size / 2 + 2, 5);
+    // 机翼（后掠翼，左右展开）
+    g.fillStyle(TextureGenerator.COLORS.player, 0.85);
+    g.beginPath();
+    g.moveTo(cx, cy - 22);
+    g.lineTo(cx + 22, cy + 12);
+    g.lineTo(cx + 14, cy + 16);
+    g.lineTo(cx, cy + 8);
+    g.lineTo(cx - 14, cy + 16);
+    g.lineTo(cx - 22, cy + 12);
+    g.closePath();
+    g.fillPath();
+
+    // 机身主体（尖锐菱形）
+    g.fillStyle(TextureGenerator.COLORS.player, 1);
+    g.beginPath();
+    g.moveTo(cx, cy - 24);
+    g.lineTo(cx + 10, cy + 10);
+    g.lineTo(cx, cy + 16);
+    g.lineTo(cx - 10, cy + 10);
+    g.closePath();
+    g.fillPath();
+
+    // 机身暗部（右侧阴影，增加立体感）
+    g.fillStyle(0x006666, 0.5);
+    g.beginPath();
+    g.moveTo(cx, cy - 24);
+    g.lineTo(cx + 10, cy + 10);
+    g.lineTo(cx, cy + 16);
+    g.closePath();
+    g.fillPath();
+
+    // 驾驶舱（发光椭圆）
+    g.fillStyle(0xffffff, 0.9);
+    g.fillEllipse(cx, cy - 6, 5, 8);
+    g.fillStyle(TextureGenerator.COLORS.playerGlow, 0.6);
+    g.fillEllipse(cx, cy - 6, 7, 10);
+
+    // 机翼尖端发光点
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx - 20, cy + 11, 2);
+    g.fillCircle(cx + 20, cy + 11, 2);
 
     // 边缘描边
-    g.lineStyle(2, 0xffffff, 0.8);
+    g.lineStyle(1.5, 0xffffff, 0.6);
     g.beginPath();
-    g.moveTo(size / 2, 8);
-    g.lineTo(size - 12, size - 10);
-    g.lineTo(size / 2, size - 18);
-    g.lineTo(12, size - 10);
+    g.moveTo(cx, cy - 24);
+    g.lineTo(cx + 10, cy + 10);
+    g.lineTo(cx, cy + 16);
+    g.lineTo(cx - 10, cy + 10);
     g.closePath();
     g.strokePath();
 
@@ -83,101 +133,229 @@ export class TextureGenerator {
 
   // ========== 敌人 ==========
   private generateEnemies(): void {
-    this.generateEnemyCircle('enemy_normal', TextureGenerator.COLORS.enemyNormal, 20);
-    this.generateEnemyDiamond('enemy_fast', TextureGenerator.COLORS.enemyFast, 18);
-    this.generateEnemySquare('enemy_tank', TextureGenerator.COLORS.enemyTank, 24);
-    this.generateEnemyCircle('enemy_ranged', TextureGenerator.COLORS.enemyRanged, 18);
-    this.generateEnemyHexagon('enemy_elite', TextureGenerator.COLORS.enemyElite, 26);
+    this.generateEnemyBlob('enemy_normal', TextureGenerator.COLORS.enemyNormal, 20);
+    this.generateEnemyShard('enemy_fast', TextureGenerator.COLORS.enemyFast, 18);
+    this.generateEnemyTank('enemy_tank', TextureGenerator.COLORS.enemyTank, 24);
+    this.generateEnemyCaster('enemy_ranged', TextureGenerator.COLORS.enemyRanged, 18);
+    this.generateEnemyElite('enemy_elite', TextureGenerator.COLORS.enemyElite, 26);
     this.generateEnemyBoss('enemy_boss', TextureGenerator.COLORS.enemyBoss, 56);
   }
 
-  private generateEnemyCircle(key: string, color: number, radius: number): void {
-    const size = radius * 2 + 8;
+  /** 普通敌人：感染体（不规则圆形 + 破损边缘 + 眼睛） */
+  private generateEnemyBlob(key: string, color: number, radius: number): void {
+    const size = radius * 2 + 12;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
     const cx = size / 2;
     const cy = size / 2;
 
-    // 发光
-    g.fillStyle(color, 0.25);
-    g.fillCircle(cx, cy, radius + 4);
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, radius + 6);
+    g.fillStyle(color, 0.3);
+    g.fillCircle(cx, cy, radius + 2);
 
-    // 主体
+    // 主体（不规则圆形，用多个圆叠加模拟感染体）
     g.fillStyle(color, 1);
     g.fillCircle(cx, cy, radius);
+    g.fillCircle(cx - radius * 0.4, cy - radius * 0.3, radius * 0.5);
+    g.fillCircle(cx + radius * 0.35, cy + radius * 0.2, radius * 0.45);
 
-    // 眼睛
+    // 暗部
+    g.fillStyle(0x000000, 0.25);
+    g.fillCircle(cx + radius * 0.3, cy + radius * 0.3, radius * 0.6);
+
+    // 眼睛（一大一小，诡异感）
     g.fillStyle(0x000000, 1);
-    g.fillCircle(cx - radius * 0.3, cy - 2, 3);
-    g.fillCircle(cx + radius * 0.3, cy - 2, 3);
+    g.fillCircle(cx - radius * 0.25, cy - radius * 0.15, radius * 0.18);
+    g.fillCircle(cx + radius * 0.3, cy - radius * 0.05, radius * 0.13);
+    // 瞳孔高光
+    g.fillStyle(0xff0000, 0.9);
+    g.fillCircle(cx - radius * 0.25, cy - radius * 0.15, radius * 0.08);
+    g.fillCircle(cx + radius * 0.3, cy - radius * 0.05, radius * 0.06);
+
+    // 嘴（锯齿状）
+    g.fillStyle(0x000000, 0.7);
+    g.fillRect(cx - radius * 0.3, cy + radius * 0.25, radius * 0.6, radius * 0.12);
 
     // 高光
-    g.fillStyle(0xffffff, 0.4);
-    g.fillCircle(cx - radius * 0.3, cy - radius * 0.3, radius * 0.25);
+    g.fillStyle(0xffffff, 0.35);
+    g.fillCircle(cx - radius * 0.35, cy - radius * 0.4, radius * 0.2);
 
     g.generateTexture(key, size, size);
     g.destroy();
   }
 
-  private generateEnemyDiamond(key: string, color: number, size: number): void {
-    const canvas = size + 8;
+  /** 快速敌人：晶体碎片（锐利菱形 + 速度线） */
+  private generateEnemyShard(key: string, color: number, r: number): void {
+    const size = r * 2 + 12;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
-    const cx = canvas / 2;
-    const cy = canvas / 2;
+    const cx = size / 2;
+    const cy = size / 2;
 
-    g.fillStyle(color, 0.25);
-    g.fillCircle(cx, cy, size * 0.7);
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 4);
 
-    g.fillStyle(color, 1);
+    // 速度线（后方拖影）
+    g.fillStyle(color, 0.3);
     g.beginPath();
-    g.moveTo(cx, cy - size / 2);
-    g.lineTo(cx + size / 2, cy);
-    g.lineTo(cx, cy + size / 2);
-    g.lineTo(cx - size / 2, cy);
+    g.moveTo(cx, cy + r * 0.3);
+    g.lineTo(cx - r * 0.5, cy + r * 1.2);
+    g.lineTo(cx + r * 0.5, cy + r * 1.2);
     g.closePath();
     g.fillPath();
 
-    g.fillStyle(0xffffff, 0.5);
-    g.fillCircle(cx, cy - 2, 3);
-
-    g.generateTexture(key, canvas, canvas);
-    g.destroy();
-  }
-
-  private generateEnemySquare(key: string, color: number, size: number): void {
-    const canvas = size + 8;
-    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
-    const cx = canvas / 2;
-    const cy = canvas / 2;
-    const half = size / 2;
-
-    g.fillStyle(color, 0.25);
-    g.fillCircle(cx, cy, size * 0.65);
-
+    // 主体（锐利晶体，上下不对称）
     g.fillStyle(color, 1);
-    g.fillRoundedRect(cx - half, cy - half, size, size, 4);
+    g.beginPath();
+    g.moveTo(cx, cy - r);
+    g.lineTo(cx + r * 0.7, cy - r * 0.1);
+    g.lineTo(cx + r * 0.5, cy + r * 0.6);
+    g.lineTo(cx, cy + r * 0.9);
+    g.lineTo(cx - r * 0.5, cy + r * 0.6);
+    g.lineTo(cx - r * 0.7, cy - r * 0.1);
+    g.closePath();
+    g.fillPath();
 
-    // 装甲线条
-    g.lineStyle(2, 0x000000, 0.4);
-    g.lineBetween(cx - half + 4, cy, cx + half - 4, cy);
+    // 内部切面（晶体感）
+    g.fillStyle(0xffffff, 0.35);
+    g.beginPath();
+    g.moveTo(cx, cy - r);
+    g.lineTo(cx + r * 0.3, cy - r * 0.1);
+    g.lineTo(cx, cy + r * 0.2);
+    g.lineTo(cx - r * 0.3, cy - r * 0.1);
+    g.closePath();
+    g.fillPath();
 
-    g.fillStyle(0xff0000, 1);
-    g.fillCircle(cx - 5, cy - 4, 2.5);
-    g.fillCircle(cx + 5, cy - 4, 2.5);
+    // 核心发光点
+    g.fillStyle(0xffffff, 0.8);
+    g.fillCircle(cx, cy, r * 0.15);
 
-    g.generateTexture(key, canvas, canvas);
+    g.generateTexture(key, size, size);
     g.destroy();
   }
 
-  private generateEnemyHexagon(key: string, color: number, size: number): void {
-    const canvas = size + 10;
+  /** 重装敌人：装甲方块（多层装甲 + 铆钉 + 红眼） */
+  private generateEnemyTank(key: string, color: number, s: number): void {
+    const size = s + 14;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
-    const cx = canvas / 2;
-    const cy = canvas / 2;
-    const r = size / 2;
+    const cx = size / 2;
+    const cy = size / 2;
+    const half = s / 2;
 
-    g.fillStyle(color, 0.3);
+    // 外发光
+    g.fillStyle(color, 0.18);
+    g.fillRoundedRect(cx - half - 4, cy - half - 4, s + 8, s + 8, 6);
+
+    // 主体装甲
+    g.fillStyle(color, 1);
+    g.fillRoundedRect(cx - half, cy - half, s, s, 5);
+
+    // 装甲板拼接缝
+    g.lineStyle(2, 0x000000, 0.35);
+    g.lineBetween(cx - half + 3, cy, cx + half - 3, cy);
+    g.lineBetween(cx, cy - half + 3, cx, cy + half - 3);
+
+    // 铆钉（四角）
+    g.fillStyle(0x333333, 1);
+    const rivetR = 2;
+    g.fillCircle(cx - half + 5, cy - half + 5, rivetR);
+    g.fillCircle(cx + half - 5, cy - half + 5, rivetR);
+    g.fillCircle(cx - half + 5, cy + half - 5, rivetR);
+    g.fillCircle(cx + half - 5, cy + half - 5, rivetR);
+
+    // 红色光学眼（横向）
+    g.fillStyle(0x000000, 0.8);
+    g.fillRoundedRect(cx - half * 0.5, cy - half * 0.25, half, half * 0.5, 2);
+    g.fillStyle(0xff0000, 1);
+    g.fillRect(cx - half * 0.4, cy - half * 0.12, half * 0.8, half * 0.24);
+    g.fillStyle(0xff6666, 0.6);
+    g.fillRect(cx - half * 0.4, cy - half * 0.12, half * 0.8, half * 0.08);
+
+    // 顶部高光
+    g.fillStyle(0xffffff, 0.2);
+    g.fillRoundedRect(cx - half + 2, cy - half + 2, s - 4, 4, 2);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 远程敌人：施法者（圆形 + 能量环 + 瞄准核心） */
+  private generateEnemyCaster(key: string, color: number, r: number): void {
+    const size = r * 2 + 14;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 7);
+
+    // 旋转能量环（虚线感，用弧线段）
+    g.lineStyle(2, color, 0.6);
+    for (let i = 0; i < 8; i++) {
+      const a1 = (i / 8) * Math.PI * 2;
+      const a2 = a1 + 0.3;
+      g.beginPath();
+      g.arc(cx, cy, r + 4, a1, a2, false);
+      g.strokePath();
+    }
+
+    // 主体
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+
+    // 暗部
+    g.fillStyle(0x000000, 0.3);
+    g.fillCircle(cx + r * 0.25, cy + r * 0.25, r * 0.7);
+
+    // 瞄准核心（十字准星）
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx, cy, r * 0.25);
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r * 0.15);
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(cx, cy, r * 0.06);
+
+    // 准星十字线
+    g.lineStyle(1.5, 0xffffff, 0.7);
+    g.lineBetween(cx - r * 0.5, cy, cx - r * 0.3, cy);
+    g.lineBetween(cx + r * 0.3, cy, cx + r * 0.5, cy);
+    g.lineBetween(cx, cy - r * 0.5, cx, cy - r * 0.3);
+    g.lineBetween(cx, cy + r * 0.3, cx, cy + r * 0.5);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 精英敌人：六边形能量体（旋转纹路 + 核心 + 尖角） */
+  private generateEnemyElite(key: string, color: number, r: number): void {
+    const size = r * 2 + 14;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 7);
+    g.fillStyle(color, 0.12);
     g.fillCircle(cx, cy, r + 4);
 
+    // 尖角（六边形外伸）
+    g.fillStyle(color, 0.7);
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const innerR = r * 0.85;
+      const outerR = r * 1.15;
+      g.beginPath();
+      g.moveTo(cx + Math.cos(angle - 0.2) * innerR, cy + Math.sin(angle - 0.2) * innerR);
+      g.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+      g.lineTo(cx + Math.cos(angle + 0.2) * innerR, cy + Math.sin(angle + 0.2) * innerR);
+      g.closePath();
+      g.fillPath();
+    }
+
+    // 主体六边形
     g.fillStyle(color, 1);
     g.beginPath();
     for (let i = 0; i < 6; i++) {
@@ -190,26 +368,58 @@ export class TextureGenerator {
     g.closePath();
     g.fillPath();
 
-    // 中心核心
-    g.fillStyle(0xffffff, 0.7);
-    g.fillCircle(cx, cy, r * 0.3);
+    // 内部六边形（暗）
+    g.fillStyle(0x000000, 0.35);
+    g.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+      const px = cx + Math.cos(angle) * r * 0.6;
+      const py = cy + Math.sin(angle) * r * 0.6;
+      if (i === 0) g.moveTo(px, py);
+      else g.lineTo(px, py);
+    }
+    g.closePath();
+    g.fillPath();
 
-    g.generateTexture(key, canvas, canvas);
+    // 能量核心（脉冲感，用多层圆）
+    g.fillStyle(color, 0.5);
+    g.fillCircle(cx, cy, r * 0.35);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx, cy, r * 0.2);
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r * 0.1);
+
+    g.generateTexture(key, size, size);
     g.destroy();
   }
 
-  private generateEnemyBoss(key: string, color: number, size: number): void {
-    const canvas = size + 16;
+  /** Boss：多层装甲 + 尖刺 + 多眼 + 核心 */
+  private generateEnemyBoss(key: string, color: number, s: number): void {
+    const size = s + 24;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
-    const cx = canvas / 2;
-    const cy = canvas / 2;
-    const r = size / 2;
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = s / 2;
 
-    // 外层光环
-    g.fillStyle(color, 0.2);
-    g.fillCircle(cx, cy, r + 10);
+    // 最外层光环
+    g.fillStyle(color, 0.1);
+    g.fillCircle(cx, cy, r + 14);
     g.fillStyle(color, 0.15);
-    g.fillCircle(cx, cy, r + 6);
+    g.fillCircle(cx, cy, r + 8);
+
+    // 外层尖刺（12个）
+    g.fillStyle(color, 0.75);
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const innerR = r * 0.9;
+      const outerR = r * 1.2;
+      g.beginPath();
+      g.moveTo(cx + Math.cos(angle - 0.1) * innerR, cy + Math.sin(angle - 0.1) * innerR);
+      g.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+      g.lineTo(cx + Math.cos(angle + 0.1) * innerR, cy + Math.sin(angle + 0.1) * innerR);
+      g.closePath();
+      g.fillPath();
+    }
 
     // 主体八边形
     g.fillStyle(color, 1);
@@ -224,124 +434,187 @@ export class TextureGenerator {
     g.closePath();
     g.fillPath();
 
-    // 内核
-    g.fillStyle(0x000000, 0.5);
-    g.fillCircle(cx, cy, r * 0.5);
+    // 装甲环
+    g.lineStyle(3, 0x000000, 0.4);
+    g.beginPath();
+    g.arc(cx, cy, r * 0.75, 0, Math.PI * 2, false);
+    g.strokePath();
 
-    // 眼睛
-    g.fillStyle(0xffff00, 1);
-    g.fillCircle(cx - r * 0.25, cy - r * 0.1, r * 0.12);
-    g.fillCircle(cx + r * 0.25, cy - r * 0.1, r * 0.12);
+    // 内层暗区
+    g.fillStyle(0x000000, 0.4);
+    g.fillCircle(cx, cy, r * 0.6);
 
-    // 尖刺
-    g.fillStyle(color, 0.8);
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const innerR = r * 0.9;
-      const outerR = r * 1.15;
-      g.beginPath();
-      g.moveTo(cx + Math.cos(angle - 0.15) * innerR, cy + Math.sin(angle - 0.15) * innerR);
-      g.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
-      g.lineTo(cx + Math.cos(angle + 0.15) * innerR, cy + Math.sin(angle + 0.15) * innerR);
-      g.closePath();
-      g.fillPath();
-    }
+    // 三只眼睛（三角分布，恐怖感）
+    const eyePositions = [
+      { x: cx, y: cy - r * 0.25 },
+      { x: cx - r * 0.25, y: cy + r * 0.15 },
+      { x: cx + r * 0.25, y: cy + r * 0.15 },
+    ];
+    eyePositions.forEach((pos) => {
+      g.fillStyle(0x000000, 1);
+      g.fillCircle(pos.x, pos.y, r * 0.12);
+      g.fillStyle(0xffff00, 1);
+      g.fillCircle(pos.x, pos.y, r * 0.07);
+      g.fillStyle(0xff0000, 0.8);
+      g.fillCircle(pos.x, pos.y, r * 0.04);
+    });
 
-    g.generateTexture(key, canvas, canvas);
+    // 中心能量核心
+    g.fillStyle(color, 0.6);
+    g.fillCircle(cx, cy + r * 0.35, r * 0.15);
+    g.fillStyle(0xffffff, 0.8);
+    g.fillCircle(cx, cy + r * 0.35, r * 0.07);
+
+    g.generateTexture(key, size, size);
     g.destroy();
   }
 
   // ========== 子弹 ==========
   private generateBullets(): void {
-    // 玩家子弹
-    const size = 16;
+    // 玩家子弹（能量弹：发光核心 + 拖尾）
+    const size = 20;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
-    g.fillStyle(TextureGenerator.COLORS.bulletGlow, 0.4);
-    g.fillCircle(size / 2, size / 2, 7);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外层光晕
+    g.fillStyle(TextureGenerator.COLORS.bulletGlow, 0.3);
+    g.fillCircle(cx, cy, 8);
+    g.fillStyle(TextureGenerator.COLORS.bulletGlow, 0.5);
+    g.fillCircle(cx, cy, 5);
+
+    // 核心
     g.fillStyle(TextureGenerator.COLORS.bullet, 1);
-    g.fillCircle(size / 2, size / 2, 4);
-    g.fillStyle(0xffffff, 0.8);
-    g.fillCircle(size / 2 - 1, size / 2 - 1, 1.5);
+    g.fillCircle(cx, cy, 3);
+
+    // 高光
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx - 0.5, cy - 0.5, 1.2);
+
     g.generateTexture('bullet', size, size);
     g.destroy();
+
+    // 敌人子弹（紫红色能量弹）
+    const size2 = 18;
+    const g2 = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    g2.fillStyle(0xff44ff, 0.3);
+    g2.fillCircle(size2 / 2, size2 / 2, 7);
+    g2.fillStyle(0xff44ff, 0.6);
+    g2.fillCircle(size2 / 2, size2 / 2, 4);
+    g2.fillStyle(0xffffff, 1);
+    g2.fillCircle(size2 / 2, size2 / 2, 2);
+    g2.generateTexture('enemy_bullet', size2, size2);
+    g2.destroy();
   }
 
   // ========== 拾取物 ==========
   private generatePickups(): void {
-    // 经验宝石
     this.generateGem('pickup_exp', TextureGenerator.COLORS.exp, 20);
-    // 血包
     this.generateHealth('pickup_health', 22);
-    // 金币
     this.generateCoin('pickup_coin', 18);
   }
 
   private generateGem(key: string, color: number, size: number): void {
-    const canvas = size + 6;
+    const canvas = size + 8;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
     const cx = canvas / 2;
     const cy = canvas / 2;
     const r = size / 2;
 
-    g.fillStyle(color, 0.3);
-    g.fillCircle(cx, cy, r + 2);
+    // 外发光
+    g.fillStyle(color, 0.25);
+    g.fillCircle(cx, cy, r + 3);
 
+    // 主体菱形（多切面）
     g.fillStyle(color, 1);
     g.beginPath();
     g.moveTo(cx, cy - r);
-    g.lineTo(cx + r * 0.7, cy);
-    g.lineTo(cx, cy + r);
-    g.lineTo(cx - r * 0.7, cy);
+    g.lineTo(cx + r * 0.75, cy - r * 0.2);
+    g.lineTo(cx + r * 0.6, cy + r);
+    g.lineTo(cx - r * 0.6, cy + r);
+    g.lineTo(cx - r * 0.75, cy - r * 0.2);
     g.closePath();
     g.fillPath();
 
-    g.fillStyle(0xffffff, 0.6);
-    g.fillTriangle(cx - 2, cy - r + 3, cx + 2, cy - r + 3, cx, cy - 2);
+    // 顶部亮面
+    g.fillStyle(0xffffff, 0.45);
+    g.beginPath();
+    g.moveTo(cx, cy - r);
+    g.lineTo(cx + r * 0.75, cy - r * 0.2);
+    g.lineTo(cx, cy - r * 0.1);
+    g.lineTo(cx - r * 0.75, cy - r * 0.2);
+    g.closePath();
+    g.fillPath();
+
+    // 内部切割线
+    g.lineStyle(1, 0xffffff, 0.3);
+    g.lineBetween(cx - r * 0.6, cy + r, cx, cy - r * 0.1);
+    g.lineBetween(cx + r * 0.6, cy + r, cx, cy - r * 0.1);
 
     g.generateTexture(key, canvas, canvas);
     g.destroy();
   }
 
   private generateHealth(key: string, size: number): void {
-    const canvas = size + 6;
+    const canvas = size + 8;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
     const cx = canvas / 2;
     const cy = canvas / 2;
 
-    g.fillStyle(TextureGenerator.COLORS.health, 0.3);
-    g.fillCircle(cx, cy, size / 2 + 2);
+    // 外发光
+    g.fillStyle(TextureGenerator.COLORS.health, 0.25);
+    g.fillCircle(cx, cy, size / 2 + 3);
 
+    // 主体圆角方
     g.fillStyle(TextureGenerator.COLORS.health, 1);
-    g.fillRoundedRect(cx - size / 2, cy - size / 2, size, size, 4);
+    g.fillRoundedRect(cx - size / 2, cy - size / 2, size, size, 5);
 
-    // 白色十字
+    // 暗边
+    g.lineStyle(2, 0x000000, 0.3);
+    g.strokeRoundedRect(cx - size / 2, cy - size / 2, size, size, 5);
+
+    // 白色十字（更粗更醒目）
     g.fillStyle(0xffffff, 1);
-    const t = size * 0.22;
-    g.fillRect(cx - t / 2, cy - size * 0.35, t, size * 0.7);
-    g.fillRect(cx - size * 0.35, cy - t / 2, size * 0.7, t);
+    const t = size * 0.24;
+    g.fillRoundedRect(cx - t / 2, cy - size * 0.32, t, size * 0.64, 2);
+    g.fillRoundedRect(cx - size * 0.32, cy - t / 2, size * 0.64, t, 2);
+
+    // 十字高光
+    g.fillStyle(0xffaaaa, 0.5);
+    g.fillRoundedRect(cx - t / 2, cy - size * 0.32, t, size * 0.3, 1);
 
     g.generateTexture(key, canvas, canvas);
     g.destroy();
   }
 
   private generateCoin(key: string, size: number): void {
-    const canvas = size + 6;
+    const canvas = size + 8;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
     const cx = canvas / 2;
     const cy = canvas / 2;
     const r = size / 2;
 
-    g.fillStyle(TextureGenerator.COLORS.coin, 0.3);
-    g.fillCircle(cx, cy, r + 2);
+    // 外发光
+    g.fillStyle(TextureGenerator.COLORS.coin, 0.25);
+    g.fillCircle(cx, cy, r + 3);
 
+    // 外圈
     g.fillStyle(TextureGenerator.COLORS.coin, 1);
     g.fillCircle(cx, cy, r);
 
-    g.fillStyle(0xaa7700, 0.6);
-    g.fillCircle(cx, cy, r * 0.7);
+    // 内圈暗
+    g.fillStyle(0xaa7700, 0.7);
+    g.fillCircle(cx, cy, r * 0.75);
 
-    g.fillStyle(0xffffff, 0.5);
-    g.fillCircle(cx - r * 0.3, cy - r * 0.3, r * 0.2);
+    // 内圈亮
+    g.fillStyle(0xffdd44, 1);
+    g.fillCircle(cx, cy, r * 0.6);
+
+    // 中心符号（$ 用竖线+S曲线模拟）
+    g.fillStyle(0xaa7700, 1);
+    g.fillRect(cx - 1.5, cy - r * 0.35, 3, r * 0.7);
+    g.fillStyle(0xffffff, 0.4);
+    g.fillCircle(cx - r * 0.25, cy - r * 0.25, r * 0.18);
 
     g.generateTexture(key, canvas, canvas);
     g.destroy();
@@ -352,14 +625,17 @@ export class TextureGenerator {
     this.generateParticleDot('particle_hit', 0xffff00, 8);
     this.generateParticleDot('particle_death', 0xff4444, 10);
     this.generateParticleDot('particle_exp', 0x00ffff, 8);
+    this.generateParticleDot('particle_explosion', 0xff8800, 12);
   }
 
   private generateParticleDot(key: string, color: number, size: number): void {
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    g.fillStyle(color, 0.4);
+    g.fillCircle(size / 2, size / 2, size / 2);
     g.fillStyle(color, 1);
-    g.fillCircle(size / 2, size / 2, size / 2 - 1);
-    g.fillStyle(0xffffff, 0.6);
-    g.fillCircle(size / 2 - 1, size / 2 - 1, size / 4);
+    g.fillCircle(size / 2, size / 2, size / 2 - 2);
+    g.fillStyle(0xffffff, 0.7);
+    g.fillCircle(size / 2 - 1, size / 2 - 1, size / 5);
     g.generateTexture(key, size, size);
     g.destroy();
   }
@@ -425,30 +701,200 @@ export class TextureGenerator {
     g.destroy();
   }
 
+  // ========== 障碍物纹理 ==========
+  private generateObstacles(): void {
+    // 岩石障碍物
+    this.generateRock('obstacle_rock', 0x556677, 120, 80);
+    // 墙体障碍物
+    this.generateWall('obstacle_wall', 0x4a4a5e, 160, 40);
+    // 水晶障碍物
+    this.generateCrystal('obstacle_crystal', 0x8844ff, 60, 90);
+  }
+
+  private generateRock(key: string, color: number, w: number, h: number): void {
+    const pad = 8;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = (w + pad * 2) / 2;
+    const cy = (h + pad * 2) / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.15);
+    g.fillRoundedRect(pad - 2, pad - 2, w + 4, h + 4, 8);
+
+    // 主体（不规则岩石，用多边形）
+    g.fillStyle(color, 1);
+    g.beginPath();
+    g.moveTo(cx - w / 2 + 8, cy - h / 2);
+    g.lineTo(cx + w / 2 - 5, cy - h / 2 + 4);
+    g.lineTo(cx + w / 2, cy + h / 2 - 8);
+    g.lineTo(cx + w / 2 - 12, cy + h / 2);
+    g.lineTo(cx - w / 2 + 6, cy + h / 2 - 3);
+    g.lineTo(cx - w / 2, cy + h / 2 - 12);
+    g.closePath();
+    g.fillPath();
+
+    // 暗部
+    g.fillStyle(0x000000, 0.25);
+    g.beginPath();
+    g.moveTo(cx, cy - h / 2);
+    g.lineTo(cx + w / 2 - 5, cy - h / 2 + 4);
+    g.lineTo(cx + w / 2, cy + h / 2 - 8);
+    g.lineTo(cx + w / 2 - 12, cy + h / 2);
+    g.lineTo(cx, cy + h / 4);
+    g.closePath();
+    g.fillPath();
+
+    // 裂纹
+    g.lineStyle(1.5, 0x000000, 0.4);
+    g.beginPath();
+    g.moveTo(cx - w * 0.2, cy - h * 0.3);
+    g.lineTo(cx - w * 0.05, cy);
+    g.lineTo(cx - w * 0.15, cy + h * 0.25);
+    g.strokePath();
+
+    // 高光
+    g.fillStyle(0xffffff, 0.15);
+    g.beginPath();
+    g.moveTo(cx - w / 2 + 8, cy - h / 2);
+    g.lineTo(cx, cy - h / 2 + 2);
+    g.lineTo(cx - w * 0.2, cy - h * 0.1);
+    g.closePath();
+    g.fillPath();
+
+    g.generateTexture(key, w + pad * 2, h + pad * 2);
+    g.destroy();
+  }
+
+  private generateWall(key: string, color: number, w: number, h: number): void {
+    const pad = 6;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = (w + pad * 2) / 2;
+    const cy = (h + pad * 2) / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.15);
+    g.fillRoundedRect(pad - 1, pad - 1, w + 2, h + 2, 4);
+
+    // 主体
+    g.fillStyle(color, 1);
+    g.fillRoundedRect(pad, pad, w, h, 3);
+
+    // 砖块纹理（横向分隔线）
+    g.lineStyle(1.5, 0x000000, 0.35);
+    g.lineBetween(pad, cy, pad + w, cy);
+    // 竖向错位分隔
+    g.lineBetween(pad + w * 0.25, pad, pad + w * 0.25, cy);
+    g.lineBetween(pad + w * 0.7, pad, pad + w * 0.7, cy);
+    g.lineBetween(pad + w * 0.45, cy, pad + w * 0.45, pad + h);
+    g.lineBetween(pad + w * 0.85, cy, pad + w * 0.85, pad + h);
+
+    // 顶部高光
+    g.fillStyle(0xffffff, 0.15);
+    g.fillRect(pad + 2, pad + 1, w - 4, 3);
+
+    // 边缘描边
+    g.lineStyle(1.5, 0x000000, 0.5);
+    g.strokeRoundedRect(pad, pad, w, h, 3);
+
+    g.generateTexture(key, w + pad * 2, h + pad * 2);
+    g.destroy();
+  }
+
+  private generateCrystal(key: string, color: number, w: number, h: number): void {
+    const pad = 8;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = (w + pad * 2) / 2;
+    const cy = (h + pad * 2) / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, Math.max(w, h) / 2 + 4);
+
+    // 主体水晶（多面菱形）
+    g.fillStyle(color, 1);
+    g.beginPath();
+    g.moveTo(cx, cy - h / 2);
+    g.lineTo(cx + w / 2, cy - h * 0.1);
+    g.lineTo(cx + w * 0.35, cy + h / 2);
+    g.lineTo(cx - w * 0.35, cy + h / 2);
+    g.lineTo(cx - w / 2, cy - h * 0.1);
+    g.closePath();
+    g.fillPath();
+
+    // 左侧亮面
+    g.fillStyle(0xffffff, 0.35);
+    g.beginPath();
+    g.moveTo(cx, cy - h / 2);
+    g.lineTo(cx - w / 2, cy - h * 0.1);
+    g.lineTo(cx - w * 0.1, cy);
+    g.closePath();
+    g.fillPath();
+
+    // 内部切面
+    g.lineStyle(1, 0xffffff, 0.3);
+    g.lineBetween(cx, cy - h / 2, cx, cy + h / 2);
+    g.lineBetween(cx - w / 2, cy - h * 0.1, cx + w / 2, cy - h * 0.1);
+
+    // 核心发光
+    g.fillStyle(0xffffff, 0.6);
+    g.fillCircle(cx, cy - h * 0.05, w * 0.12);
+
+    g.generateTexture(key, w + pad * 2, h + pad * 2);
+    g.destroy();
+  }
+
   // ========== 地图瓦片 ==========
   private generateTiles(): void {
     const size = 128;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
 
-    // 深色背景
-    g.fillStyle(0x0d0d1a, 1);
+    // 深色基底（略带紫调，深渊感）
+    g.fillStyle(0x0a0a18, 1);
     g.fillRect(0, 0, size, size);
 
-    // 网格线
-    g.lineStyle(1, 0x1a1a30, 0.8);
+    // 径向渐变模拟（多层同心圆，中心亮边缘暗）
+    for (let i = 6; i >= 1; i--) {
+      const r = (size / 2) * (i / 6);
+      const alpha = 0.015 * (7 - i);
+      g.fillStyle(0x1a1a3a, alpha);
+      g.fillCircle(size / 2, size / 2, r);
+    }
+
+    // 大网格（64px）
+    g.lineStyle(1, 0x2a2a50, 0.5);
     g.lineBetween(0, 0, size, 0);
     g.lineBetween(0, 0, 0, size);
+    g.lineBetween(64, 0, 64, size);
+    g.lineBetween(0, 64, size, 64);
 
-    // 随机霓虹点（装饰）
-    const dots = [
-      { x: 20, y: 30, c: 0x00ffff, a: 0.15 },
-      { x: 90, y: 60, c: 0xff00ff, a: 0.1 },
-      { x: 50, y: 100, c: 0x00ff88, a: 0.12 },
-      { x: 110, y: 20, c: 0xffaa00, a: 0.08 },
+    // 小网格（32px，增加细节）
+    g.lineStyle(1, 0x1e1e38, 0.3);
+    for (let x = 32; x < size; x += 32) g.lineBetween(x, 0, x, size);
+    for (let y = 32; y < size; y += 32) g.lineBetween(0, y, size, y);
+
+    // 网格交叉点发光
+    const ix = [0, 64, 128];
+    const iy = [0, 64, 128];
+    ix.forEach((x) => iy.forEach((y) => {
+      g.fillStyle(0x00ffff, 0.12);
+      g.fillCircle(x, y, 2);
+    }));
+
+    // 散落霓虹微粒（固定位置保证可平铺）
+    const particles = [
+      { x: 15, y: 22, c: 0x00ffff, a: 0.25, r: 1.5 },
+      { x: 88, y: 45, c: 0xff00ff, a: 0.18, r: 1 },
+      { x: 42, y: 95, c: 0x00ff88, a: 0.2, r: 1.2 },
+      { x: 105, y: 110, c: 0xffaa00, a: 0.15, r: 1 },
+      { x: 70, y: 15, c: 0xff4466, a: 0.12, r: 0.8 },
+      { x: 25, y: 75, c: 0x00ffff, a: 0.1, r: 0.8 },
+      { x: 115, y: 70, c: 0x8844ff, a: 0.15, r: 1.2 },
     ];
-    dots.forEach((d) => {
-      g.fillStyle(d.c, d.a);
-      g.fillCircle(d.x, d.y, 3);
+    particles.forEach((p) => {
+      g.fillStyle(p.c, p.a * 0.4);
+      g.fillCircle(p.x, p.y, p.r * 2.5);
+      g.fillStyle(p.c, p.a);
+      g.fillCircle(p.x, p.y, p.r);
     });
 
     g.generateTexture('tile_grass', size, size);
