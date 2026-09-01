@@ -62,6 +62,8 @@ export class GameScene extends Phaser.Scene {
   private aiDecisionTimer = 0;
   private aiCurrentDir = { x: 0, y: 0 };
   private aiHesitateTimer = 0;
+  // AI 使用物品的冷却计时（不每帧判断）
+  private aiItemUseTimer = 0;
 
   constructor() {
     super('GameScene');
@@ -409,6 +411,7 @@ export class GameScene extends Phaser.Scene {
     // AI 自动玩：计算移动方向（躲敌人 / 捡经验）
     if (this.autoPlayEnabled) {
       this.updateAIDirection(delta);
+      this.updateAIItems(delta);
     }
 
     // 更新玩家
@@ -707,6 +710,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** 获取最近敌人距离 */
+  /** 获取最近敌人距离 */
   private getNearestEnemyDist(): number {
     let nearest = Infinity;
     this.enemies.children.each((enemy: any) => {
@@ -718,6 +722,55 @@ export class GameScene extends Phaser.Scene {
       return true;
     });
     return nearest;
+  }
+
+  /**
+   * AI 自动使用消耗品（人类化节奏：每 0.8-1.2s 判断一次，单次只处理最高优先级）
+   * 优先级：低血量回血 > 被近身开盾 > 被大量包围清屏 > 战斗开狂暴
+   */
+  private updateAIItems(delta: number): void {
+    this.aiItemUseTimer -= delta;
+    if (this.aiItemUseTimer > 0) return;
+    this.aiItemUseTimer = 800 + Math.random() * 400;
+
+    const inv = this.player.getInventory();
+    if (inv.length === 0) return;
+    const has = (id: string) => inv.some((i) => i.id === id);
+
+    const hpRatio = this.player.getHealth() / this.player.getMaxHealth();
+    const nearestDist = this.getNearestEnemyDist();
+
+    // 1. 血量 < 40% 且有血包 → 回血
+    if (hpRatio < 0.4 && has('heal')) {
+      this.player.useItem('heal', this);
+      return;
+    }
+
+    // 2. 敌人贴近（< 110px）且有护盾且未开盾 → 开盾
+    if (nearestDist < 110 && has('shield') && !this.player.isShieldActive()) {
+      this.player.useItem('shield', this);
+      return;
+    }
+
+    // 3. 被大量敌人包围（200px 内 ≥ 6 个）→ 炸弹清屏
+    let nearbyCount = 0;
+    this.enemies.children.each((e: any) => {
+      if (!e.active) return true;
+      const dx = e.x - this.player.x;
+      const dy = e.y - this.player.y;
+      if (dx * dx + dy * dy < 200 * 200) nearbyCount++;
+      return true;
+    });
+    if (nearbyCount >= 6 && has('bomb')) {
+      this.player.useItem('bomb', this);
+      return;
+    }
+
+    // 4. 战斗中（附近 400px 有敌）且有狂暴且未激活 → 开狂暴
+    if (nearestDist < 400 && has('rage') && !this.player.isRageActive()) {
+      this.player.useItem('rage', this);
+      return;
+    }
   }
 
   /** 获取最近的经验宝石 */

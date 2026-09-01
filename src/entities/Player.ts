@@ -758,6 +758,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.stats.maxHealth;
   }
 
+  /** 护盾是否激活中（供 AI/UI 判断） */
+  isShieldActive(): boolean {
+    return this.shieldActive;
+  }
+
+  /** 狂暴是否激活中（供 AI/UI 判断） */
+  isRageActive(): boolean {
+    return this.rageActive;
+  }
+
   getLevel(): number {
     return this.stats.level;
   }

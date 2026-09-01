@@ -21,6 +21,10 @@ export class ShopScene extends Phaser.Scene {
   private refreshCost: number = 20;
   private coinText!: Phaser.GameObjects.Text;
   private refreshText!: Phaser.GameObjects.Text;
+  /** 卡片引用（供 AI 购买逻辑访问对应 Container） */
+  private cardRefs: Array<{ item: ShopItem; card: Phaser.GameObjects.Container }> = [];
+  /** AI 购物是否已启动（防止重复调度） */
+  private aiShoppingStarted = false;
 
   private readonly cardWidth = 200;
   private readonly cardHeight = 300;
@@ -33,6 +37,12 @@ export class ShopScene extends Phaser.Scene {
   create(): void {
     // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
     const { width, height } = setupUICamera(this);
+
+    // 每次进入商店重置刷新消耗（跨会话不累积涨价，每遇到一次都是全新会话）
+    this.freeRefreshLeft = 1;
+    this.refreshCost = 20;
+    this.cardRefs = [];
+    this.aiShoppingStarted = false;
 
     // 半透明背景
     this.add.rectangle(0, 0, width, height, 0x000000, 0.82).setOrigin(0);
@@ -79,11 +89,73 @@ export class ShopScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // AI 自动玩：延迟自动离开商店
+    // AI 自动玩：进入商店后自动购物（按稀有度购买 → 刷新 → 直到金币耗尽）
     const gameScene = this.scene.get('GameScene') as any;
     if (gameScene?.isAutoPlay?.()) {
-      this.time.delayedCall(800, () => this.leave());
+      this.time.delayedCall(600, () => this.runAIShopping());
     }
+  }
+
+  // ========== AI 自动购物 ==========
+
+  /** 稀有度排序权重 */
+  private static readonly RARITY_RANK: Record<string, number> = {
+    legendary: 4,
+    epic: 3,
+    rare: 2,
+    common: 1,
+  };
+
+  /**
+   * AI 购物循环（人类化节奏）：
+   * 1. 从货架中挑"买得起 + 稀有度最高"的商品购买（同稀有度优先便宜的）
+   * 2. 当前货架买不起任何商品时 → 刷新（优先免费刷新，再付费刷新）
+   * 3. 直到金币既买不起货架商品、又付不起刷新费 → 离开
+   */
+  private runAIShopping(): void {
+    if (this.aiShoppingStarted) return;
+    this.aiShoppingStarted = true;
+    this.aiShoppingStep();
+  }
+
+  private aiShoppingStep(): void {
+    const player = this.getPlayer();
+    if (!player) {
+      this.leave();
+      return;
+    }
+
+    const coins = player.getCoins();
+
+    // 1. 挑选最优可购商品（未售 + 买得起，稀有度降序，同稀有度价格升序）
+    const candidates = this.cardRefs
+      .filter(({ card }) => !card.getData('sold'))
+      .filter(({ item }) => item.price <= coins)
+      .sort(
+        (a, b) =>
+          (ShopScene.RARITY_RANK[b.item.rarity] ?? 0) - (ShopScene.RARITY_RANK[a.item.rarity] ?? 0) ||
+          a.item.price - b.item.price
+      );
+
+    if (candidates.length > 0) {
+      const best = candidates[0];
+      this.tryBuy(best.item, best.card);
+      // 人类化延迟：每次购买间隔 250-600ms
+      this.time.delayedCall(250 + Math.random() * 350, () => this.aiShoppingStep());
+      return;
+    }
+
+    // 2. 货架买不起了 → 尝试刷新（免费优先，再付费）
+    const canFreeRefresh = this.freeRefreshLeft > 0;
+    const canPayRefresh = coins >= this.refreshCost;
+    if (canFreeRefresh || canPayRefresh) {
+      this.tryRefresh();
+      this.time.delayedCall(350 + Math.random() * 300, () => this.aiShoppingStep());
+      return;
+    }
+
+    // 3. 无货可买也无刷新能力 → 离开
+    this.leave();
   }
 
   private getPlayer(): Player | undefined {
@@ -98,6 +170,9 @@ export class ShopScene extends Phaser.Scene {
       .filter((obj) => obj.getData('isShopCard'))
       .forEach((obj) => obj.destroy());
 
+    // 重置卡片引用（刷新后重建，供 AI 购物使用）
+    this.cardRefs = [];
+
     const width = GameConfig.GAME_WIDTH;
     const height = GameConfig.GAME_HEIGHT;
     const totalWidth = this.stock.length * this.cardWidth + (this.stock.length - 1) * this.cardSpacing;
@@ -106,12 +181,13 @@ export class ShopScene extends Phaser.Scene {
 
     this.stock.forEach((item, index) => {
       const x = startX + index * (this.cardWidth + this.cardSpacing);
-      this.createCard(x, cardY, item, index);
+      const card = this.createCard(x, cardY, item, index);
+      this.cardRefs.push({ item, card });
     });
   }
 
-  /** 创建单个商品卡片（整格点击购买） */
-  private createCard(x: number, y: number, item: ShopItem, index: number): void {
+  /** 创建单个商品卡片（整格点击购买），返回卡片 Container 供 AI 引用 */
+  private createCard(x: number, y: number, item: ShopItem, index: number): Phaser.GameObjects.Container {
     const card = createOptionCard(this, x, y, {
       name: item.name,
       icon: item.icon,
@@ -124,6 +200,7 @@ export class ShopScene extends Phaser.Scene {
       onClick: () => this.tryBuy(item, card),
     });
     card.setData('isShopCard', true);
+    return card;
   }
 
   // ========== 购买 ==========
