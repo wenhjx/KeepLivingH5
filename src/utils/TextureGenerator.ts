@@ -20,6 +20,9 @@ export class TextureGenerator {
     enemyRanged: 0xff44ff,
     enemyElite: 0xffaa00,
     enemyBoss: 0xff2244,
+    enemySuicider: 0xff5500,
+    enemySplitter: 0xcc44ff,
+    enemyShielded: 0x88aaff,
     bullet: 0xffffff,
     bulletGlow: 0x00ffff,
     exp: 0x00ffff,
@@ -139,6 +142,127 @@ export class TextureGenerator {
     this.generateEnemyCaster('enemy_ranged', TextureGenerator.COLORS.enemyRanged, 18);
     this.generateEnemyElite('enemy_elite', TextureGenerator.COLORS.enemyElite, 26);
     this.generateEnemyBoss('enemy_boss', TextureGenerator.COLORS.enemyBoss, 56);
+    this.generateEnemySuicider('enemy_suicider', TextureGenerator.COLORS.enemySuicider, 20);
+    this.generateEnemySplitter('enemy_splitter', TextureGenerator.COLORS.enemySplitter, 24);
+    this.generateEnemyShielded('enemy_shielded', TextureGenerator.COLORS.enemyShielded, 24);
+  }
+
+  /** 自爆怪：膨胀的不稳定球体 + 引线火花，危险感 */
+  private generateEnemySuicider(key: string, color: number, r: number): void {
+    const size = r * 2 + 12;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光（红色警告感）
+    g.fillStyle(color, 0.25);
+    g.fillCircle(cx, cy, r + 6);
+
+    // 膨胀主体（外圈 + 内圈，像要炸开）
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+    g.fillStyle(0xffaa44, 1);
+    g.fillCircle(cx - r * 0.1, cy - r * 0.1, r * 0.75);
+
+    // 内部不稳定核心（高亮白热）
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx, cy, r * 0.35);
+    g.fillStyle(0xffcc44, 1);
+    g.fillCircle(cx, cy, r * 0.2);
+
+    // 引线火花（四周小刺）
+    g.fillStyle(0xffff00, 0.9);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + 0.5;
+      g.fillCircle(cx + Math.cos(a) * r * 1.1, cy + Math.sin(a) * r * 1.1, 2.5);
+    }
+
+    // 警示黑边
+    g.lineStyle(2, 0x222222, 0.6);
+    g.strokeCircle(cx, cy, r);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 分裂怪：胶状分裂体（多个小圆粘连 + 分裂线） */
+  private generateEnemySplitter(key: string, color: number, r: number): void {
+    const size = r * 2 + 14;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 6);
+
+    // 胶状主体（多圆粘连）
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+    g.fillCircle(cx - r * 0.7, cy + r * 0.3, r * 0.55);
+    g.fillCircle(cx + r * 0.65, cy - r * 0.35, r * 0.5);
+
+    // 分裂裂纹（模拟将要分裂）
+    g.lineStyle(2, 0x000000, 0.4);
+    g.lineBetween(cx - r * 0.4, cy + r * 0.3, cx + r * 0.4, cy - r * 0.3);
+    g.lineBetween(cx - r * 0.5, cy - r * 0.2, cx + r * 0.3, cy + r * 0.4);
+
+    // 黏液高光
+    g.fillStyle(0xffffff, 0.35);
+    g.fillCircle(cx - r * 0.2, cy - r * 0.35, r * 0.2);
+
+    // 小眼睛（两个）
+    g.fillStyle(0x000000, 0.9);
+    g.fillCircle(cx - r * 0.2, cy - r * 0.05, r * 0.16);
+    g.fillCircle(cx + r * 0.3, cy + r * 0.05, r * 0.12);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx - r * 0.2, cy - r * 0.05, r * 0.06);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 护盾怪：装甲核心 + 前方能量盾弧（面向玩家方向） */
+  private generateEnemyShielded(key: string, color: number, r: number): void {
+    const size = r * 2 + 16;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 6);
+
+    // 盾牌弧（右前方，默认朝向 +X）
+    g.lineStyle(4, 0x66ccff, 0.9);
+    g.beginPath();
+    g.arc(cx, cy, r + 4, -0.9, 0.9, false);
+    g.strokePath();
+    // 盾牌光晕
+    g.fillStyle(0x66ccff, 0.15);
+    g.beginPath();
+    g.arc(cx, cy, r + 4, -0.9, 0.9, false);
+    g.lineTo(cx, cy);
+    g.closePath();
+    g.fillPath();
+
+    // 装甲主体
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+
+    // 装甲板纹路
+    g.lineStyle(2, 0x000000, 0.3);
+    g.lineBetween(cx - r * 0.5, cy, cx + r * 0.5, cy);
+    g.lineBetween(cx, cy - r * 0.5, cx, cy + r * 0.5);
+
+    // 光学眼（中央）
+    g.fillStyle(0x000000, 0.8);
+    g.fillCircle(cx, cy, r * 0.25);
+    g.fillStyle(0x66ddff, 1);
+    g.fillCircle(cx, cy, r * 0.15);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
   }
 
   /** 普通敌人：感染体（不规则圆形 + 破损边缘 + 眼睛） */

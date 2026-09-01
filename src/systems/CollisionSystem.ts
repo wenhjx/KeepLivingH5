@@ -61,7 +61,7 @@ export class CollisionSystem {
     const isCrit = Math.random() < critRate;
     const finalDamage = isCrit ? damage * critDamage : damage;
 
-    enemy.takeDamage(finalDamage, isCrit);
+    enemy.takeDamage(finalDamage, isCrit, bullet.x, bullet.y);
 
     // 命中音效（暴击更响）
     AudioManager.getInstance().playSfx(

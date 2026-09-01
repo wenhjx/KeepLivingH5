@@ -62,9 +62,16 @@
 - 修复 Boss 弹幕攻击未乘 difficultyMultiplier 的 bug
 - 普通敌人仍用线性增长（1+0.1/wave）
 
-### ② 敌人多样化（机制挑战）
-  - 新敌人：自爆怪（近身爆炸）、分裂怪（死后分裂）、盾牌怪（正面减伤）
-  - 精英词缀：狂暴 / 护盾 / 分裂
+### ② 敌人多样化（✅ 已完成 2026-09-01）
+  - **新敌人已实装**（类型驱动：EnemyType 联合 + ENEMY_CONFIGS 配置 + Enemy.updateAI 分支 + WaveManager 波次权重）：
+    - **自爆怪 suicider**（第5波解锁，橙红）：高速冲向玩家，进入爆炸半径 60px 即自爆——对玩家造成范围衰减伤害、对范围内敌人造成 50% 连锁伤害、爆圈视觉 + 屏幕震动，自身无掉落
+    - **分裂怪 splitter**（第8波解锁，紫色）：死亡后原地分裂成 2 只 normal 小怪（difficultyMultiplier ×0.6）
+    - **护盾怪 shielded**（第7波解锁，蓝灰）：正面减伤 75%（`shieldFrontReduction: 0.75`）——`takeDamage(amount, isCrit, fromX, fromY)` 新增来源坐标参数，CollisionSystem 传子弹位置，攻击方向与"敌人→玩家"夹角 <60° 判为正面减伤；护盾怪每帧 setRotation 朝向玩家，盾牌弧视觉与减伤逻辑一致
+  - **纹理**：TextureGenerator 新增 3 个生成方法（generateEnemySuicider / Splitter / Shielded），按各自颜色生成
+  - **波次解锁**：suicider 第5波 / shielded 第7波 / splitter 第8波（WaveManager.buildSpawnTable 权重随波次增长）
+  - **平衡**：自爆 40血/攻25/速110 是脆皮威胁；分裂 60血/攻10 血量少但死后膨胀；护盾 90血/攻12 需绕后或范围武器处理
+  - **验证**：三种敌人正常生成/纹理正确；击杀分裂怪分裂出 2 normal；自爆怪接近爆炸玩家掉血、自身消失；护盾怪朝向玩家旋转
+  - 待办：精英词缀（狂暴/护盾/分裂）尚未做，列入后续
 - [ ] **③ 宝箱 + 一次性道具**（爽点）
   - 宝箱：杀怪/精英掉落，开出金币、随机升级、全屏炸弹
   - 消耗品：炸弹清屏、护盾、时间减速、狂暴药水、大磁铁

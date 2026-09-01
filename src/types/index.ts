@@ -34,7 +34,7 @@ export interface PlayerStats extends EntityStats {
   coins: number;
 }
 
-export type EnemyType = 'normal' | 'fast' | 'tank' | 'ranged' | 'elite' | 'boss';
+export type EnemyType = 'normal' | 'fast' | 'tank' | 'ranged' | 'elite' | 'boss' | 'suicider' | 'splitter' | 'shielded';
 
 export interface EnemyConfig {
   type: EnemyType;
@@ -49,6 +49,15 @@ export interface EnemyConfig {
   scoreReward: number;
   size: number;
   color: number;
+  // ===== 特殊敌人行为参数（可选） =====
+  /** 自爆怪：爆炸半径（px），接近玩家该距离内自爆 */
+  explodeRadius?: number;
+  /** 自爆怪：爆炸伤害 */
+  explodeDamage?: number;
+  /** 盾牌怪：正面减伤比例（0-1，来自玩家方向的攻击减免） */
+  shieldFrontReduction?: number;
+  /** 分裂怪：死亡后分裂成的敌人类型与数量 */
+  splitInto?: { type: EnemyType; count: number };
 }
 
 // ========== 武器与技能 ==========

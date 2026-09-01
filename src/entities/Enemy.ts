@@ -3,6 +3,7 @@ import { MathUtils } from '../utils/MathUtils';
 import { EventBus } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
+import { ENEMY_CONFIGS } from '../data/enemies';
 import type { EnemyConfig, EnemyType } from '../types';
 import type { Player } from './Player';
 
@@ -106,9 +107,108 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       case 'fast':
         this.fastAI(delta, player, dist);
         break;
+      case 'suicider':
+        this.suiciderAI(delta, player, dist);
+        break;
+      case 'splitter':
+        this.normalAI(delta, player, dist);
+        break;
+      case 'shielded':
+        this.shieldedAI(delta, player, dist);
+        break;
       default:
         this.normalAI(delta, player, dist);
         break;
+    }
+  }
+
+  /** 自爆怪：高速冲向玩家，进入爆炸半径后自爆 */
+  private suiciderAI(delta: number, player: Player, dist: number): void {
+    const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
+    const speed = this.config.moveSpeed * this.difficultyMultiplier;
+    const v = this.avoidObstacles(angle, speed);
+    this.setVelocity(v.vx, v.vy);
+
+    // 进入爆炸半径立即自爆
+    const explodeRadius = this.config.explodeRadius ?? 60;
+    if (dist < explodeRadius) {
+      this.explode(player);
+    }
+  }
+
+  /** 自爆：对玩家造成范围伤害，自身死亡 */
+  private explode(player: Player): void {
+    if (this.isDead) return;
+    const radius = this.config.explodeRadius ?? 60;
+    const damage = (this.config.explodeDamage ?? 30) * this.difficultyMultiplier;
+
+    // 对范围内的敌人也造成伤害（连锁爆炸的爽感）
+    const scene = this.scene as any;
+    const enemies = scene?.getEnemies?.();
+    if (enemies) {
+      enemies.getChildren().forEach((e: any) => {
+        if (!e.active || e === this) return;
+        const d = MathUtils.distance(this.x, this.y, e.x, e.y);
+        if (d <= radius) {
+          e.takeDamage?.(damage * 0.5, false);
+        }
+      });
+    }
+
+    // 对玩家造成伤害（范围衰减）
+    const pDist = MathUtils.distance(this.x, this.y, player.x, player.y);
+    const falloff = 1 - Math.max(0, pDist / radius) * 0.5;
+    player.takeDamage(Math.max(1, damage * falloff));
+
+    // 自爆视觉：红色爆圈 + 震动
+    this.spawnExplosionFx(radius);
+
+    // 自身死亡（不掉落，自爆无收益）
+    this.isDead = true;
+    EventBus.emit('enemy:death', this.config);
+    this.despawn();
+  }
+
+  /** 自爆视觉特效 */
+  private spawnExplosionFx(radius: number): void {
+    const scene = this.scene as any;
+    const outer = scene.add?.circle?.(this.x, this.y, radius, 0xff5500, 0.4).setDepth(50);
+    const inner = scene.add?.circle?.(this.x, this.y, radius * 0.5, 0xffcc00, 0.6).setDepth(51);
+    if (outer) {
+      scene.tweens.add({
+        targets: outer,
+        scale: { from: 0.4, to: 1.2 },
+        alpha: { from: 0.5, to: 0 },
+        duration: 250,
+        onComplete: () => outer.destroy(),
+      });
+    }
+    if (inner) {
+      scene.tweens.add({
+        targets: inner,
+        scale: { from: 0.6, to: 1 },
+        alpha: { from: 0.8, to: 0 },
+        duration: 180,
+        onComplete: () => inner.destroy(),
+      });
+    }
+    scene.cameras?.main?.shake?.(80, 0.004);
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.8);
+  }
+
+  /** 护盾怪：缓慢接近，正面减伤，侧面/背面正常受伤 */
+  private shieldedAI(delta: number, player: Player, dist: number): void {
+    const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
+    const speed = this.config.moveSpeed * this.difficultyMultiplier;
+    const v = this.avoidObstacles(angle, speed);
+    this.setVelocity(v.vx, v.vy);
+
+    // 旋转朝向玩家，让护盾弧始终朝前（与正面减伤逻辑一致）
+    this.setRotation(angle);
+
+    // 接触攻击
+    if (dist < this.config.attackRange && this.attackCooldown <= 0) {
+      this.attackPlayer(player);
     }
   }
 
@@ -251,10 +351,30 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   // ========== 受伤与死亡 ==========
 
-  takeDamage(amount: number, isCrit: boolean = false): void {
+  takeDamage(amount: number, isCrit: boolean = false, fromX?: number, fromY?: number): void {
     if (this.isDead) return;
 
-    this.health -= amount;
+    // 护盾怪：正面减伤（攻击来自玩家方向的子弹视为正面）
+    const reduction = this.config?.shieldFrontReduction;
+    let finalAmount = amount;
+    if (reduction && fromX !== undefined && fromY !== undefined) {
+      // 敌人面向玩家的方向 = 盾牌正面朝向
+      const gs = this.scene as any;
+      const player = gs?.getPlayer?.();
+      if (player) {
+        const facingAngle = Math.atan2(player.y - this.y, player.x - this.x);
+        const attackAngle = Math.atan2(fromY - this.y, fromX - this.x);
+        // 夹角（弧度）
+        let diff = Math.abs(facingAngle - attackAngle);
+        if (diff > Math.PI) diff = Math.PI * 2 - diff;
+        // 正面 ±60° 内减伤
+        if (diff < Math.PI / 3) {
+          finalAmount = Math.max(1, amount * (1 - reduction));
+        }
+      }
+    }
+
+    this.health -= finalAmount;
     this.hitFlashTimer = 100;
     this.setTint(0xffffff);
 
@@ -269,6 +389,23 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private die(): void {
     this.isDead = true;
     const scene = this.scene as any;
+
+    // 分裂怪：死亡后分裂成小怪
+    const splitConfig = this.config?.splitInto;
+    if (splitConfig) {
+      const productConfig = ENEMY_CONFIGS[splitConfig.type];
+      if (productConfig && scene?.getObjectPool?.()) {
+        for (let i = 0; i < splitConfig.count; i++) {
+          const offsetX = (i % 2 === 0 ? -1 : 1) * 20;
+          scene.getObjectPool().spawnEnemy(
+            productConfig,
+            this.x + offsetX,
+            this.y + (i % 2 === 0 ? 15 : -15),
+            this.difficultyMultiplier * 0.6
+          );
+        }
+      }
+    }
 
     // 掉落经验（随波次难度成长，避免后期"需求指数涨、获取固定"导致升级断崖）
     if (scene && scene.spawnPickup) {

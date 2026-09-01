@@ -71,6 +71,21 @@ export class WaveManager {
       this.currentSpawnTable.push({ type: 'ranged', weight: 10 + wave });
     }
 
+    // 第5波开始出现自爆怪
+    if (wave >= 5) {
+      this.currentSpawnTable.push({ type: 'suicider', weight: 12 + wave });
+    }
+
+    // 第7波开始出现护盾怪
+    if (wave >= 7) {
+      this.currentSpawnTable.push({ type: 'shielded', weight: 10 + wave * 0.8 });
+    }
+
+    // 第8波开始出现分裂怪
+    if (wave >= 8) {
+      this.currentSpawnTable.push({ type: 'splitter', weight: 8 + wave * 0.6 });
+    }
+
     // 第6波开始出现精英
     if (wave >= 6) {
       this.currentSpawnTable.push({ type: 'elite', weight: 5 + wave * 0.5 });
