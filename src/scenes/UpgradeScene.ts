@@ -198,7 +198,7 @@ export class UpgradeScene extends Phaser.Scene {
           description: weapon.description + '\n将自动攻击敌人',
           icon: '🔫',
           color: 0xff6b35,
-          position: 'top',
+          position: 'top-right',
           duration: 4000,
           showButton: false,
         });
@@ -210,7 +210,7 @@ export class UpgradeScene extends Phaser.Scene {
         description: option.description,
         icon: option.icon || '✨',
         color: 0xaa44ff,
-        position: 'top',
+        position: 'top-right',
         duration: 4000,
         showButton: false,
       });
