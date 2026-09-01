@@ -33,7 +33,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   spawn(config: EnemyConfig, x: number, y: number, difficultyMultiplier: number = 1): void {
     this.config = config;
     this.difficultyMultiplier = difficultyMultiplier;
-    this.maxHealth = Math.floor(config.maxHealth * difficultyMultiplier);
+    // 防御：难度系数非法（NaN/Infinity）时回退为 1，血量永远用有效正数，
+    // 避免 maxHealth/health 变成 NaN 导致怪物永久无敌（health -= NaN 永远不死）
+    const safeMult = isFinite(difficultyMultiplier) && difficultyMultiplier > 0 ? difficultyMultiplier : 1;
+    const baseHp = Number(config.maxHealth);
+    this.maxHealth = Math.max(1, Math.floor(isFinite(baseHp) && baseHp > 0 ? baseHp * safeMult : 1));
     this.health = this.maxHealth;
     this.attackCooldown = 0;
     this.isDead = false;
@@ -353,6 +357,14 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   takeDamage(amount: number, isCrit: boolean = false, fromX?: number, fromY?: number): void {
     if (this.isDead) return;
+
+    // 防御：无效伤害（NaN/Infinity/<=0）直接忽略，防止污染血量（health -= NaN → 永久无敌）
+    if (!isFinite(amount) || amount <= 0) return;
+
+    // 防御：血量已被污染成 NaN 的残留怪，先重置为满血再正常结算，避免"打不死"
+    if (!isFinite(this.health) || this.health < 0) {
+      this.health = this.maxHealth || 1;
+    }
 
     // 护盾怪：正面减伤（攻击来自玩家方向的子弹视为正面）
     const reduction = this.config?.shieldFrontReduction;

@@ -168,6 +168,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
+  /**
+   * 计算武器伤害
+   * 防御：攻击力非法（NaN/Infinity/<=0）时回退基础攻击力，结果仍非法则回退武器基础伤害，
+   * 杜绝 0/NaN 伤害（会导致怪物 health 被 NaN 污染而永久无敌）
+   */
+  private calcWeaponDamage(config: WeaponConfig, level: number): number {
+    const atk = Number(this.stats.attackPower);
+    const attackPower = isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
+    const raw = config.damage * (1 + level * 0.2) * attackPower / 10;
+    return isFinite(raw) && raw > 0 ? raw : config.damage;
+  }
+
   /** 按武器类型分发攻击逻辑 */
   private fireWeapon(config: WeaponConfig, level: number): void {
     switch (config.type) {
@@ -194,7 +206,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!scene || !scene.getObjectPool) return;
 
     const pool = scene.getObjectPool();
-    const damage = config.damage * (1 + level * 0.2) * this.stats.attackPower / 10;
+    const damage = this.calcWeaponDamage(config, level);
 
     // 寻找最近敌人作为目标
     const nearestEnemy = this.findNearestEnemy();
@@ -273,7 +285,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!scene || !scene.getObjectPool) return;
 
     const pool = scene.getObjectPool();
-    const damage = config.damage * (1 + level * 0.2) * this.stats.attackPower / 10;
+    const damage = this.calcWeaponDamage(config, level);
 
     const nearestEnemy = this.findNearestEnemy();
     let angle = this.facingAngle;
@@ -302,7 +314,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const scene = this.scene as any;
     if (!scene || !scene.getEnemies) return;
 
-    const damage = config.damage * (1 + level * 0.2) * this.stats.attackPower / 10;
+    const damage = this.calcWeaponDamage(config, level);
     const range = config.range || 80;
     const enemies = scene.getEnemies();
 
@@ -634,7 +646,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     passives: Array<{ id: string; name: string; level: number }>;
   }): void {
     if (saved.stats) {
-      this.stats = { ...this.stats, ...saved.stats };
+      // 防御：存档中非法数值（null/NaN 等）不覆盖当前基础属性，
+      // 否则 stats.attackPower 等变 NaN → 武器伤害 NaN → 怪物血量被污染成 NaN 永久无敌
+      const merged = { ...this.stats, ...saved.stats };
+      (Object.keys(merged) as Array<keyof typeof merged>).forEach((k) => {
+        const v = merged[k];
+        if (typeof v === 'number' && !isFinite(v)) {
+          (merged as any)[k] = (this.stats as any)[k];
+        }
+      });
+      this.stats = merged;
     }
     // 旧存档可能存了旧版本曲线(指数1.5)的 expToNext，按当前曲线重新计算，避免"继续游戏"后升级卡住
     this.stats.expToNext = this.calcExpToNext(this.stats.level);
@@ -734,9 +755,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   modifyStat(stat: keyof PlayerStats, value: number, isPercent: boolean = false): void {
     if (isPercent) {
-      (this.stats as any)[stat] *= 1 + value;
+      // 防御：当前属性非法（NaN）时按 0 处理，避免 *= 永久污染为 NaN
+      const cur = Number((this.stats as any)[stat]);
+      (this.stats as any)[stat] = (isFinite(cur) ? cur : 0) * (1 + value);
     } else {
-      (this.stats as any)[stat] += value;
+      const cur = Number((this.stats as any)[stat]);
+      (this.stats as any)[stat] = (isFinite(cur) ? cur : 0) + value;
     }
     // 确保生命值不超过上限
     if (stat === 'maxHealth') {

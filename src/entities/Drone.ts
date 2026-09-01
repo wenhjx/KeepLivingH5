@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import { MathUtils } from '../utils/MathUtils';
+import { GameConfig } from '../game/GameConfig';
 import type { Player } from './Player';
 import type { WeaponConfig } from '../types';
 
@@ -83,7 +84,7 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
     if (!target) return;
 
     const angle = MathUtils.angle(this.x, this.y, target.x, target.y);
-    const damage = this.config.damage * (1 + this.level * 0.2) * this.player.getStats().attackPower / 10;
+    const damage = this.calcDroneDamage();
 
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_DRONE, 0.4);
 
@@ -128,7 +129,7 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
     if (!scene || !scene.getEnemies) return;
 
     const enemies = scene.getEnemies();
-    const damage = this.config.damage * (1 + this.level * 0.2) * this.player.getStats().attackPower / 10;
+    const damage = this.calcDroneDamage();
 
     enemies.children.each((enemy: any) => {
       if (!enemy.active) return true;
@@ -142,6 +143,17 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
       }
       return true;
     });
+  }
+
+  /**
+   * 计算无人机伤害
+   * 防御：玩家攻击力非法时回退基础值，避免 NaN/0 伤害污染怪物血量
+   */
+  private calcDroneDamage(): number {
+    const atk = Number(this.player.getStats().attackPower);
+    const attackPower = isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
+    const raw = this.config.damage * (1 + this.level * 0.2) * attackPower / 10;
+    return isFinite(raw) && raw > 0 ? raw : this.config.damage;
   }
 
   /** 更新无人机等级（武器升级时调用） */
