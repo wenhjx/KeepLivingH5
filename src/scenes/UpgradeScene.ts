@@ -5,7 +5,7 @@ import { GameConfig } from '../game/GameConfig';
 import { UpgradePanel } from '../ui/UpgradePanel';
 import { GuideManager } from '../systems/GuideManager';
 import { WEAPONS } from '../data/weapons';
-import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED } from '../data/upgrades';
+import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED, FALLBACK_UPGRADES } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
 import { EventBus } from '../utils/EventBus';
 import { setupUICamera } from '../utils/CameraHelper';
@@ -50,12 +50,13 @@ export class UpgradeScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // 过滤掉玩家已满级的武器选项
+    // 过滤掉玩家已满级的选项，不足时用兜底项补位
     const availableOptions = this.getAvailableOptions();
+    const choices = this.getChoices(availableOptions);
 
     // 升级面板
     this.upgradePanel = new UpgradePanel(this);
-    this.upgradePanel.show((option: UpgradeOption) => this.onSelect(option), availableOptions);
+    this.upgradePanel.show((option: UpgradeOption) => this.onSelect(option), choices);
 
     // AI 自动玩：从显示的3个选项中智能选择
     // 流程：延迟0.8秒选中（显示"即将选择..."）→ 再延迟1秒自动确认
@@ -153,7 +154,7 @@ export class UpgradeScene extends Phaser.Scene {
     }
   }
 
-  /** 获取可用的升级选项（过滤已满级武器） */
+  /** 获取可用的升级选项（过滤已满级武器/被动/stat 属性） */
   private getAvailableOptions(): UpgradeOption[] {
     const gameScene = this.scene.get('GameScene') as any;
     const player = gameScene?.getPlayer() as Player | undefined;
@@ -162,11 +163,52 @@ export class UpgradeScene extends Phaser.Scene {
     return UPGRADE_OPTIONS.filter((option) => {
       // 从升级候选池中排除的选项（如未实装系统的金币加成）
       if (UPGRADE_POOL_EXCLUDED.includes(option.id)) return false;
-      // 非武器选项始终可用
-      if (option.type !== 'weapon' || !option.effect.weaponId) return true;
       // 武器选项：已满级则过滤掉
-      return !player.isWeaponMaxLevel(option.effect.weaponId);
+      if (option.type === 'weapon' && option.effect.weaponId) {
+        return !player.isWeaponMaxLevel(option.effect.weaponId);
+      }
+      // 被动选项：满级后不再出现（让出位置，避免玩家白选）
+      if (option.type === 'passive') {
+        return !player.isPassiveMaxLevel(option.id);
+      }
+      // stat 属性选项：达 maxLevel 上限后不再出现（防止无限叠加数值爆炸）
+      if (option.type === 'stat' && option.maxLevel) {
+        return player.getStatUpgradeLevel(option.id) < option.maxLevel;
+      }
+      return true;
     });
+  }
+
+  /**
+   * 生成三选一候选：可用升级项不足时用兜底项补位，
+   * 保证玩家在所有成长项（武器/被动/stat）满级后依然有得选。
+   */
+  private getChoices(availableOptions: UpgradeOption[]): UpgradeOption[] {
+    // 所有成长项已满级：直接全部用兜底项（金币袋/大治疗/狂暴/清屏，无等级不膨胀）
+    if (availableOptions.length === 0) {
+      return this.shuffleUpgrades([...FALLBACK_UPGRADES]).slice(0, 3);
+    }
+    const choices = this.shuffleUpgrades([...availableOptions]).slice(0, 3);
+    // 用兜底项补齐不足的空位（兜底项无等级、不膨胀）
+    if (choices.length < 3) {
+      const fillers = this.shuffleUpgrades([...FALLBACK_UPGRADES]).filter(
+        (f) => !choices.some((c) => c.id === f.id)
+      );
+      for (const f of fillers) {
+        if (choices.length >= 3) break;
+        choices.push(f);
+      }
+    }
+    return choices;
+  }
+
+  private shuffleUpgrades<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
   }
 
   /**
@@ -185,7 +227,7 @@ export class UpgradeScene extends Phaser.Scene {
       : false;
 
     if (player) {
-      applyUpgradeToPlayer(player, option);
+      applyUpgradeToPlayer(player, option, gameScene);
     }
 
     // 新武器解锁提示（已有武器升级不提示）

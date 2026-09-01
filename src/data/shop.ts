@@ -1,6 +1,8 @@
 import { UPGRADE_OPTIONS } from './upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
+import { FALLBACK_UPGRADES } from './upgrades';
 import type { Player } from '../entities/Player';
+import type { UpgradeOption } from '../types';
 
 /**
  * 神秘商店商品数据与货架生成
@@ -181,7 +183,27 @@ function isPurchasable(item: ShopItem, player: Player): boolean {
     if (player.isPassiveMaxLevel?.(item.upgradeId || item.id)) return false;
     return true;
   }
+  if (item.kind === 'stat') {
+    // stat 属性达 maxLevel 后不再上架（防无限叠加；兜底项不在 UPGRADE_OPTIONS 中 → 永远可买）
+    const opt = UPGRADE_OPTIONS.find((u) => u.id === item.upgradeId);
+    if (opt?.maxLevel && player.getStatUpgradeLevel?.(item.upgradeId!) >= opt.maxLevel) return false;
+    return true;
+  }
   return true;
+}
+
+/** 兜底升级项转商品（全满级后补货用） */
+function fromFallback(f: UpgradeOption, price: number): ShopItem {
+  return {
+    id: `shop_${f.id}`,
+    name: f.name,
+    icon: f.icon,
+    desc: f.description,
+    price,
+    rarity: f.rarity as ShopItem['rarity'],
+    kind: 'stat',
+    upgradeId: f.id,
+  };
 }
 
 /** 生成一货架 4 件商品（3 常规 + 1 高级位保底） */
@@ -226,6 +248,17 @@ export function generateShopStock(player: Player): ShopItem[] {
     regulars.push(item);
   }
 
+  // 仍不足（所有成长项满级 + 消耗品售罄）时用兜底项补位（金币袋/大治疗/狂暴/清屏，无等级不膨胀）
+  if (regulars.length < 3) {
+    const fallbacks = shuffle(FALLBACK_UPGRADES)
+      .map((f) => fromFallback(f, 20))
+      .filter((it) => !regulars.some((r) => r.id === it.id) && it.id !== premium?.id);
+    for (const item of fallbacks) {
+      if (regulars.length >= 3) break;
+      regulars.push(item);
+    }
+  }
+
   return shuffle([premium, ...regulars].filter(Boolean));
 }
 
@@ -235,8 +268,10 @@ export function applyShopItem(player: Player, item: ShopItem, gameScene: any): v
     item.consumableEffect?.(player, gameScene);
     return;
   }
-  const opt = UPGRADE_OPTIONS.find((u) => u.id === item.upgradeId);
+  const opt =
+    UPGRADE_OPTIONS.find((u) => u.id === item.upgradeId) ||
+    FALLBACK_UPGRADES.find((f) => f.id === item.upgradeId);
   if (opt) {
-    applyUpgradeToPlayer(player, opt);
+    applyUpgradeToPlayer(player, opt, gameScene);
   }
 }

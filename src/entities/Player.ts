@@ -4,6 +4,7 @@ import { EventBus } from '../utils/EventBus';
 import { MathUtils } from '../utils/MathUtils';
 import { Drone } from './Drone';
 import { WEAPONS } from '../data/weapons';
+import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { USABLE_ITEMS } from '../data/items';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
@@ -21,6 +22,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private weapons: Map<string, { config: WeaponConfig; level: number; cooldown: number }> = new Map();
   // 被动技能列表
   private passives: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
+  // stat 类升级次数（满级后不再出现在升级/商店候选池；用于防止无限叠加数值爆炸）
+  private statUpgrades: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
   // 无人机列表（summon 类型武器）
   private drones: Drone[] = [];
   // 生命恢复计时器
@@ -644,6 +647,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     stats: PlayerStats;
     weapons: Array<{ id: string; level: number }>;
     passives: Array<{ id: string; name: string; level: number }>;
+    statUpgrades?: Array<{ id: string; name: string; level: number }>;
   }): void {
     if (saved.stats) {
       // 防御：存档中非法数值（null/NaN 等）不覆盖当前基础属性，
@@ -674,6 +678,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (saved.passives) {
       for (const p of saved.passives) {
         this.passives.set(p.id, { id: p.id, name: p.name, level: p.level, maxLevel: 5 });
+      }
+    }
+    // 重建 stat 升级计数（从 UPGRADE_OPTIONS 取 maxLevel；旧存档无此字段则跳过）
+    this.statUpgrades.clear();
+    if (saved.statUpgrades) {
+      for (const s of saved.statUpgrades) {
+        const opt = UPGRADE_OPTIONS.find((u) => u.id === s.id);
+        if (opt?.maxLevel) {
+          this.statUpgrades.set(s.id, { id: s.id, name: s.name, level: s.level, maxLevel: opt.maxLevel });
+        }
       }
     }
     // 同步无人机数量
@@ -738,6 +752,36 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** 是否拥有某被动技能 */
   hasPassive(id: string): boolean {
     return this.passives.has(id);
+  }
+
+  // ========== stat 类升级管理 ==========
+
+  /** 记录一次 stat 类升级（按升级项 id 计数，达 maxLevel 后不再出现） */
+  recordStatUpgrade(id: string, name: string, maxLevel: number): void {
+    if (this.statUpgrades.has(id)) {
+      const s = this.statUpgrades.get(id)!;
+      if (s.level < s.maxLevel) s.level++;
+    } else {
+      this.statUpgrades.set(id, { id, name, level: 1, maxLevel });
+    }
+  }
+
+  /** 某 stat 升级项已选次数（0 表示未选过） */
+  getStatUpgradeLevel(id: string): number {
+    const s = this.statUpgrades.get(id);
+    return s ? s.level : 0;
+  }
+
+  /** 某 stat 升级项是否已满级 */
+  isStatMaxLevel(id: string, maxLevel?: number): boolean {
+    const s = this.statUpgrades.get(id);
+    if (!s) return false;
+    return s.level >= (maxLevel ?? s.maxLevel);
+  }
+
+  /** 获取全部 stat 升级（供 HUD 增益列表显示进度） */
+  getStatUpgrades(): Array<{ id: string; name: string; level: number; maxLevel: number }> {
+    return Array.from(this.statUpgrades.values());
   }
 
   /** 获取某被动技能等级（0 表示未拥有） */

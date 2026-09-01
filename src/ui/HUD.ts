@@ -63,6 +63,20 @@ export class HUD {
     passive_gold_boost: { icon: '💰', color: 0x665500 },
   };
 
+  // stat 属性升级视觉映射（图标 + 背景色；图标与 UPGRADE_OPTIONS 保持一致）
+  // 显示等级进度，让玩家能看到"力量强化 3/5"之类的上限
+  private readonly statVisuals: Record<string, { icon: string; color: number }> = {
+    max_hp: { icon: '❤️', color: 0x662222 },
+    move_speed: { icon: '👟', color: 0x445566 },
+    attack_power: { icon: '⚔️', color: 0x664422 },
+    attack_speed: { icon: '⚡', color: 0x886622 },
+    crit_rate: { icon: '🎯', color: 0x664466 },
+    crit_damage: { icon: '💥', color: 0x882222 },
+    pickup_radius: { icon: '🧲', color: 0x446666 },
+    defense: { icon: '🛡️', color: 0x446688 },
+    luck: { icon: '🍀', color: 0x226644 },
+  };
+
   // 尺寸常量
   private readonly barWidth = 380;
   private readonly barHeight = 22;
@@ -242,10 +256,11 @@ export class HUD {
     }
   }
 
-  /** 更新增益列表（武器+被动） */
+  /** 更新增益列表（武器+被动+stat 属性） */
   private updateBuffs(player: any): void {
     const weapons = player.getWeapons?.() || [];
     const passives = player.getPassives?.() || [];
+    const statUpgrades = player.getStatUpgrades?.() || [];
 
     // 合并为统一格式
     const allBuffs = [
@@ -262,6 +277,13 @@ export class HUD {
         level: p.level,
         maxLevel: p.maxLevel,
         ...this.passiveVisuals[p.id],
+      })),
+      ...statUpgrades.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        level: s.level,
+        maxLevel: s.maxLevel,
+        ...this.statVisuals[s.id],
       })),
     ].filter((b) => b.icon); // 过滤掉没有图标的未知项
 

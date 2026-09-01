@@ -129,7 +129,7 @@ export class DebugPanel {
       const label = `${option.icon || "✨"} ${option.name}`;
       const click = () => {
         const player = this.getPlayer();
-        if (player) applyUpgradeToPlayer(player, option);
+        if (player) applyUpgradeToPlayer(player, option, this.getGameScene());
       };
       if (i % 2 === 0) {
         curY = this.addButton(colX, curY, label, click);

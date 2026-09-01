@@ -95,6 +95,10 @@ export interface UpgradeOption {
   icon: string;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   effect: UpgradeEffect;
+  /** 该升级项最多可选次数（stat 类满级后不再出现在升级/商店候选池，防止无限叠加数值爆炸） */
+  maxLevel?: number;
+  /** 自定义应用逻辑（兜底项等特殊效果用；优先级高于 effect，scene 为 GameScene） */
+  onApply?: (player: any, scene?: any) => void;
 }
 
 export interface UpgradeEffect {
@@ -169,5 +173,6 @@ export interface SavedRun {
     stats: PlayerStats;
     weapons: Array<{ id: string; level: number }>;
     passives: Array<{ id: string; name: string; level: number }>;
+    statUpgrades?: Array<{ id: string; name: string; level: number }>;
   };
 }

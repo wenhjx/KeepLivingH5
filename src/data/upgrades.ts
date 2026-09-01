@@ -6,6 +6,9 @@ import type { UpgradeOption } from '../types';
  */
 export const UPGRADE_OPTIONS: UpgradeOption[] = [
   // ========== 属性升级 ==========
+  // 说明：stat 类升级设有 maxLevel（最多可选次数），满级后从升级三选一与商店候选池移除，
+  // 防止 attackPower ×1.2ⁿ / critDamage ×1.5ⁿ 无限乘算叠加导致后期数值爆炸。
+  // 封顶战力：攻击力 10→24.9、爆伤 1.5→5.06、暴击率 5%→55%、攻速 1.0→2.01
   {
     id: 'max_hp',
     name: '生命强化',
@@ -13,6 +16,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: '最大生命值 +20，并恢复满血',
     icon: '❤️',
     rarity: 'common',
+    maxLevel: 5,
     effect: { stat: 'maxHealth', value: 20 },
   },
   {
@@ -22,6 +26,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: '移动速度 +15%',
     icon: '👟',
     rarity: 'common',
+    maxLevel: 3,
     effect: { stat: 'moveSpeed', value: 0.15, isPercent: true },
   },
   {
@@ -31,6 +36,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: '攻击力 +20%',
     icon: '⚔️',
     rarity: 'rare',
+    maxLevel: 5,
     effect: { stat: 'attackPower', value: 0.2, isPercent: true },
   },
   {
@@ -40,6 +46,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: '攻击速度 +15%',
     icon: '⚡',
     rarity: 'rare',
+    maxLevel: 5,
     effect: { stat: 'attackSpeed', value: 0.15, isPercent: true },
   },
   {
@@ -49,6 +56,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: '暴击率 +10%',
     icon: '🎯',
     rarity: 'rare',
+    maxLevel: 5,
     effect: { stat: 'critRate', value: 0.1 },
   },
   {
@@ -58,6 +66,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: '暴击伤害 +50%',
     icon: '💥',
     rarity: 'epic',
+    maxLevel: 3,
     effect: { stat: 'critDamage', value: 0.5, isPercent: true },
   },
   {
@@ -67,6 +76,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: '拾取范围 +30%',
     icon: '🧲',
     rarity: 'common',
+    maxLevel: 5,
     effect: { stat: 'pickupRadius', value: 0.3, isPercent: true },
   },
   {
@@ -76,6 +86,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: '防御力 +5',
     icon: '🛡️',
     rarity: 'common',
+    maxLevel: 5,
     effect: { stat: 'defense', value: 5 },
   },
   {
@@ -85,6 +96,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: '幸运值 +10（影响掉落）',
     icon: '🍀',
     rarity: 'rare',
+    maxLevel: 5,
     effect: { stat: 'luck', value: 10 },
   },
 
@@ -216,3 +228,68 @@ export const getUpgradesByRarity = (rarity: string): UpgradeOption[] =>
 /** 根据类型筛选 */
 export const getUpgradesByType = (type: string): UpgradeOption[] =>
   UPGRADE_OPTIONS.filter((u) => u.type === type);
+
+/**
+ * 兜底升级项（所有可成长项——武器/被动/stat——全部满级后的补充）
+ *
+ * 设计目标：成长项满级后玩家依然"有得选、有决策"，但不重新制造数值膨胀。
+ * 因此兜底项一律：无等级、即时/限时生效、不可叠加（重复选只是刷新效果，不累积属性）。
+ *
+ * 参考：吸血鬼幸存者满级后三选一退化为金币袋/治疗/护符等资源型保底项。
+ */
+export const FALLBACK_UPGRADES: UpgradeOption[] = [
+  {
+    id: 'fallback_coins',
+    name: '金币袋',
+    type: 'stat',
+    description: '立即获得 50 金币',
+    icon: '💰',
+    rarity: 'common',
+    effect: {},
+    onApply: (player) => {
+      player.addCoins?.(50);
+    },
+  },
+  {
+    id: 'fallback_heal',
+    name: '大治疗',
+    type: 'stat',
+    description: '立即恢复全部生命值',
+    icon: '💚',
+    rarity: 'common',
+    effect: {},
+    onApply: (player) => {
+      player.heal?.(player.getMaxHealth?.() ?? 9999);
+    },
+  },
+  {
+    id: 'fallback_rage',
+    name: '狂暴药剂',
+    type: 'stat',
+    description: '15 秒内攻击力与攻速 +50%',
+    icon: '⚗️',
+    rarity: 'rare',
+    effect: {},
+    onApply: (player) => {
+      player.applyRage?.(15000);
+    },
+  },
+  {
+    id: 'fallback_clearscreen',
+    name: '清屏冲击波',
+    type: 'stat',
+    description: '对全场敌人造成 300 点伤害',
+    icon: '💥',
+    rarity: 'epic',
+    effect: {},
+    onApply: (_player, scene) => {
+      if (!scene) return;
+      const enemies = scene.getEnemies?.() || [];
+      enemies.forEach((e: any) => {
+        if (e?.active && e?.takeDamage) {
+          e.takeDamage(300, false);
+        }
+      });
+    },
+  },
+];
