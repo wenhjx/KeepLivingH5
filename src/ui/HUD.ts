@@ -43,11 +43,12 @@ export class HUD {
   private lastBuffCount: number = -1;
 
   // 武器视觉映射（图标 + 背景色）
+  // 注意：图标与 UPGRADE_OPTIONS（升级三选一/商店/解锁提示）保持一致，避免同一武器多处图标不一致
   private readonly weaponVisuals: Record<string, { icon: string; color: number }> = {
     default_gun: { icon: '🔫', color: 0x444466 },
     machine_gun: { icon: '🔫', color: 0x886600 },
-    shotgun: { icon: '💥', color: 0x882222 },
-    laser: { icon: '⚡', color: 0x006666 },
+    shotgun: { icon: '🔫', color: 0x882222 },
+    laser: { icon: '🔆', color: 0x006666 },
     rocket: { icon: '🚀', color: 0x884400 },
     boomerang: { icon: '🪃', color: 0x226622 },
     lightsaber: { icon: '🗡️', color: 0x006688 },

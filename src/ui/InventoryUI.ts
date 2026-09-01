@@ -2,7 +2,6 @@ import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { EventBus } from '../utils/EventBus';
 import { USABLE_ITEMS, INVENTORY_ORDER } from '../data/items';
-import { GameConfig } from '../game/GameConfig';
 import type { Player } from '../entities/Player';
 
 /**
@@ -25,12 +24,18 @@ export class InventoryUI {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    // 加入 UIScene 的反向缩放根容器（uiRoot），保证 960x640 逻辑坐标下视觉位置正确，
+    // 否则相机 zoom 后定位会偏移（曾导致物品栏跑到屏幕中央）
+    const parent = (scene as any).uiRoot || scene;
     this.container = scene.add.container(0, 0).setDepth(150);
+    parent.add(this.container);
 
-    // 4 个固定槽位（从右往左排列在右下角）
+    // 4 个固定槽位（从右往左排列在右下角，避开 HUD 区域）
+    // 注意：加入 uiRoot 的组件须用 scene.scale（渲染尺寸）坐标，逻辑 960 尺寸会偏移到中央
+    const { width, height } = this.scene.scale;
     const totalWidth = INVENTORY_ORDER.length * this.slotSize + (INVENTORY_ORDER.length - 1) * this.slotSpacing;
-    const startX = GameConfig.GAME_WIDTH - 12 - totalWidth + this.slotSize / 2;
-    const y = GameConfig.GAME_HEIGHT - 12 - this.slotSize / 2;
+    const startX = width - 12 - totalWidth + this.slotSize / 2;
+    const y = height - 12 - this.slotSize / 2;
 
     INVENTORY_ORDER.forEach((itemId, index) => {
       const x = startX + index * (this.slotSize + this.slotSpacing);
