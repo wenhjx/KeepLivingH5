@@ -62,9 +62,9 @@ export class UIScene extends Phaser.Scene {
     // 物品栏（右下角，点击或按 1-4 使用消耗品）
     this.inventoryUI = new InventoryUI(this);
 
-    // 移动端显示虚拟摇杆
+    // 移动端显示虚拟摇杆（动态模式：左半屏触碰即在按下处弹出，避免固定位置误触）
     if (gm.isMobile) {
-      this.joystick = new VirtualJoystick(this, 100, this.scale.height - 100);
+      this.joystick = new VirtualJoystick(this, 100, this.scale.height - 100, 'dynamic');
       // 绑定到 GameScene 的输入管理器
       const gameScene = this.scene.get('GameScene') as any;
       if (gameScene && gameScene.getInputManager) {

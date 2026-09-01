@@ -209,6 +209,12 @@ export class ShopScene extends Phaser.Scene {
     const player = this.getPlayer();
     if (!player) return;
 
+    // 防重复购买：卡片已售出后禁止再次点击购买（否则 stat 类商品可反复叠加，如磁力刷到超神）
+    if (card.getData('sold')) {
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_SHOP_DENY, 0.8);
+      return;
+    }
+
     if (!player.spendCoins(item.price)) {
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_SHOP_DENY, 0.8);
       this.flashInsufficient();

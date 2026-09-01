@@ -2,6 +2,7 @@ import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { EventBus } from '../utils/EventBus';
 import { USABLE_ITEMS, INVENTORY_ORDER } from '../data/items';
+import { GameManager } from '../game/GameManager';
 import type { Player } from '../entities/Player';
 
 /**
@@ -14,6 +15,9 @@ export class InventoryUI {
   private container: Phaser.GameObjects.Container;
   private slotSize = 46;
   private slotSpacing = 8;
+  private iconSize = '22px';
+  private countSize = '12px';
+  private keySize = '10px';
   private slots: Array<{
     bg: Phaser.GameObjects.Graphics;
     icon: Phaser.GameObjects.Text;
@@ -24,6 +28,16 @@ export class InventoryUI {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    // 移动端放大触控目标（手机手指精度低，默认 46px 太小容易点错）
+    const gm = GameManager.getInstance();
+    if (gm.isMobile) {
+      this.slotSize = 62;
+      this.slotSpacing = 10;
+      this.iconSize = '30px';
+      this.countSize = '16px';
+      this.keySize = '13px';
+    }
+
     // 加入 UIScene 的反向缩放根容器（uiRoot），保证 960x640 逻辑坐标下视觉位置正确，
     // 否则相机 zoom 后定位会偏移（曾导致物品栏跑到屏幕中央）
     const parent = (scene as any).uiRoot || scene;
@@ -63,13 +77,13 @@ export class InventoryUI {
     bg.strokeRoundedRect(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize, 6);
 
     // 图标（空时灰色）
-    const icon = createUIText(this.scene, 0, 0, item.icon, { fontSize: '22px' })
+    const icon = createUIText(this.scene, 0, 0, item.icon, { fontSize: this.iconSize })
       .setOrigin(0.5)
       .setAlpha(0.3);
 
     // 数量角标
     const count = createUIText(this.scene, this.slotSize / 2 - 4, -this.slotSize / 2 + 4, '', {
-        fontSize: '12px',
+        fontSize: this.countSize,
         color: '#ffffff',
         fontStyle: 'bold',
         stroke: '#000000',
@@ -79,7 +93,7 @@ export class InventoryUI {
 
     // 快捷键提示
     const key = createUIText(this.scene, -this.slotSize / 2 + 4, -this.slotSize / 2 + 2, `${index + 1}`, {
-        fontSize: '10px',
+        fontSize: this.keySize,
         color: '#888888',
       })
       .setOrigin(0, 0);

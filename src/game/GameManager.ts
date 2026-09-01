@@ -58,6 +58,11 @@ export class GameManager {
   }
 
   private detectMobile(): boolean {
+    // 调试/测试：URL 参数 ?mobile=1 强制移动端模式（用于在桌面验证摇杆、物品栏等移动端 UI）
+    if (typeof window !== 'undefined' && /[?&]mobile=1/.test(window.location.search)) {
+      return true;
+    }
+
     if (typeof navigator === 'undefined') return false;
 
     // 1. userAgent 正则匹配（覆盖大多数移动设备和浏览器设备模拟）
