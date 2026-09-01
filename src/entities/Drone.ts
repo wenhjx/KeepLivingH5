@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 import { MathUtils } from '../utils/MathUtils';
 import type { Player } from './Player';
 import type { WeaponConfig } from '../types';
@@ -82,6 +84,8 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
 
     const angle = MathUtils.angle(this.x, this.y, target.x, target.y);
     const damage = this.config.damage * (1 + this.level * 0.2) * this.player.getStats().attackPower / 10;
+
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_DRONE, 0.4);
 
     scene.getObjectPool().spawnBullet(
       this.x,

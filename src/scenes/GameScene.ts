@@ -13,6 +13,7 @@ import { DamageTextManager } from '../ui/DamageTextManager';
 import { TerrainManager } from '../systems/TerrainManager';
 import { DEFAULT_TERRAIN } from '../data/terrain';
 import { EventBus } from '../utils/EventBus';
+import { SOUND_KEYS } from '../data/sounds';
 import type { EnemyConfig, PickupConfig } from '../types';
 
 /**
@@ -481,6 +482,7 @@ export class GameScene extends Phaser.Scene {
    * 处理爆炸：范围伤害 + 视觉效果
    */
   private handleExplosion(x: number, y: number, damage: number, radius: number): void {
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_EXPLOSION, 1);
     // 对范围内敌人造成伤害
     this.enemies.children.each((enemy: any) => {
       if (!enemy.active) return true;

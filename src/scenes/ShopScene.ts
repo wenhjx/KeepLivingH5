@@ -4,6 +4,8 @@ import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
 import { EventBus } from '../utils/EventBus';
 import { setupUICamera } from '../utils/CameraHelper';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 import { generateShopStock, applyShopItem, type ShopItem } from '../data/shop';
 import { createOptionCard } from '../ui/OptionCard';
 import type { Player } from '../entities/Player';
@@ -131,6 +133,7 @@ export class ShopScene extends Phaser.Scene {
     if (!player) return;
 
     if (!player.spendCoins(item.price)) {
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_SHOP_DENY, 0.8);
       this.flashInsufficient();
       return;
     }
@@ -155,6 +158,7 @@ export class ShopScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     card.add(soldText);
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_SHOP_BUY, 1);
   }
 
   /** 金币不足提示 */

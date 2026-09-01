@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { EventBus } from '../utils/EventBus';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 import type { Player } from '../entities/Player';
 import type { Enemy } from '../entities/Enemy';
 import type { Bullet } from '../entities/Bullet';
@@ -30,6 +32,7 @@ export class CollisionSystem {
 
     const damage = enemy.getConfig()?.attackPower || 10;
     player.takeDamage(damage);
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PLAYER_HURT, 1);
 
     // 击退玩家
     const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
@@ -59,6 +62,12 @@ export class CollisionSystem {
     const finalDamage = isCrit ? damage * critDamage : damage;
 
     enemy.takeDamage(finalDamage, isCrit);
+
+    // 命中音效（暴击更响）
+    AudioManager.getInstance().playSfx(
+      isCrit ? SOUND_KEYS.SFX_HIT_CRIT : SOUND_KEYS.SFX_HIT,
+      isCrit ? 1 : 0.5
+    );
 
     // 浮动伤害数字（暴击金色大字，普通白色）
     gameScene?.spawnDamageText?.(bullet.x, bullet.y, finalDamage, isCrit);

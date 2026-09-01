@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { MathUtils } from '../utils/MathUtils';
 import { EventBus } from '../utils/EventBus';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 import type { EnemyConfig, EnemyType } from '../types';
 import type { Player } from './Player';
 
@@ -313,6 +315,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     // 死亡粒子
     // TODO: 粒子特效
+
+    // 死亡音效（Boss 用专属死亡音效）
+    AudioManager.getInstance().playSfx(
+      this.config.type === 'boss' ? SOUND_KEYS.SFX_BOSS_DIE : SOUND_KEYS.SFX_ENEMY_DIE,
+      this.config.type === 'boss' ? 1 : 0.5
+    );
 
     EventBus.emit('enemy:death', this.config);
     this.despawn();

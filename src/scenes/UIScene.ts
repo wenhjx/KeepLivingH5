@@ -9,6 +9,8 @@ import { Minimap } from '../ui/Minimap';
 import { InventoryUI } from '../ui/InventoryUI';
 import { GuideManager } from '../systems/GuideManager';
 import { EventBus } from '../utils/EventBus';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 
 /**
  * UI 叠加场景
@@ -80,11 +82,10 @@ export class UIScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     this.pauseButton.on('pointerdown', () => {
-      const game = this.scene.get('GameScene') as any;
-      if (game && game.inputManager) {
-        // 切换暂停
-      }
-      GameManager.getInstance().setPaused(!GameManager.getInstance().isPaused);
+      const gm = GameManager.getInstance();
+      const pausing = !gm.isPaused;
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_PAUSE, 0.6);
+      gm.setPaused(pausing);
     });
 
     // 暂停遮罩
@@ -129,6 +130,7 @@ export class UIScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     resumeBtn.on('pointerdown', () => {
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
       GameManager.getInstance().setPaused(false);
     });
     this.pauseOverlay.add(resumeBtn);
@@ -143,6 +145,7 @@ export class UIScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     menuBtn.on('pointerdown', () => {
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
       // 存档由 GameScene SHUTDOWN 统一处理（saveRun + exitRun，保留进行中对局）
       // 此处不调用 endRun，否则会 clearSavedRun 导致"继续游戏"失效
       this.scene.stop('GameScene');

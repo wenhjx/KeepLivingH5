@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { GameConfig } from '../game/GameConfig';
 import { GameManager } from '../game/GameManager';
 import { MathUtils } from '../utils/MathUtils';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 import type { ObjectPool } from './ObjectPool';
 import type { EnemyConfig, EnemyType, WaveConfig } from '../types';
 import { ENEMY_CONFIGS } from '../data/enemies';
@@ -167,6 +169,7 @@ export class WaveManager {
 
     this.objectPool.spawnEnemy(config, spawnPos.x, spawnPos.y, difficultyMultiplier);
     this.bossActive = true;
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_BOSS_ALERT, 1);
   }
 
   /** 进入下一波 */

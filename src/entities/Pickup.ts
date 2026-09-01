@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { MathUtils } from '../utils/MathUtils';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 import type { PickupConfig, PickupType } from '../types';
 import type { Player } from './Player';
 
@@ -78,12 +80,15 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
     switch (this.config.type) {
       case 'exp':
         player.addExp(this.config.value);
+        AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PICKUP_EXP, 0.5);
         break;
       case 'health':
         player.heal(this.config.value);
+        AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PICKUP_HEALTH, 0.7);
         break;
       case 'coin':
         player.addCoins(this.config.value);
+        AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PICKUP_COIN, 0.6);
         break;
       case 'item':
         // TODO: 道具系统

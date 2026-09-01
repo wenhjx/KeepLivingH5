@@ -1,4 +1,6 @@
 import type { Player } from '../entities/Player';
+import { SOUND_KEYS } from './sounds';
+import { AudioManager } from '../systems/AudioManager';
 
 /**
  * 可主动使用的物品定义（物品栏系统）
@@ -23,7 +25,7 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
     icon: '🛡️',
     description: '8 秒无敌护盾',
     color: 0x33ccff,
-    use: (player) => player.applyShield(8000),
+    use: (player) => { player.applyShield(8000); AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_ITEM_SHIELD, 0.9); },
   },
   rage: {
     id: 'rage',
@@ -31,7 +33,7 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
     icon: '⚗️',
     description: '15 秒攻速与攻击力 +50%',
     color: 0xff4444,
-    use: (player) => player.applyRage(15000),
+    use: (player) => { player.applyRage(15000); AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_ITEM_RAGE, 0.9); },
   },
   bomb: {
     id: 'bomb',
@@ -48,6 +50,7 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
           e.takeDamage(500, true);
         }
       });
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_ITEM_BOMB, 1);
     },
   },
   heal: {
@@ -56,7 +59,7 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
     icon: '🍗',
     description: '恢复 50% 最大生命值',
     color: 0x44ff88,
-    use: (player) => player.heal(player.getMaxHealth() * 0.5),
+    use: (player) => { player.heal(player.getMaxHealth() * 0.5); AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_ITEM_USE, 0.8); },
   },
 };
 

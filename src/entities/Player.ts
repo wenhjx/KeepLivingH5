@@ -5,6 +5,8 @@ import { MathUtils } from '../utils/MathUtils';
 import { Drone } from './Drone';
 import { WEAPONS } from '../data/weapons';
 import { USABLE_ITEMS } from '../data/items';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 import type { PlayerStats, WeaponConfig } from '../types';
 import type { InputManager } from '../systems/InputManager';
 
@@ -204,6 +206,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 获取武器视觉参数
     const visual = this.getWeaponVisual(config.id);
 
+    // 射击音效（按武器类型区分，资源缺失时静默失败）
+    this.playWeaponSfx(config.id);
+
     // 发射子弹（霰弹等可随等级增加弹丸数）
     const baseCount = config.projectileCount || 1;
     const count = baseCount + (config.extraProjectilesPerLevel || 0) * (level - 1);
@@ -245,6 +250,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         return { color: 0xffffff }; // 白色默认
       default:
         return {};
+    }
+  }
+
+  /** 按武器播放对应射击音效（资源缺失静默失败） */
+  private playWeaponSfx(weaponId: string): void {
+    const audio = AudioManager.getInstance();
+    switch (weaponId) {
+      case 'shotgun': audio.playSfx(SOUND_KEYS.SFX_SHOOT_SHOTGUN, 0.8); break;
+      case 'machine_gun': audio.playSfx(SOUND_KEYS.SFX_SHOOT_MACHINE_GUN, 0.6); break;
+      case 'laser': audio.playSfx(SOUND_KEYS.SFX_SHOOT_LASER, 0.7); break;
+      case 'rocket': audio.playSfx(SOUND_KEYS.SFX_SHOOT_ROCKET, 1); break;
+      case 'boomerang': audio.playSfx(SOUND_KEYS.SFX_BOOMERANG, 0.8); break;
+      case 'lightsaber': audio.playSfx(SOUND_KEYS.SFX_MELEE_SWING, 0.7); break;
+      default: audio.playSfx(SOUND_KEYS.SFX_SHOOT_DEFAULT, 0.5); break;
     }
   }
 
@@ -396,6 +415,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     EventBus.emit('player:damage', actualDamage);
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PLAYER_HURT, 1);
 
     if (this.stats.health <= 0) {
       this.stats.health = 0;
@@ -419,6 +439,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.setVisible(true);
       this.setAlpha(1);
       EventBus.emit('player:revive');
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PLAYER_REVIVE, 1);
       return;
     }
 
@@ -427,6 +448,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.shieldRing?.destroy();
     this.shieldRing = null;
     EventBus.emit('player:death');
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PLAYER_DIE, 1);
   }
 
   // ========== 金币 ==========
@@ -565,6 +587,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.stats.attackPower += 2;
 
     EventBus.emit('player:levelup', this.stats.level);
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_LEVEL_UP, 0.9);
   }
 
   /** 计算指定等级升级所需经验（与 GameConfig.LEVEL 曲线一致） */

@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
 import { setupUICamera } from '../utils/CameraHelper';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 
 /**
  * 游戏结束场景
@@ -20,6 +22,9 @@ export class GameOverScene extends Phaser.Scene {
     const runData = gm.runData;
     const stats = gm.stats;
     const centerX = width / 2;
+
+    // 游戏结束音效
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_GAME_OVER, 1);
 
     // 背景
     this.add.rectangle(0, 0, width, height, 0x0a0a0f).setOrigin(0);

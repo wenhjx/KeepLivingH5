@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
 import { AudioManager } from '../systems/AudioManager';
+import { SOUND_KEYS } from '../data/sounds';
 import { setupUICamera } from '../utils/CameraHelper';
 import type { QualityLevel } from '../game/GameConfig';
 
@@ -113,7 +114,10 @@ export class MainMenuScene extends Phaser.Scene {
     btn.on('pointerout', () => {
       btn.setStyle({ color: '#e0e0e0', backgroundColor: '#1a1a25' });
     });
-    btn.on('pointerdown', callback);
+    btn.on('pointerdown', () => {
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
+      callback();
+    });
   }
 
   private startGame(): void {

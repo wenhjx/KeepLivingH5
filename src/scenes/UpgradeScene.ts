@@ -9,6 +9,8 @@ import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
 import { EventBus } from '../utils/EventBus';
 import { setupUICamera } from '../utils/CameraHelper';
+import { SOUND_KEYS } from '../data/sounds';
+import { AudioManager } from '../systems/AudioManager';
 import type { UpgradeOption } from '../types';
 import type { Player } from '../entities/Player';
 
@@ -190,6 +192,7 @@ export class UpgradeScene extends Phaser.Scene {
     if (isNewWeapon && option.effect.weaponId) {
       const weapon = WEAPONS[option.effect.weaponId];
       if (weapon) {
+        AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_WEAPON_UNLOCK, 1);
         GuideManager.getInstance().show({
           title: `新武器: ${weapon.name}`,
           description: weapon.description + '\n将自动攻击敌人',
