@@ -196,7 +196,7 @@ export class UpgradeScene extends Phaser.Scene {
         GuideManager.getInstance().show({
           title: `新武器: ${weapon.name}`,
           description: weapon.description + '\n将自动攻击敌人',
-          icon: '🔫',
+          icon: option.icon || '🔫',
           color: 0xff6b35,
           position: 'top-right',
           duration: 4000,

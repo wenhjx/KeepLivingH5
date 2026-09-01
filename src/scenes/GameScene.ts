@@ -660,13 +660,14 @@ export class GameScene extends Phaser.Scene {
     const px = this.player.x;
     const py = this.player.y;
     const SAFE_DIST = 160;
+    const BULLET_DIST = 120;
     let targetX = 0;
     let targetY = 0;
 
+    // 敌人躲避向量（所有附近敌人的合力方向）
+    let avoidX = 0;
+    let avoidY = 0;
     if (nearestEnemyDist < SAFE_DIST) {
-      // 危险：躲避所有附近敌人的合力
-      let avoidX = 0;
-      let avoidY = 0;
       this.enemies.children.each((enemy: any) => {
         if (!enemy.active) return true;
         const dx = px - enemy.x;
@@ -679,6 +680,50 @@ export class GameScene extends Phaser.Scene {
         }
         return true;
       });
+    }
+
+    // 子弹躲避向量：检测附近朝玩家飞来的敌人子弹，预测侧向闪避
+    let bulletX = 0;
+    let bulletY = 0;
+    let bulletDanger = 0;
+    this.bullets.children.each((bullet: any) => {
+      if (!bullet.active || !bullet.isEnemyBullet) return true;
+      const dx = px - bullet.x;
+      const dy = py - bullet.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0.1 && dist < BULLET_DIST) {
+        const bvx = bullet.body?.velocity?.x ?? bullet.vx ?? 0;
+        const bvy = bullet.body?.velocity?.y ?? bullet.vy ?? 0;
+        const spd = Math.hypot(bvx, bvy);
+        if (spd > 0.01) {
+          // 子弹运动方向与"子弹→玩家"方向的点积：>0 表示正朝玩家飞来
+          const dot = (bvx / spd) * (dx / dist) + (bvy / spd) * (dy / dist);
+          if (dot > 0.2) {
+            // 越近越危险、方向越正越危险
+            const weight = (1 - dist / BULLET_DIST) * (0.4 + dot * 0.6);
+            // 沿子弹运动方向的垂直方向侧向闪避
+            const perpX = -(bvy / spd);
+            const perpY = bvx / spd;
+            bulletX += perpX * weight;
+            bulletY += perpY * weight;
+            bulletDanger = Math.max(bulletDanger, weight);
+          }
+        }
+      }
+      return true;
+    });
+
+    if (bulletDanger > 0.45) {
+      // 子弹威胁主导：以侧向闪避为主，轻微叠加敌人躲避
+      const bl = Math.hypot(bulletX, bulletY);
+      if (bl > 0.01) {
+        bulletX /= bl;
+        bulletY /= bl;
+      }
+      targetX = bulletX + avoidX * 0.25;
+      targetY = bulletY + avoidY * 0.25;
+    } else if (nearestEnemyDist < SAFE_DIST) {
+      // 敌人威胁主导：背向敌人合力
       targetX = avoidX;
       targetY = avoidY;
     } else {
