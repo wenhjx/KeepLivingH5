@@ -284,8 +284,11 @@ export const FALLBACK_UPGRADES: UpgradeOption[] = [
     effect: {},
     onApply: (_player, scene) => {
       if (!scene) return;
-      const enemies = scene.getEnemies?.() || [];
-      enemies.forEach((e: any) => {
+      // getEnemies() 返回 Phaser.Arcade.Group，须用 getChildren() 取数组（Group 无 forEach）
+      const enemies = scene.getEnemies?.();
+      if (!enemies) return;
+      const list = enemies.getChildren() as any[];
+      list.forEach((e: any) => {
         if (e?.active && e?.takeDamage) {
           e.takeDamage(300, false);
         }
