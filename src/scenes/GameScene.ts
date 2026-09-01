@@ -616,6 +616,9 @@ export class GameScene extends Phaser.Scene {
     this.aiCurrentDir = { x: 0, y: 0 };
     if (!enabled) {
       this.inputManager.clearAIDirection();
+    } else {
+      // AI 托管时自动关闭新手引导（引导框会挡视野，AI 也不需要看提示）
+      GuideManager.getInstance().clearAll();
     }
   }
 

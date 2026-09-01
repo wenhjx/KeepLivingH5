@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { USABLE_ITEMS } from '../data/items';
+import { GuideManager } from '../systems/GuideManager';
 
 /**
  * 全局调试 API（仅开发环境使用，挂在 window.__debug 上）
@@ -87,16 +88,8 @@ export function initDebugAPI(game: Phaser.Game): void {
     resume: () => gm.setPaused(false),
 
     closeTutorial: () => {
-      const uiScene = getScene('UIScene');
-      // GuideManager 绑定在 UIScene 上，尝试调用其隐藏方法
-      const guide = (uiScene as any)?.guideManager || (window as any).GuideManager;
-      if (guide?.getInstance) {
-        guide.getInstance().hide?.();
-        guide.getInstance()?.clearQueue?.();
-      }
-      // 兜底：直接销毁引导卡片
-      const guideCard = (uiScene as any)?.guideCard;
-      guideCard?.destroy?.();
+      // 直接操作 GuideManager 单例：清空队列 + 销毁当前卡片（旧实现 getInstance 判断错误导致永不生效）
+      GuideManager.getInstance().clearAll();
     },
 
     giveItem: (id: string, count = 1) => {
