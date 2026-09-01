@@ -55,7 +55,9 @@ export class GameConfig {
     bulletInitialSize: 50,
     bulletMaxSize: 300,
     enemyInitialSize: 30,
-    enemyMaxSize: 250,
+    // 同屏敌人上限：压力测试显示 500 只仍 60fps 流畅（极端贴脸场景），
+    // 800 只降到 51fps、1200 只 40fps、1500 只 32fps 开始明显卡顿
+    enemyMaxSize: 500,
     particleInitialSize: 80,
     particleMaxSize: 400,
     pickupInitialSize: 30,
