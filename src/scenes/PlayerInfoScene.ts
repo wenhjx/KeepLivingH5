@@ -236,18 +236,25 @@ export class PlayerInfoScene extends Phaser.Scene {
     });
 
     // 拖拽滚动（按住上下拖动内容区）
+    // 位移超阈值才真正滚动：轻点/微移不跳动内容，也为将来滚动区放入可交互组件预留防误触
     let dragging = false;
+    let dragMoved = false;
     let dragStartY = 0;
     let dragStartOff = 0;
+    const DRAG_THRESHOLD = 12;
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       dragging = true;
+      dragMoved = false;
       dragStartY = p.y;
       dragStartOff = scrollOff;
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!dragging || maxScroll <= 0) return;
-      scrollOff = Phaser.Math.Clamp(dragStartOff + (dragStartY - p.y) / zoom, 0, maxScroll);
-      applyScroll();
+      if (!dragMoved && Math.abs(p.y - dragStartY) > DRAG_THRESHOLD) dragMoved = true;
+      if (dragMoved) {
+        scrollOff = Phaser.Math.Clamp(dragStartOff + (dragStartY - p.y) / zoom, 0, maxScroll);
+        applyScroll();
+      }
     });
     this.input.on('pointerup', () => {
       dragging = false;

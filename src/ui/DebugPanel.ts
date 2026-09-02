@@ -52,6 +52,16 @@ export class DebugPanel {
   private panelY = 12;
   private panelX = 0;
 
+  // ===== 触摸/点击防误触 =====
+  /** 位移超过该阈值（屏幕像素）判定为拖动滚动，抑制按钮点击 */
+  private readonly TAP_THRESHOLD = 12;
+  /** 按下的待结算点击（松手时若未拖动则触发） */
+  private pendingTap: { fn: () => void; sx: number; sy: number; moved: boolean } | null = null;
+  /** 滚动区拖动状态 */
+  private scrollDragging = false;
+  private dragStartY = 0;
+  private dragStartOff = 0;
+
   constructor(scene: Phaser.Scene, uiRoot: Phaser.GameObjects.Container) {
     this.scene = scene;
     this.uiRoot = uiRoot;
@@ -162,6 +172,9 @@ export class DebugPanel {
       if (dy === 0) return;
       this.setScroll(this.scrollOffset - dy);
     });
+
+    // 触摸拖动滚动 + 点击防误触（移动端在按钮上滑动 = 滚动而非点击）
+    this.setupTouchInput();
   }
 
   // ===== 布局辅助 =====
@@ -250,7 +263,10 @@ export class DebugPanel {
       bg.strokeRoundedRect(0, 0, width, this.btnHeight, 4);
       txt.setColor('#cccccc');
     });
-    hit.on('pointerdown', onClick);
+    // 点击改为"按下记录 + 松手判定"：移动端按下后滑动（超阈值）视为滚动而非误触
+    hit.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      this.pendingTap = { fn: onClick, sx: p.x, sy: p.y, moved: false };
+    });
 
     return { bg, txt, hit };
   }
@@ -305,12 +321,19 @@ export class DebugPanel {
     hit.on('pointerout', () => {
       updateState(this.getGameScene()?.isAutoPlay?.() || false);
     });
-    hit.on('pointerdown', () => {
-      const gs = this.getGameScene();
-      if (!gs) return;
-      const next = !gs.isAutoPlay?.();
-      gs.setAutoPlay?.(next);
-      updateState(next);
+    hit.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      this.pendingTap = {
+        fn: () => {
+          const gs = this.getGameScene();
+          if (!gs) return;
+          const next = !gs.isAutoPlay?.();
+          gs.setAutoPlay?.(next);
+          updateState(next);
+        },
+        sx: p.x,
+        sy: p.y,
+        moved: false,
+      };
     });
 
     bg.setPosition(0, y);
@@ -358,15 +381,22 @@ export class DebugPanel {
       this.themeText?.setColor('#ffffff');
     });
     hit.on('pointerout', () => updateState(GameConfig.VISUAL_THEME));
-    hit.on('pointerdown', () => {
-      const next: 'pixel' | 'classic' = GameConfig.VISUAL_THEME === 'classic' ? 'pixel' : 'classic';
-      const api = (window as any).__debug;
-      if (api?.setTheme) {
-        api.setTheme(next);
-      } else {
-        GameConfig.VISUAL_THEME = next;
-      }
-      updateState(next);
+    hit.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      this.pendingTap = {
+        fn: () => {
+          const next: 'pixel' | 'classic' = GameConfig.VISUAL_THEME === 'classic' ? 'pixel' : 'classic';
+          const api = (window as any).__debug;
+          if (api?.setTheme) {
+            api.setTheme(next);
+          } else {
+            GameConfig.VISUAL_THEME = next;
+          }
+          updateState(next);
+        },
+        sx: p.x,
+        sy: p.y,
+        moved: false,
+      };
     });
 
     bg.setPosition(0, y);
@@ -383,6 +413,57 @@ export class DebugPanel {
   private setScroll(offset: number): void {
     this.scrollOffset = Phaser.Math.Clamp(offset, -this.maxScroll, 0);
     this.content.setY(this.contentBaseY + this.scrollOffset);
+  }
+
+  /**
+   * 触摸/鼠标拖动滚动 + 点击防误触
+   *
+   * 原理：按钮点击不再"按下即触发"，而是"按下记录 + 松手时若位移未超阈值才触发"；
+   * 滚动区覆盖一层透明交互矩形，按在其上并拖动（位移超阈值）即滚动内容、抑制点击。
+   * 这样移动端手指按住按钮滑动时是滚动而非误触；快速轻点仍是正常点击。
+   * 位移量用 Pointer 屏幕坐标差（uiRoot 局部 1 单位 = 屏幕 1 像素，与 wheel 同基准）。
+   */
+  private setupTouchInput(): void {
+    // 内容可视区透明交互层（置于 content 最底，不挡按钮；命中由 Phaser 自动处理局部坐标）
+    const scrollRect = this.scene.add
+      .rectangle(0, 0, this.panelWidth - this.padding * 2, this.viewportH, 0xffffff, 0)
+      .setOrigin(0, 0)
+      .setInteractive({ useHandCursor: false });
+    this.content.addAt(scrollRect, 0);
+
+    // 关键：场景默认 topOnly=true，重叠时只触发最顶层对象，导致按在按钮上时滚动区收不到
+    // pointerdown。关闭后按钮（记录待结算点击）与滚动区（启动拖动）同时响应，由位移阈值区分行为。
+    this.scene.input.setTopOnly(false);
+
+    scrollRect.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (!this.visible || this.maxScroll <= 0) return;
+      this.scrollDragging = true;
+      this.dragStartY = p.y;
+      this.dragStartOff = this.scrollOffset;
+    });
+
+    // 场景级 move：既结算点击拖动判定，也持续滚动（避免指针移出滚动区导致拖动中断）
+    this.scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (!this.visible) return;
+      if (this.pendingTap && !this.pendingTap.moved) {
+        if (Math.hypot(p.x - this.pendingTap.sx, p.y - this.pendingTap.sy) > this.TAP_THRESHOLD) {
+          this.pendingTap.moved = true;
+        }
+      }
+      if (this.scrollDragging && this.maxScroll > 0) {
+        this.setScroll(this.dragStartOff - (p.y - this.dragStartY));
+      }
+    });
+
+    const settle = () => {
+      if (this.pendingTap) {
+        if (!this.pendingTap.moved) this.pendingTap.fn();
+        this.pendingTap = null;
+      }
+      this.scrollDragging = false;
+    };
+    this.scene.input.on('pointerup', settle);
+    this.scene.input.on('pointerupoutside', settle);
   }
 
   // ===== 对外/内部方法（保持原语义） =====
@@ -409,36 +490,16 @@ export class DebugPanel {
 
   private addLevel(count: number): void {
     const player = this.getPlayer();
-    const gs = this.getGameScene();
     if (!player) return;
-    // 抑制升级三选一弹窗：调试面板加级直接生效，不弹升级框（避免其覆盖面板拦截后续点击）
-    if (gs) gs.suppressUpgradeUI = true;
-    try {
-      for (let i = 0; i < count; i++) {
-        (player as any).stats.exp = (player as any).stats.expToNext;
-        (player as any).addExp(0);
-      }
-    } finally {
-      if (gs) {
-        gs.suppressUpgradeUI = false;
-        gs.pendingLevelUps = 0;
-        gs.upgradeQueued = false;
-      }
+    // 走正常升级流程：跨多级由 upgrade:chosen 事件逐个弹出三选一（与真实游戏一致）
+    for (let i = 0; i < count; i++) {
+      (player as any).stats.exp = (player as any).stats.expToNext;
+      (player as any).addExp(0);
     }
   }
 
   private addExp(amount: number): void {
-    const gs = this.getGameScene();
-    if (gs) gs.suppressUpgradeUI = true;
-    try {
-      this.getPlayer()?.addExp(amount);
-    } finally {
-      if (gs) {
-        gs.suppressUpgradeUI = false;
-        gs.pendingLevelUps = 0;
-        gs.upgradeQueued = false;
-      }
-    }
+    this.getPlayer()?.addExp(amount);
   }
 
   private addPickupRadius(amount: number): void {

@@ -35,8 +35,6 @@ export class GameScene extends Phaser.Scene {
   private activeBoss: Enemy | null = null;
   private pendingLevelUps = 0;
   private upgradeQueued = false;
-  /** 调试面板加级/加经验期间抑制升级三选一弹窗（避免升级框覆盖调试面板拦截后续点击） */
-  suppressUpgradeUI = false;
   // Boss 战前待弹出的商店（与升级选择排队，避免同时弹出冲突）
   private pendingShop = false;
   // 商店关闭后要开始的 Boss 波（0 = 无待开始）
@@ -558,13 +556,6 @@ export class GameScene extends Phaser.Scene {
    * 跨多级时由 upgrade:chosen 事件驱动逐个弹出
    */
   private showNextUpgrade(): void {
-    // 调试面板加级/加经验期间抑制三选一弹窗：不 setPaused、不 launch 升级场景，
-    // 避免升级框覆盖在调试面板上方拦截后续点击（'hover 有效但点击无效'的根因）
-    if (this.suppressUpgradeUI) {
-      this.pendingLevelUps = 0;
-      this.upgradeQueued = false;
-      return;
-    }
     if (this.pendingLevelUps <= 0 || this.upgradeQueued) return;
     if (this.scene.isActive('UpgradeScene')) return;
 
