@@ -29,6 +29,7 @@ interface BtnParts {
 export class DebugPanel {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
+  private uiRoot: Phaser.GameObjects.Container;
   private visible: boolean = false;
   private autoPlayText: Phaser.GameObjects.Text | null = null;
   private autoPlayBg: Phaser.GameObjects.Graphics | null = null;
@@ -51,8 +52,9 @@ export class DebugPanel {
   private panelY = 12;
   private panelX = 0;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, uiRoot: Phaser.GameObjects.Container) {
     this.scene = scene;
+    this.uiRoot = uiRoot;
     this.container = scene.add.container(0, 0).setDepth(1000).setVisible(false);
     this.create();
     this.setupHotkey();
@@ -91,9 +93,19 @@ export class DebugPanel {
     this.contentBaseY = this.panelY + 40;
 
     // 滚动遮罩（几何 mask，覆盖可视区；graphics 本身不渲染）
+    // 关键：Phaser 的 GeometryMask 几何按 world/camera 坐标解释，而本面板位于
+    // UIScene 的"反向缩放根容器 uiRoot"内（局部坐标 ≠ world 坐标）。
+    // 必须把面板可视区经 uiRoot 变换换算成 world 坐标后再画矩形，否则 mask 与
+    // content 渲染位置错位——在部分窗口尺寸/高分屏下表现为"面板无内容但可点击"。
+    const rm = this.uiRoot.getWorldTransformMatrix();
+    const origin = rm.transformPoint(this.panelX + this.padding, this.panelY + 40, new Phaser.Math.Vector2());
+    const maskX = origin.x;
+    const maskY = origin.y;
+    const maskW = (this.panelWidth - this.padding * 2) * rm.scaleX;
+    const maskH = this.viewportH * rm.scaleY;
     const maskG = this.scene.add.graphics();
     maskG.fillStyle(0xffffff, 1);
-    maskG.fillRect(this.panelX + this.padding, this.panelY + 40, this.panelWidth - this.padding * 2, this.viewportH);
+    maskG.fillRect(maskX, maskY, maskW, maskH);
     maskG.setVisible(false);
     const mask = maskG.createGeometryMask();
     this.content.setMask(mask);
@@ -134,22 +146,28 @@ export class DebugPanel {
     this.maxScroll = Math.max(0, col.y + this.padding - this.viewportH);
     this.setScroll(0);
 
-    // 滚轮滚动（仅面板区域 + 面板可见时）
-    this.scene.input.on('wheel', (_pointer: any, _x: number, y: number, _dx: number, dy: number) => {
+    // 滚轮滚动（面板可见时生效）
+    // Phaser wheel 事件签名：(pointer, currentlyOver, deltaX, deltaY, deltaZ)。
+    // deltaY 为屏幕像素，DebugPanel 布局即 canvas 像素坐标系（uiRoot 局部），故直接使用。
+    this.scene.input.on('wheel', (_pointer: any, _over: any, deltaX: number, deltaY: number, deltaZ: number) => {
       if (!this.visible) return;
-      if (y < this.panelY || y > this.panelY + panelHeight) return;
+      const dy = deltaY !== 0 ? deltaY : deltaZ;
+      if (dy === 0) return;
       this.setScroll(this.scrollOffset - dy);
     });
   }
 
   // ===== 布局辅助 =====
 
-  /** 估算内容总高（行数 × 行高 + 标题 + 间隔） */
+  /** 估算内容总高（按 UPGRADE_OPTIONS 实际行数动态计算，新增选项自动拓展） */
   private computeContentHeight(): number {
     const rowH = this.btnHeight + this.btnSpacing;
     const sectionH = (rows: number) => 20 + rows * rowH + this.sectionSpacing;
-    // 快捷操作 4 行（含 AI/主题全宽）、属性 2 行、属性升级 5 行、武器 3 行、被动 2 行
-    return 28 + sectionH(4) + sectionH(2) + sectionH(5) + sectionH(3) + sectionH(2) + this.padding;
+    // 快捷操作 4 行（含 AI/主题全宽）、属性 2 行
+    const statRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'stat').length / 2);
+    const weaponRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'weapon').length / 2);
+    const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
+    return 28 + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + this.padding;
   }
 
   /** 分区标题（content 内） */
@@ -170,7 +188,7 @@ export class DebugPanel {
     const y = col.y;
     if (left) this.placeButton(this.makeButton(left.text, left.fn, this.btnWidth), 0, y);
     if (right) this.placeButton(this.makeButton(right.text, right.fn, this.btnWidth), this.btnWidth + this.btnSpacing, y);
-    col.step(this.btnHeight);
+    col.step(this.btnHeight + this.btnSpacing);
   }
 
   /** 渲染一组升级选项为两列行 */
@@ -290,7 +308,7 @@ export class DebugPanel {
     this.autoPlayText.setPosition(fullW / 2, y + this.btnHeight / 2);
     hit.setPosition(fullW / 2, y + this.btnHeight / 2);
     this.content.add([bg, this.autoPlayText, hit]);
-    col.step(this.btnHeight);
+    col.step(this.btnHeight + this.btnSpacing);
   }
 
   /** 视觉主题切换按钮（全宽，显示当前主题，点击切换并即时生效） */
@@ -347,7 +365,7 @@ export class DebugPanel {
     hit.setPosition(fullW / 2, y + this.btnHeight / 2);
     this.content.add([bg, this.themeText, hit]);
     updateState(GameConfig.VISUAL_THEME);
-    col.step(this.btnHeight);
+    col.step(this.btnHeight + this.btnSpacing);
   }
 
   // ===== 滚动 =====
