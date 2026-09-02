@@ -402,6 +402,25 @@ export class GameScene extends Phaser.Scene {
       const gm = GameManager.getInstance();
       gm.setPaused(!gm.isPaused);
     });
+
+    // 按 C 打开/关闭玩家属性面板（二游式角色详情）
+    // 注意：UIScene/PlayerInfoScene 的键盘监听不生效，统一放在 GameScene（与 ESC 一致）
+    this.input.keyboard?.on('keydown-C', () => {
+      const gm = GameManager.getInstance();
+      if (gm.isGameOver) return;
+      if (this.scene.isActive('PlayerInfoScene')) {
+        // 已打开 → 关闭（恢复打开前的暂停状态）
+        const pi = this.scene.get('PlayerInfoScene') as any;
+        pi?.closePanel?.();
+        return;
+      }
+      if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') ||
+          this.scene.isActive('BreakthroughScene')) return;
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
+      const prevPaused = gm.isPaused; // 记录打开前状态，供关闭时恢复
+      gm.setPaused(true);
+      this.scene.launch('PlayerInfoScene', { prevPaused });
+    });
   }
 
   update(time: number, delta: number): void {

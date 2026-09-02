@@ -1,6 +1,8 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
+import { WEAPONS } from '../data/weapons';
+import { UPGRADE_OPTIONS } from '../data/upgrades';
 
 /**
  * HUD 抬头显示
@@ -41,6 +43,11 @@ export class HUD {
   private buffContainer!: Phaser.GameObjects.Container;
   private buffIcons: Map<string, Phaser.GameObjects.Container> = new Map();
   private lastBuffCount: number = -1;
+
+  // buff 点击提示（tooltip）
+  private tooltipContainer!: Phaser.GameObjects.Container;
+  private tooltipHitArea!: Phaser.GameObjects.Rectangle;
+  private activeTooltipId: string | null = null;
 
   // 武器视觉映射（图标 + 背景色）
   // 注意：图标与 UPGRADE_OPTIONS（升级三选一/商店/解锁提示）保持一致，避免同一武器多处图标不一致
@@ -227,6 +234,21 @@ export class HUD {
 
     // ========== 左下角：增益列表（武器/被动） ==========
     this.buffContainer = this.scene.add.container(this.padding, 0).setDepth(50);
+
+    // buff 点击提示
+    this.initTooltip();
+  }
+
+  /** 初始化 buff 点击提示（点击增益图标显示详情，点击任意处关闭） */
+  private initTooltip(): void {
+    this.tooltipContainer = this.scene.add.container(0, 0).setDepth(210).setVisible(false);
+    // 全屏透明遮罩：点击任意处关闭提示
+    this.tooltipHitArea = this.scene.add
+      .rectangle(0, 0, this.scene.scale.width, this.scene.scale.height, 0x000000, 0)
+      .setOrigin(0)
+      .setInteractive();
+    this.tooltipHitArea.on('pointerdown', () => this.hideTooltip());
+    this.tooltipContainer.add(this.tooltipHitArea);
   }
 
   /** 每帧更新 HUD */
@@ -262,31 +284,40 @@ export class HUD {
     const passives = player.getPassives?.() || [];
     const statUpgrades = player.getStatUpgrades?.() || [];
 
-    // 合并为统一格式
+    // 合并为统一格式（附加 desc 描述，供点击提示显示）
     const allBuffs = [
       ...weapons.map((w: any) => ({
         id: w.id,
         name: w.name,
         level: w.level,
         maxLevel: w.maxLevel,
+        desc: WEAPONS[w.id]?.description || '',
         ...this.weaponVisuals[w.id],
       })),
-      ...passives.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        level: p.level,
-        maxLevel: p.maxLevel,
-        ...this.passiveVisuals[p.id],
-      })),
-      ...statUpgrades.map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        level: s.level,
-        maxLevel: s.maxLevel,
-        // Boss 突破次数（突破后显示 "5+2" 让玩家看到突破效果）
-        bt: player.getBreakthroughLevel?.(s.id) ?? 0,
-        ...this.statVisuals[s.id],
-      })),
+      ...passives.map((p: any) => {
+        const opt = UPGRADE_OPTIONS.find((u) => u.id === p.id);
+        return {
+          id: p.id,
+          name: p.name,
+          level: p.level,
+          maxLevel: p.maxLevel,
+          desc: opt?.description || '',
+          ...this.passiveVisuals[p.id],
+        };
+      }),
+      ...statUpgrades.map((s: any) => {
+        const opt = UPGRADE_OPTIONS.find((u) => u.id === s.id);
+        return {
+          id: s.id,
+          name: s.name,
+          level: s.level,
+          maxLevel: s.maxLevel,
+          // Boss 突破次数（突破后显示 "5+2" 让玩家看到突破效果）
+          bt: player.getBreakthroughLevel?.(s.id) ?? 0,
+          desc: opt?.description || '',
+          ...this.statVisuals[s.id],
+        };
+      }),
     ].filter((b) => b.icon); // 过滤掉没有图标的未知项
 
     // 数量变化时重建列表
@@ -309,7 +340,7 @@ export class HUD {
   }
 
   /** 重建增益列表 */
-  private rebuildBuffList(buffs: Array<{ id: string; level: number; icon: string; color: number }>): void {
+  private rebuildBuffList(buffs: Array<{ id: string; level: number; icon: string; color: number; name?: string; desc?: string; maxLevel?: number; bt?: number }>): void {
     // 清除旧图标
     this.buffIcons.forEach((icon) => icon.destroy());
     this.buffIcons.clear();
@@ -347,9 +378,81 @@ export class HUD {
         .setOrigin(1, 1);
       container.add(levelText);
 
+      // 点击增益图标 → 显示 buff 详情提示（二游式，点击任意处关闭）
+      container.setSize(this.buffSize, this.buffSize);
+      container.setInteractive();
+      container.on('pointerdown', () => this.showBuffTooltip(b));
+
       this.buffContainer.add(container);
       this.buffIcons.set(b.id, container);
     });
+  }
+
+  /** 显示 buff 详情提示（图标+名称+等级+描述） */
+  private showBuffTooltip(b: { id: string; name?: string; level: number; icon: string; color: number; desc?: string; maxLevel?: number; bt?: number }): void {
+    // 已在显示同一 buff 的提示 → 关闭
+    if (this.tooltipContainer.visible && this.activeTooltipId === b.id) {
+      this.hideTooltip();
+      return;
+    }
+    // 关闭旧提示后重建
+    this.hideTooltip();
+    this.activeTooltipId = b.id;
+    this.tooltipContainer.add(this.tooltipHitArea);
+
+    const { width } = this.scene.scale;
+    const boxW = 240;
+    const title = b.name || b.id;
+    const lvText = b.bt && b.bt > 0 ? `Lv.${b.level}+${b.bt}` : `Lv.${b.level}`;
+    const boxX = this.buffSize + 16 + boxW / 2; // 增益列表右侧
+    const boxY = 210;
+
+    // 背景
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(0x0e0e18, 0.96);
+    bg.fillRoundedRect(boxX - boxW / 2, boxY - 30, boxW, 88, 10);
+    bg.lineStyle(2, b.color, 1);
+    bg.strokeRoundedRect(boxX - boxW / 2, boxY - 30, boxW, 88, 10);
+    this.tooltipContainer.add(bg);
+
+    // 标题行：图标 + 名称 + 等级
+    const titleText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - 24, `${b.icon}  ${title}`, {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0, 0);
+    this.tooltipContainer.add(titleText);
+
+    const lvTextObj = createUIText(this.scene, boxX + boxW / 2 - 12, boxY - 24, lvText, {
+        fontSize: '13px',
+        color: '#ffd54f',
+        fontStyle: 'bold',
+      })
+      .setOrigin(1, 0);
+    this.tooltipContainer.add(lvTextObj);
+
+    // 描述
+    const descText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY + 2, b.desc || '', {
+        fontSize: '13px',
+        color: '#bbbbbb',
+        wordWrap: { width: boxW - 24 },
+        lineSpacing: 4,
+      })
+      .setOrigin(0, 0);
+    this.tooltipContainer.add(descText);
+
+    this.tooltipContainer.setVisible(true);
+  }
+
+  /** 关闭 buff 详情提示 */
+  private hideTooltip(): void {
+    this.tooltipContainer.setVisible(false);
+    this.activeTooltipId = null;
+    // 移除内容（保留全屏遮罩）
+    this.tooltipContainer.list
+      .filter((obj) => obj !== this.tooltipHitArea)
+      .forEach((obj) => obj.destroy());
   }
 
   updateHealth(): void {

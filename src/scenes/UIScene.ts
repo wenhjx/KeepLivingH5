@@ -88,6 +88,9 @@ export class UIScene extends Phaser.Scene {
       gm.setPaused(pausing);
     });
 
+    // 按 C 打开玩家属性面板的逻辑放在 GameScene（其键盘监听可靠生效），
+    // 此处不重复监听，避免双触发。
+
     // 暂停遮罩
     this.createPauseOverlay();
 
@@ -134,6 +137,23 @@ export class UIScene extends Phaser.Scene {
       GameManager.getInstance().setPaused(false);
     });
     this.pauseOverlay.add(resumeBtn);
+
+    // 玩家属性按钮（暂停时也可查看角色详情，方便移动端无键盘用户）
+    const infoBtn = createUIText(this, width / 2, height / 2 + 42, '📋 玩家属性', {
+        fontSize: '16px',
+        color: '#cccccc',
+        backgroundColor: '#1a1a25',
+        padding: { left: 24, right: 24, top: 8, bottom: 8 },
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    infoBtn.on('pointerdown', () => {
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
+      if (this.scene.isActive('PlayerInfoScene')) return;
+      // 暂停菜单中打开：prevPaused=true，关闭后回到暂停菜单
+      this.scene.launch('PlayerInfoScene', { prevPaused: GameManager.getInstance().isPaused });
+    });
+    this.pauseOverlay.add(infoBtn);
 
     // 返回主菜单按钮
     const menuBtn = createUIText(this, width / 2, height / 2 + 60, '返回主菜单', {
