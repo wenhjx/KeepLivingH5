@@ -380,6 +380,8 @@ export class GameScene extends Phaser.Scene {
     sub(EventBus.on('enemy:death', (config: EnemyConfig) => {
       if (config?.type === 'boss') {
         this.activeBoss = null;
+        // Boss 战利品：弹出突破奖励（已满级 stat 突破 +1 级）
+        this.triggerBreakthrough();
       }
     }));
 
@@ -564,6 +566,24 @@ export class GameScene extends Phaser.Scene {
     this.pendingShop = true;
     this.pendingBossWave = wave;
     this.tryOpenShop();
+  }
+
+  /**
+   * Boss 死亡 → 弹出突破奖励（从已满级 stat 中选一个突破 +1 级）。
+   * 与升级/商店排队：若当前有面板在显示则不打断；无可用突破项则跳过。
+   */
+  private triggerBreakthrough(): void {
+    // 延迟一点，给 Boss 死亡掉落/动画留时间，也避免与死亡瞬间的其他逻辑冲突
+    this.time.delayedCall(700, () => {
+      const gm = GameManager.getInstance();
+      if (gm.isGameOver) return;
+      if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') || this.scene.isActive('BreakthroughScene')) return;
+      if (this.pendingLevelUps > 0 || this.upgradeQueued) return;
+      const available = this.player.getAvailableBreakthroughs?.();
+      if (!available || available.length === 0) return;
+      gm.setPaused(true);
+      this.scene.launch('BreakthroughScene');
+    });
   }
 
   /** 弹出浮动伤害数字（供碰撞系统调用） */

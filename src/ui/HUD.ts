@@ -283,6 +283,8 @@ export class HUD {
         name: s.name,
         level: s.level,
         maxLevel: s.maxLevel,
+        // Boss 突破次数（突破后显示 "5+2" 让玩家看到突破效果）
+        bt: player.getBreakthroughLevel?.(s.id) ?? 0,
         ...this.statVisuals[s.id],
       })),
     ].filter((b) => b.icon); // 过滤掉没有图标的未知项
@@ -299,7 +301,8 @@ export class HUD {
       if (icon) {
         const levelText = icon.getAt(2) as Phaser.GameObjects.Text;
         if (levelText) {
-          levelText.setText(`${b.level}`);
+          // 有突破次数时显示 "5+2"（升级满级5 + 突破2），否则仅显示等级
+          levelText.setText(b.bt > 0 ? `${b.level}+${b.bt}` : `${b.level}`);
         }
       }
     });

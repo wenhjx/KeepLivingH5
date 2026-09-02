@@ -8,7 +8,7 @@ import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { USABLE_ITEMS } from '../data/items';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
-import type { PlayerStats, WeaponConfig } from '../types';
+import type { PlayerStats, WeaponConfig, UpgradeOption } from '../types';
 import type { InputManager } from '../systems/InputManager';
 
 /**
@@ -24,6 +24,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private passives: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
   // stat 类升级次数（满级后不再出现在升级/商店候选池；用于防止无限叠加数值爆炸）
   private statUpgrades: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
+  // Boss 突破奖励记录（对已满级 stat 突破 +1 级，突破上限=原 maxLevel，受 Boss 数量硬限制）
+  private breakthroughs: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
   // 无人机列表（summon 类型武器）
   private drones: Drone[] = [];
   // 生命恢复计时器
@@ -648,6 +650,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     weapons: Array<{ id: string; level: number }>;
     passives: Array<{ id: string; name: string; level: number }>;
     statUpgrades?: Array<{ id: string; name: string; level: number }>;
+    breakthroughs?: Array<{ id: string; name: string; level: number }>;
   }): void {
     if (saved.stats) {
       // 防御：存档中非法数值（null/NaN 等）不覆盖当前基础属性，
@@ -687,6 +690,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         const opt = UPGRADE_OPTIONS.find((u) => u.id === s.id);
         if (opt?.maxLevel) {
           this.statUpgrades.set(s.id, { id: s.id, name: s.name, level: s.level, maxLevel: opt.maxLevel });
+        }
+      }
+    }
+    // 重建 Boss 突破记录（突破上限=原 maxLevel；旧存档无此字段则跳过）
+    this.breakthroughs.clear();
+    if (saved.breakthroughs) {
+      for (const b of saved.breakthroughs) {
+        const opt = UPGRADE_OPTIONS.find((u) => u.id === b.id);
+        if (opt?.maxLevel) {
+          this.breakthroughs.set(b.id, { id: b.id, name: b.name, level: b.level, maxLevel: opt.maxLevel });
         }
       }
     }
@@ -782,6 +795,53 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** 获取全部 stat 升级（供 HUD 增益列表显示进度） */
   getStatUpgrades(): Array<{ id: string; name: string; level: number; maxLevel: number }> {
     return Array.from(this.statUpgrades.values());
+  }
+
+  // ========== Boss 突破奖励管理 ==========
+
+  /**
+   * Boss 突破：对已满级 stat 突破 +1 级（效果再叠加一次，超过原 maxLevel）。
+   * 突破上限 = 原 maxLevel，受 Boss 数量硬限制，不会像早期版本那样无限叠加导致数值爆炸。
+   * @returns 是否突破成功
+   */
+  breakthroughStat(option: UpgradeOption): boolean {
+    if (option.type !== 'stat' || !option.effect?.stat) return false;
+    const upgradeMax = option.maxLevel ?? 0;
+    if (upgradeMax <= 0) return false;
+    // 必须先通过升级满级，才具备突破资格
+    if (!this.isStatMaxLevel(option.id, upgradeMax)) return false;
+    const cur = this.breakthroughs.get(option.id)?.level ?? 0;
+    if (cur >= upgradeMax) return false;
+    this.modifyStat(option.effect.stat, option.effect.value, option.effect.isPercent ?? false);
+    this.breakthroughs.set(option.id, { id: option.id, name: option.name, level: cur + 1, maxLevel: upgradeMax });
+    return true;
+  }
+
+  /** 某 stat 已突破次数（0 表示未突破） */
+  getBreakthroughLevel(id: string): number {
+    return this.breakthroughs.get(id)?.level ?? 0;
+  }
+
+  /** 某 stat 是否已达突破上限 */
+  isBreakthroughMax(id: string, maxLevel?: number): boolean {
+    const b = this.breakthroughs.get(id);
+    if (!b) return false;
+    return b.level >= (maxLevel ?? b.maxLevel);
+  }
+
+  /** 全部突破记录（供存档/HUD） */
+  getBreakthroughs(): Array<{ id: string; name: string; level: number; maxLevel: number }> {
+    return Array.from(this.breakthroughs.values());
+  }
+
+  /** 可突破的 stat 列表：已通过升级满级且未达突破上限（Boss 突破奖励的候选池） */
+  getAvailableBreakthroughs(): UpgradeOption[] {
+    return UPGRADE_OPTIONS.filter((o) => {
+      if (o.type !== 'stat' || !o.maxLevel) return false;
+      if (!this.isStatMaxLevel(o.id, o.maxLevel)) return false;
+      if (this.isBreakthroughMax(o.id, o.maxLevel)) return false;
+      return true;
+    });
   }
 
   /** 获取某被动技能等级（0 表示未拥有） */

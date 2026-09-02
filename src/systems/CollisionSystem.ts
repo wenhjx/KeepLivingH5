@@ -56,8 +56,12 @@ export class CollisionSystem {
     // 暴击判定读取玩家属性（暴击精通/致命一击升级生效），而非硬编码
     const gameScene = this.scene as any;
     const playerStats = gameScene?.getPlayer?.()?.getStats?.();
-    const critRate = playerStats?.critRate ?? 0.05;
-    const critDamage = playerStats?.critDamage ?? 1.5;
+    // 暴击率溢出转化：critRate 超过 100% 的部分按 1:2 转暴击伤害（每 1% 溢出 → +2% 爆伤），
+    // 同时把判定率 clamp 到 100%（溢出后必定暴击）
+    const rawCritRate = playerStats?.critRate ?? 0.05;
+    const critRateOverflow = Math.max(0, rawCritRate - 1);
+    const critRate = Math.min(1, rawCritRate);
+    const critDamage = (playerStats?.critDamage ?? 1.5) + critRateOverflow * 2;
     const isCrit = Math.random() < critRate;
     const finalDamage = isCrit ? damage * critDamage : damage;
 

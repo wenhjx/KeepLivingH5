@@ -174,5 +174,7 @@ export interface SavedRun {
     weapons: Array<{ id: string; level: number }>;
     passives: Array<{ id: string; name: string; level: number }>;
     statUpgrades?: Array<{ id: string; name: string; level: number }>;
+    /** Boss 突破奖励记录（已满级 stat 的额外成长，突破上限=原 maxLevel，受 Boss 数量硬限制） */
+    breakthroughs?: Array<{ id: string; name: string; level: number }>;
   };
 }

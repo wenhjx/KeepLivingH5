@@ -8,6 +8,7 @@ import { UIScene } from './scenes/UIScene';
 import { GameOverScene } from './scenes/GameOverScene';
 import { UpgradeScene } from './scenes/UpgradeScene';
 import { ShopScene } from './scenes/ShopScene';
+import { BreakthroughScene } from './scenes/BreakthroughScene';
 import { GameManager } from './game/GameManager';
 import { initDebugAPI } from './utils/DebugAPI';
 
@@ -77,7 +78,7 @@ const config: Phaser.Types.Core.GameConfig = {
   input: {
     activePointers: 3,
   },
-  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene, ShopScene],
+  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene, ShopScene, BreakthroughScene],
   callbacks: {
     postBoot: (game) => {
       hideLoading();
