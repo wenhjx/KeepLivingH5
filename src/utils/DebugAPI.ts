@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { GameConfig } from '../game/GameConfig';
 import { GameManager } from '../game/GameManager';
 import { USABLE_ITEMS } from '../data/items';
 import { GuideManager } from '../systems/GuideManager';
@@ -39,6 +40,8 @@ export interface DebugAPI {
   autoPlay: (enabled?: boolean) => boolean;
   /** 稳定测试态：无敌 + 不升级 + 关闭所有覆盖面板（避免升级/商店弹窗干扰 UI 点击测试） */
   testStable: () => string;
+  /** 切换视觉主题（皮肤）：'pixel' 像素风 | 'classic' 经典矢量霓虹（已有实体即时生效） */
+  setTheme: (theme: 'pixel' | 'classic') => string;
 }
 
 export function initDebugAPI(game: Phaser.Game): void {
@@ -181,6 +184,38 @@ export function initDebugAPI(game: Phaser.Game): void {
       }
       console.log('[debug] 稳定测试态已启用（无敌+不升级+关面板）');
       return 'testStable active';
+    },
+
+    setTheme: (theme: 'pixel' | 'classic') => {
+      GameConfig.VISUAL_THEME = theme;
+      // 渲染器抗锯齿跟随主题：classic 矢量平滑、pixel 像素锐利
+      const renderer = game.renderer as any;
+      try {
+        if (renderer && typeof renderer.setAntialias === 'function') {
+          renderer.setAntialias(theme === 'classic');
+        }
+      } catch (e) {
+        /* 渲染器不支持运行时切换则忽略 */
+      }
+      // 已有实体即时切换纹理（玩家 + 场上敌人）
+      const gs = getGameScene();
+      const player = gs?.getPlayer?.();
+      if (player && player.setTexture) {
+        player.setTexture(GameConfig.themeKey('player'));
+      }
+      gs?.enemies?.children?.each?.((enemy: any) => {
+        if (!enemy || !enemy.setTexture || !enemy.config?.texture) return true;
+        enemy.setTexture(GameConfig.themeKey(enemy.config.texture));
+        // 主题切换后重设染色：pixel 白色主体需 tint；classic 矢量自带色需 clear
+        if (theme === 'pixel') {
+          if (enemy.config.color) enemy.setTint(enemy.config.color);
+        } else {
+          enemy.clearTint();
+        }
+        return true;
+      });
+      console.log(`[debug] 视觉主题已切换: ${theme}`);
+      return `主题已切换: ${theme}`;
     },
   };
 

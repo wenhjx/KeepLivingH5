@@ -3,6 +3,7 @@ import { MathUtils } from '../utils/MathUtils';
 import { EventBus } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
+import { GameConfig } from '../game/GameConfig';
 import { ENEMY_CONFIGS } from '../data/enemies';
 import type { EnemyConfig, EnemyType } from '../types';
 import type { Player } from './Player';
@@ -22,7 +23,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private avoidSide: number = 1; // 障碍物避让方向：+1 右，-1 左（每个敌人固定，避免扎堆）
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 0, 0, 'enemy_normal');
+    super(scene, 0, 0, GameConfig.themeKey('enemy_normal'));
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setActive(false);
@@ -44,7 +45,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.hitFlashTimer = 0;
     this.avoidSide = Math.random() > 0.5 ? 1 : -1;
 
-    this.setTexture(config.texture || 'enemy_normal');
+    this.setTexture(GameConfig.themeKey(config.texture || 'enemy_normal'));
     // 先启用物理体并 reset 到正确位置
     if (this.body) {
       this.body.enable = true;
@@ -58,8 +59,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.clearTint();
     this.setAlpha(1);
 
-    // 根据类型设置颜色（占位素材时区分）
-    if (config.color) {
+    // 根据类型设置颜色：像素主题（白色像素主体）需 tint 上色；
+    // 经典矢量主题纹理自带颜色，无需 tint（避免双重染色）
+    if (config.color && GameConfig.VISUAL_THEME === 'pixel') {
       this.setTint(config.color);
     }
 

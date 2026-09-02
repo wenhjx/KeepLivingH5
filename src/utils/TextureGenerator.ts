@@ -40,6 +40,9 @@ export class TextureGenerator {
   generateAll(): void {
     this.generatePlayer();
     this.generateEnemies();
+    // 经典矢量主题（皮肤）：与像素版并存，供 VISUAL_THEME 切换
+    this.generatePlayerClassic();
+    this.generateEnemiesClassic();
     this.generateBullets();
     this.generatePickups();
     this.generateParticles();
@@ -317,6 +320,552 @@ export class TextureGenerator {
     });
   }
 
+
+  // ========== 经典矢量主题（classic 皮肤）==========
+  private generatePlayerClassic(): void {
+    const size = 64;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 最外层光晕
+    g.fillStyle(TextureGenerator.COLORS.playerGlow, 0.12);
+    g.fillCircle(cx, cy, 30);
+    g.fillStyle(TextureGenerator.COLORS.playerGlow, 0.2);
+    g.fillCircle(cx, cy, 24);
+
+    // 引擎尾焰（底部渐变三角形）
+    g.fillStyle(TextureGenerator.COLORS.playerAccent, 0.6);
+    g.beginPath();
+    g.moveTo(cx - 6, cy + 14);
+    g.lineTo(cx, cy + 28);
+    g.lineTo(cx + 6, cy + 14);
+    g.closePath();
+    g.fillPath();
+    g.fillStyle(0xffff00, 0.5);
+    g.beginPath();
+    g.moveTo(cx - 3, cy + 14);
+    g.lineTo(cx, cy + 22);
+    g.lineTo(cx + 3, cy + 14);
+    g.closePath();
+    g.fillPath();
+
+    // 机翼（后掠翼，左右展开）
+    g.fillStyle(TextureGenerator.COLORS.player, 0.85);
+    g.beginPath();
+    g.moveTo(cx, cy - 22);
+    g.lineTo(cx + 22, cy + 12);
+    g.lineTo(cx + 14, cy + 16);
+    g.lineTo(cx, cy + 8);
+    g.lineTo(cx - 14, cy + 16);
+    g.lineTo(cx - 22, cy + 12);
+    g.closePath();
+    g.fillPath();
+
+    // 机身主体（尖锐菱形）
+    g.fillStyle(TextureGenerator.COLORS.player, 1);
+    g.beginPath();
+    g.moveTo(cx, cy - 24);
+    g.lineTo(cx + 10, cy + 10);
+    g.lineTo(cx, cy + 16);
+    g.lineTo(cx - 10, cy + 10);
+    g.closePath();
+    g.fillPath();
+
+    // 机身暗部（右侧阴影，增加立体感）
+    g.fillStyle(0x006666, 0.5);
+    g.beginPath();
+    g.moveTo(cx, cy - 24);
+    g.lineTo(cx + 10, cy + 10);
+    g.lineTo(cx, cy + 16);
+    g.closePath();
+    g.fillPath();
+
+    // 驾驶舱（发光椭圆）
+    g.fillStyle(0xffffff, 0.9);
+    g.fillEllipse(cx, cy - 6, 5, 8);
+    g.fillStyle(TextureGenerator.COLORS.playerGlow, 0.6);
+    g.fillEllipse(cx, cy - 6, 7, 10);
+
+    // 机翼尖端发光点
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx - 20, cy + 11, 2);
+    g.fillCircle(cx + 20, cy + 11, 2);
+
+    // 边缘描边
+    g.lineStyle(1.5, 0xffffff, 0.6);
+    g.beginPath();
+    g.moveTo(cx, cy - 24);
+    g.lineTo(cx + 10, cy + 10);
+    g.lineTo(cx, cy + 16);
+    g.lineTo(cx - 10, cy + 10);
+    g.closePath();
+    g.strokePath();
+
+    g.generateTexture('player_classic', size, size);
+    g.destroy();
+  }
+
+  // ========== 敌人 ==========
+  private generateEnemiesClassic(): void {
+    this.generateEnemyBlob('enemy_normal_classic', TextureGenerator.COLORS.enemyNormal, 20);
+    this.generateEnemyShard('enemy_fast_classic', TextureGenerator.COLORS.enemyFast, 18);
+    this.generateEnemyTank('enemy_tank_classic', TextureGenerator.COLORS.enemyTank, 24);
+    this.generateEnemyCaster('enemy_ranged_classic', TextureGenerator.COLORS.enemyRanged, 18);
+    this.generateEnemyElite('enemy_elite_classic', TextureGenerator.COLORS.enemyElite, 26);
+    this.generateEnemyBoss('enemy_boss_classic', TextureGenerator.COLORS.enemyBoss, 56);
+    this.generateEnemySuicider('enemy_suicider_classic', TextureGenerator.COLORS.enemySuicider, 20);
+    this.generateEnemySplitter('enemy_splitter_classic', TextureGenerator.COLORS.enemySplitter, 24);
+    this.generateEnemyShielded('enemy_shielded_classic', TextureGenerator.COLORS.enemyShielded, 24);
+  }
+
+  /** 自爆怪：膨胀的不稳定球体 + 引线火花，危险感 */
+  private generateEnemySuicider(key: string, color: number, r: number): void {
+    const size = r * 2 + 12;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光（红色警告感）
+    g.fillStyle(color, 0.25);
+    g.fillCircle(cx, cy, r + 6);
+
+    // 膨胀主体（外圈 + 内圈，像要炸开）
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+    g.fillStyle(0xffaa44, 1);
+    g.fillCircle(cx - r * 0.1, cy - r * 0.1, r * 0.75);
+
+    // 内部不稳定核心（高亮白热）
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx, cy, r * 0.35);
+    g.fillStyle(0xffcc44, 1);
+    g.fillCircle(cx, cy, r * 0.2);
+
+    // 引线火花（四周小刺）
+    g.fillStyle(0xffff00, 0.9);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + 0.5;
+      g.fillCircle(cx + Math.cos(a) * r * 1.1, cy + Math.sin(a) * r * 1.1, 2.5);
+    }
+
+    // 警示黑边
+    g.lineStyle(2, 0x222222, 0.6);
+    g.strokeCircle(cx, cy, r);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 分裂怪：胶状分裂体（多个小圆粘连 + 分裂线） */
+  private generateEnemySplitter(key: string, color: number, r: number): void {
+    const size = r * 2 + 14;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 6);
+
+    // 胶状主体（多圆粘连）
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+    g.fillCircle(cx - r * 0.7, cy + r * 0.3, r * 0.55);
+    g.fillCircle(cx + r * 0.65, cy - r * 0.35, r * 0.5);
+
+    // 分裂裂纹（模拟将要分裂）
+    g.lineStyle(2, 0x000000, 0.4);
+    g.lineBetween(cx - r * 0.4, cy + r * 0.3, cx + r * 0.4, cy - r * 0.3);
+    g.lineBetween(cx - r * 0.5, cy - r * 0.2, cx + r * 0.3, cy + r * 0.4);
+
+    // 黏液高光
+    g.fillStyle(0xffffff, 0.35);
+    g.fillCircle(cx - r * 0.2, cy - r * 0.35, r * 0.2);
+
+    // 小眼睛（两个）
+    g.fillStyle(0x000000, 0.9);
+    g.fillCircle(cx - r * 0.2, cy - r * 0.05, r * 0.16);
+    g.fillCircle(cx + r * 0.3, cy + r * 0.05, r * 0.12);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx - r * 0.2, cy - r * 0.05, r * 0.06);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 护盾怪：装甲核心 + 前方能量盾弧（面向玩家方向） */
+  private generateEnemyShielded(key: string, color: number, r: number): void {
+    const size = r * 2 + 16;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 6);
+
+    // 盾牌弧（右前方，默认朝向 +X）
+    g.lineStyle(4, 0x66ccff, 0.9);
+    g.beginPath();
+    g.arc(cx, cy, r + 4, -0.9, 0.9, false);
+    g.strokePath();
+    // 盾牌光晕
+    g.fillStyle(0x66ccff, 0.15);
+    g.beginPath();
+    g.arc(cx, cy, r + 4, -0.9, 0.9, false);
+    g.lineTo(cx, cy);
+    g.closePath();
+    g.fillPath();
+
+    // 装甲主体
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+
+    // 装甲板纹路
+    g.lineStyle(2, 0x000000, 0.3);
+    g.lineBetween(cx - r * 0.5, cy, cx + r * 0.5, cy);
+    g.lineBetween(cx, cy - r * 0.5, cx, cy + r * 0.5);
+
+    // 光学眼（中央）
+    g.fillStyle(0x000000, 0.8);
+    g.fillCircle(cx, cy, r * 0.25);
+    g.fillStyle(0x66ddff, 1);
+    g.fillCircle(cx, cy, r * 0.15);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 普通敌人：感染体（不规则圆形 + 破损边缘 + 眼睛） */
+  private generateEnemyBlob(key: string, color: number, radius: number): void {
+    const size = radius * 2 + 12;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, radius + 6);
+    g.fillStyle(color, 0.3);
+    g.fillCircle(cx, cy, radius + 2);
+
+    // 主体（不规则圆形，用多个圆叠加模拟感染体）
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, radius);
+    g.fillCircle(cx - radius * 0.4, cy - radius * 0.3, radius * 0.5);
+    g.fillCircle(cx + radius * 0.35, cy + radius * 0.2, radius * 0.45);
+
+    // 暗部
+    g.fillStyle(0x000000, 0.25);
+    g.fillCircle(cx + radius * 0.3, cy + radius * 0.3, radius * 0.6);
+
+    // 眼睛（一大一小，诡异感）
+    g.fillStyle(0x000000, 1);
+    g.fillCircle(cx - radius * 0.25, cy - radius * 0.15, radius * 0.18);
+    g.fillCircle(cx + radius * 0.3, cy - radius * 0.05, radius * 0.13);
+    // 瞳孔高光
+    g.fillStyle(0xff0000, 0.9);
+    g.fillCircle(cx - radius * 0.25, cy - radius * 0.15, radius * 0.08);
+    g.fillCircle(cx + radius * 0.3, cy - radius * 0.05, radius * 0.06);
+
+    // 嘴（锯齿状）
+    g.fillStyle(0x000000, 0.7);
+    g.fillRect(cx - radius * 0.3, cy + radius * 0.25, radius * 0.6, radius * 0.12);
+
+    // 高光
+    g.fillStyle(0xffffff, 0.35);
+    g.fillCircle(cx - radius * 0.35, cy - radius * 0.4, radius * 0.2);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 快速敌人：晶体碎片（锐利菱形 + 速度线） */
+  private generateEnemyShard(key: string, color: number, r: number): void {
+    const size = r * 2 + 12;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 4);
+
+    // 速度线（后方拖影）
+    g.fillStyle(color, 0.3);
+    g.beginPath();
+    g.moveTo(cx, cy + r * 0.3);
+    g.lineTo(cx - r * 0.5, cy + r * 1.2);
+    g.lineTo(cx + r * 0.5, cy + r * 1.2);
+    g.closePath();
+    g.fillPath();
+
+    // 主体（锐利晶体，上下不对称）
+    g.fillStyle(color, 1);
+    g.beginPath();
+    g.moveTo(cx, cy - r);
+    g.lineTo(cx + r * 0.7, cy - r * 0.1);
+    g.lineTo(cx + r * 0.5, cy + r * 0.6);
+    g.lineTo(cx, cy + r * 0.9);
+    g.lineTo(cx - r * 0.5, cy + r * 0.6);
+    g.lineTo(cx - r * 0.7, cy - r * 0.1);
+    g.closePath();
+    g.fillPath();
+
+    // 内部切面（晶体感）
+    g.fillStyle(0xffffff, 0.35);
+    g.beginPath();
+    g.moveTo(cx, cy - r);
+    g.lineTo(cx + r * 0.3, cy - r * 0.1);
+    g.lineTo(cx, cy + r * 0.2);
+    g.lineTo(cx - r * 0.3, cy - r * 0.1);
+    g.closePath();
+    g.fillPath();
+
+    // 核心发光点
+    g.fillStyle(0xffffff, 0.8);
+    g.fillCircle(cx, cy, r * 0.15);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 重装敌人：装甲方块（多层装甲 + 铆钉 + 红眼） */
+  private generateEnemyTank(key: string, color: number, s: number): void {
+    const size = s + 14;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+    const half = s / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.18);
+    g.fillRoundedRect(cx - half - 4, cy - half - 4, s + 8, s + 8, 6);
+
+    // 主体装甲
+    g.fillStyle(color, 1);
+    g.fillRoundedRect(cx - half, cy - half, s, s, 5);
+
+    // 装甲板拼接缝
+    g.lineStyle(2, 0x000000, 0.35);
+    g.lineBetween(cx - half + 3, cy, cx + half - 3, cy);
+    g.lineBetween(cx, cy - half + 3, cx, cy + half - 3);
+
+    // 铆钉（四角）
+    g.fillStyle(0x333333, 1);
+    const rivetR = 2;
+    g.fillCircle(cx - half + 5, cy - half + 5, rivetR);
+    g.fillCircle(cx + half - 5, cy - half + 5, rivetR);
+    g.fillCircle(cx - half + 5, cy + half - 5, rivetR);
+    g.fillCircle(cx + half - 5, cy + half - 5, rivetR);
+
+    // 红色光学眼（横向）
+    g.fillStyle(0x000000, 0.8);
+    g.fillRoundedRect(cx - half * 0.5, cy - half * 0.25, half, half * 0.5, 2);
+    g.fillStyle(0xff0000, 1);
+    g.fillRect(cx - half * 0.4, cy - half * 0.12, half * 0.8, half * 0.24);
+    g.fillStyle(0xff6666, 0.6);
+    g.fillRect(cx - half * 0.4, cy - half * 0.12, half * 0.8, half * 0.08);
+
+    // 顶部高光
+    g.fillStyle(0xffffff, 0.2);
+    g.fillRoundedRect(cx - half + 2, cy - half + 2, s - 4, 4, 2);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 远程敌人：施法者（圆形 + 能量环 + 瞄准核心） */
+  private generateEnemyCaster(key: string, color: number, r: number): void {
+    const size = r * 2 + 14;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 7);
+
+    // 旋转能量环（虚线感，用弧线段）
+    g.lineStyle(2, color, 0.6);
+    for (let i = 0; i < 8; i++) {
+      const a1 = (i / 8) * Math.PI * 2;
+      const a2 = a1 + 0.3;
+      g.beginPath();
+      g.arc(cx, cy, r + 4, a1, a2, false);
+      g.strokePath();
+    }
+
+    // 主体
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+
+    // 暗部
+    g.fillStyle(0x000000, 0.3);
+    g.fillCircle(cx + r * 0.25, cy + r * 0.25, r * 0.7);
+
+    // 瞄准核心（十字准星）
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx, cy, r * 0.25);
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r * 0.15);
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(cx, cy, r * 0.06);
+
+    // 准星十字线
+    g.lineStyle(1.5, 0xffffff, 0.7);
+    g.lineBetween(cx - r * 0.5, cy, cx - r * 0.3, cy);
+    g.lineBetween(cx + r * 0.3, cy, cx + r * 0.5, cy);
+    g.lineBetween(cx, cy - r * 0.5, cx, cy - r * 0.3);
+    g.lineBetween(cx, cy + r * 0.3, cx, cy + r * 0.5);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 精英敌人：六边形能量体（旋转纹路 + 核心 + 尖角） */
+  private generateEnemyElite(key: string, color: number, r: number): void {
+    const size = r * 2 + 14;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 7);
+    g.fillStyle(color, 0.12);
+    g.fillCircle(cx, cy, r + 4);
+
+    // 尖角（六边形外伸）
+    g.fillStyle(color, 0.7);
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const innerR = r * 0.85;
+      const outerR = r * 1.15;
+      g.beginPath();
+      g.moveTo(cx + Math.cos(angle - 0.2) * innerR, cy + Math.sin(angle - 0.2) * innerR);
+      g.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+      g.lineTo(cx + Math.cos(angle + 0.2) * innerR, cy + Math.sin(angle + 0.2) * innerR);
+      g.closePath();
+      g.fillPath();
+    }
+
+    // 主体六边形
+    g.fillStyle(color, 1);
+    g.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+      if (i === 0) g.moveTo(px, py);
+      else g.lineTo(px, py);
+    }
+    g.closePath();
+    g.fillPath();
+
+    // 内部六边形（暗）
+    g.fillStyle(0x000000, 0.35);
+    g.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+      const px = cx + Math.cos(angle) * r * 0.6;
+      const py = cy + Math.sin(angle) * r * 0.6;
+      if (i === 0) g.moveTo(px, py);
+      else g.lineTo(px, py);
+    }
+    g.closePath();
+    g.fillPath();
+
+    // 能量核心（脉冲感，用多层圆）
+    g.fillStyle(color, 0.5);
+    g.fillCircle(cx, cy, r * 0.35);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx, cy, r * 0.2);
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r * 0.1);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** Boss：多层装甲 + 尖刺 + 多眼 + 核心 */
+  private generateEnemyBoss(key: string, color: number, s: number): void {
+    const size = s + 24;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = s / 2;
+
+    // 最外层光环
+    g.fillStyle(color, 0.1);
+    g.fillCircle(cx, cy, r + 14);
+    g.fillStyle(color, 0.15);
+    g.fillCircle(cx, cy, r + 8);
+
+    // 外层尖刺（12个）
+    g.fillStyle(color, 0.75);
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const innerR = r * 0.9;
+      const outerR = r * 1.2;
+      g.beginPath();
+      g.moveTo(cx + Math.cos(angle - 0.1) * innerR, cy + Math.sin(angle - 0.1) * innerR);
+      g.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+      g.lineTo(cx + Math.cos(angle + 0.1) * innerR, cy + Math.sin(angle + 0.1) * innerR);
+      g.closePath();
+      g.fillPath();
+    }
+
+    // 主体八边形
+    g.fillStyle(color, 1);
+    g.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 - Math.PI / 8;
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+      if (i === 0) g.moveTo(px, py);
+      else g.lineTo(px, py);
+    }
+    g.closePath();
+    g.fillPath();
+
+    // 装甲环
+    g.lineStyle(3, 0x000000, 0.4);
+    g.beginPath();
+    g.arc(cx, cy, r * 0.75, 0, Math.PI * 2, false);
+    g.strokePath();
+
+    // 内层暗区
+    g.fillStyle(0x000000, 0.4);
+    g.fillCircle(cx, cy, r * 0.6);
+
+    // 三只眼睛（三角分布，恐怖感）
+    const eyePositions = [
+      { x: cx, y: cy - r * 0.25 },
+      { x: cx - r * 0.25, y: cy + r * 0.15 },
+      { x: cx + r * 0.25, y: cy + r * 0.15 },
+    ];
+    eyePositions.forEach((pos) => {
+      g.fillStyle(0x000000, 1);
+      g.fillCircle(pos.x, pos.y, r * 0.12);
+      g.fillStyle(0xffff00, 1);
+      g.fillCircle(pos.x, pos.y, r * 0.07);
+      g.fillStyle(0xff0000, 0.8);
+      g.fillCircle(pos.x, pos.y, r * 0.04);
+    });
+
+    // 中心能量核心
+    g.fillStyle(color, 0.6);
+    g.fillCircle(cx, cy + r * 0.35, r * 0.15);
+    g.fillStyle(0xffffff, 0.8);
+    g.fillCircle(cx, cy + r * 0.35, r * 0.07);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  // ========== 子弹 ==========
 
   // ========== 子弹 ==========
   private generateBullets(): void {

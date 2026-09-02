@@ -66,7 +66,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private expFlashTimer = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'player');
+    // 按当前视觉主题解析玩家纹理（classic 矢量 / pixel 像素）
+    super(scene, x, y, GameConfig.themeKey('player'));
 
     // 初始化属性
     this.stats = {
