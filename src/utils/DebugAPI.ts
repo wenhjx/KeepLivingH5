@@ -37,6 +37,8 @@ export interface DebugAPI {
   clearSave: () => void;
   /** 开关 AI 自动玩 */
   autoPlay: (enabled?: boolean) => boolean;
+  /** 稳定测试态：无敌 + 不升级 + 关闭所有覆盖面板（避免升级/商店弹窗干扰 UI 点击测试） */
+  testStable: () => string;
 }
 
 export function initDebugAPI(game: Phaser.Game): void {
@@ -149,6 +151,36 @@ export function initDebugAPI(game: Phaser.Game): void {
       gs.setAutoPlay?.(state);
       console.log(`[debug] 自动玩: ${state ? '开启' : '关闭'}`);
       return state;
+    },
+
+    testStable: () => {
+      const player = getPlayer();
+      if (player) {
+        if (player.stats) {
+          // 巨大血量打不死 + 升级需求巨大不升级，避免战斗/升级弹窗干扰 UI 点击测试
+          player.stats.maxHealth = 1e9;
+          player.stats.health = 1e9;
+          player.stats.exp = 0;
+          player.stats.expToNext = 1e9;
+        }
+        player.invincible = true;
+        player.invincibleTimer = 1e9; // 持续无敌（timer 单位 ms）
+      }
+      const gs = getGameScene();
+      if (gs) gs.pendingLevelUps = 0;
+      // 关闭所有覆盖面板（升级三选一/商店/突破/玩家属性/结算）
+      const sc = plugin();
+      if (sc) {
+        ['UpgradeScene', 'ShopScene', 'BreakthroughScene', 'PlayerInfoScene', 'GameOverScene'].forEach((k) => {
+          try {
+            if (sc.isActive(k)) sc.stop(k);
+          } catch (e) {
+            /* 忽略未运行场景 */
+          }
+        });
+      }
+      console.log('[debug] 稳定测试态已启用（无敌+不升级+关面板）');
+      return 'testStable active';
     },
   };
 

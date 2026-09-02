@@ -46,8 +46,10 @@ export class HUD {
 
   // buff 点击提示（tooltip）
   private tooltipContainer!: Phaser.GameObjects.Container;
-  private tooltipHitArea!: Phaser.GameObjects.Rectangle;
   private activeTooltipId: string | null = null;
+  // buff 图标命中区（uiRoot 局部坐标 = canvas 像素坐标；手动判定，避免 Phaser 嵌套
+  // Container setInteractive 在 scale 环境下 hitArea 偏移导致"点击左/右半命中不同 buff"）
+  private buffHitRects: Array<{ b: any; x: number; y: number }> = [];
 
   // 武器视觉映射（图标 + 背景色）
   // 注意：图标与 UPGRADE_OPTIONS（升级三选一/商店/解锁提示）保持一致，避免同一武器多处图标不一致
@@ -242,14 +244,28 @@ export class HUD {
   /** 初始化 buff 点击提示（点击增益图标显示详情，点击任意处关闭） */
   private initTooltip(): void {
     this.tooltipContainer = this.scene.add.container(0, 0).setDepth(210).setVisible(false);
-    // 全屏透明遮罩：点击任意处关闭提示（uiRoot 局部坐标范围 = 0~scale.width/height，需覆盖整块画布）
-    this.tooltipHitArea = this.scene.add
-      .rectangle(0, 0, this.scene.scale.width, this.scene.scale.height, 0x000000, 0)
-      .setOrigin(0);
-    // 初始禁用：未显示 tooltip 时全屏遮罩不得拦截 buff 图标点击
-    this.tooltipHitArea.disableInteractive();
-    this.tooltipHitArea.on('pointerdown', () => this.hideTooltip());
-    this.tooltipContainer.add(this.tooltipHitArea);
+
+    // 全局点击判定：tooltip 显示时点击任意处关闭；否则命中 buff 图标则显示详情。
+    // 采用手动坐标判定（uiRoot 局部坐标 = pointer.x/y），彻底规避 Phaser Container
+    // 嵌套 + 父级 scale 时 setInteractive hitArea 命中偏移的问题。
+    this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (this.tooltipContainer.visible) {
+        this.hideTooltip();
+        return;
+      }
+      // 命中检测：图标 32x32，中心偏移使点击范围略宽松（±4px）便于点中
+      for (const r of this.buffHitRects) {
+        if (
+          pointer.x >= r.x - 4 &&
+          pointer.x <= r.x + this.buffSize + 4 &&
+          pointer.y >= r.y - 4 &&
+          pointer.y <= r.y + this.buffSize + 4
+        ) {
+          this.showBuffTooltip(r.b, pointer);
+          return;
+        }
+      }
+    });
   }
 
   /** 每帧更新 HUD */
@@ -345,11 +361,15 @@ export class HUD {
     // 清除旧图标
     this.buffIcons.forEach((icon) => icon.destroy());
     this.buffIcons.clear();
+    this.buffHitRects = [];
 
     const startY = 148; // 小地图（160x120，位于 10,10）下方
 
     buffs.forEach((b, index: number) => {
       const x = index * (this.buffSize + this.buffSpacing);
+
+      // 记录命中区（uiRoot 局部坐标：buffContainer 位于 (padding,0)，图标在容器内 (x,startY)）
+      this.buffHitRects.push({ b, x: this.padding + x, y: startY });
 
       const container = this.scene.add.container(x, startY).setDepth(51);
 
@@ -379,17 +399,9 @@ export class HUD {
         .setOrigin(1, 1);
       container.add(levelText);
 
-      // 点击增益图标 → 显示 buff 详情提示（二游式，点击任意处关闭）
-      // 注意：Container 默认 setInteractive 的 hitArea 以原点(0,0)为中心，
-      // 与图标视觉区域(0,0)-(buffSize,buffSize)错位，需显式指定左上角对齐的矩形
-      container.setSize(this.buffSize, this.buffSize);
-      container.setInteractive(
-        new Phaser.Geom.Rectangle(0, 0, this.buffSize, this.buffSize),
-        Phaser.Geom.Rectangle.Contains
-      );
-      container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-        this.showBuffTooltip(b, pointer);
-      });
+      // 注意：此处不再对图标 Container setInteractive——Phaser 嵌套 Container（uiRoot scale=1/z
+      // → buffContainer → 图标）的 hitArea 在 scale 环境下命中偏移（点击左/右半命中不同 buff），
+      // 点击判定统一由 initTooltip 的全局 pointerdown 手动坐标检测处理（见 buffHitRects）。
 
       this.buffContainer.add(container);
       this.buffIcons.set(b.id, container);
@@ -409,12 +421,6 @@ export class HUD {
     // 关闭旧提示后重建
     this.hideTooltip();
     this.activeTooltipId = b.id;
-    this.tooltipContainer.add(this.tooltipHitArea);
-    // 重新启用全屏遮罩（隐藏时已 disableInteractive，避免拦截 buff 点击）
-    this.tooltipHitArea.setInteractive(
-      new Phaser.Geom.Rectangle(0, 0, this.scene.scale.width, this.scene.scale.height),
-      Phaser.Geom.Rectangle.Contains
-    );
 
     // 布局坐标系 = uiRoot 反向缩放根容器的局部坐标 = canvas 像素坐标（0~scale.width/height）。
     // 原因：UIScene 相机 zoom=renderScale，UI 全部放入 scale=1/z 的 uiRoot 容器做视觉补偿，
@@ -481,13 +487,9 @@ export class HUD {
   /** 关闭 buff 详情提示 */
   private hideTooltip(): void {
     this.tooltipContainer.setVisible(false);
-    // 禁用全屏遮罩：tooltip 隐藏后不得再拦截 buff 图标的点击
-    this.tooltipHitArea.disableInteractive();
     this.activeTooltipId = null;
-    // 移除内容（保留全屏遮罩）
-    this.tooltipContainer.list
-      .filter((obj) => obj !== this.tooltipHitArea)
-      .forEach((obj) => obj.destroy());
+    // 移除 tooltip 内容（点击关闭逻辑已由 initTooltip 的全局 pointerdown 统一处理）
+    this.tooltipContainer.list.forEach((obj) => obj.destroy());
   }
 
   updateHealth(): void {
