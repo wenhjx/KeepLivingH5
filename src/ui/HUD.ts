@@ -530,8 +530,10 @@ export class HUD {
     }
     this.tooltipContainer.setVisible(false);
     this.activeTooltipId = null;
-    // 移除 tooltip 内容（点击关闭逻辑已由 initTooltip 的全局 pointerdown 统一处理）
-    this.tooltipContainer.list.forEach((obj) => obj.destroy());
+    // 移除 tooltip 内容。注意必须用数组快照遍历：destroy() 会同步修改
+    // container.list（从父容器移除），直接 forEach 会因索引前移跳过元素，
+    // 导致快速切换 buff 时旧文本残留（实测 list 长度每次点击递增 4→6→7）。
+    this.tooltipContainer.list.slice().forEach((obj) => obj.destroy());
   }
 
   updateHealth(): void {
