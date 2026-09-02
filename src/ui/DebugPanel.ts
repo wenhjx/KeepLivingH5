@@ -1,6 +1,6 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
-import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { UPGRADE_OPTIONS, FALLBACK_UPGRADES } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
 import { GameConfig } from '../game/GameConfig';
 import { UILayout } from '../utils/UILayout';
@@ -65,9 +65,11 @@ export class DebugPanel {
     this.panelX = width - this.panelWidth - 12;
     this.panelY = 12;
 
-    // 内容总高度估算（用于面板背景高度；超出屏高的部分由滚动处理）
+    // 内容总高度估算（决定是否需要滚动；面板高度上限 = 屏幕 3/4 高）
     const contentHeight = this.computeContentHeight();
-    const panelHeight = Math.min(contentHeight + this.padding, height - 24);
+    // 界面高度不随内容无限变长：内容少时紧凑，内容多时封顶为屏幕高度 3/4，
+    // 超出部分在面板内滚动查看（UILayout 排布 + 几何 mask 裁剪）
+    const panelHeight = Math.min(contentHeight + this.padding, Math.round(height * 0.75));
     this.viewportH = panelHeight - 40 - this.padding;
 
     // 半透明背景
@@ -141,6 +143,11 @@ export class DebugPanel {
     // 被动（与 UPGRADE_OPTIONS.passive 对齐）
     this.addSectionTitle(col, '✨ 被动技能（点击获取/升级）');
     this.addOptionsRows(col, UPGRADE_OPTIONS.filter((o) => o.type === 'passive'));
+    col.step(this.sectionSpacing);
+
+    // 商店道具（即时生效，方便测试；不叠加属性，不影响玩家状态）
+    this.addSectionTitle(col, '🛒 商店道具（即时生效）');
+    this.addOptionsRows(col, FALLBACK_UPGRADES);
 
     // 计算可滚动上限（内容总高 - 可视区高）
     this.maxScroll = Math.max(0, col.y + this.padding - this.viewportH);
@@ -167,7 +174,9 @@ export class DebugPanel {
     const statRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'stat').length / 2);
     const weaponRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'weapon').length / 2);
     const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
-    return 28 + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + this.padding;
+    // 商店道具（FALLBACK_UPGRADES）2 行
+    const shopRows = Math.ceil(FALLBACK_UPGRADES.length / 2);
+    return 28 + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + this.padding;
   }
 
   /** 分区标题（content 内） */
