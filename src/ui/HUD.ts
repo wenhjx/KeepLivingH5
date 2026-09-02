@@ -235,25 +235,21 @@ export class HUD {
     this.bossContainer.add(this.bossValueText);
 
     // ========== 左下角：增益列表（武器/被动） ==========
-    this.buffContainer = this.scene.add.container(this.padding, 0).setDepth(50);
+    this.buffContainer = this.scene.add.container(0, 0).setDepth(50);
 
     // buff 点击提示
     this.initTooltip();
   }
 
-  /** 初始化 buff 点击提示（点击增益图标显示详情，点击任意处关闭） */
+  /** 初始化 buff 点击提示（按下增益图标显示详情，松开自动消失，无需再点一次关闭） */
   private initTooltip(): void {
     this.tooltipContainer = this.scene.add.container(0, 0).setDepth(210).setVisible(false);
 
-    // 全局点击判定：tooltip 显示时点击任意处关闭；否则命中 buff 图标则显示详情。
     // 采用手动坐标判定（uiRoot 局部坐标 = pointer.x/y），彻底规避 Phaser Container
     // 嵌套 + 父级 scale 时 setInteractive hitArea 命中偏移的问题。
+    // 交互：pointerdown 命中 buff 图标 → 显示详情并跟随点击位置；pointerup（松开）→ 自动关闭。
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (this.tooltipContainer.visible) {
-        this.hideTooltip();
-        return;
-      }
-      // 命中检测：图标 32x32，中心偏移使点击范围略宽松（±4px）便于点中
+      // 命中检测：图标 32x32，±4px 宽容便于点中
       for (const r of this.buffHitRects) {
         if (
           pointer.x >= r.x - 4 &&
@@ -264,6 +260,13 @@ export class HUD {
           this.showBuffTooltip(r.b, pointer);
           return;
         }
+      }
+    });
+
+    // 松开鼠标/手指 → 提示自动消失，避免"再点一次用来关闭"的多余操作
+    this.scene.input.on('pointerup', () => {
+      if (this.tooltipContainer.visible) {
+        this.hideTooltip();
       }
     });
   }
@@ -356,22 +359,26 @@ export class HUD {
     });
   }
 
-  /** 重建增益列表 */
+  /** 重建增益列表（整体居中于血条上方，buff 多时均匀向两侧铺开） */
   private rebuildBuffList(buffs: Array<{ id: string; level: number; icon: string; color: number; name?: string; desc?: string; maxLevel?: number; bt?: number }>): void {
     // 清除旧图标
     this.buffIcons.forEach((icon) => icon.destroy());
     this.buffIcons.clear();
     this.buffHitRects = [];
 
-    const startY = 148; // 小地图（160x120，位于 10,10）下方
+    // 位置：血条（barTopY）上方居中。居中基准为血条中心（scale.width/2），
+    // 保证无论 buff 多少，列表都以屏幕中心对称铺开，不会向左/右单向延伸。
+    const buffTop = this.barTopY - this.buffSize - 12; // 血条上方 12px
+    const totalW = buffs.length * (this.buffSize + this.buffSpacing) - this.buffSpacing;
+    const startX = Math.max(this.padding, (this.scene.scale.width - totalW) / 2);
 
     buffs.forEach((b, index: number) => {
-      const x = index * (this.buffSize + this.buffSpacing);
+      const x = startX + index * (this.buffSize + this.buffSpacing);
 
-      // 记录命中区（uiRoot 局部坐标：buffContainer 位于 (padding,0)，图标在容器内 (x,startY)）
-      this.buffHitRects.push({ b, x: this.padding + x, y: startY });
+      // 记录命中区（uiRoot 局部坐标：buffContainer 位于 (0,0)，图标在 (x,buffTop)）
+      this.buffHitRects.push({ b, x, y: buffTop });
 
-      const container = this.scene.add.container(x, startY).setDepth(51);
+      const container = this.scene.add.container(x, buffTop).setDepth(51);
 
       // 背景
       const bg = this.scene.add.graphics();
