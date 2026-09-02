@@ -1,6 +1,7 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
+import { GameConfig } from '../game/GameConfig';
 import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 
@@ -242,11 +243,12 @@ export class HUD {
   /** 初始化 buff 点击提示（点击增益图标显示详情，点击任意处关闭） */
   private initTooltip(): void {
     this.tooltipContainer = this.scene.add.container(0, 0).setDepth(210).setVisible(false);
-    // 全屏透明遮罩：点击任意处关闭提示
+    // 全屏透明遮罩：点击任意处关闭提示（用逻辑分辨率，uiRoot 内以逻辑坐标定位）
     this.tooltipHitArea = this.scene.add
-      .rectangle(0, 0, this.scene.scale.width, this.scene.scale.height, 0x000000, 0)
-      .setOrigin(0)
-      .setInteractive();
+      .rectangle(0, 0, GameConfig.GAME_WIDTH, GameConfig.GAME_HEIGHT, 0x000000, 0)
+      .setOrigin(0);
+    // 初始禁用：未显示 tooltip 时全屏遮罩不得拦截 buff 图标点击
+    this.tooltipHitArea.disableInteractive();
     this.tooltipHitArea.on('pointerdown', () => this.hideTooltip());
     this.tooltipContainer.add(this.tooltipHitArea);
   }
@@ -379,17 +381,27 @@ export class HUD {
       container.add(levelText);
 
       // 点击增益图标 → 显示 buff 详情提示（二游式，点击任意处关闭）
+      // 注意：Container 默认 setInteractive 的 hitArea 以原点(0,0)为中心，
+      // 与图标视觉区域(0,0)-(buffSize,buffSize)错位，需显式指定左上角对齐的矩形
       container.setSize(this.buffSize, this.buffSize);
-      container.setInteractive();
-      container.on('pointerdown', () => this.showBuffTooltip(b));
+      container.setInteractive(
+        new Phaser.Geom.Rectangle(0, 0, this.buffSize, this.buffSize),
+        Phaser.Geom.Rectangle.Contains
+      );
+      container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        this.showBuffTooltip(b, pointer);
+      });
 
       this.buffContainer.add(container);
       this.buffIcons.set(b.id, container);
     });
   }
 
-  /** 显示 buff 详情提示（图标+名称+等级+描述） */
-  private showBuffTooltip(b: { id: string; name?: string; level: number; icon: string; color: number; desc?: string; maxLevel?: number; bt?: number }): void {
+  /** 显示 buff 详情提示（图标+名称+等级+描述，跟随点击位置并钳制屏幕边界） */
+  private showBuffTooltip(
+    b: { id: string; name?: string; level: number; icon: string; color: number; desc?: string; maxLevel?: number; bt?: number },
+    pointer?: Phaser.Input.Pointer
+  ): void {
     // 已在显示同一 buff 的提示 → 关闭
     if (this.tooltipContainer.visible && this.activeTooltipId === b.id) {
       this.hideTooltip();
@@ -399,24 +411,41 @@ export class HUD {
     this.hideTooltip();
     this.activeTooltipId = b.id;
     this.tooltipContainer.add(this.tooltipHitArea);
+    // 重新启用全屏遮罩（隐藏时已 disableInteractive，避免拦截 buff 点击）
+    this.tooltipHitArea.setInteractive(
+      new Phaser.Geom.Rectangle(0, 0, GameConfig.GAME_WIDTH, GameConfig.GAME_HEIGHT),
+      Phaser.Geom.Rectangle.Contains
+    );
 
-    const { width } = this.scene.scale;
-    const boxW = 240;
+    const viewW = GameConfig.GAME_WIDTH;
+    const viewH = GameConfig.GAME_HEIGHT;
+    const boxW = 250;
+    const boxH = 88;
     const title = b.name || b.id;
     const lvText = b.bt && b.bt > 0 ? `Lv.${b.level}+${b.bt}` : `Lv.${b.level}`;
-    const boxX = this.buffSize + 16 + boxW / 2; // 增益列表右侧
-    const boxY = 210;
+
+    // 默认跟随点击位置，显示在点击点右下；越界则翻转
+    const px = pointer ? pointer.worldX : 100;
+    const py = pointer ? pointer.worldY : 220;
+    let boxX = px + 10;
+    if (boxX + boxW / 2 > viewW) boxX = px - 10 - boxW / 2;
+    if (boxX - boxW / 2 < 0) boxX = boxW / 2 + 4;
+    let boxY = py + 12;
+    if (boxY + boxH / 2 > viewH) boxY = py - 12 - boxH / 2;
+    if (boxY - boxH / 2 < 20) boxY = boxH / 2 + 24;
+    // 描述换行高度自适应：描述超过一行时按行数抬高 tooltip
+    const descLines = Math.ceil((b.desc || '').length / 16);
 
     // 背景
     const bg = this.scene.add.graphics();
     bg.fillStyle(0x0e0e18, 0.96);
-    bg.fillRoundedRect(boxX - boxW / 2, boxY - 30, boxW, 88, 10);
+    bg.fillRoundedRect(boxX - boxW / 2, boxY - boxH / 2, boxW, boxH + Math.max(0, descLines - 1) * 16, 10);
     bg.lineStyle(2, b.color, 1);
-    bg.strokeRoundedRect(boxX - boxW / 2, boxY - 30, boxW, 88, 10);
+    bg.strokeRoundedRect(boxX - boxW / 2, boxY - boxH / 2, boxW, boxH + Math.max(0, descLines - 1) * 16, 10);
     this.tooltipContainer.add(bg);
 
     // 标题行：图标 + 名称 + 等级
-    const titleText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - 24, `${b.icon}  ${title}`, {
+    const titleText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxH / 2 + 8, `${b.icon}  ${title}`, {
         fontSize: '16px',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -424,7 +453,7 @@ export class HUD {
       .setOrigin(0, 0);
     this.tooltipContainer.add(titleText);
 
-    const lvTextObj = createUIText(this.scene, boxX + boxW / 2 - 12, boxY - 24, lvText, {
+    const lvTextObj = createUIText(this.scene, boxX + boxW / 2 - 12, boxY - boxH / 2 + 8, lvText, {
         fontSize: '13px',
         color: '#ffd54f',
         fontStyle: 'bold',
@@ -433,7 +462,7 @@ export class HUD {
     this.tooltipContainer.add(lvTextObj);
 
     // 描述
-    const descText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY + 2, b.desc || '', {
+    const descText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxH / 2 + 34, b.desc || '', {
         fontSize: '13px',
         color: '#bbbbbb',
         wordWrap: { width: boxW - 24 },
@@ -448,6 +477,8 @@ export class HUD {
   /** 关闭 buff 详情提示 */
   private hideTooltip(): void {
     this.tooltipContainer.setVisible(false);
+    // 禁用全屏遮罩：tooltip 隐藏后不得再拦截 buff 图标的点击
+    this.tooltipHitArea.disableInteractive();
     this.activeTooltipId = null;
     // 移除内容（保留全屏遮罩）
     this.tooltipContainer.list
