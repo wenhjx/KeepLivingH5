@@ -5,7 +5,6 @@ import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
 import { HUD } from '../ui/HUD';
 import { VirtualJoystick } from '../ui/VirtualJoystick';
-import { DebugPanel } from '../ui/DebugPanel';
 import { Minimap } from '../ui/Minimap';
 import { InventoryUI } from '../ui/InventoryUI';
 import { GuideManager } from '../systems/GuideManager';
@@ -21,7 +20,6 @@ import { AudioManager } from '../systems/AudioManager';
 export class UIScene extends Phaser.Scene {
   private hud!: HUD;
   private joystick!: VirtualJoystick;
-  private debugPanel!: DebugPanel;
   private minimap!: Minimap;
   private inventoryUI!: InventoryUI;
   private pauseButton!: Phaser.GameObjects.Text;
@@ -51,9 +49,6 @@ export class UIScene extends Phaser.Scene {
 
     // HUD
     this.hud = new HUD(this);
-
-    // 调试面板（按 ` 键切换）；传入 uiRoot 供滚动遮罩做 world 坐标换算
-    this.debugPanel = new DebugPanel(this, this.uiRoot);
 
     // 小地图（左上角，数据驱动：以后新增区域/更大地图自动适配）
     const gameScene = this.scene.get('GameScene') as any;

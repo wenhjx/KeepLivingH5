@@ -409,15 +409,36 @@ export class DebugPanel {
 
   private addLevel(count: number): void {
     const player = this.getPlayer();
+    const gs = this.getGameScene();
     if (!player) return;
-    for (let i = 0; i < count; i++) {
-      (player as any).stats.exp = (player as any).stats.expToNext;
-      (player as any).addExp(0);
+    // 抑制升级三选一弹窗：调试面板加级直接生效，不弹升级框（避免其覆盖面板拦截后续点击）
+    if (gs) gs.suppressUpgradeUI = true;
+    try {
+      for (let i = 0; i < count; i++) {
+        (player as any).stats.exp = (player as any).stats.expToNext;
+        (player as any).addExp(0);
+      }
+    } finally {
+      if (gs) {
+        gs.suppressUpgradeUI = false;
+        gs.pendingLevelUps = 0;
+        gs.upgradeQueued = false;
+      }
     }
   }
 
   private addExp(amount: number): void {
-    this.getPlayer()?.addExp(amount);
+    const gs = this.getGameScene();
+    if (gs) gs.suppressUpgradeUI = true;
+    try {
+      this.getPlayer()?.addExp(amount);
+    } finally {
+      if (gs) {
+        gs.suppressUpgradeUI = false;
+        gs.pendingLevelUps = 0;
+        gs.upgradeQueued = false;
+      }
+    }
   }
 
   private addPickupRadius(amount: number): void {
