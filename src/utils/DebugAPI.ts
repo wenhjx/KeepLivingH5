@@ -214,6 +214,21 @@ export function initDebugAPI(game: Phaser.Game): void {
         }
         return true;
       });
+      // 场上已有子弹/掉落物即时更新（仅双套纹理的 key）
+      const themedBulletKeys = ['bullet', 'bullet_classic'];
+      const themedPickupBase = ['pickup_exp', 'pickup_health', 'pickup_coin'];
+      gs?.bullets?.children?.each?.((b: any) => {
+        if (!b || !b.setTexture || !b.active) return true;
+        if (themedBulletKeys.includes(b.texture?.key)) b.setTexture(GameConfig.themeKey('bullet'));
+        return true;
+      });
+      gs?.pickups?.children?.each?.((p: any) => {
+        if (!p || !p.setTexture || !p.active) return true;
+        const k = p.texture?.key;
+        const base = themedPickupBase.find((b) => k === b || k === `${b}_classic`);
+        if (base) p.setTexture(GameConfig.themeKey(base));
+        return true;
+      });
       console.log(`[debug] 视觉主题已切换: ${theme}`);
       return `主题已切换: ${theme}`;
     },

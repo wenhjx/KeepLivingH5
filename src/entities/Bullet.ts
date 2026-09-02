@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { EventBus } from '../utils/EventBus';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 子弹实体
@@ -30,7 +31,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
   private returning: boolean = false;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 0, 0, 'bullet');
+    super(scene, 0, 0, GameConfig.themeKey('bullet'));
     scene.add.existing(this);
     scene.physics.add.existing(this, false);
     this.setActive(false);
@@ -72,7 +73,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
 
-    this.setTexture(texture);
+    // 基础子弹按当前主题解析（classic 用霓虹能量弹）；武器自定义纹理（如 weapon_sword）保持原样
+    const tex = texture === 'bullet' ? GameConfig.themeKey('bullet') : texture;
+    this.setTexture(tex);
     this.setPosition(x, y);
     this.setActive(true);
     this.setVisible(true);

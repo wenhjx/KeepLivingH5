@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { MathUtils } from '../utils/MathUtils';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
+import { GameConfig } from '../game/GameConfig';
 import type { PickupConfig, PickupType } from '../types';
 import type { Player } from './Player';
 
@@ -15,7 +16,7 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
   private bobOffset: number = 0;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 0, 0, 'pickup_exp');
+    super(scene, 0, 0, GameConfig.themeKey('pickup_exp'));
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setActive(false);
@@ -27,7 +28,8 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
     this.magnetActive = false;
     this.bobOffset = Math.random() * Math.PI * 2;
 
-    this.setTexture(config.texture || 'pickup_exp');
+    // 拾取物纹理按当前主题解析（classic 用霓虹版）
+    this.setTexture(GameConfig.themeKey(config.texture || 'pickup_exp'));
     // 先启用物理体并 reset 到正确位置
     if (this.body) {
       this.body.enable = true;

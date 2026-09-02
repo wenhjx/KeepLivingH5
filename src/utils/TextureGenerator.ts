@@ -44,7 +44,10 @@ export class TextureGenerator {
     this.generatePlayerClassic();
     this.generateEnemiesClassic();
     this.generateBullets();
+    // 经典矢量主题：霓虹能量弹/拾取物（像素化改造前的原始实现），key 加 _classic 后缀
+    this.generateBulletsClassic();
     this.generatePickups();
+    this.generatePickupsClassic();
     this.generateParticles();
     this.generateUI();
     this.generateWeapons();
@@ -868,8 +871,54 @@ export class TextureGenerator {
   // ========== 子弹 ==========
 
   // ========== 子弹 ==========
+  /** 像素风子弹（pixel 主题默认）：方块核心 + 递减方块拖尾，棱角分明 */
   private generateBullets(): void {
-    // 玩家子弹（能量弹：发光核心 + 拖尾）
+    // 玩家子弹
+    const size = 20;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    // 拖尾（向后递减方块）
+    const trail = [
+      { w: 5, h: 5, off: 3, a: 0.45 },
+      { w: 4, h: 4, off: 6, a: 0.3 },
+      { w: 3, h: 3, off: 8, a: 0.18 },
+    ];
+    for (const t of trail) {
+      g.fillStyle(TextureGenerator.COLORS.bullet, t.a);
+      g.fillRect(cx - t.w / 2 - t.off, cy - t.h / 2, t.w, t.h);
+    }
+
+    // 核心方块
+    g.fillStyle(TextureGenerator.COLORS.bullet, 1);
+    g.fillRect(cx - 3, cy - 3, 6, 6);
+    // 高光
+    g.fillStyle(0xffffff, 0.9);
+    g.fillRect(cx - 2, cy - 2, 2, 2);
+
+    g.generateTexture('bullet', size, size);
+    g.destroy();
+
+    // 敌人子弹（紫红色方块）
+    const size2 = 18;
+    const g2 = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx2 = size2 / 2;
+    const cy2 = size2 / 2;
+
+    g2.fillStyle(0xff44ff, 0.5);
+    g2.fillRect(cx2 - 3, cy2 - 3, 6, 6);
+    g2.fillStyle(0xff44ff, 1);
+    g2.fillRect(cx2 - 2, cy2 - 2, 4, 4);
+    g2.fillStyle(0xffffff, 1);
+    g2.fillRect(cx2 - 1, cy2 - 1, 2, 2);
+
+    g2.generateTexture('enemy_bullet', size2, size2);
+    g2.destroy();
+  }
+
+  /** 经典矢量主题子弹（霓虹能量弹：发光核心 + 拖尾），key 加 _classic 后缀 */
+  private generateBulletsClassic(): void {
     const size = 20;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
     const cx = size / 2;
@@ -889,7 +938,7 @@ export class TextureGenerator {
     g.fillStyle(0xffffff, 0.9);
     g.fillCircle(cx - 0.5, cy - 0.5, 1.2);
 
-    g.generateTexture('bullet', size, size);
+    g.generateTexture('bullet_classic', size, size);
     g.destroy();
 
     // 敌人子弹（紫红色能量弹）
@@ -901,15 +950,122 @@ export class TextureGenerator {
     g2.fillCircle(size2 / 2, size2 / 2, 4);
     g2.fillStyle(0xffffff, 1);
     g2.fillCircle(size2 / 2, size2 / 2, 2);
-    g2.generateTexture('enemy_bullet', size2, size2);
+    g2.generateTexture('enemy_bullet_classic', size2, size2);
     g2.destroy();
   }
 
   // ========== 拾取物 ==========
+  /** 像素风拾取物（pixel 主题默认）：方块拼接，棱角分明 */
   private generatePickups(): void {
-    this.generateGem('pickup_exp', TextureGenerator.COLORS.exp, 20);
-    this.generateHealth('pickup_health', 22);
-    this.generateCoin('pickup_coin', 18);
+    this.generateGemPixel('pickup_exp', TextureGenerator.COLORS.exp, 20);
+    this.generateHealthPixel('pickup_health', 22);
+    this.generateCoinPixel('pickup_coin', 18);
+  }
+
+  /** 经典矢量主题拾取物（霓虹菱形/十字/金币），key 加 _classic 后缀 */
+  private generatePickupsClassic(): void {
+    this.generateGem('pickup_exp_classic', TextureGenerator.COLORS.exp, 20);
+    this.generateHealth('pickup_health_classic', 22);
+    this.generateCoin('pickup_coin_classic', 18);
+  }
+
+  /** 像素宝石：整数方块拼菱形 */
+  private generateGemPixel(key: string, color: number, size: number): void {
+    const canvas = size + 8;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = canvas / 2;
+    const cy = canvas / 2;
+
+    // 底部暗影（下层方块）
+    g.fillStyle(color, 0.35);
+    g.fillRect(cx - 5, cy - 3, 10, 10);
+    g.fillRect(cx - 3, cy + 1, 6, 10);
+
+    // 主体菱形（逐行方块，上窄下宽）
+    g.fillStyle(color, 1);
+    g.fillRect(cx - 2, cy - 5, 4, 2);   // 尖端
+    g.fillRect(cx - 4, cy - 3, 8, 2);   // 上排
+    g.fillRect(cx - 5, cy - 1, 10, 2);  // 中排
+    g.fillRect(cx - 4, cy + 1, 8, 2);   // 下排
+    g.fillRect(cx - 2, cy + 3, 4, 2);   // 尾端
+
+    // 顶部高光
+    g.fillStyle(0xffffff, 0.5);
+    g.fillRect(cx - 2, cy - 5, 4, 2);
+    g.fillRect(cx - 4, cy - 3, 4, 2);
+
+    // 中心亮线
+    g.fillStyle(0xffffff, 0.35);
+    g.fillRect(cx - 5, cy - 1, 10, 1);
+
+    g.generateTexture(key, canvas, canvas);
+    g.destroy();
+  }
+
+  /** 像素血包：红色方块 + 像素十字 */
+  private generateHealthPixel(key: string, size: number): void {
+    const canvas = size + 8;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = canvas / 2;
+    const cy = canvas / 2;
+    const half = size / 2;
+
+    // 主体红色方块
+    g.fillStyle(TextureGenerator.COLORS.health, 1);
+    g.fillRect(cx - half, cy - half, size, size);
+
+    // 像素描边（四边暗色）
+    g.fillStyle(0x000000, 0.4);
+    g.fillRect(cx - half, cy - half, size, 2);
+    g.fillRect(cx - half, cy + half - 2, size, 2);
+    g.fillRect(cx - half, cy - half, 2, size);
+    g.fillRect(cx + half - 2, cy - half, 2, size);
+
+    // 白色像素十字
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(cx - 3, cy - 7, 6, 14);
+    g.fillRect(cx - 7, cy - 3, 14, 6);
+
+    // 十字高光（左上）
+    g.fillStyle(0xffcccc, 1);
+    g.fillRect(cx - 3, cy - 7, 6, 3);
+
+    g.generateTexture(key, canvas, canvas);
+    g.destroy();
+  }
+
+  /** 像素金币：方块金币 + 中心符号 */
+  private generateCoinPixel(key: string, size: number): void {
+    const canvas = size + 8;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = canvas / 2;
+    const cy = canvas / 2;
+    const r = size / 2;
+
+    // 外圈方块
+    g.fillStyle(TextureGenerator.COLORS.coin, 1);
+    g.fillRect(cx - r, cy - r, size, size);
+
+    // 切角（削去四角成八角感）
+    g.fillStyle(TextureGenerator.COLORS.coin, 1);
+    g.fillRect(cx - r, cy - r, size, 2);
+    g.fillRect(cx - r, cy + r - 2, size, 2);
+    g.fillRect(cx - r, cy - r, 2, size);
+    g.fillRect(cx + r - 2, cy - r, 2, size);
+    // 内圈暗
+    g.fillStyle(0xaa7700, 1);
+    g.fillRect(cx - r + 3, cy - r + 3, size - 6, size - 6);
+    // 内圈亮
+    g.fillStyle(0xffdd44, 1);
+    g.fillRect(cx - r + 5, cy - r + 5, size - 10, size - 10);
+    // 中心 $（竖线 + 高光）
+    g.fillStyle(0xaa7700, 1);
+    g.fillRect(cx - 1, cy - 4, 2, 8);
+    g.fillStyle(0xffffff, 0.4);
+    g.fillRect(cx - 3, cy - 3, 2, 2);
+
+    g.generateTexture(key, canvas, canvas);
+    g.destroy();
   }
 
   private generateGem(key: string, color: number, size: number): void {
