@@ -139,11 +139,13 @@ export class UIScene extends Phaser.Scene {
     this.pauseOverlay.add(resumeBtn);
 
     // 玩家属性按钮（暂停时也可查看角色详情，方便移动端无键盘用户）
-    const infoBtn = createUIText(this, width / 2, height / 2 + 42, '📋 玩家属性', {
-        fontSize: '16px',
-        color: '#cccccc',
+    // 与"返回主菜单"同级风格保持一致：纯文字、无 emoji、同字号同色
+    // 间距按按钮实际高度（20px字+padding）预留 20px 留白，避免文字重叠
+    const infoBtn = createUIText(this, width / 2, height / 2 + 60, '玩家属性', {
+        fontSize: '20px',
+        color: '#aaaaaa',
         backgroundColor: '#1a1a25',
-        padding: { left: 24, right: 24, top: 8, bottom: 8 },
+        padding: { left: 30, right: 30, top: 10, bottom: 10 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -156,7 +158,7 @@ export class UIScene extends Phaser.Scene {
     this.pauseOverlay.add(infoBtn);
 
     // 返回主菜单按钮
-    const menuBtn = createUIText(this, width / 2, height / 2 + 60, '返回主菜单', {
+    const menuBtn = createUIText(this, width / 2, height / 2 + 120, '返回主菜单', {
         fontSize: '20px',
         color: '#aaaaaa',
         backgroundColor: '#1a1a25',
