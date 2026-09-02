@@ -12,8 +12,8 @@ export class GameConfig {
   static renderScale = 1;
   /** 背景色 */
   static readonly BG_COLOR = '#0a0a0f';
-  /** 是否像素风模式 */
-  static readonly PIXEL_ART = false;
+  /** 是否像素风模式（开启后：最近邻采样 + 像素对齐，边缘锐利不模糊） */
+  static readonly PIXEL_ART = true;
   /** 物理调试模式 */
   static readonly DEBUG_PHYSICS = false;
 

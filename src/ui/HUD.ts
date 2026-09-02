@@ -1,7 +1,6 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
-import { GameConfig } from '../game/GameConfig';
 import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 
@@ -243,9 +242,9 @@ export class HUD {
   /** 初始化 buff 点击提示（点击增益图标显示详情，点击任意处关闭） */
   private initTooltip(): void {
     this.tooltipContainer = this.scene.add.container(0, 0).setDepth(210).setVisible(false);
-    // 全屏透明遮罩：点击任意处关闭提示（用逻辑分辨率，uiRoot 内以逻辑坐标定位）
+    // 全屏透明遮罩：点击任意处关闭提示（uiRoot 局部坐标范围 = 0~scale.width/height，需覆盖整块画布）
     this.tooltipHitArea = this.scene.add
-      .rectangle(0, 0, GameConfig.GAME_WIDTH, GameConfig.GAME_HEIGHT, 0x000000, 0)
+      .rectangle(0, 0, this.scene.scale.width, this.scene.scale.height, 0x000000, 0)
       .setOrigin(0);
     // 初始禁用：未显示 tooltip 时全屏遮罩不得拦截 buff 图标点击
     this.tooltipHitArea.disableInteractive();
@@ -413,20 +412,25 @@ export class HUD {
     this.tooltipContainer.add(this.tooltipHitArea);
     // 重新启用全屏遮罩（隐藏时已 disableInteractive，避免拦截 buff 点击）
     this.tooltipHitArea.setInteractive(
-      new Phaser.Geom.Rectangle(0, 0, GameConfig.GAME_WIDTH, GameConfig.GAME_HEIGHT),
+      new Phaser.Geom.Rectangle(0, 0, this.scene.scale.width, this.scene.scale.height),
       Phaser.Geom.Rectangle.Contains
     );
 
-    const viewW = GameConfig.GAME_WIDTH;
-    const viewH = GameConfig.GAME_HEIGHT;
+    // 布局坐标系 = uiRoot 反向缩放根容器的局部坐标 = canvas 像素坐标（0~scale.width/height）。
+    // 原因：UIScene 相机 zoom=renderScale，UI 全部放入 scale=1/z 的 uiRoot 容器做视觉补偿，
+    // 因此 HUD 布局（this.scene.scale.width 基准）与 canvas 像素坐标一一对应。
+    // 注意：不能用 pointer.worldX/worldY —— 那是相机 scroll+zoom 公式的世界坐标，z>1 时
+    // 与 uiRoot 局部坐标存在偏移（左上角点击会向右下偏），正是此前 tooltip 在系统浏览器偏位的原因。
+    const viewW = this.scene.scale.width;
+    const viewH = this.scene.scale.height;
     const boxW = 250;
     const boxH = 88;
     const title = b.name || b.id;
     const lvText = b.bt && b.bt > 0 ? `Lv.${b.level}+${b.bt}` : `Lv.${b.level}`;
 
     // 默认跟随点击位置，显示在点击点右下；越界则翻转
-    const px = pointer ? pointer.worldX : 100;
-    const py = pointer ? pointer.worldY : 220;
+    const px = pointer ? pointer.x : 100;
+    const py = pointer ? pointer.y : 220;
     let boxX = px + 10;
     if (boxX + boxW / 2 > viewW) boxX = px - 10 - boxW / 2;
     if (boxX - boxW / 2 < 0) boxX = boxW / 2 + 4;
