@@ -164,40 +164,14 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const falloff = 1 - Math.max(0, pDist / radius) * 0.5;
     player.takeDamage(Math.max(1, damage * falloff));
 
-    // 自爆视觉：红色爆圈 + 震动
-    this.spawnExplosionFx(radius);
+    // 自爆视觉：双环 + 橙色粒子 + 轻震屏（统一走 FXManager）+ 爆炸音效
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.8);
+    scene?.getFXManager?.()?.explosion(this.x, this.y, radius);
 
     // 自身死亡（不掉落，自爆无收益）
     this.isDead = true;
     EventBus.emit('enemy:death', this.config);
     this.despawn();
-  }
-
-  /** 自爆视觉特效 */
-  private spawnExplosionFx(radius: number): void {
-    const scene = this.scene as any;
-    const outer = scene.add?.circle?.(this.x, this.y, radius, 0xff5500, 0.4).setDepth(50);
-    const inner = scene.add?.circle?.(this.x, this.y, radius * 0.5, 0xffcc00, 0.6).setDepth(51);
-    if (outer) {
-      scene.tweens.add({
-        targets: outer,
-        scale: { from: 0.4, to: 1.2 },
-        alpha: { from: 0.5, to: 0 },
-        duration: 250,
-        onComplete: () => outer.destroy(),
-      });
-    }
-    if (inner) {
-      scene.tweens.add({
-        targets: inner,
-        scale: { from: 0.6, to: 1 },
-        alpha: { from: 0.8, to: 0 },
-        duration: 180,
-        onComplete: () => inner.destroy(),
-      });
-    }
-    scene.cameras?.main?.shake?.(80, 0.004);
-    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.8);
   }
 
   /** 护盾怪：缓慢接近，正面减伤，侧面/背面正常受伤 */
@@ -462,8 +436,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       );
     }
 
-    // 死亡粒子
-    // TODO: 粒子特效
+    // 死亡消散特效（统一入口：子弹击杀 / killAll / 连锁伤害均触发）
+    scene?.getFXManager?.()?.enemyDeath(this.x, this.y, this.config?.color || 0xff4444);
 
     // 死亡音效（Boss 用专属死亡音效）
     AudioManager.getInstance().playSfx(

@@ -240,6 +240,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 射击音效（按武器类型区分，资源缺失时静默失败）
     this.playWeaponSfx(config.id);
 
+    // 枪口闪光（射击瞬间，颜色随武器；霰弹多弹只闪一次）
+    scene.getFXManager?.()?.muzzleFlash(
+      this.x + Math.cos(angle) * 18,
+      this.y + Math.sin(angle) * 18,
+      angle,
+      visual.color ?? 0xffffff
+    );
+
     // 发射子弹（霰弹等可随等级增加弹丸数）
     const baseCount = config.projectileCount || 1;
     const count = baseCount + (config.extraProjectilesPerLevel || 0) * (level - 1);

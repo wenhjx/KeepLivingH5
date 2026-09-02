@@ -136,10 +136,8 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
       const dist = Phaser.Math.Distance.Between(this.x, this.y, enemy.x, enemy.y);
       if (dist <= this.hitRadius + (enemy.config?.size || 20) / 2) {
         enemy.takeDamage(damage, false);
-        // 命中粒子
-        if (scene.getObjectPool) {
-          scene.getObjectPool()?.spawnParticle(this.x, this.y, 0x66ffff, 2);
-        }
+        // 命中粒子（统一走 FXManager）
+        scene.getFXManager?.()?.hit(this.x, this.y, false);
       }
       return true;
     });

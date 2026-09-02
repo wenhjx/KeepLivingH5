@@ -76,13 +76,12 @@ export class CollisionSystem {
     // 浮动伤害数字（暴击金色大字，普通白色）
     gameScene?.spawnDamageText?.(bullet.x, bullet.y, finalDamage, isCrit);
 
-    // 命中粒子
-    gameScene.getObjectPool()?.spawnParticle(bullet.x, bullet.y, 0xffff00, 3);
+    // 命中粒子（暴击金色更多更大）
+    gameScene.getFXManager?.()?.hit(bullet.x, bullet.y, isCrit);
 
-    // 击杀统计
+    // 击杀统计（敌人死亡消散特效由 Enemy.die() 统一触发，避免重复）
     if (enemy.getHealth() <= 0) {
       GameManager.getInstance().addKill(enemy.getScoreReward());
-      gameScene.getObjectPool()?.spawnDeathParticle(enemy.x, enemy.y, enemy.getConfig()?.color || 0xff4444);
     }
   }
 
@@ -113,11 +112,9 @@ export class CollisionSystem {
 
     pickup.collect(player);
 
-    // 拾取特效
+    // 拾取光点（经验青 / 金币金 / 其他白）
     const gameScene = this.scene as any;
-    if (pickup.getType() === 'exp') {
-      gameScene.getObjectPool()?.spawnExpParticle(pickup.x, pickup.y);
-    }
+    gameScene.getFXManager?.()?.pickup(pickup.x, pickup.y, pickup.getType());
   }
 
 }

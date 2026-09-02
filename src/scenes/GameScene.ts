@@ -11,6 +11,7 @@ import { AudioManager } from '../systems/AudioManager';
 import { GuideManager } from '../systems/GuideManager';
 import { DamageTextManager } from '../ui/DamageTextManager';
 import { TerrainManager } from '../systems/TerrainManager';
+import { FXManager } from '../systems/FXManager';
 import { DEFAULT_TERRAIN } from '../data/terrain';
 import { EventBus } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
@@ -30,6 +31,7 @@ export class GameScene extends Phaser.Scene {
   private audioManager!: AudioManager;
   private damageTextManager!: DamageTextManager;
   private terrainManager!: TerrainManager;
+  private fxManager!: FXManager;
   private activeBoss: Enemy | null = null;
   private pendingLevelUps = 0;
   private upgradeQueued = false;
@@ -204,6 +206,9 @@ export class GameScene extends Phaser.Scene {
     // 音频管理
     this.audioManager = AudioManager.getInstance();
     this.audioManager.init(this);
+
+    // 视觉特效统一入口（所有命中/死亡/爆炸/升级/拾取/枪口闪光走这里）
+    this.fxManager = new FXManager(this);
   }
 
   private createMap(): void {
@@ -344,6 +349,7 @@ export class GameScene extends Phaser.Scene {
     // 玩家升级：跨多级时排队逐个弹出三选一（避免一次性升级丢失选择机会）
     sub(EventBus.on('player:levelup', (level: number) => {
       this.audioManager.playSfx('sfx_levelup');
+      this.fxManager.levelUp(this.player.x, this.player.y);
       this.pendingLevelUps++;
       this.showNextUpgrade();
     }));
@@ -498,7 +504,24 @@ export class GameScene extends Phaser.Scene {
     this.pendingShop = false;
     this.pendingBossWave = 0;
 
-    // 延迟切换到结算场景
+    // 玩家死亡消散特效：青色粒子上升消散 + 本体淡出缩放到 0.15
+    const p = this.player;
+    this.fxManager.playerDeath(p.x, p.y);
+    p.setVisible(true);
+    p.setAlpha(1);
+    this.tweens.add({
+      targets: p,
+      alpha: 0,
+      scale: 0.15,
+      duration: 550,
+      onComplete: () => {
+        p.setVisible(false);
+        p.setScale(1);
+        p.setAlpha(1);
+      },
+    });
+
+    // 延迟切换到结算场景（等消散动画播完）
     this.time.delayedCall(1500, () => {
       this.scene.stop('UIScene');
       this.scene.start('GameOverScene');
@@ -522,27 +545,8 @@ export class GameScene extends Phaser.Scene {
       return true;
     });
 
-    // 爆炸视觉效果：外圈 + 内圈
-    const outer = this.add.circle(x, y, radius, 0xff6600, 0.4).setDepth(50);
-    const inner = this.add.circle(x, y, radius * 0.5, 0xffff00, 0.6).setDepth(51);
-
-    this.tweens.add({
-      targets: outer,
-      scale: { from: 0.3, to: 1.2 },
-      alpha: { from: 0.6, to: 0 },
-      duration: 300,
-      onComplete: () => outer.destroy(),
-    });
-    this.tweens.add({
-      targets: inner,
-      scale: { from: 0.5, to: 1 },
-      alpha: { from: 0.8, to: 0 },
-      duration: 200,
-      onComplete: () => inner.destroy(),
-    });
-
-    // 屏幕震动
-    this.cameras.main.shake(100, 0.005);
+    // 爆炸视觉：双环冲击波 + 橙色粒子 + 轻震屏（统一走 FXManager）
+    this.fxManager.explosion(x, y, radius);
   }
 
   // ========== 公共接口（供其他系统调用） ==========
@@ -646,6 +650,11 @@ export class GameScene extends Phaser.Scene {
   /** 地形管理器（供小地图渲染障碍物轮廓） */
   getTerrainManager(): TerrainManager {
     return this.terrainManager;
+  }
+
+  /** 视觉特效管理器（供碰撞系统/实体调用命中/死亡/拾取等特效） */
+  getFXManager(): FXManager {
+    return this.fxManager;
   }
 
   // ========== AI 自动玩 ==========
