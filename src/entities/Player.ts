@@ -12,6 +12,20 @@ import type { PlayerStats, WeaponConfig, UpgradeOption } from '../types';
 import type { InputManager } from '../systems/InputManager';
 
 /**
+ * 可突破的 stat 属性（Boss 突破奖励候选）。
+ * 只保留"战斗输出向"属性——突破后能直接提升击杀效率的属性；
+ * 生存/便利类（护甲/磁力/疾风步/生命/幸运）满级即够，若放进同一候选池，
+ * 玩家会无脑选择输出属性而永远放弃它们（价值不等价，选择无意义）。
+ * 后续新增战斗向 stat 时把 id 加进此列表即可。
+ */
+export const BREAKTHROUGH_STATS: string[] = [
+  'attack_power', // 力量强化：攻击力 +20%/级
+  'attack_speed', // 急速：攻速 +15%/级
+  'crit_rate',    // 暴击精通：暴击率 +10%/级（突破可到100%+，溢出转爆伤）
+  'crit_damage',  // 致命一击：暴击伤害 +50%/级
+];
+
+/**
  * 玩家实体
  * 管理玩家移动、属性、升级、武器、受伤等核心逻辑
  */
@@ -812,7 +826,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.isStatMaxLevel(option.id, upgradeMax)) return false;
     const cur = this.breakthroughs.get(option.id)?.level ?? 0;
     if (cur >= upgradeMax) return false;
-    this.modifyStat(option.effect.stat, option.effect.value, option.effect.isPercent ?? false);
+    this.modifyStat(option.effect.stat, option.effect.value ?? 0, option.effect.isPercent ?? false);
     this.breakthroughs.set(option.id, { id: option.id, name: option.name, level: cur + 1, maxLevel: upgradeMax });
     return true;
   }
@@ -834,10 +848,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return Array.from(this.breakthroughs.values());
   }
 
-  /** 可突破的 stat 列表：已通过升级满级且未达突破上限（Boss 突破奖励的候选池） */
+  /** 可突破的 stat 列表：战斗输出向属性、已通过升级满级且未达突破上限（Boss 突破奖励的候选池） */
   getAvailableBreakthroughs(): UpgradeOption[] {
     return UPGRADE_OPTIONS.filter((o) => {
       if (o.type !== 'stat' || !o.maxLevel) return false;
+      // 仅战斗输出向属性可突破；生存/便利类（护甲/磁力/疾风步等）不参与，避免无意义选择
+      if (!BREAKTHROUGH_STATS.includes(o.id)) return false;
       if (!this.isStatMaxLevel(o.id, o.maxLevel)) return false;
       if (this.isBreakthroughMax(o.id, o.maxLevel)) return false;
       return true;

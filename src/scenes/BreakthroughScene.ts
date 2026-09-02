@@ -41,7 +41,7 @@ export class BreakthroughScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // 副标题
-    createUIText(this, width / 2, 105, '选择一项已满级的属性，突破其极限', {
+    createUIText(this, width / 2, 105, '选择一项战斗属性，突破其极限', {
       fontSize: '15px',
       color: '#cccccc',
     }).setOrigin(0.5);
