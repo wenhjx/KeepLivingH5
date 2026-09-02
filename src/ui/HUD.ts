@@ -48,6 +48,8 @@ export class HUD {
   // buff 点击提示（tooltip）
   private tooltipContainer!: Phaser.GameObjects.Container;
   private activeTooltipId: string | null = null;
+  // 松开后延迟消失的定时器（移动端留时间移开手指读完内容）
+  private tooltipHideTimer: number | null = null;
   // buff 图标命中区（uiRoot 局部坐标 = canvas 像素坐标；手动判定，避免 Phaser 嵌套
   // Container setInteractive 在 scale 环境下 hitArea 偏移导致"点击左/右半命中不同 buff"）
   private buffHitRects: Array<{ b: any; x: number; y: number }> = [];
@@ -242,13 +244,15 @@ export class HUD {
     this.initTooltip();
   }
 
-  /** 初始化 buff 点击提示（按下增益图标显示详情，松开自动消失，无需再点一次关闭） */
+  /** 初始化 buff 点击提示（按下增益图标显示详情，松开延迟消失，无需再点一次关闭） */
   private initTooltip(): void {
     this.tooltipContainer = this.scene.add.container(0, 0).setDepth(210).setVisible(false);
 
     // 采用手动坐标判定（uiRoot 局部坐标 = pointer.x/y），彻底规避 Phaser Container
     // 嵌套 + 父级 scale 时 setInteractive hitArea 命中偏移的问题。
-    // 交互：pointerdown 命中 buff 图标 → 显示详情并跟随点击位置；pointerup（松开）→ 自动关闭。
+    // 交互：pointerdown 命中 buff 图标 → 显示详情（tooltip 悬浮于图标上方，避开手指遮挡）；
+    //      pointerup（松开）→ 延迟 1.5s 消失，移动端移开手指后仍有时间读完；
+    //      点击空白处 → 立即关闭。
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       // 命中检测：图标 32x32，±4px 宽容便于点中
       for (const r of this.buffHitRects) {
@@ -258,18 +262,33 @@ export class HUD {
           pointer.y >= r.y - 4 &&
           pointer.y <= r.y + this.buffSize + 4
         ) {
-          this.showBuffTooltip(r.b, pointer);
+          this.showBuffTooltip(r.b, r);
           return;
         }
       }
+      // 点击空白：立即关闭并取消延迟消失
+      this.hideTooltip();
     });
 
-    // 松开鼠标/手指 → 提示自动消失，避免"再点一次用来关闭"的多余操作
+    // 松开鼠标/手指 → 延迟消失：给移动端玩家移开手指阅读的时间，
+    // 不再"移开即消失"（手指遮挡 ↔ 移开消失的死锁）
     this.scene.input.on('pointerup', () => {
       if (this.tooltipContainer.visible) {
-        this.hideTooltip();
+        this.scheduleHideTooltip(1500);
       }
     });
+  }
+
+  /** 延迟关闭 tooltip（再次按下会重置该计时器） */
+  private scheduleHideTooltip(delay: number): void {
+    if (this.tooltipHideTimer !== null) {
+      clearTimeout(this.tooltipHideTimer);
+      this.tooltipHideTimer = null;
+    }
+    this.tooltipHideTimer = window.setTimeout(() => {
+      this.tooltipHideTimer = null;
+      if (this.tooltipContainer.visible) this.hideTooltip();
+    }, delay);
   }
 
   /** 每帧更新 HUD */
@@ -426,10 +445,10 @@ export class HUD {
     });
   }
 
-  /** 显示 buff 详情提示（图标+名称+等级+描述，跟随点击位置并钳制屏幕边界） */
+  /** 显示 buff 详情提示（悬浮于 buff 图标正上方，避开手指/鼠标遮挡；越界翻转到图标下方） */
   private showBuffTooltip(
     b: { id: string; name?: string; level: number; icon: string; color: number; desc?: string; maxLevel?: number; bt?: number },
-    pointer?: Phaser.Input.Pointer
+    rect: { b: any; x: number; y: number }
   ): void {
     // 已在显示同一 buff 的提示 → 关闭
     if (this.tooltipContainer.visible && this.activeTooltipId === b.id) {
@@ -452,28 +471,28 @@ export class HUD {
     const title = b.name || b.id;
     const lvText = b.bt && b.bt > 0 ? `Lv.${b.level}+${b.bt}` : `Lv.${b.level}`;
 
-    // 默认跟随点击位置，显示在点击点右下；越界则翻转
-    const px = pointer ? pointer.x : 100;
-    const py = pointer ? pointer.y : 220;
-    let boxX = px + 10;
-    if (boxX + boxW / 2 > viewW) boxX = px - 10 - boxW / 2;
-    if (boxX - boxW / 2 < 0) boxX = boxW / 2 + 4;
-    let boxY = py + 12;
-    if (boxY + boxH / 2 > viewH) boxY = py - 12 - boxH / 2;
-    if (boxY - boxH / 2 < 20) boxY = boxH / 2 + 24;
+    // 锚定到 buff 图标中心（而非手指位置）：手指按在图标上时，tooltip 悬浮于图标上方，
+    // 不在手指覆盖区内 → 移动端不再遮挡内容。水平居中于图标，垂直位于图标上方 10px。
+    const iconCx = rect.x + this.buffSize / 2;
+    const iconCy = rect.y + this.buffSize / 2;
     // 描述换行高度自适应：描述超过一行时按行数抬高 tooltip
     const descLines = Math.ceil((b.desc || '').length / 16);
+    const boxHTotal = boxH + Math.max(0, descLines - 1) * 16;
+    const boxX = Phaser.Math.Clamp(iconCx, boxW / 2 + 4, viewW - boxW / 2 - 4);
+    let boxY = iconCy - boxHTotal / 2 - 10;
+    // 顶部越界 → 翻转到图标下方
+    if (boxY - boxHTotal / 2 < 20) boxY = iconCy + boxHTotal / 2 + 12;
 
     // 背景
     const bg = this.scene.add.graphics();
     bg.fillStyle(0x0e0e18, 0.96);
-    bg.fillRoundedRect(boxX - boxW / 2, boxY - boxH / 2, boxW, boxH + Math.max(0, descLines - 1) * 16, 10);
+    bg.fillRoundedRect(boxX - boxW / 2, boxY - boxHTotal / 2, boxW, boxHTotal, 10);
     bg.lineStyle(2, b.color, 1);
-    bg.strokeRoundedRect(boxX - boxW / 2, boxY - boxH / 2, boxW, boxH + Math.max(0, descLines - 1) * 16, 10);
+    bg.strokeRoundedRect(boxX - boxW / 2, boxY - boxHTotal / 2, boxW, boxHTotal, 10);
     this.tooltipContainer.add(bg);
 
     // 标题行：图标 + 名称 + 等级
-    const titleText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxH / 2 + 8, `${b.icon}  ${title}`, {
+    const titleText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxHTotal / 2 + 8, `${b.icon}  ${title}`, {
         fontSize: '16px',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -481,7 +500,7 @@ export class HUD {
       .setOrigin(0, 0);
     this.tooltipContainer.add(titleText);
 
-    const lvTextObj = createUIText(this.scene, boxX + boxW / 2 - 12, boxY - boxH / 2 + 8, lvText, {
+    const lvTextObj = createUIText(this.scene, boxX + boxW / 2 - 12, boxY - boxHTotal / 2 + 8, lvText, {
         fontSize: '13px',
         color: '#ffd54f',
         fontStyle: 'bold',
@@ -490,7 +509,7 @@ export class HUD {
     this.tooltipContainer.add(lvTextObj);
 
     // 描述
-    const descText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxH / 2 + 34, b.desc || '', {
+    const descText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxHTotal / 2 + 34, b.desc || '', {
         fontSize: '13px',
         color: '#bbbbbb',
         wordWrap: { width: boxW - 24 },
@@ -504,6 +523,11 @@ export class HUD {
 
   /** 关闭 buff 详情提示 */
   private hideTooltip(): void {
+    // 取消未触发的延迟消失定时器，避免残留
+    if (this.tooltipHideTimer !== null) {
+      clearTimeout(this.tooltipHideTimer);
+      this.tooltipHideTimer = null;
+    }
     this.tooltipContainer.setVisible(false);
     this.activeTooltipId = null;
     // 移除 tooltip 内容（点击关闭逻辑已由 initTooltip 的全局 pointerdown 统一处理）
