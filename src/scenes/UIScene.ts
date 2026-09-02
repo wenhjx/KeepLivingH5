@@ -1,4 +1,5 @@
 import { createUIText } from '../utils/UIText';
+import { UILayout } from '../utils/UILayout';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -140,7 +141,7 @@ export class UIScene extends Phaser.Scene {
 
     // 玩家属性按钮（暂停时也可查看角色详情，方便移动端无键盘用户）
     // 与"返回主菜单"同级风格保持一致：纯文字、无 emoji、同字号同色
-    // 间距按按钮实际高度（20px字+padding）预留 20px 留白，避免文字重叠
+    // 间距由 UILayout 统一管理（60px 中心距，按钮间 20px 留白），新增按钮自动拓展
     const infoBtn = createUIText(this, width / 2, height / 2 + 60, '玩家属性', {
         fontSize: '20px',
         color: '#aaaaaa',
@@ -175,6 +176,13 @@ export class UIScene extends Phaser.Scene {
       this.scene.start('MainMenuScene');
     });
     this.pauseOverlay.add(menuBtn);
+
+    // 用 UILayout 统一重排三按钮：center 起点 = 屏幕中心，垂直列、60px 中心距
+    // 按钮顺序从"继续游戏"开始，逐一自动向下排布（自增长友好）
+    const menuLayout = new UILayout({ x: width / 2, y: height / 2, direction: 'column', spacing: 60 });
+    menuLayout.placeCentered(resumeBtn);
+    menuLayout.placeCentered(infoBtn);
+    menuLayout.placeCentered(menuBtn);
   }
 
   private setupEventListeners(): void {

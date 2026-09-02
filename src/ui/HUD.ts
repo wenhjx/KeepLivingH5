@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { UILayout } from '../utils/UILayout';
 
 /**
  * HUD 抬头显示
@@ -372,13 +373,23 @@ export class HUD {
     const totalW = buffs.length * (this.buffSize + this.buffSpacing) - this.buffSpacing;
     const startX = Math.max(this.padding, (this.scene.scale.width - totalW) / 2);
 
-    buffs.forEach((b, index: number) => {
-      const x = startX + index * (this.buffSize + this.buffSpacing);
+    // 用 UILayout 水平排布：固定步长 = buffSize，间距 = buffSpacing，
+    // 每个图标自动接在上一个右侧（自增长友好，新增 buff 无需重算坐标）
+    const buffRow = new UILayout({
+      x: startX,
+      y: buffTop,
+      direction: 'row',
+      itemSize: this.buffSize,
+      spacing: this.buffSpacing,
+    });
 
+    buffs.forEach((b) => {
       // 记录命中区（uiRoot 局部坐标：buffContainer 位于 (0,0)，图标在 (x,buffTop)）
-      this.buffHitRects.push({ b, x, y: buffTop });
+      this.buffHitRects.push({ b, x: buffRow.x, y: buffTop });
 
-      const container = this.scene.add.container(x, buffTop).setDepth(51);
+      const container = this.scene.add.container(buffRow.x, buffTop).setDepth(51);
+      buffRow.place(container, this.buffContainer);
+      // 注：container 保持默认 origin(0,0)，左上角贴齐游标，hitRect 左上角语义不变
 
       // 背景
       const bg = this.scene.add.graphics();
@@ -409,8 +420,8 @@ export class HUD {
       // 注意：此处不再对图标 Container setInteractive——Phaser 嵌套 Container（uiRoot scale=1/z
       // → buffContainer → 图标）的 hitArea 在 scale 环境下命中偏移（点击左/右半命中不同 buff），
       // 点击判定统一由 initTooltip 的全局 pointerdown 手动坐标检测处理（见 buffHitRects）。
+      // （container 已由 buffRow.place(container, this.buffContainer) 加入 buffContainer）
 
-      this.buffContainer.add(container);
       this.buffIcons.set(b.id, container);
     });
   }
