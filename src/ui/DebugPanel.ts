@@ -35,6 +35,7 @@ export class DebugPanel {
   private autoPlayBg: Phaser.GameObjects.Graphics | null = null;
   private themeText: Phaser.GameObjects.Text | null = null;
   private themeBg: Phaser.GameObjects.Graphics | null = null;
+  private enemyBoostText: Phaser.GameObjects.Text | null = null;
 
   private readonly panelWidth = 340;
   private readonly btnWidth = 152;
@@ -158,6 +159,23 @@ export class DebugPanel {
     // 商店道具（即时生效，方便测试；不叠加属性，不影响玩家状态）
     this.addSectionTitle(col, '🛒 商店道具（即时生效）');
     this.addOptionsRows(col, FALLBACK_UPGRADES);
+    col.step(this.sectionSpacing);
+
+    // 怪物增强（调试测试阈值用；只作用于新生成的敌人，不影响场上现有敌人）
+    this.addSectionTitle(col, '👹 怪物增强（新生成生效）');
+    const gs = this.getGameScene();
+    const curHp = gs?.enemyHpBoost ?? 1;
+    const curAtk = gs?.enemyAtkBoost ?? 1;
+    this.enemyBoostText = createUIText(this.scene, 0, col.y, `当前：血量×${curHp} · 攻击×${curAtk}`, {
+        fontSize: '11px',
+        color: '#88ff88',
+      })
+      .setOrigin(0, 0);
+    this.content.add(this.enemyBoostText);
+    col.step(this.btnHeight + this.btnSpacing);
+    this.addRow(col, { text: '🩸 血量×2', fn: () => this.setEnemyBoost(2, -1) }, { text: '⚔️ 攻击×2', fn: () => this.setEnemyBoost(-1, 2) });
+    this.addRow(col, { text: '🩸 血量×4', fn: () => this.setEnemyBoost(4, -1) }, { text: '⚔️ 攻击×4', fn: () => this.setEnemyBoost(-1, 4) });
+    this.addRow(col, { text: '🩸 血量×1', fn: () => this.setEnemyBoost(1, -1) }, { text: '⚔️ 攻击×1', fn: () => this.setEnemyBoost(-1, 1) });
 
     // 计算可滚动上限（内容总高 - 可视区高）
     this.maxScroll = Math.max(0, col.y + this.padding - this.viewportH);
@@ -189,7 +207,7 @@ export class DebugPanel {
     const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
     // 商店道具（FALLBACK_UPGRADES）2 行
     const shopRows = Math.ceil(FALLBACK_UPGRADES.length / 2);
-    return 28 + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + this.padding;
+    return 28 + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
   }
 
   /** 分区标题（content 内） */
@@ -467,6 +485,16 @@ export class DebugPanel {
   }
 
   // ===== 对外/内部方法（保持原语义） =====
+
+  /** 设置怪物增强倍率（-1 表示保持当前值），并刷新状态文字 */
+  private setEnemyBoost(hp: number, atk: number): void {
+    const gs = this.getGameScene();
+    if (!gs) return;
+    const curHp = gs.enemyHpBoost ?? 1;
+    const curAtk = gs.enemyAtkBoost ?? 1;
+    gs.setEnemyBoost(hp === -1 ? curHp : hp, atk === -1 ? curAtk : atk);
+    this.enemyBoostText?.setText(`当前：血量×${gs.enemyHpBoost} · 攻击×${gs.enemyAtkBoost}`);
+  }
 
   private getGameScene(): any {
     return this.scene.scene.get('GameScene');

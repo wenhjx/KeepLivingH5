@@ -20,6 +20,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private isDead: boolean = false;
   private hitFlashTimer: number = 0;
   private difficultyMultiplier: number = 1;
+  private atkBoost: number = 1;
   private avoidSide: number = 1; // 障碍物避让方向：+1 右，-1 左（每个敌人固定，避免扎堆）
 
   constructor(scene: Phaser.Scene) {
@@ -31,14 +32,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** 从对象池取出时初始化 */
-  spawn(config: EnemyConfig, x: number, y: number, difficultyMultiplier: number = 1): void {
+  spawn(config: EnemyConfig, x: number, y: number, difficultyMultiplier: number = 1, hpBoost: number = 1, atkBoost: number = 1): void {
     this.config = config;
     this.difficultyMultiplier = difficultyMultiplier;
+    this.atkBoost = isFinite(atkBoost) && atkBoost > 0 ? atkBoost : 1;
     // 防御：难度系数非法（NaN/Infinity）时回退为 1，血量永远用有效正数，
     // 避免 maxHealth/health 变成 NaN 导致怪物永久无敌（health -= NaN 永远不死）
     const safeMult = isFinite(difficultyMultiplier) && difficultyMultiplier > 0 ? difficultyMultiplier : 1;
+    const safeHpBoost = isFinite(hpBoost) && hpBoost > 0 ? hpBoost : 1;
     const baseHp = Number(config.maxHealth);
-    this.maxHealth = Math.max(1, Math.floor(isFinite(baseHp) && baseHp > 0 ? baseHp * safeMult : 1));
+    this.maxHealth = Math.max(1, Math.floor(isFinite(baseHp) && baseHp > 0 ? baseHp * safeMult * safeHpBoost : 1));
     this.health = this.maxHealth;
     this.attackCooldown = 0;
     this.isDead = false;
@@ -146,7 +149,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private explode(player: Player): void {
     if (this.isDead) return;
     const radius = this.config.explodeRadius ?? 60;
-    const damage = (this.config.explodeDamage ?? 30) * this.difficultyMultiplier;
+    const damage = (this.config.explodeDamage ?? 30) * this.difficultyMultiplier * this.atkBoost;
 
     // 对范围内的敌人也造成伤害（连锁爆炸的爽感）
     const scene = this.scene as any;
@@ -311,12 +314,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 8方向弹幕
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2;
-      pool.spawnEnemyBullet(this.x, this.y, angle, 200, this.config.attackPower * 0.5 * this.difficultyMultiplier);
+      pool.spawnEnemyBullet(this.x, this.y, angle, 200, this.config.attackPower * 0.5 * this.difficultyMultiplier * this.atkBoost);
     }
   }
 
   private attackPlayer(player: Player): void {
-    player.takeDamage(this.config.attackPower * this.difficultyMultiplier);
+    player.takeDamage(this.config.attackPower * this.difficultyMultiplier * this.atkBoost);
     this.attackCooldown = this.config.attackCooldown;
   }
 
@@ -325,7 +328,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (!scene || !scene.getObjectPool) return;
     const pool = scene.getObjectPool();
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    pool.spawnEnemyBullet(this.x, this.y, angle, 300, this.config.attackPower * this.difficultyMultiplier);
+    pool.spawnEnemyBullet(this.x, this.y, angle, 300, this.config.attackPower * this.difficultyMultiplier * this.atkBoost);
     this.attackCooldown = this.config.attackCooldown;
   }
 

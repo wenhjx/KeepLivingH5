@@ -35,6 +35,9 @@ export class GameScene extends Phaser.Scene {
   private activeBoss: Enemy | null = null;
   private pendingLevelUps = 0;
   private upgradeQueued = false;
+  // 调试：怪物增强倍率（血量/攻击），作用于新生成敌人，方便测试阈值
+  enemyHpBoost = 1;
+  enemyAtkBoost = 1;
   // Boss 战前待弹出的商店（与升级选择排队，避免同时弹出冲突）
   private pendingShop = false;
   // 商店关闭后要开始的 Boss 波（0 = 无待开始）
@@ -617,6 +620,12 @@ export class GameScene extends Phaser.Scene {
   /** 当前唯一的 Boss（无则 null，供 HUD 顶部血条使用） */
   getActiveBoss(): Enemy | null {
     return this.activeBoss;
+  }
+
+  /** 调试：设置怪物增强倍率（血量/攻击 ≥1），作用于后续新生成的敌人 */
+  setEnemyBoost(hp: number, atk: number): void {
+    this.enemyHpBoost = Math.max(1, hp);
+    this.enemyAtkBoost = Math.max(1, atk);
   }
 
   getPlayer(): Player {

@@ -96,7 +96,11 @@ export class ObjectPool {
       }
     }
 
-    enemy.spawn(config, x, y, difficultyMultiplier);
+    // 读取 GameScene 的调试增强倍率（血量/攻击），作用于新生成敌人，方便测试阈值
+    const gs = this.scene as any;
+    const hpBoost = gs?.enemyHpBoost ?? 1;
+    const atkBoost = gs?.enemyAtkBoost ?? 1;
+    enemy.spawn(config, x, y, difficultyMultiplier, hpBoost, atkBoost);
     this.enemyGroup?.add(enemy);
     this.stats.enemiesSpawned++;
 
