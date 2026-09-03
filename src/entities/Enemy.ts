@@ -21,6 +21,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private hitFlashTimer: number = 0;
   private difficultyMultiplier: number = 1;
   private atkBoost: number = 1;
+  /** 击退（环形冲击波等推离效果）：速度分量 + 剩余时长（ms） */
+  private knockbackVx = 0;
+  private knockbackVy = 0;
+  private knockbackTimer = 0;
   private avoidSide: number = 1; // 障碍物避让方向：+1 右，-1 左（每个敌人固定，避免扎堆）
 
   constructor(scene: Phaser.Scene) {
@@ -73,6 +77,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   /** 回收对象池 */
   despawn(): void {
+    this.knockbackTimer = 0;
     this.setActive(false);
     this.setVisible(false);
     if (this.body) {
@@ -80,6 +85,15 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.body.enable = false;
       this.body.reset(0, 0);
     }
+  }
+
+  /** 击退：从 fromX/fromY 方向将敌人推离（环形冲击波等），短暂覆盖 AI 移动 */
+  applyKnockback(fromX: number, fromY: number, force: number): void {
+    if (this.isDead || !this.body) return;
+    const angle = MathUtils.angle(fromX, fromY, this.x, this.y);
+    this.knockbackVx = Math.cos(angle) * force;
+    this.knockbackVy = Math.sin(angle) * force;
+    this.knockbackTimer = 200; // 200ms 击退（足够把围堵的敌人推出一段安全距离）
   }
 
   update(time: number, delta: number, player: Player): void {
@@ -96,6 +110,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     // AI 行为
     this.updateAI(time, delta, player);
+
+    // 击退覆盖（环形冲击波等推离效果，短暂覆盖 AI 移动后恢复）
+    if (this.knockbackTimer > 0) {
+      this.knockbackTimer -= delta;
+      this.setVelocity(this.knockbackVx, this.knockbackVy);
+    }
 
     // 攻击冷却
     if (this.attackCooldown > 0) {

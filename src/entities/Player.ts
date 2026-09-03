@@ -207,7 +207,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.fireMelee(config, level);
         break;
       case 'aoe':
-        if (config.boomerang) {
+        if (config.nova) {
+          this.fireNova(config, level);
+        } else if (config.boomerang) {
           this.fireBoomerang(config, level);
         } else {
           this.fireProjectile(config, level); // 火箭筒走弹道，命中后爆炸
@@ -303,6 +305,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       case 'rocket': audio.playSfx(SOUND_KEYS.SFX_SHOOT_ROCKET, 1); break;
       case 'boomerang': audio.playSfx(SOUND_KEYS.SFX_BOOMERANG, 0.8); break;
       case 'lightsaber': audio.playSfx(SOUND_KEYS.SFX_MELEE_SWING, 0.7); break;
+      case 'nova': audio.playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.85); break;
       default: audio.playSfx(SOUND_KEYS.SFX_SHOOT_DEFAULT, 0.5); break;
     }
   }
@@ -335,6 +338,31 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         aoeRadius: config.aoeRadius,
       }
     );
+  }
+
+  /** 环形冲击波：360° 全向范围伤害 + 击退（被围堵时的救急/脱困武器） */
+  private fireNova(config: WeaponConfig, level: number): void {
+    const scene = this.scene as any;
+    if (!scene || !scene.getEnemies || !scene.getFXManager) return;
+
+    const damage = this.calcWeaponDamage(config, level);
+    const range = config.range || 160;
+    const enemies = scene.getEnemies();
+
+    // 360° 全向：范围内所有敌人受伤 + 由内向外递减的击退（贴身敌人被推得最远）
+    enemies.children.each((enemy: any) => {
+      if (!enemy.active) return true;
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, enemy.x, enemy.y);
+      if (dist > range) return true;
+      enemy.takeDamage(damage, false);
+      const falloff = 1 - (dist / range) * 0.6;
+      enemy.applyKnockback?.(this.x, this.y, 340 * falloff);
+      return true;
+    });
+
+    // 环形扩散冲击波视觉 + 音效
+    scene.getFXManager()?.shockwave(this.x, this.y, range, 0x00ffff);
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.85);
   }
 
   /** 近战武器：光剑扇形范围攻击 */

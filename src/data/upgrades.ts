@@ -173,6 +173,15 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     rarity: 'epic',
     effect: { weaponId: 'lightsaber', weaponLevel: 1 },
   },
+  {
+    id: 'weapon_nova',
+    name: '环形冲击波',
+    type: 'weapon',
+    description: '获得环形冲击波，周期性释放全向冲击击退周围敌人',
+    icon: '💥',
+    rarity: 'epic',
+    effect: { weaponId: 'nova', weaponLevel: 1 },
+  },
 
   // ========== 被动技能 ==========
   {

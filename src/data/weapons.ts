@@ -117,6 +117,19 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     description: '超高速激光，穿透敌人',
     maxLevel: 6,
   },
+  nova: {
+    id: 'nova',
+    name: '环形冲击波',
+    type: 'aoe',
+    texture: 'bullet',
+    damage: 18,
+    attackSpeed: 0.55,
+    range: 180,
+    aoeRadius: 180,
+    nova: true,
+    description: '周期性释放环形冲击波，击退周围所有敌人，被围堵时的救急武器',
+    maxLevel: 6,
+  },
 };
 
 /** 获取所有武器列表 */

@@ -64,6 +64,7 @@ const WEAPON_ITEMS: ShopItem[] = [
   fromUpgrade('weapon_lightsaber', 'weapon', 55),
   fromUpgrade('weapon_rocket', 'weapon', 80),
   fromUpgrade('weapon_laser', 'weapon', 80),
+  fromUpgrade('weapon_nova', 'weapon', 55),
 ];
 
 /** 被动类商品 */
@@ -158,6 +159,7 @@ const HIGH_VALUE_ITEMS: ShopItem[] = [
   fromUpgrade('weapon_boomerang', 'weapon', 55),
   fromUpgrade('weapon_drone', 'weapon', 55),
   fromUpgrade('weapon_lightsaber', 'weapon', 55),
+  fromUpgrade('weapon_nova', 'weapon', 55),
   CONSUMABLE_ITEMS.find((c) => c.id === 'consumable_revive')!,
 ];
 

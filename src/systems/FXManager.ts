@@ -72,6 +72,18 @@ export class FXManager {
     });
   }
 
+  /** 环形冲击波：双环扩散 + 粒子迸发（环形冲击波武器等全向范围攻击） */
+  shockwave(x: number, y: number, radius: number, color: number = 0x00ffff): void {
+    this.ring(x, y, radius, color, 380, 0.2, 1.6);
+    this.ring(x, y, radius * 0.65, color, 300, 0.3, 1.3);
+    this.emit(x, y, 'particle_death', color, 16, {
+      lifespan: 350,
+      speedMin: 120,
+      speedMax: 300,
+      scaleStart: 0.8,
+    });
+  }
+
   // ========== 特效方法 ==========
 
   /** 子弹命中：普通黄点小爆，暴击金色更多更大（配合暴击数字） */
