@@ -90,6 +90,8 @@ export const SOUND_KEYS = {
   SFX_UI_PAUSE: 'sfx_ui_pause',
   /** 游戏结束 */
   SFX_GAME_OVER: 'sfx_game_over',
+  /** 通关胜利 */
+  SFX_VICTORY: 'sfx_victory',
 } as const;
 
 export type SoundKey = (typeof SOUND_KEYS)[keyof typeof SOUND_KEYS];

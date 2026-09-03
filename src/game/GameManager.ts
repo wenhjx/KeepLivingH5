@@ -27,6 +27,7 @@ export class GameManager {
     survivalTime: 0,
     isPaused: false,
     isGameOver: false,
+    isVictory: false,
   };
   private _saveSystem: SaveSystem | null = null;
   private _pendingRun: SavedRun | null = null;
@@ -101,6 +102,7 @@ export class GameManager {
       survivalTime: 0,
       isPaused: false,
       isGameOver: false,
+      isVictory: false,
     };
     this._pendingRun = null;
     this.clearSavedRun();
@@ -119,6 +121,15 @@ export class GameManager {
     this.clearSavedRun();
     this.saveProgress();
     EventBus.emit('run:end', { ...this._runData, highScore: this._stats.highScore });
+  }
+
+  /**
+   * 通关胜利：标记本局为胜利后走 endRun 统计（结算/清存档/保存）。
+   * 与 endRun() 的唯一区别是 isVictory 置 true，供结算场景区分胜利/失败。
+   */
+  completeRun(): void {
+    this._runData.isVictory = true;
+    this.endRun();
   }
 
   /**
@@ -188,6 +199,7 @@ export class GameManager {
       survivalTime: run.survivalTime,
       isPaused: false,
       isGameOver: false,
+      isVictory: false,
     };
     EventBus.emit('run:start', this._runData);
   }

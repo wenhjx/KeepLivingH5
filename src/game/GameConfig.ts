@@ -58,6 +58,9 @@ export class GameConfig {
     spawnIntervalMin: 200,
     maxEnemiesOnScreen: 200,
     bossWaveInterval: 5,
+    // 通关波次：打完第 victoryWave 波 = 单关通关 → 胜利结算
+    // 15 恰好是 Boss 波（15 = 3×5），打完关底 Boss 即胜利，节奏完整
+    victoryWave: 15,
   };
 
   // ========== 对象池配置 ==========

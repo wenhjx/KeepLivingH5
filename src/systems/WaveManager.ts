@@ -191,6 +191,14 @@ export class WaveManager {
   private nextWave(): void {
     this.waveActive = false;
 
+    // 通关判定：打完第 victoryWave 波 → 触发胜利结算，不再开下一波/战前商店/武器强化
+    if (this.currentWave >= GameConfig.WAVE.victoryWave) {
+      this.scene.time.delayedCall(2000, () => {
+        (this.scene as any).triggerVictory?.();
+      });
+      return;
+    }
+
     const next = this.currentWave + 1;
     const isBossWave = next % GameConfig.WAVE.bossWaveInterval === 0;
     // 刚打完 Boss 波（当前波是 Boss 波）→ 弹武器强化三选一作为战力成长奖励

@@ -219,6 +219,21 @@ export class FXManager {
     this.ring(x, y, 40, 0xffd700, 300, 0.4, 2);
   }
 
+  /** 通关胜利：金色粒子向上升腾 + 双环扩散庆祝（克制不夸张） */
+  victory(x: number, y: number): void {
+    this.emit(x, y, 'particle_hit', 0xffd700, 24, {
+      lifespan: 700,
+      speedMin: 80,
+      speedMax: 260,
+      angleMin: 200,
+      angleMax: 340,
+      gravityY: -90,
+      scaleStart: 0.8,
+    });
+    this.ringStroke(x, y, 60, 0xffd700, 500, 0.2, 3);
+    this.ringStroke(x, y, 40, 0xffeaa0, 400, 0.3, 2.2);
+  }
+
   /** 枪口闪光：极短小圆闪光（颜色随武器） */
   muzzleFlash(x: number, y: number, angle: number, color: number = 0xffffff): void {
     const flash = this.scene.add.circle(x, y, 8, color, 0.8).setDepth(50);

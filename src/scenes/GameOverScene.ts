@@ -15,6 +15,13 @@ export class GameOverScene extends Phaser.Scene {
     super('GameOverScene');
   }
 
+  // 结算模式：'victory' 通关成功 / 'defeat' 游戏结束（默认）
+  private mode: 'victory' | 'defeat' = 'defeat';
+
+  init(data: { mode?: 'victory' | 'defeat' }): void {
+    this.mode = data?.mode ?? 'defeat';
+  }
+
   create(): void {
     // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
     const { width, height } = setupUICamera(this);
@@ -22,28 +29,41 @@ export class GameOverScene extends Phaser.Scene {
     const runData = gm.runData;
     const stats = gm.stats;
     const centerX = width / 2;
+    const isVictory = this.mode === 'victory';
 
-    // 游戏结束音效
-    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_GAME_OVER, 1);
+    // 音效：胜利/失败分开（胜利音效资源缺失时 playSfx 静默失败，不阻塞流程）
+    AudioManager.getInstance().playSfx(
+      isVictory ? SOUND_KEYS.SFX_VICTORY : SOUND_KEYS.SFX_GAME_OVER,
+      1
+    );
 
-    // 背景
-    this.add.rectangle(0, 0, width, height, 0x0a0a0f).setOrigin(0);
+    // 背景：胜利用金色暗调，失败用冷黑
+    this.add.rectangle(0, 0, width, height, isVictory ? 0x120d04 : 0x0a0a0f).setOrigin(0);
 
     // 标题
-    createUIText(this, centerX, height * 0.2, '游戏结束', {
+    createUIText(this, centerX, height * 0.18, isVictory ? '通关成功！' : '游戏结束', {
         fontSize: '52px',
-        color: '#ff4444',
+        color: isVictory ? '#ffd700' : '#ff4444',
         fontStyle: 'bold',
       })
       .setOrigin(0.5);
 
+    // 胜利副标题（失败不显示）
+    if (isVictory) {
+      createUIText(this, centerX, height * 0.18 + 48, '完成第 ' + runData.wave + ' 波，成功存活！', {
+          fontSize: '20px',
+          color: '#ffb347',
+        })
+        .setOrigin(0.5);
+    }
+
     // 本局数据
-    const dataY = height * 0.35;
+    const dataY = height * 0.4;
     const lineHeight = 40;
 
     const statsData = [
       { label: '存活时间', value: this.formatTime(runData.survivalTime) },
-      { label: '到达波次', value: `${runData.wave}` },
+      { label: isVictory ? '通关波次' : '到达波次', value: `${runData.wave}` },
       { label: '击杀数', value: `${runData.kills}` },
       { label: '本局得分', value: `${runData.score}` },
       { label: '历史最高分', value: `${stats.highScore}` },

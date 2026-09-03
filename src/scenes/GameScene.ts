@@ -47,6 +47,8 @@ export class GameScene extends Phaser.Scene {
   private pendingWeaponSelect = false;
   // 武器强化选择完成后要开始的波（0 = 无待开始）
   private pendingWeaponWave = 0;
+  // 通关胜利已触发（防止与死亡路径重复进入结算）
+  private victoryTriggered = false;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -518,6 +520,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onPlayerDeath(): void {
+    if (this.victoryTriggered) return;
+    this.victoryTriggered = true;
     const gm = GameManager.getInstance();
     gm.endRun();
     this.pendingShop = false;
@@ -546,6 +550,29 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1500, () => {
       this.scene.stop('UIScene');
       this.scene.start('GameOverScene');
+    });
+  }
+
+  /**
+   * 通关胜利：打完第 victoryWave 波后由 WaveManager.nextWave 触发
+   * 结算数据走 completeRun（标记 isVictory），延迟等庆祝特效播完再进胜利结算
+   */
+  triggerVictory(): void {
+    if (this.victoryTriggered) return;
+    this.victoryTriggered = true;
+    const gm = GameManager.getInstance();
+    gm.completeRun();
+    this.pendingShop = false;
+    this.pendingBossWave = 0;
+    this.pendingWeaponSelect = false;
+    this.pendingWeaponWave = 0;
+
+    // 胜利庆祝特效：金色粒子向上升腾 + 双环扩散
+    this.fxManager.victory(this.player.x, this.player.y);
+
+    this.time.delayedCall(1500, () => {
+      this.scene.stop('UIScene');
+      this.scene.start('GameOverScene', { mode: 'victory' });
     });
   }
 
