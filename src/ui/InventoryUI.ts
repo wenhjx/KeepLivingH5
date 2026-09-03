@@ -102,7 +102,13 @@ export class InventoryUI {
     const slotContainer = this.scene.add.container(x, y);
     slotContainer.add([bg, icon, count, key]);
     slotContainer.setSize(this.slotSize, this.slotSize);
-    slotContainer.setInteractive({ useHandCursor: true });
+    // 显式 hitArea：以容器原点（槽位中心）为基准的对称矩形，与视觉背景完全对齐。
+    // Container 默认 hitArea 为 Rectangle(0,0,w,h)，从原点向右下展开，会让命中区偏离视觉半格
+    slotContainer.setInteractive(
+      new Phaser.Geom.Rectangle(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize),
+      Phaser.Geom.Rectangle.Contains
+    );
+    if (slotContainer.input) slotContainer.input.cursor = 'pointer';
     slotContainer.on('pointerdown', () => this.useSlot(index));
 
     this.container.add(slotContainer);
