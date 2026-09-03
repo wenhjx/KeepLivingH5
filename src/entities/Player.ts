@@ -34,6 +34,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private stats: PlayerStats;
   // 武器列表
   private weapons: Map<string, { config: WeaponConfig; level: number; cooldown: number }> = new Map();
+  /** 环形冲击波爆发计数：每 5s 周期内快速 3 连发 */
+  private novaBurstCount = 0;
   // 被动技能列表
   private passives: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
   // stat 类升级次数（满级后不再出现在升级/商店候选池；用于防止无限叠加数值爆炸）
@@ -179,6 +181,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.weapons.forEach((weapon) => {
       // summon 类型（无人机）由独立实体管理，不走冷却射击
       if (weapon.config.type === 'summon') return;
+
+      // 环形冲击波：5s 爆发周期，周期内快速 3 连发（救急脱困武器，节奏感强）
+      if (weapon.config.nova) {
+        weapon.cooldown -= delta;
+        if (weapon.cooldown <= 0) {
+          this.fireNova(weapon.config, weapon.level);
+          this.novaBurstCount++;
+          if (this.novaBurstCount >= 3) {
+            weapon.cooldown = 5000; // 3 连发后进入 5s 冷却
+            this.novaBurstCount = 0;
+          } else {
+            weapon.cooldown = 250; // 连发间隔
+          }
+        }
+        return;
+      }
 
       weapon.cooldown -= delta;
       if (weapon.cooldown <= 0) {

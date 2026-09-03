@@ -72,10 +72,27 @@ export class FXManager {
     });
   }
 
-  /** 环形冲击波：双环扩散 + 粒子迸发（环形冲击波武器等全向范围攻击） */
+  /** 空心圆环（描边扩散 + 淡出），冲击波用，避免实心圆盘的厚重感 */
+  private ringStroke(x: number, y: number, radius: number, color: number, duration: number, scaleFrom: number, scaleTo: number): void {
+    const g = this.scene.add.graphics();
+    g.lineStyle(4, color, 1);
+    g.strokeCircleShape(new Phaser.Geom.Circle(0, 0, radius));
+    const c = this.scene.add.container(x, y);
+    c.add(g);
+    c.setDepth(50);
+    this.scene.tweens.add({
+      targets: c,
+      scale: { from: scaleFrom, to: scaleTo },
+      alpha: { from: 1, to: 0 },
+      duration,
+      onComplete: () => c.destroy(),
+    });
+  }
+
+  /** 环形冲击波：空心双环扩散 + 粒子迸发（环形冲击波武器等全向范围攻击） */
   shockwave(x: number, y: number, radius: number, color: number = 0x00ffff): void {
-    this.ring(x, y, radius, color, 380, 0.2, 1.6);
-    this.ring(x, y, radius * 0.65, color, 300, 0.3, 1.3);
+    this.ringStroke(x, y, radius, color, 380, 0.2, 1.6);
+    this.ringStroke(x, y, radius * 0.65, color, 300, 0.3, 1.3);
     this.emit(x, y, 'particle_death', color, 16, {
       lifespan: 350,
       speedMin: 120,

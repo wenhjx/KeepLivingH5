@@ -122,7 +122,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     name: '环形冲击波',
     type: 'aoe',
     texture: 'bullet',
-    damage: 18,
+    damage: 22,
     attackSpeed: 0.9,
     range: 180,
     aoeRadius: 180,
