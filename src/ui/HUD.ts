@@ -320,7 +320,8 @@ export class HUD {
 
   /** 更新增益列表（武器+被动+stat 属性） */
   private updateBuffs(player: any): void {
-    const weapons = player.getWeapons?.() || [];
+    // nova（环形冲击波）是自动救急武器：不占 buff 格子，玩家从冲击波特效感知其存在
+    const weapons = (player.getWeapons?.() || []).filter((w: any) => w.id !== 'nova');
     const passives = player.getPassives?.() || [];
     const statUpgrades = player.getStatUpgrades?.() || [];
 

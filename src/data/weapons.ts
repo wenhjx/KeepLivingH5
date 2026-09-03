@@ -123,7 +123,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     type: 'aoe',
     texture: 'bullet',
     damage: 18,
-    attackSpeed: 0.55,
+    attackSpeed: 0.9,
     range: 180,
     aoeRadius: 180,
     nova: true,
