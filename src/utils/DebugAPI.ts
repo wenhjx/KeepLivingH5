@@ -172,6 +172,7 @@ export function initDebugAPI(game: Phaser.Game): void {
         }
         player.invincible = true;
         player.invincibleTimer = 1e9; // 持续无敌（timer 单位 ms）
+        player.stableMode = true; // 稳定测试态：持续无敌不闪烁
       }
       const gs = getGameScene();
       if (gs) gs.pendingLevelUps = 0;

@@ -47,6 +47,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private breakthroughs: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
   // 无人机列表（summon 类型武器）
   private drones: Drone[] = [];
+  /** 稳定测试态标记（testStable）：持续无敌不闪烁，避免干扰观察 */
+  stableMode: boolean = false;
   // 生命恢复计时器
   private regenTimer: number = 0;
   // 无敌状态
@@ -119,8 +121,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.shieldRing?.destroy();
           this.shieldRing = null;
         }
-      } else if (!this.shieldActive) {
-        // 非护盾的受击无敌才闪烁
+      } else if (!this.shieldActive && !this.stableMode) {
+        // 非护盾的受击无敌才闪烁（稳定测试态持续无敌不闪，避免干扰观察）
         this.setAlpha(Math.sin(time / 50) > 0 ? 1 : 0.3);
       }
     } else {
