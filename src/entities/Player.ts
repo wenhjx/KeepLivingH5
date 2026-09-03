@@ -36,6 +36,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private weapons: Map<string, { config: WeaponConfig; level: number; cooldown: number }> = new Map();
   /** 环形冲击波爆发计数：每 5s 周期内快速 3 连发 */
   private novaBurstCount = 0;
+  /** 临时拾取半径（大磁铁效果），到期自动恢复 */
+  private tempPickupRadius = 0;
+  private tempPickupRadiusTimer = 0;
   // 被动技能列表
   private passives: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
   // stat 类升级次数（满级后不再出现在升级/商店候选池；用于防止无限叠加数值爆炸）
@@ -159,6 +162,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // 武器攻击
+    // 临时拾取半径计时
+    if (this.tempPickupRadiusTimer > 0) {
+      this.tempPickupRadiusTimer -= delta;
+      if (this.tempPickupRadiusTimer <= 0) this.tempPickupRadius = 0;
+    }
+
     this.updateWeapons(time, delta);
 
     // 经验闪烁
@@ -1003,7 +1012,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   getPickupRadius(): number {
-    return this.stats.pickupRadius;
+    return this.tempPickupRadius > 0 ? this.tempPickupRadius : this.stats.pickupRadius;
+  }
+
+  /** 临时扩大拾取半径（大磁铁等效果），duration 毫秒后自动恢复 */
+  setPickupRadiusTemporary(radius: number, duration: number): void {
+    this.tempPickupRadius = radius;
+    this.tempPickupRadiusTimer = duration;
   }
 
   isInvincible(): boolean {

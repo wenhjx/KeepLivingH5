@@ -131,6 +131,13 @@ export class DebugPanel {
     this.addSectionTitle(col, '⚡ 快捷操作');
     this.addRow(col, { text: '❤️ 回满血', fn: () => this.getPlayer()?.heal(9999) }, { text: '⭐ +1 级', fn: () => this.addLevel(1) });
     this.addRow(col, { text: '🌟 +5 级', fn: () => this.addLevel(5) }, { text: '💀 清空敌人', fn: () => this.clearEnemies() });
+    this.addRow(col, { text: '🎁 宝箱', fn: () => {
+      const p = this.getPlayer();
+      const gs = this.scene.scene.get('GameScene') as any;
+      if (p && gs?.spawnPickup) {
+        gs.spawnPickup({ type: 'chest', texture: 'pickup_chest', value: 0, magnetSpeed: 200 }, p.x + 40, p.y);
+      }
+    } });
     this.addAutoPlayRow(col);
     this.addThemeRow(col);
     col.step(this.sectionSpacing);
@@ -207,7 +214,7 @@ export class DebugPanel {
     const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
     // 商店道具（FALLBACK_UPGRADES）2 行
     const shopRows = Math.ceil(FALLBACK_UPGRADES.length / 2);
-    return 28 + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
+    return 28 + sectionH(5) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
   }
 
   /** 分区标题（content 内） */

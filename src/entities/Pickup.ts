@@ -3,6 +3,8 @@ import { MathUtils } from '../utils/MathUtils';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import { GameConfig } from '../game/GameConfig';
+import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
 import type { PickupConfig, PickupType } from '../types';
 import type { Player } from './Player';
 
@@ -96,11 +98,66 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
         // TODO: 道具系统
         break;
       case 'chest':
-        // TODO: 宝箱系统
+        this.openChest(player);
         break;
     }
 
     this.despawn();
+  }
+
+  /** 强制进入磁吸状态（大磁铁等效果：全场拾取物吸向玩家） */
+  forceMagnet(): void {
+    if (this.active) this.magnetActive = true;
+  }
+
+  /** 开启宝箱：从奖励池随机开出金币/随机升级/消耗品/大经验 */
+  private openChest(player: Player): void {
+    const scene = this.scene as any;
+    const roll = Math.random();
+
+    if (roll < 0.35) {
+      // 大金币堆
+      const gold = Phaser.Math.Between(150, 400);
+      player.addCoins(gold);
+      scene?.spawnDamageText?.(player.x, player.y - 30, `+${gold} 金币`, 0xffd700);
+    } else if (roll < 0.6) {
+      // 随机升级（未满级项直接应用）
+      this.grantRandomUpgrade(player, scene);
+    } else if (roll < 0.85) {
+      // 消耗品礼包（1-2 个进物品栏）
+      const pool = ['bomb', 'shield', 'rage', 'heal', 'slow', 'magnet'];
+      const n = Math.random() < 0.5 ? 1 : 2;
+      let label = '';
+      for (let i = 0; i < n; i++) {
+        const id = pool[Math.floor(Math.random() * pool.length)];
+        player.addItem(id, 1);
+        label += `${id} `;
+      }
+      scene?.spawnDamageText?.(player.x, player.y - 30, `获得道具 ×${n}`, 0x88ff88);
+    } else {
+      // 大经验
+      const exp = Phaser.Math.Between(200, 600);
+      player.addExp(exp);
+      scene?.spawnDamageText?.(player.x, player.y - 30, `经验 +${exp}`, 0x66ccff);
+    }
+
+    // 宝箱开启金色冲击波特效
+    scene?.getFXManager?.()?.shockwave?.(this.x, this.y, 70, 0xffd700);
+  }
+
+  /** 随机应用一个未满级升级项；全部满级则兜底金币 */
+  private grantRandomUpgrade(player: Player, scene: any): void {
+    const options = UPGRADE_OPTIONS.slice().sort(() => Math.random() - 0.5);
+    for (const opt of options) {
+      if (opt.type === 'weapon' && opt.effect?.weaponId && player.isWeaponMaxLevel?.(opt.effect.weaponId)) continue;
+      if (opt.type === 'passive' && player.isPassiveMaxLevel?.(opt.id)) continue;
+      if (opt.type === 'stat' && opt.maxLevel && (player.getStatUpgradeLevel?.(opt.id) ?? 0) >= opt.maxLevel) continue;
+      applyUpgradeToPlayer(player, opt, scene);
+      scene?.spawnDamageText?.(player.x, player.y - 30, `${opt.name} +1`, 0x88ff88);
+      return;
+    }
+    player.addCoins(200);
+    scene?.spawnDamageText?.(player.x, player.y - 30, '金币 +200', 0xffd700);
   }
 
   despawn(): void {

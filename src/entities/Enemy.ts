@@ -115,6 +115,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.knockbackTimer > 0) {
       this.knockbackTimer -= delta;
       this.setVelocity(this.knockbackVx, this.knockbackVy);
+    } else {
+      // 时间减速（时间减速药水）：统一缩放敌人速度，不影响玩家与子弹
+      const slow = (this.scene as any).getSlowFactor?.() ?? 1;
+      if (slow !== 1 && this.body) {
+        this.setVelocity(this.body.velocity.x * slow, this.body.velocity.y * slow);
+      }
     }
 
     // 攻击冷却
@@ -458,6 +464,21 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         },
         this.x - 20,
         this.y
+      );
+    }
+
+    // 宝箱掉落（爽点）：普通怪小概率，精英高概率，Boss 必掉
+    const chestChance = this.config.type === 'boss' ? 1 : (this.config.type === 'elite' ? 0.15 : 0.03);
+    if (MathUtils.chance(chestChance)) {
+      scene?.spawnPickup?.(
+        {
+          type: 'chest',
+          texture: 'pickup_chest',
+          value: 0,
+          magnetSpeed: 200,
+        },
+        this.x + 15,
+        this.y + 20
       );
     }
 

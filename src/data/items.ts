@@ -61,7 +61,31 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
     color: 0x44ff88,
     use: (player) => { player.heal(player.getMaxHealth() * 0.5); AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_ITEM_USE, 0.8); },
   },
+  slow: {
+    id: 'slow',
+    name: '时间减速',
+    icon: '⏳',
+    description: '8 秒内敌人速度减半',
+    color: 0x88ccff,
+    use: (_player, gameScene) => {
+      gameScene?.setSlowFactor?.(0.5);
+      gameScene?.time?.delayedCall(8000, () => gameScene?.setSlowFactor?.(1));
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_ITEM_USE, 0.8);
+    },
+  },
+  magnet: {
+    id: 'magnet',
+    name: '大磁铁',
+    icon: '🧲',
+    description: '8 秒内全屏吸附金币与经验',
+    color: 0xffaa44,
+    use: (player, gameScene) => {
+      player.setPickupRadiusTemporary(99999, 8000);
+      gameScene?.magnetAll?.();
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PICKUP_COIN, 0.8);
+    },
+  },
 };
 
 /** 物品栏显示顺序 */
-export const INVENTORY_ORDER = ['heal', 'shield', 'rage', 'bomb'];
+export const INVENTORY_ORDER = ['heal', 'shield', 'rage', 'bomb', 'slow', 'magnet'];

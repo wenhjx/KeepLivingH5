@@ -59,9 +59,10 @@ export class InventoryUI {
     // 监听物品栏变化
     EventBus.on('player:inventoryChanged', () => this.refresh());
 
-    // 快捷键 1-4
-    const keys = ['ONE', 'TWO', 'THREE', 'FOUR'];
+    // 快捷键 1-6（物品栏槽位数）
+    const keys = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];
     keys.forEach((key, index) => {
+      if (index >= INVENTORY_ORDER.length) return;
       scene.input.keyboard?.on(`keydown-${key}`, () => this.useSlot(index));
     });
   }

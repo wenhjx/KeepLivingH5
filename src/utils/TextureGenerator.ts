@@ -960,6 +960,32 @@ export class TextureGenerator {
     this.generateGemPixel('pickup_exp', TextureGenerator.COLORS.exp, 20);
     this.generateHealthPixel('pickup_health', 22);
     this.generateCoinPixel('pickup_coin', 18);
+    this.generateChestPixel('pickup_chest', 22);
+  }
+
+  /** 像素宝箱：金色方块箱体 + 锁扣 + 高光 */
+  private generateChestPixel(key: string, size: number): void {
+    const canvas = size + 8;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = canvas / 2;
+    const cy = canvas / 2;
+    // 箱体底部暗影
+    g.fillStyle(0x6a4510, 1);
+    g.fillRect(cx - 8, cy - 3, 16, 10);
+    // 箱体
+    g.fillStyle(0xc9862a, 1);
+    g.fillRect(cx - 8, cy - 5, 16, 10);
+    // 箱盖缝
+    g.fillStyle(0x5a3a0e, 1);
+    g.fillRect(cx - 8, cy - 5, 16, 2);
+    // 锁扣
+    g.fillStyle(0xffd700, 1);
+    g.fillRect(cx - 2, cy - 3, 4, 4);
+    // 高光
+    g.fillStyle(0xffe9a0, 0.6);
+    g.fillRect(cx - 6, cy - 1, 12, 1);
+    g.generateTexture(key, canvas, canvas);
+    g.destroy();
   }
 
   /** 经典矢量主题拾取物（霓虹菱形/十字/金币），key 加 _classic 后缀 */
@@ -967,6 +993,23 @@ export class TextureGenerator {
     this.generateGem('pickup_exp_classic', TextureGenerator.COLORS.exp, 20);
     this.generateHealth('pickup_health_classic', 22);
     this.generateCoin('pickup_coin_classic', 18);
+    this.generateChest('pickup_chest_classic', 22);
+  }
+
+  /** 经典宝箱：圆角金色箱体 + 锁扣 */
+  private generateChest(key: string, size: number): void {
+    const canvas = size + 8;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = canvas / 2;
+    const cy = canvas / 2;
+    g.fillStyle(0xc9862a, 1);
+    g.fillRoundedRect(cx - 8, cy - 7, 16, 14, 2);
+    g.fillStyle(0x5a3a0e, 1);
+    g.fillRect(cx - 8, cy - 2, 16, 1);
+    g.fillStyle(0xffd700, 1);
+    g.fillRoundedRect(cx - 3, cy - 3, 6, 4, 1);
+    g.generateTexture(key, canvas, canvas);
+    g.destroy();
   }
 
   /** 像素宝石：整数方块拼菱形 */

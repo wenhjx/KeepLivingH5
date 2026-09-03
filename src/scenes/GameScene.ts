@@ -55,6 +55,8 @@ export class GameScene extends Phaser.Scene {
 
   // 计时器
   private autoSaveTimer = 0;
+  /** 时间减速系数（时间减速药水）：1=正常，<1 敌人变慢 */
+  private slowFactor = 1;
   // 是否为"继续游戏"恢复模式
   private resumeMode = false;
   // 页面刷新/关闭前的存档回调
@@ -899,6 +901,24 @@ export class GameScene extends Phaser.Scene {
 
   spawnEnemy(config: EnemyConfig, x: number, y: number): void {
     this.waveManager.spawnEnemy(config, x, y);
+  }
+
+  /** 设置时间减速系数（时间减速药水用，只影响敌人） */
+  setSlowFactor(f: number): void {
+    this.slowFactor = Math.max(0.1, Math.min(1, f));
+  }
+
+  /** 当前时间减速系数 */
+  getSlowFactor(): number {
+    return this.slowFactor;
+  }
+
+  /** 全场拾取物强制磁吸（大磁铁效果） */
+  magnetAll(): void {
+    this.pickups.children.each((pickup: any) => {
+      if (pickup.active) pickup.forceMagnet?.();
+      return true;
+    });
   }
 
   spawnPickup(config: PickupConfig, x: number, y: number): void {
