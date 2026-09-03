@@ -73,6 +73,11 @@ export class HUD {
     passive_thorns: { icon: '🌵', color: 0x664422 },
     passive_exp_boost: { icon: '📈', color: 0x224466 },
     passive_gold_boost: { icon: '💰', color: 0x665500 },
+    passive_lifesteal: { icon: '🩸', color: 0x662244 },
+    passive_bounce: { icon: '🪩', color: 0x664466 },
+    passive_freeze: { icon: '❄️', color: 0x226688 },
+    passive_burn: { icon: '🔥', color: 0x883322 },
+    passive_chain: { icon: '⚡', color: 0x886600 },
   };
 
   // stat 属性升级视觉映射（图标 + 背景色；图标与 UPGRADE_OPTIONS 保持一致）
@@ -318,12 +323,13 @@ export class HUD {
     }
   }
 
-  /** 更新增益列表（武器+被动+stat 属性） */
+  /** 更新增益列表（武器+被动；stat 属性已并入 C 键属性面板，不再占用 buff 条） */
   private updateBuffs(player: any): void {
     // nova（环形冲击波）是自动救急武器：不占 buff 格子，玩家从冲击波特效感知其存在
     const weapons = (player.getWeapons?.() || []).filter((w: any) => w.id !== 'nova');
     const passives = player.getPassives?.() || [];
-    const statUpgrades = player.getStatUpgrades?.() || [];
+    // stat 属性升级已由 C 键玩家属性面板（PlayerInfoScene）完整展示（含突破次数），
+    // 从 buff 条移除，只保留真增益（武器+被动），避免 buff 多时列表过长扎在屏幕中间
 
     // 合并为统一格式（附加 desc 描述，供点击提示显示）
     const allBuffs = [
@@ -344,19 +350,6 @@ export class HUD {
           maxLevel: p.maxLevel,
           desc: opt?.description || '',
           ...this.passiveVisuals[p.id],
-        };
-      }),
-      ...statUpgrades.map((s: any) => {
-        const opt = UPGRADE_OPTIONS.find((u) => u.id === s.id);
-        return {
-          id: s.id,
-          name: s.name,
-          level: s.level,
-          maxLevel: s.maxLevel,
-          // Boss 突破次数（突破后显示 "5+2" 让玩家看到突破效果）
-          bt: player.getBreakthroughLevel?.(s.id) ?? 0,
-          desc: opt?.description || '',
-          ...this.statVisuals[s.id],
         };
       }),
     ].filter((b) => b.icon); // 过滤掉没有图标的未知项
