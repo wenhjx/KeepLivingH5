@@ -36,6 +36,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private hpBarBg!: Phaser.GameObjects.Graphics;
   private hpBar!: Phaser.GameObjects.Graphics;
   private hpBarTimer = 0;
+  /** 精英词缀：enrage(狂暴)/shield(护盾)/split(分裂)，仅精英怪随机附加 */
+  private affix = '';
+  private shieldPool = 0;
+  private affixAtkBoost = 1;
+  private affixSpeedMult = 1;
+  private affixText!: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0, GameConfig.themeKey('enemy_normal'));
@@ -94,6 +100,39 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.setTint(config.color);
     }
 
+    // ===== 精英词缀：狂暴/护盾/分裂（仅精英怪随机附加，可按配置固定） =====
+    if (config.type === 'elite') {
+      const affixes = ['enrage', 'shield', 'split'];
+      this.affix = config.affix || affixes[Math.floor(Math.random() * affixes.length)];
+    } else {
+      this.affix = config.affix || '';
+    }
+    this.shieldPool = 0;
+    this.affixAtkBoost = 1;
+    this.affixSpeedMult = 1;
+    if (this.affix === 'enrage') {
+      // 狂暴：攻击×1.2、移速×1.3、橙红视觉
+      this.affixAtkBoost = 1.2;
+      this.affixSpeedMult = 1.3;
+      this.setTint(0xff8844);
+    } else if (this.affix === 'shield') {
+      // 护盾：额外护盾值 60% 血量、亮蓝视觉
+      this.shieldPool = Math.floor(this.maxHealth * 0.6);
+      this.setTint(0x44aaff);
+    } else if (this.affix === 'split') {
+      // 分裂：死亡分裂 2 只小怪、紫色视觉
+      this.setTint(0xcc88ff);
+    }
+    // 词缀图标（跟随头顶）
+    const affixIcons: Record<string, string> = { enrage: '🔥', shield: '🛡️', split: '💥' };
+    if (!this.affixText) {
+      this.affixText = this.scene.add.text(0, 0, '', { fontSize: '12px', fontFamily: 'Arial' }).setDepth(6).setOrigin(0.5);
+    }
+    const affixIcon = affixIcons[this.affix] || '';
+    this.affixText.setText(affixIcon)
+      .setPosition(this.x, this.y - (config.size || 32) / 2 - 22)
+      .setVisible(!!affixIcon);
+
     EventBus.emit('enemy:spawn', this);
   }
 
@@ -103,6 +142,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.freezeTimer = 0;
     this.burnTimer = 0;
     this.burnDamage = 0;
+    this.affix = '';
+    this.shieldPool = 0;
+    this.affixAtkBoost = 1;
+    this.affixSpeedMult = 1;
+    if (this.affixText) this.affixText.setVisible(false);
     this.hideHpBar();
     this.setActive(false);
     this.setVisible(false);
@@ -221,6 +265,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     return best;
   }
 
+  /** 当前精英词缀（enrage/shield/split/''） */
+  getAffix(): string {
+    return this.affix;
+  }
+
   /** 绘制头顶小血条（跟随敌人位置） */
   private drawHpBar(): void {
     if (!this.hpBarBg || !this.hpBar) return;
@@ -255,6 +304,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.clearTint();
         if (this.config?.color) this.setTint(this.config.color);
       }
+    }
+
+    // 词缀图标跟随敌人
+    if (this.affixText && this.affixText.visible) {
+      this.affixText.setPosition(this.x, this.y - (this.config?.size || 32) / 2 - 22);
     }
 
     // 灼烧 DOT（持续火焰伤害，每 500ms 一跳）
@@ -337,7 +391,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /** 自爆怪：高速冲向玩家，进入爆炸半径后自爆 */
   private suiciderAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier;
+    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
 
@@ -385,7 +439,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /** 护盾怪：缓慢接近，正面减伤，侧面/背面正常受伤 */
   private shieldedAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier;
+    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
 
@@ -401,7 +455,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /** 普通敌人：直接冲向玩家 */
   private normalAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier;
+    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
 
@@ -417,7 +471,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 加入正弦波动实现Z字
     const wobble = Math.sin(this.scene.time.now / 200 + this.x * 0.01) * 0.5;
     const angle = baseAngle + wobble;
-    const speed = this.config.moveSpeed * this.difficultyMultiplier;
+    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
 
@@ -429,7 +483,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /** 远程敌人：保持距离并射击 */
   private rangedAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier;
+    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
     const preferredDist = 250;
 
     let moveAngle = angle;
@@ -459,7 +513,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /** Boss：多种攻击模式 */
   private bossAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier;
+    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
 
@@ -517,12 +571,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 8方向弹幕
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2;
-      pool.spawnEnemyBullet(this.x, this.y, angle, 200, this.config.attackPower * 0.5 * this.difficultyMultiplier * this.atkBoost);
+      pool.spawnEnemyBullet(this.x, this.y, angle, 200, this.config.attackPower * 0.5 * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost);
     }
   }
 
   private attackPlayer(player: Player): void {
-    player.takeDamage(this.config.attackPower * this.difficultyMultiplier * this.atkBoost);
+    player.takeDamage(this.config.attackPower * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost);
     this.attackCooldown = this.config.attackCooldown;
   }
 
@@ -531,7 +585,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (!scene || !scene.getObjectPool) return;
     const pool = scene.getObjectPool();
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    pool.spawnEnemyBullet(this.x, this.y, angle, 300, this.config.attackPower * this.difficultyMultiplier * this.atkBoost);
+    pool.spawnEnemyBullet(this.x, this.y, angle, 300, this.config.attackPower * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost);
     this.attackCooldown = this.config.attackCooldown;
   }
 
@@ -553,6 +607,15 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 防御：血量已被污染成 NaN 的残留怪，先重置为满血再正常结算，避免"打不死"
     if (!isFinite(this.health) || this.health < 0) {
       this.health = this.maxHealth || 1;
+    }
+
+    // 精英护盾词缀：护盾池优先吸收伤害
+    if (this.shieldPool > 0) {
+      const absorbed = Math.min(this.shieldPool, amount);
+      this.shieldPool -= absorbed;
+      amount -= absorbed;
+      (this.scene as any).getFXManager?.()?.hit?.(this.x, this.y, false);
+      if (amount <= 0) return;
     }
 
     // 护盾怪：正面减伤（攻击来自玩家方向的子弹视为正面）
@@ -597,6 +660,22 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       const productConfig = ENEMY_CONFIGS[splitConfig.type];
       if (productConfig && scene?.getObjectPool?.()) {
         for (let i = 0; i < splitConfig.count; i++) {
+          const offsetX = (i % 2 === 0 ? -1 : 1) * 20;
+          scene.getObjectPool().spawnEnemy(
+            productConfig,
+            this.x + offsetX,
+            this.y + (i % 2 === 0 ? 15 : -15),
+            this.difficultyMultiplier * 0.6
+          );
+        }
+      }
+    }
+
+    // 精英分裂词缀：死亡分裂 2 只普通小怪（词缀版，与分裂怪机制一致）
+    if (this.affix === 'split') {
+      const productConfig = ENEMY_CONFIGS.normal;
+      if (productConfig && scene?.getObjectPool?.()) {
+        for (let i = 0; i < 2; i++) {
           const offsetX = (i % 2 === 0 ? -1 : 1) * 20;
           scene.getObjectPool().spawnEnemy(
             productConfig,

@@ -58,6 +58,8 @@ export interface EnemyConfig {
   shieldFrontReduction?: number;
   /** 分裂怪：死亡后分裂成的敌人类型与数量 */
   splitInto?: { type: EnemyType; count: number };
+  /** 精英词缀（固定指定用）：enrage 狂暴 / shield 护盾 / split 分裂；不填则精英怪随机分配 */
+  affix?: string;
 }
 
 // ========== 武器与技能 ==========

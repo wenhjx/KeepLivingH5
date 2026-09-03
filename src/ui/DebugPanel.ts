@@ -137,6 +137,15 @@ export class DebugPanel {
       if (p && gs?.spawnPickup) {
         gs.spawnPickup({ type: 'chest', texture: 'pickup_chest', value: 0, magnetSpeed: 200 }, p.x + 40, p.y);
       }
+    } }, { text: '🦹 精英怪', fn: () => {
+      const p = this.getPlayer();
+      const gs = this.scene.scene.get('GameScene') as any;
+      if (p && gs?.spawnEnemy) {
+        gs.spawnEnemy(
+          { id: 'elite_test', type: 'elite', name: '精英僵尸', texture: 'enemy_normal', maxHealth: 200, moveSpeed: 70, attackPower: 20, attackRange: 35, attackCooldown: 1200, expReward: 30, scoreReward: 60, size: 28, color: 0xffaa00 },
+          p.x + 160, p.y
+        );
+      }
     } });
     this.addAutoPlayRow(col);
     this.addThemeRow(col);
@@ -214,7 +223,7 @@ export class DebugPanel {
     const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
     // 商店道具（FALLBACK_UPGRADES）2 行
     const shopRows = Math.ceil(FALLBACK_UPGRADES.length / 2);
-    return 28 + sectionH(5) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
+    return 28 + sectionH(6) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
   }
 
   /** 分区标题（content 内） */
