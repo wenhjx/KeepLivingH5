@@ -469,7 +469,7 @@ export class DebugPanel {
         }
       }
       if (this.scrollDragging && this.maxScroll > 0) {
-        this.setScroll(this.dragStartOff - (p.y - this.dragStartY));
+        this.setScroll(this.dragStartOff + (p.y - this.dragStartY));
       }
     });
 
