@@ -119,7 +119,7 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
       // 大金币堆
       const gold = Phaser.Math.Between(150, 400);
       player.addCoins(gold);
-      scene?.spawnDamageText?.(player.x, player.y - 30, `+${gold} 金币`, 0xffd700);
+      scene?.spawnEventText?.(player.x, player.y - 30, `+${gold} 金币`, '#ffd700');
     } else if (roll < 0.6) {
       // 随机升级（未满级项直接应用）
       this.grantRandomUpgrade(player, scene);
@@ -133,12 +133,12 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
         player.addItem(id, 1);
         label += `${id} `;
       }
-      scene?.spawnDamageText?.(player.x, player.y - 30, `获得道具 ×${n}`, 0x88ff88);
+      scene?.spawnEventText?.(player.x, player.y - 30, `获得道具 ×${n}`, '#88ff88');
     } else {
       // 大经验
       const exp = Phaser.Math.Between(200, 600);
       player.addExp(exp);
-      scene?.spawnDamageText?.(player.x, player.y - 30, `经验 +${exp}`, 0x66ccff);
+      scene?.spawnEventText?.(player.x, player.y - 30, `经验 +${exp}`, '#66ccff');
     }
 
     // 宝箱开启金色冲击波特效
@@ -153,11 +153,11 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
       if (opt.type === 'passive' && player.isPassiveMaxLevel?.(opt.id)) continue;
       if (opt.type === 'stat' && opt.maxLevel && (player.getStatUpgradeLevel?.(opt.id) ?? 0) >= opt.maxLevel) continue;
       applyUpgradeToPlayer(player, opt, scene);
-      scene?.spawnDamageText?.(player.x, player.y - 30, `${opt.name} +1`, 0x88ff88);
+      scene?.spawnEventText?.(player.x, player.y - 30, `${opt.name} +1`, '#88ff88');
       return;
     }
     player.addCoins(200);
-    scene?.spawnDamageText?.(player.x, player.y - 30, '金币 +200', 0xffd700);
+    scene?.spawnEventText?.(player.x, player.y - 30, '金币 +200', '#ffd700');
   }
 
   despawn(): void {

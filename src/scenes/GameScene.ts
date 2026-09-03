@@ -619,6 +619,11 @@ export class GameScene extends Phaser.Scene {
     this.damageTextManager?.show(x, y, damage, isCrit);
   }
 
+  /** 事件飘字（宝箱/商店等文本提示），支持自定义颜色 */
+  spawnEventText(x: number, y: number, text: string, color: string = '#ffffff'): void {
+    this.damageTextManager?.showText(x, y, text, color);
+  }
+
   /** 当前唯一的 Boss（无则 null，供 HUD 顶部血条使用） */
   getActiveBoss(): Enemy | null {
     return this.activeBoss;

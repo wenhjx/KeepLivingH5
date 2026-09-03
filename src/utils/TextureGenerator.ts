@@ -900,6 +900,9 @@ export class TextureGenerator {
     g.generateTexture('bullet', size, size);
     g.destroy();
 
+    // 无人机（对称机体，旋转自然）
+    this.generateDronePixel('drone', 26);
+
     // 敌人子弹（紫红色方块）
     const size2 = 18;
     const g2 = this.scene.make.graphics({ x: 0, y: 0 }, false);
@@ -917,7 +920,51 @@ export class TextureGenerator {
     g2.destroy();
   }
 
+  /** 像素无人机：中心机体 + 四角旋翼（对称，旋转时方向自然） */
+  private generateDronePixel(key: string, size: number): void {
+    const canvas = size + 8;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = canvas / 2;
+    const cy = canvas / 2;
+    // 四角旋翼
+    g.fillStyle(0xffffff, 0.85);
+    g.fillRect(cx - 11, cy - 11, 6, 6);
+    g.fillRect(cx + 5, cy - 11, 6, 6);
+    g.fillRect(cx - 11, cy + 5, 6, 6);
+    g.fillRect(cx + 5, cy + 5, 6, 6);
+    // 机臂十字
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(cx - 6, cy - 2, 12, 4);
+    g.fillRect(cx - 2, cy - 6, 4, 12);
+    // 中心高光
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(cx - 2, cy - 2, 4, 4);
+    g.generateTexture(key, canvas, canvas);
+    g.destroy();
+  }
+
   /** 经典矢量主题子弹（霓虹能量弹：发光核心 + 拖尾），key 加 _classic 后缀 */
+  /** 经典矢量无人机：四角旋翼圆 + 圆润机身 */
+  private generateDrone(key: string, size: number): void {
+    const canvas = size + 8;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = canvas / 2;
+    const cy = canvas / 2;
+    // 四角旋翼
+    g.fillStyle(0x66ccff, 0.4);
+    g.fillCircle(cx - 10, cy - 10, 4);
+    g.fillCircle(cx + 10, cy - 10, 4);
+    g.fillCircle(cx - 10, cy + 10, 4);
+    g.fillCircle(cx + 10, cy + 10, 4);
+    // 机身圆盘
+    g.fillStyle(0x88ddff, 1);
+    g.fillCircle(cx, cy, 8);
+    g.fillStyle(0xffffff, 0.85);
+    g.fillCircle(cx, cy, 3);
+    g.generateTexture(key, canvas, canvas);
+    g.destroy();
+  }
+
   private generateBulletsClassic(): void {
     const size = 20;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
@@ -952,6 +999,9 @@ export class TextureGenerator {
     g2.fillCircle(size2 / 2, size2 / 2, 2);
     g2.generateTexture('enemy_bullet_classic', size2, size2);
     g2.destroy();
+
+    // 经典无人机
+    this.generateDrone('drone_classic', 26);
   }
 
   // ========== 拾取物 ==========

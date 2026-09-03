@@ -25,7 +25,7 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
   private shootInterval: number = 1000; // 自动射击间隔（毫秒）
 
   constructor(scene: Phaser.Scene, player: Player, config: WeaponConfig, level: number, index: number, total: number) {
-    super(scene, player.x, player.y, GameConfig.themeKey('bullet'));
+    super(scene, player.x, player.y, GameConfig.themeKey('drone'));
     this.player = player;
     this.config = config;
     this.level = level;
