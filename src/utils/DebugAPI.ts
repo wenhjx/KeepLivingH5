@@ -2,6 +2,8 @@ import type Phaser from 'phaser';
 import { GameConfig } from '../game/GameConfig';
 import { GameManager } from '../game/GameManager';
 import { USABLE_ITEMS } from '../data/items';
+import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { applyUpgradeToPlayer } from './UpgradeApplier';
 import { GuideManager } from '../systems/GuideManager';
 
 /**
@@ -42,6 +44,8 @@ export interface DebugAPI {
   testStable: () => string;
   /** 切换视觉主题（皮肤）：'pixel' 像素风 | 'classic' 经典矢量霓虹（已有实体即时生效） */
   setTheme: (theme: 'pixel' | 'classic') => string;
+  /** 为玩家添加当前所有可获得 buff（武器/被动/属性），默认各 1 级；跳过兜底项与初始武器 */
+  giveAllBuffs: (level?: number) => string;
 }
 
 export function initDebugAPI(game: Phaser.Game): void {
@@ -231,6 +235,24 @@ export function initDebugAPI(game: Phaser.Game): void {
       });
       console.log(`[debug] 视觉主题已切换: ${theme}`);
       return `主题已切换: ${theme}`;
+    },
+
+    giveAllBuffs: (level = 1) => {
+      const player = getPlayer();
+      if (!player) return 'player not found';
+      const gs = getGameScene();
+      const applied: string[] = [];
+      for (const opt of UPGRADE_OPTIONS) {
+        // 跳过兜底项（金币/治疗/狂暴/清屏即时效果）与初始武器（玩家开局自带，保持 Lv1）
+        if (opt.id.startsWith('fallback_')) continue;
+        if (opt.id === 'weapon_default_gun') continue;
+        for (let i = 0; i < level; i++) {
+          applyUpgradeToPlayer(player, opt, gs);
+        }
+        applied.push(opt.name);
+      }
+      console.log(`[debug] 已为玩家添加 ${applied.length} 个 buff（${level} 级）: ${applied.join(', ')}`);
+      return `${applied.length} buffs applied (${level} 级)`;
     },
   };
 
