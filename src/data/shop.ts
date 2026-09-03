@@ -73,6 +73,11 @@ const PASSIVE_ITEMS: ShopItem[] = [
   fromUpgrade('passive_exp_boost', 'passive', 35),
   fromUpgrade('passive_regen', 'passive', 35),
   fromUpgrade('passive_thorns', 'passive', 45),
+  fromUpgrade('passive_lifesteal', 'passive', 40),
+  fromUpgrade('passive_freeze', 'passive', 50),
+  fromUpgrade('passive_burn', 'passive', 60),
+  fromUpgrade('passive_bounce', 'passive', 60),
+  fromUpgrade('passive_chain', 'passive', 65),
 ];
 
 /** 属性类商品 */

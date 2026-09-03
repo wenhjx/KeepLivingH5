@@ -26,6 +26,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private knockbackVy = 0;
   private knockbackTimer = 0;
   private avoidSide: number = 1; // 障碍物避让方向：+1 右，-1 左（每个敌人固定，避免扎堆）
+  /** 冰冻剩余时长(ms)：>0 时大幅减速 + 蓝色视觉 */
+  private freezeTimer = 0;
+  /** 灼烧 DOT：剩余时长(ms) + 每跳伤害 + 跳间计时 */
+  private burnTimer = 0;
+  private burnDamage = 0;
+  private burnTick = 0;
+  /** 头顶小血条（受伤时短暂显示，平时隐藏） */
+  private hpBarBg!: Phaser.GameObjects.Graphics;
+  private hpBar!: Phaser.GameObjects.Graphics;
+  private hpBarTimer = 0;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0, GameConfig.themeKey('enemy_normal'));
@@ -45,12 +55,24 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const safeMult = isFinite(difficultyMultiplier) && difficultyMultiplier > 0 ? difficultyMultiplier : 1;
     const safeHpBoost = isFinite(hpBoost) && hpBoost > 0 ? hpBoost : 1;
     const baseHp = Number(config.maxHealth);
-    this.maxHealth = Math.max(1, Math.floor(isFinite(baseHp) && baseHp > 0 ? baseHp * safeMult * safeHpBoost : 1));
+    // 全局耐久系数 1.3：怪物整体更扛揍，给吸血/灼烧/闪电链等新被动发挥空间
+    this.maxHealth = Math.max(1, Math.floor(isFinite(baseHp) && baseHp > 0 ? baseHp * safeMult * safeHpBoost * 1.3 : 1));
     this.health = this.maxHealth;
     this.attackCooldown = 0;
     this.isDead = false;
     this.hitFlashTimer = 0;
+    this.freezeTimer = 0;
+    this.burnTimer = 0;
+    this.burnDamage = 0;
     this.avoidSide = Math.random() > 0.5 ? 1 : -1;
+
+    // 头顶小血条（Boss 用顶部大血条，不显示小血条）
+    if (!this.hpBarBg && config.type !== 'boss') {
+      this.hpBarBg = this.scene.add.graphics().setDepth(8);
+      this.hpBar = this.scene.add.graphics().setDepth(9);
+      this.hpBarBg.setVisible(false);
+      this.hpBar.setVisible(false);
+    }
 
     this.setTexture(GameConfig.themeKey(config.texture || 'enemy_normal'));
     // 先启用物理体并 reset 到正确位置
@@ -78,6 +100,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /** 回收对象池 */
   despawn(): void {
     this.knockbackTimer = 0;
+    this.freezeTimer = 0;
+    this.burnTimer = 0;
+    this.burnDamage = 0;
+    this.hideHpBar();
     this.setActive(false);
     this.setVisible(false);
     if (this.body) {
@@ -96,6 +122,129 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.knockbackTimer = 200; // 200ms 击退（足够把围堵的敌人推出一段安全距离）
   }
 
+  /** 冰冻（冰冻被动）：减速 + 蓝色视觉 */
+  applyFreeze(duration: number): void {
+    if (this.isDead) return;
+    this.freezeTimer = Math.max(this.freezeTimer, duration);
+    this.setTint(0x88ddff);
+  }
+
+  /** 灼烧（灼烧被动）：持续火焰伤害 */
+  applyBurn(damage: number, duration: number): void {
+    if (this.isDead) return;
+    this.burnDamage = Math.max(this.burnDamage, damage);
+    this.burnTimer = Math.max(this.burnTimer, duration);
+    this.burnTick = 0;
+  }
+
+  /**
+   * 玩家攻击命中时触发被动效果（吸血/冰冻/灼烧/闪电链/弹射）
+   * 由 CollisionSystem（子弹）/ Player.fireMelee / Player.fireNova 调用
+   */
+  applyPlayerEffects(amount: number, player: Player, sourceX: number, sourceY: number): void {
+    if (this.isDead || !player) return;
+    const getLv = (id: string) => player.getPassiveLevel(id);
+
+    // 吸血：回复造成伤害的一定比例
+    const ls = getLv('passive_lifesteal');
+    if (ls > 0) {
+      player.heal(amount * 0.03 * ls);
+    }
+
+    // 冰冻：概率冰冻减速
+    const frz = getLv('passive_freeze');
+    if (frz > 0 && Math.random() < 0.08 * frz) {
+      this.applyFreeze(2000);
+      (this.scene as any).getFXManager?.()?.frost?.(this.x, this.y);
+    }
+
+    // 灼烧：概率施加 DOT
+    const brn = getLv('passive_burn');
+    if (brn > 0 && Math.random() < 0.1 * brn) {
+      this.applyBurn(Math.max(1, amount * 0.1 * brn), 3000);
+    }
+
+    // 闪电链：概率连锁伤害附近敌人（不递归触发其他被动）
+    const chn = getLv('passive_chain');
+    if (chn > 0 && Math.random() < 0.1 * chn) {
+      this.chainLightning(player, amount * 0.6, chn, sourceX, sourceY);
+    }
+
+    // 弹射：伤害弹射到附近敌人（不递归触发其他被动）
+    const bnc = getLv('passive_bounce');
+    if (bnc > 0) {
+      this.bounceHit(player, amount * 0.5, bnc, sourceX, sourceY);
+    }
+  }
+
+  /** 弹射：从源敌人跳到附近最近的敌人，逐跳递减伤害 */
+  private bounceHit(player: Player, damage: number, jumps: number, sourceX: number, sourceY: number): void {
+    const scene = this.scene as any;
+    let source: any = this;
+    for (let i = 0; i < jumps; i++) {
+      const target = this.findNearbyEnemy(source, 160);
+      if (!target) break;
+      target.takeDamage(damage, false);
+      scene?.getFXManager?.()?.bounce?.(source.x, source.y, target.x, target.y);
+      source = target;
+    }
+  }
+
+  /** 闪电链：连锁伤害附近敌人，每跳 60% 伤害 */
+  private chainLightning(player: Player, damage: number, jumps: number, sourceX: number, sourceY: number): void {
+    const scene = this.scene as any;
+    let source: any = this;
+    for (let i = 0; i < jumps; i++) {
+      const target = this.findNearbyEnemy(source, 220);
+      if (!target) break;
+      target.takeDamage(damage, false);
+      scene?.getFXManager?.()?.chainLightning?.(source.x, source.y, target.x, target.y);
+      source = target;
+    }
+  }
+
+  /** 查找源敌人附近最近的存活敌人（弹射/闪电链用） */
+  private findNearbyEnemy(source: any, radius: number): any {
+    const scene = this.scene as any;
+    const enemies = scene?.getEnemies?.();
+    if (!enemies) return null;
+    let best: any = null;
+    let bd = radius;
+    enemies.getChildren().forEach((e: any) => {
+      if (!e.active || e === source || e.isDead) return;
+      const d = Phaser.Math.Distance.Between(source.x, source.y, e.x, e.y);
+      if (d < bd) {
+        bd = d;
+        best = e;
+      }
+    });
+    return best;
+  }
+
+  /** 绘制头顶小血条（跟随敌人位置） */
+  private drawHpBar(): void {
+    if (!this.hpBarBg || !this.hpBar) return;
+    const w = Math.max(20, (this.config?.size || 32) * 1.2);
+    const h = 3;
+    const x = this.x - w / 2;
+    const y = this.y - (this.config?.size || 32) / 2 - 9;
+    const pct = Math.max(0, Math.min(1, this.health / (this.maxHealth || 1)));
+    this.hpBarBg.clear();
+    this.hpBarBg.fillStyle(0x000000, 0.6);
+    this.hpBarBg.fillRect(x, y, w, h);
+    this.hpBar.clear();
+    const barColor = pct > 0.5 ? 0x44ff44 : pct > 0.25 ? 0xffaa33 : 0xff4444;
+    this.hpBar.fillStyle(barColor, 1);
+    this.hpBar.fillRect(x + 1, y + 1, Math.max(0, (w - 2) * pct), h - 2);
+  }
+
+  /** 隐藏头顶小血条 */
+  private hideHpBar(): void {
+    this.hpBarTimer = 0;
+    if (this.hpBarBg) this.hpBarBg.setVisible(false);
+    if (this.hpBar) this.hpBar.setVisible(false);
+  }
+
   update(time: number, delta: number, player: Player): void {
     if (!this.active || this.isDead) return;
 
@@ -108,6 +257,25 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
+    // 灼烧 DOT（持续火焰伤害，每 500ms 一跳）
+    if (this.burnTimer > 0) {
+      this.burnTimer -= delta;
+      this.burnTick -= delta;
+      if (this.burnTick <= 0) {
+        this.burnTick = 500;
+        this.takeDamage(this.burnDamage, false);
+        (this.scene as any).getFXManager?.()?.burn?.(this.x, this.y - 10);
+      }
+      if (this.burnTimer <= 0) this.burnDamage = 0;
+    }
+
+    // 头顶小血条：受伤后短暂显示，超时隐藏
+    if (this.hpBarTimer > 0) {
+      this.hpBarTimer -= delta;
+      this.drawHpBar();
+      if (this.hpBarTimer <= 0) this.hideHpBar();
+    }
+
     // AI 行为
     this.updateAI(time, delta, player);
 
@@ -117,7 +285,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.setVelocity(this.knockbackVx, this.knockbackVy);
     } else {
       // 时间减速（时间减速药水）：统一缩放敌人速度，不影响玩家与子弹
-      const slow = (this.scene as any).getSlowFactor?.() ?? 1;
+      let slow = (this.scene as any).getSlowFactor?.() ?? 1;
+      // 冰冻（冰冻被动）：额外大幅减速 + 倒计时，结束后恢复原色
+      if (this.freezeTimer > 0) {
+        this.freezeTimer -= delta;
+        slow *= 0.4;
+        if (this.freezeTimer <= 0) {
+          if (this.config?.color) this.setTint(this.config.color);
+          else this.clearTint();
+        }
+      }
       if (slow !== 1 && this.body) {
         this.setVelocity(this.body.velocity.x * slow, this.body.velocity.y * slow);
       }
@@ -362,6 +539,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   takeDamage(amount: number, isCrit: boolean = false, fromX?: number, fromY?: number): void {
     if (this.isDead) return;
+
+    // 受伤后短暂显示头顶小血条（Boss 用顶部大血条，不显示）
+    if (this.config?.type !== 'boss' && this.hpBarBg) {
+      this.hpBarTimer = 2000;
+      this.hpBarBg.setVisible(true);
+      this.hpBar.setVisible(true);
+    }
 
     // 防御：无效伤害（NaN/Infinity/<=0）直接忽略，防止污染血量（health -= NaN → 永久无敌）
     if (!isFinite(amount) || amount <= 0) return;

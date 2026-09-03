@@ -101,6 +101,51 @@ export class FXManager {
     });
   }
 
+  /** 灼烧火焰（灼烧 DOT 持续伤害）：橙红小火苗上飘 */
+  burn(x: number, y: number): void {
+    this.emit(x, y, 'particle_hit', 0xff6600, 5, {
+      lifespan: 350,
+      speedMin: 20,
+      speedMax: 70,
+      scaleStart: 0.6,
+      gravityY: -40,
+    });
+  }
+
+  /** 冰冻霜花（冰冻命中）：淡蓝冰晶迸发 */
+  frost(x: number, y: number): void {
+    this.emit(x, y, 'particle_hit', 0x88ddff, 6, {
+      lifespan: 300,
+      speedMin: 30,
+      speedMax: 90,
+      scaleStart: 0.7,
+    });
+  }
+
+  /** 弹射轨迹（淡蓝连线） */
+  bounce(x1: number, y1: number, x2: number, y2: number): void {
+    this.ray(x1, y1, x2, y2, 0x88ccff);
+  }
+
+  /** 闪电链（金黄折线） */
+  chainLightning(x1: number, y1: number, x2: number, y2: number): void {
+    this.ray(x1, y1, x2, y2, 0xffee55);
+  }
+
+  /** 一次性连线：淡出销毁（弹射/闪电链轨迹） */
+  private ray(x1: number, y1: number, x2: number, y2: number, color: number): void {
+    const g = this.scene.add.graphics();
+    g.lineStyle(2, color, 0.9);
+    g.lineBetween(x1, y1, x2, y2);
+    g.setDepth(50);
+    this.scene.tweens.add({
+      targets: g,
+      alpha: 0,
+      duration: 160,
+      onComplete: () => g.destroy(),
+    });
+  }
+
   // ========== 特效方法 ==========
 
   /** 子弹命中：普通黄点小爆，暴击金色更多更大（配合暴击数字） */

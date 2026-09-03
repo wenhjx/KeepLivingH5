@@ -382,6 +382,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const dist = Phaser.Math.Distance.Between(this.x, this.y, enemy.x, enemy.y);
       if (dist > range) return true;
       enemy.takeDamage(damage, false);
+      enemy.applyPlayerEffects?.(damage, this, this.x, this.y);
       const falloff = 1 - (dist / range) * 0.6;
       enemy.applyKnockback?.(this.x, this.y, 340 * falloff);
       return true;
@@ -419,6 +420,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
       if (angleDiff <= halfArc) {
         enemy.takeDamage(damage, false);
+        enemy.applyPlayerEffects?.(damage, this, this.x, this.y);
       }
       return true;
     });

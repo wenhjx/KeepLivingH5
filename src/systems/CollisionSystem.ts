@@ -67,6 +67,10 @@ export class CollisionSystem {
 
     enemy.takeDamage(finalDamage, isCrit, bullet.x, bullet.y);
 
+    // 玩家被动效果触发（吸血/冰冻/灼烧/闪电链/弹射）
+    const player = gameScene?.getPlayer?.();
+    if (player) enemy.applyPlayerEffects?.(finalDamage, player, bullet.x, bullet.y);
+
     // 命中音效（暴击更响）
     AudioManager.getInstance().playSfx(
       isCrit ? SOUND_KEYS.SFX_HIT_CRIT : SOUND_KEYS.SFX_HIT,
