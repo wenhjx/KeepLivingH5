@@ -84,74 +84,22 @@ export class UpgradeScene extends Phaser.Scene {
   }
 
   /**
-   * AI 升级选择策略：
-   * 1. 血量低于 40% → 优先生命强化
-   * 2. 已有武器 < 3 把 → 优先解锁新武器（高稀有度优先）
-   * 3. 已有武器 >= 3 把 → 优先升级已有武器（高稀有度武器优先升级，打造核心）
-   * 4. 都没有 → 按稀有度选属性
+   * AI 升级选择策略：完全随机 + 一条保命兜底
+   * 说明：当前没有明确的 build 导向（无羁绊/流派），玩家也未必知道"最高战力"，
+   * 硬编码稀有度/核心武器优先级反而可能选错。改为随机贴近真人手感，
+   * 仅保留血量危急时优先生命强化，避免 AI 无脑送死、局局早夭。
    */
   private selectBestUpgrade(options: any[], player: any): any {
     if (!options || options.length === 0) return null;
-    if (!player) return options[0];
+    if (!player) return options[Math.floor(Math.random() * options.length)];
 
-    const ownedWeapons = (player.getWeapons?.() || []) as any[];
-    const ownedIds = new Set(ownedWeapons.map((w: any) => w.id));
     const hpPercent = player.stats?.hp / player.stats?.maxHealth;
-
-    // 血量危急时优先生命强化
+    // 血量危急时优先生命强化（唯一保命兜底，其余完全随机）
     if (hpPercent < 0.4) {
-      const heal = options.find(o => o.id === 'max_hp');
+      const heal = options.find((o) => o.id === 'max_hp');
       if (heal) return heal;
     }
-
-    // 武器稀有度映射（用于决定哪把是"核心武器"）
-    const weaponRarity: Record<string, number> = {
-      default_gun: 1, shotgun: 2, machine_gun: 2,
-      boomerang: 3, drone: 3, rocket: 4, laser: 4, lightsaber: 3,
-    };
-
-    const newWeapons = options.filter(o =>
-      o.type === 'weapon' && o.effect?.weaponLevel === 1 && !ownedIds.has(o.effect?.weaponId)
-    );
-    const weaponUpgrades = options.filter(o =>
-      o.type === 'weapon' && o.effect?.weaponLevel > 1
-    );
-
-    if (ownedWeapons.length < 3 && newWeapons.length > 0) {
-      // 前期：优先解锁新武器，高稀有度优先
-      return newWeapons.sort((a, b) => this.rarityScore(b.rarity) - this.rarityScore(a.rarity))[0];
-    }
-
-    if (weaponUpgrades.length > 0) {
-      // 后期：优先升级已有武器，高稀有度武器（核心）优先
-      return weaponUpgrades.sort((a, b) => {
-        const ra = weaponRarity[a.effect?.weaponId] || 1;
-        const rb = weaponRarity[b.effect?.weaponId] || 1;
-        return rb - ra;
-      })[0];
-    }
-
-    // 还能解锁新武器但已有3把以上：也可以解锁，但优先级低于升级
-    if (newWeapons.length > 0) {
-      return newWeapons.sort((a, b) => this.rarityScore(b.rarity) - this.rarityScore(a.rarity))[0];
-    }
-
-    // 属性升级按稀有度
-    const stats = options.filter(o => o.type === 'stat')
-      .sort((a, b) => this.rarityScore(b.rarity) - this.rarityScore(a.rarity));
-    if (stats.length > 0) return stats[0];
-
-    return options[0];
-  }
-
-  private rarityScore(rarity: string): number {
-    switch (rarity) {
-      case 'legendary': return 4;
-      case 'epic': return 3;
-      case 'rare': return 2;
-      case 'common': return 1;
-      default: return 0;
-    }
+    return options[Math.floor(Math.random() * options.length)];
   }
 
   /** 获取可用的升级选项（过滤已满级武器/被动/stat 属性） */

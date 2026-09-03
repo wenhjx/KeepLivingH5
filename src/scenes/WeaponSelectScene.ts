@@ -92,19 +92,10 @@ export class WeaponSelectScene extends Phaser.Scene {
     return available.slice(0, 3);
   }
 
-  /** AI 武器选择：新武器（高稀有度优先）> 升级已有武器（高稀有度优先） */
+  /** AI 武器选择：完全随机选一把（无 build 导向，随机贴近真人手感） */
   private selectBestWeapon(options: UpgradeOption[], player: any): UpgradeOption | null {
     if (!options || options.length === 0) return null;
-    const ownedIds = new Set((player?.getWeapons?.() || []).map((w: any) => w.id));
-    const newWeapons = options.filter((o) => o.effect?.weaponId && !ownedIds.has(o.effect.weaponId));
-    if (newWeapons.length > 0) {
-      return newWeapons.sort((a, b) => this.rarity(b.rarity) - this.rarity(a.rarity))[0];
-    }
-    return options.slice().sort((a, b) => this.rarity(b.rarity) - this.rarity(a.rarity))[0];
-  }
-
-  private rarity(r: string): number {
-    return ({ common: 1, rare: 2, epic: 3, legendary: 4 } as any)[r] || 0;
+    return options[Math.floor(Math.random() * options.length)];
   }
 
   private onSelect(option: UpgradeOption): void {
