@@ -40,10 +40,14 @@ export class HUD {
   private bossBar!: Phaser.GameObjects.Graphics;
   private bossValueText!: Phaser.GameObjects.Text;
 
-  // 增益列表（武器/被动）
+  // 增益列表（被动）
   private buffContainer!: Phaser.GameObjects.Container;
   private buffIcons: Map<string, Phaser.GameObjects.Container> = new Map();
   private lastBuffCount: number = -1;
+
+  // 独立武器栏（武器系统分离展示：图标 + 等级；含 nova）
+  private weaponIcons: Map<string, Phaser.GameObjects.Container> = new Map();
+  private lastWeaponCount: number = -1;
 
   // buff 点击提示（tooltip）
   private tooltipContainer!: Phaser.GameObjects.Container;
@@ -65,6 +69,7 @@ export class HUD {
     boomerang: { icon: '🪃', color: 0x226622 },
     lightsaber: { icon: '🗡️', color: 0x006688 },
     drone: { icon: '🤖', color: 0x004466 },
+    nova: { icon: '💥', color: 0x883355 },
   };
 
   // 被动技能视觉映射（图标 + 背景色）
@@ -317,31 +322,20 @@ export class HUD {
         this.levelText.setText(`Lv.${player.getLevel()}`);
         this.coinText.setText(`💰 ${player.getCoins?.() ?? 0}`);
         this.updateBuffs(player);
+        this.updateWeapons(player);
       }
       // 唯一 Boss 顶部大血条
       this.updateBossBar(gameScene.getActiveBoss?.());
     }
   }
 
-  /** 更新增益列表（武器+被动；stat 属性已并入 C 键属性面板，不再占用 buff 条） */
+  /** 更新被动增益列表（stat 属性在 C 键面板；武器已独立为左侧武器栏） */
   private updateBuffs(player: any): void {
-    // nova（环形冲击波）是自动救急武器：不占 buff 格子，玩家从冲击波特效感知其存在
-    const weapons = (player.getWeapons?.() || []).filter((w: any) => w.id !== 'nova');
     const passives = player.getPassives?.() || [];
-    // stat 属性升级已由 C 键玩家属性面板（PlayerInfoScene）完整展示（含突破次数），
-    // 从 buff 条移除，只保留真增益（武器+被动），避免 buff 多时列表过长扎在屏幕中间
 
     // 合并为统一格式（附加 desc 描述，供点击提示显示）
-    const allBuffs = [
-      ...weapons.map((w: any) => ({
-        id: w.id,
-        name: w.name,
-        level: w.level,
-        maxLevel: w.maxLevel,
-        desc: WEAPONS[w.id]?.description || '',
-        ...this.weaponVisuals[w.id],
-      })),
-      ...passives.map((p: any) => {
+    const allBuffs = passives
+      .map((p: any) => {
         const opt = UPGRADE_OPTIONS.find((u) => u.id === p.id);
         return {
           id: p.id,
@@ -351,8 +345,8 @@ export class HUD {
           desc: opt?.description || '',
           ...this.passiveVisuals[p.id],
         };
-      }),
-    ].filter((b) => b.icon); // 过滤掉没有图标的未知项
+      })
+      .filter((b: any) => b.icon); // 过滤掉没有图标的未知项
 
     // 数量变化时重建列表
     if (allBuffs.length !== this.lastBuffCount) {
@@ -370,6 +364,67 @@ export class HUD {
           levelText.setText(b.bt > 0 ? `${b.level}+${b.bt}` : `${b.level}`);
         }
       }
+    });
+  }
+
+  /** 独立武器栏：显示所有已拥有武器（含 nova），图标 + 等级 */
+  private updateWeapons(player: any): void {
+    const weapons = player.getWeapons?.() || [];
+
+    let changed = weapons.length !== this.lastWeaponCount;
+    if (!changed) {
+      for (const w of weapons) {
+        const c = this.weaponIcons.get(w.id);
+        if (!c || c.getData('level') !== w.level) { changed = true; break; }
+      }
+    }
+    if (changed) {
+      this.rebuildWeaponBar(weapons);
+      this.lastWeaponCount = weapons.length;
+    }
+
+    // 更新等级文字
+    weapons.forEach((w: any) => {
+      const c = this.weaponIcons.get(w.id);
+      if (c) {
+        const lv = c.getAt(2) as Phaser.GameObjects.Text;
+        if (lv) lv.setText(`${w.level}`);
+      }
+    });
+  }
+
+  /** 重建武器栏（左侧竖排；武器数量固定≤9，逐项向下铺开） */
+  private rebuildWeaponBar(weapons: any[]): void {
+    this.weaponIcons.forEach((c) => c.destroy());
+    this.weaponIcons.clear();
+
+    // 位置：左下角横排（与右下角物品栏对称），避开左上角小地图与底部中央血条；后续可按需求调整
+    const barX = this.padding;
+    const barTopY = 560;
+    const col = new UILayout({ x: barX, y: barTopY, direction: 'row', itemSize: 34, spacing: 6 });
+
+    weapons.forEach((w: any) => {
+      const vis = this.weaponVisuals[w.id];
+      if (!vis?.icon) return;
+      const c = this.scene.add.container(0, 0);
+      const bg = this.scene.add.graphics();
+      bg.fillStyle(vis.color, 0.9);
+      bg.fillRoundedRect(-17, -17, 34, 34, 6);
+      bg.lineStyle(1, 0xffffff, 0.35);
+      bg.strokeRoundedRect(-17, -17, 34, 34, 6);
+      const icon = this.scene.add.text(0, -3, vis.icon, { fontSize: '19px' }).setOrigin(0.5);
+      const lv = this.scene.add.text(9, 10, `${w.level}`, {
+          fontSize: '10px',
+          color: '#ffffff',
+          fontStyle: 'bold',
+          stroke: '#000000',
+          strokeThickness: 2,
+        })
+        .setOrigin(0.5);
+      c.add([bg, icon, lv]);
+      c.setData('level', w.level);
+      this.weaponIcons.set(w.id, c);
+      col.place(c);
     });
   }
 

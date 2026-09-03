@@ -46,6 +46,8 @@ export interface DebugAPI {
   setTheme: (theme: 'pixel' | 'classic') => string;
   /** 为玩家添加当前所有可获得 buff（武器/被动/属性），默认各 1 级；跳过兜底项与初始武器 */
   giveAllBuffs: (level?: number) => string;
+  /** 触发一次武器强化三选一（击败 Boss 奖励；调试用） */
+  openWeaponSelect: () => string;
 }
 
 export function initDebugAPI(game: Phaser.Game): void {
@@ -254,6 +256,13 @@ export function initDebugAPI(game: Phaser.Game): void {
       }
       console.log(`[debug] 已为玩家添加 ${applied.length} 个 buff（${level} 级）: ${applied.join(', ')}`);
       return `${applied.length} buffs applied (${level} 级)`;
+    },
+    openWeaponSelect: () => {
+      const gs = getGameScene();
+      if (!gs) return 'no game scene';
+      const wave = (gs.waveManager?.getCurrentWave?.() || 0) + 1;
+      gs.openWeaponSelectAfterBoss?.(wave);
+      return `open weapon select before wave ${wave}`;
     },
   };
 

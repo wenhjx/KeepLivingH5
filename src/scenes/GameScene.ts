@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
+import { WEAPONS } from '../data/weapons';
 import { Player } from '../entities/Player';
 import type { Enemy } from '../entities/Enemy';
 import { ObjectPool } from '../systems/ObjectPool';
@@ -42,6 +43,10 @@ export class GameScene extends Phaser.Scene {
   private pendingShop = false;
   // 商店关闭后要开始的 Boss 波（0 = 无待开始）
   private pendingBossWave = 0;
+  // 武器强化选择待弹出（击败 Boss 后，与升级/商店/突破排队）
+  private pendingWeaponSelect = false;
+  // 武器强化选择完成后要开始的波（0 = 无待开始）
+  private pendingWeaponWave = 0;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -379,6 +384,15 @@ export class GameScene extends Phaser.Scene {
       }
     }));
 
+    // 武器强化选择完成：开始之前排队的下一波
+    sub(EventBus.on('weaponselect:closed', () => {
+      if (this.pendingWeaponWave > 0) {
+        const wave = this.pendingWeaponWave;
+        this.pendingWeaponWave = 0;
+        this.waveManager.startWave(wave);
+      }
+    }));
+
     // 子弹爆炸（火箭筒等）：范围伤害 + 视觉效果
     sub(EventBus.on('bullet:explode', (data: { x: number; y: number; damage: number; radius: number }) => {
       this.handleExplosion(data.x, data.y, data.damage, data.radius);
@@ -426,7 +440,7 @@ export class GameScene extends Phaser.Scene {
         return;
       }
       if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') ||
-          this.scene.isActive('BreakthroughScene')) return;
+          this.scene.isActive('WeaponSelectScene') || this.scene.isActive('BreakthroughScene')) return;
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
       const prevPaused = gm.isPaused; // 记录打开前状态，供关闭时恢复
       gm.setPaused(true);
@@ -508,6 +522,8 @@ export class GameScene extends Phaser.Scene {
     gm.endRun();
     this.pendingShop = false;
     this.pendingBossWave = 0;
+    this.pendingWeaponSelect = false;
+    this.pendingWeaponWave = 0;
 
     // 玩家死亡消散特效：青色粒子上升消散 + 本体淡出缩放到 0.15
     const p = this.player;
@@ -576,7 +592,7 @@ export class GameScene extends Phaser.Scene {
   private tryOpenShop(): void {
     if (!this.pendingShop) return;
     if (this.pendingLevelUps > 0 || this.upgradeQueued) return;
-    if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene')) return;
+    if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') || this.scene.isActive('WeaponSelectScene')) return;
     const gm = GameManager.getInstance();
     if (gm.isGameOver) return;
 
@@ -597,6 +613,34 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
+   * 击败 Boss 后的武器强化三选一：排队弹出 WeaponSelectScene，选完后开始指定波。
+   * 由 WaveManager 在 Boss 波结束后调用；全部武器已满级则直接进入下一波。
+   */
+  openWeaponSelectAfterBoss(wave: number): void {
+    const anyLeft = Object.values(WEAPONS).some((w) => !this.player.isWeaponMaxLevel(w.id));
+    if (!anyLeft) {
+      this.waveManager.startWave(wave);
+      return;
+    }
+    this.pendingWeaponSelect = true;
+    this.pendingWeaponWave = wave;
+    this.tryOpenWeaponSelect();
+  }
+
+  /** 武器强化排队：与升级/商店/突破面板错开，无冲突时启动武器选择场景 */
+  private tryOpenWeaponSelect(): void {
+    if (!this.pendingWeaponSelect) return;
+    if (this.pendingLevelUps > 0 || this.upgradeQueued) return;
+    if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') ||
+        this.scene.isActive('WeaponSelectScene') || this.scene.isActive('BreakthroughScene')) return;
+    const gm = GameManager.getInstance();
+    if (gm.isGameOver) return;
+    this.pendingWeaponSelect = false;
+    gm.setPaused(true);
+    this.scene.launch('WeaponSelectScene');
+  }
+
+  /**
    * Boss 死亡 → 弹出突破奖励（从已满级 stat 中选一个突破 +1 级）。
    * 与升级/商店排队：若当前有面板在显示则不打断；无可用突破项则跳过。
    */
@@ -605,7 +649,7 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(700, () => {
       const gm = GameManager.getInstance();
       if (gm.isGameOver) return;
-      if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') || this.scene.isActive('BreakthroughScene')) return;
+      if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') || this.scene.isActive('WeaponSelectScene') || this.scene.isActive('BreakthroughScene')) return;
       if (this.pendingLevelUps > 0 || this.upgradeQueued) return;
       const available = this.player.getAvailableBreakthroughs?.();
       if (!available || available.length === 0) return;

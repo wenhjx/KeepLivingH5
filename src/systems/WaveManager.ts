@@ -193,10 +193,14 @@ export class WaveManager {
 
     const next = this.currentWave + 1;
     const isBossWave = next % GameConfig.WAVE.bossWaveInterval === 0;
+    // 刚打完 Boss 波（当前波是 Boss 波）→ 弹武器强化三选一作为战力成长奖励
+    const justBeatBoss = this.currentWave % GameConfig.WAVE.bossWaveInterval === 0;
 
-    // 短暂间隔后开始下一波；Boss 波前先弹商店（战前补给点），商店关闭后再开打
+    // 短暂间隔后：Boss 波后→武器强化；Boss 波前→战前商店；普通→直接下一波
     this.scene.time.delayedCall(2000, () => {
-      if (isBossWave) {
+      if (justBeatBoss) {
+        (this.scene as any).openWeaponSelectAfterBoss?.(next);
+      } else if (isBossWave) {
         (this.scene as any).openShopBeforeBoss?.(next);
       } else {
         this.startWave(next);

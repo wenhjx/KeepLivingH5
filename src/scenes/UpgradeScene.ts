@@ -163,10 +163,9 @@ export class UpgradeScene extends Phaser.Scene {
     return UPGRADE_OPTIONS.filter((option) => {
       // 从升级候选池中排除的选项（如未实装系统的金币加成）
       if (UPGRADE_POOL_EXCLUDED.includes(option.id)) return false;
-      // 武器选项：已满级则过滤掉
-      if (option.type === 'weapon' && option.effect.weaponId) {
-        return !player.isWeaponMaxLevel(option.effect.weaponId);
-      }
+      // 武器已独立为武器系统（商店/宝箱/击败 Boss 后的武器强化三选一获取），
+      // 不再出现在普通升级三选一（升级专注被动/属性成长词条）
+      if (option.type === 'weapon') return false;
       // 被动选项：满级后不再出现（让出位置，避免玩家白选）
       if (option.type === 'passive') {
         return !player.isPassiveMaxLevel(option.id);
