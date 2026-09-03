@@ -11,6 +11,7 @@ import { ShopScene } from './scenes/ShopScene';
 import { BreakthroughScene } from './scenes/BreakthroughScene';
 import { PlayerInfoScene } from './scenes/PlayerInfoScene';
 import { WeaponSelectScene } from './scenes/WeaponSelectScene';
+import { EndlessChoiceScene } from './scenes/EndlessChoiceScene';
 import { DebugScene } from './scenes/DebugScene';
 import { GameManager } from './game/GameManager';
 import { initDebugAPI } from './utils/DebugAPI';
@@ -81,7 +82,7 @@ const config: Phaser.Types.Core.GameConfig = {
   input: {
     activePointers: 3,
   },
-  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene, WeaponSelectScene, ShopScene, BreakthroughScene, PlayerInfoScene, DebugScene],
+  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene, WeaponSelectScene, EndlessChoiceScene, ShopScene, BreakthroughScene, PlayerInfoScene, DebugScene],
   callbacks: {
     postBoot: (game) => {
       hideLoading();
@@ -91,4 +92,13 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 // 启动游戏
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+// 禁用"页面不可见/窗口失焦时自动暂停"：让游戏支持后台运行（切窗不暂停），
+// 方便后台挂机/自动游玩持续进行。Phaser 3.80 已移除 disableVisibilityChange 配置，
+// 改为移除其内部 HIDDEN/VISIBLE/BLUR/FOCUS 监听（onHidden/onVisible 会暂停/恢复主循环）。
+// 游戏内暂停仍由 GameManager.setPaused 控制，不受影响。
+game.events.off('hidden');
+game.events.off('visible');
+game.events.off('blur');
+game.events.off('focus');

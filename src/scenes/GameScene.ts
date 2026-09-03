@@ -49,6 +49,8 @@ export class GameScene extends Phaser.Scene {
   private pendingWeaponWave = 0;
   // 通关胜利已触发（防止与死亡路径重复进入结算）
   private victoryTriggered = false;
+  // 无尽模式：通关结算选择"继续征战"后为 true，波次无限增长不再触发通关
+  private endlessMode = false;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -96,6 +98,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 每局状态重置：Phaser 场景实例复用（scene.start 不重建对象，字段保留上次值），
+    // 必须显式清空，否则同页面重开后 endlessMode/victoryTriggered/待弹队列会残留。
+    this.endlessMode = false;
+    this.victoryTriggered = false;
+    this.pendingShop = false;
+    this.pendingBossWave = 0;
+    this.pendingWeaponSelect = false;
+    this.pendingWeaponWave = 0;
+    this.pendingLevelUps = 0;
+    this.upgradeQueued = false;
+    this.activeBoss = null;
+
     this.initSystems();
     this.createMap();
     this.createEntities();
@@ -395,6 +409,22 @@ export class GameScene extends Phaser.Scene {
       }
     }));
 
+    // 通关结算：继续征战 → 进入无尽模式，波次继续增长
+    sub(EventBus.on('endlesschoice:continue', () => {
+      const gm = GameManager.getInstance();
+      gm.setPaused(false);
+      this.scene.stop('EndlessChoiceScene');
+      this.enterEndlessMode();
+      this.waveManager.startWave(this.waveManager.getCurrentWave() + 1);
+    }));
+
+    // 通关结算：结束征程 → 结算胜利
+    sub(EventBus.on('endlesschoice:end', () => {
+      GameManager.getInstance().setPaused(false);
+      this.scene.stop('EndlessChoiceScene');
+      this.triggerVictory();
+    }));
+
     // 子弹爆炸（火箭筒等）：范围伤害 + 视觉效果
     sub(EventBus.on('bullet:explode', (data: { x: number; y: number; damage: number; radius: number }) => {
       this.handleExplosion(data.x, data.y, data.damage, data.radius);
@@ -574,6 +604,34 @@ export class GameScene extends Phaser.Scene {
       this.scene.stop('UIScene');
       this.scene.start('GameOverScene', { mode: 'victory' });
     });
+  }
+
+  /** 无尽模式访问器 */
+  isEndlessMode(): boolean {
+    return this.endlessMode;
+  }
+
+  /** 进入无尽模式（通关结算选"继续征战"后） */
+  enterEndlessMode(): void {
+    this.endlessMode = true;
+  }
+
+  /**
+   * 通关结算：打完第 victoryWave 波后由 WaveManager.nextWave 调用
+   * 弹出 EndlessChoiceScene（继续征战 / 结束征程）
+   */
+  openEndlessChoice(): void {
+    if (this.victoryTriggered) return;
+    const gm = GameManager.getInstance();
+    if (gm.isGameOver) return;
+    if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') ||
+        this.scene.isActive('WeaponSelectScene') || this.scene.isActive('BreakthroughScene') ||
+        this.scene.isActive('EndlessChoiceScene')) return;
+    // 先启动结算场景，再延迟一帧暂停：scene.launch 的场景要到下一帧才真正 RUNNING
+    //（isActive 才为 true）。若立即 setPaused(true)，run:pause 触发时 UIScene 识别不到
+    // 模态场景，暂停覆盖层会与结算面板重叠显示"游戏暂停/继续游戏"。
+    this.scene.launch('EndlessChoiceScene');
+    this.time.delayedCall(0, () => gm.setPaused(true));
   }
 
   /**

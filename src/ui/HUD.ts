@@ -305,15 +305,15 @@ export class HUD {
   update(): void {
     const gm = GameManager.getInstance();
     const runData = gm.runData;
+    const gameScene = this.scene.scene.get('GameScene') as any;
 
-    // 更新波次、击杀、分数
-    this.waveText.setText(`波次: ${runData.wave}`);
+    // 更新波次、击杀、分数（无尽模式追加 ∞ 标记）
+    this.waveText.setText(`波次: ${runData.wave}${gameScene?.isEndlessMode?.() ? ' ∞' : ''}`);
     this.killsText.setText(`击杀: ${runData.kills}`);
     this.scoreText.setText(`分数: ${runData.score}`);
     this.timeText.setText(this.formatTime(runData.survivalTime));
 
     // 更新玩家状态（从 GameScene 获取）
-    const gameScene = this.scene.scene.get('GameScene') as any;
     if (gameScene && gameScene.getPlayer) {
       const player = gameScene.getPlayer();
       if (player) {

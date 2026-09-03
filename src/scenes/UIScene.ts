@@ -184,7 +184,14 @@ export class UIScene extends Phaser.Scene {
     const sub = (fn: () => void) => this.eventUnsubscribers.push(fn);
 
     sub(EventBus.on('run:pause', (paused: boolean) => {
-      this.pauseOverlay.setVisible(paused);
+      // 模态场景打开时（商店/武器强化/通关结算/突破奖励），暂停覆盖层不显示——
+      // 这些场景自带半透明背景，否则会与"游戏暂停/继续游戏"文字重叠
+      const modalOpen =
+        this.scene.isActive('ShopScene') ||
+        this.scene.isActive('WeaponSelectScene') ||
+        this.scene.isActive('EndlessChoiceScene') ||
+        this.scene.isActive('BreakthroughScene');
+      this.pauseOverlay.setVisible(paused && !modalOpen);
       this.pauseButton.setVisible(!paused);
     }));
 

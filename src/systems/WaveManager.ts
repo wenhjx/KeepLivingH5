@@ -191,10 +191,11 @@ export class WaveManager {
   private nextWave(): void {
     this.waveActive = false;
 
-    // 通关判定：打完第 victoryWave 波 → 触发胜利结算，不再开下一波/战前商店/武器强化
-    if (this.currentWave >= GameConfig.WAVE.victoryWave) {
+    // 通关判定：打完第 victoryWave 波且未进入无尽 → 弹通关结算（继续征战/结束征程）
+    // 无尽模式下不拦截，波次继续无限增长，Boss 每 bossWaveInterval 波继续增强
+    if (this.currentWave >= GameConfig.WAVE.victoryWave && !(this.scene as any).isEndlessMode?.()) {
       this.scene.time.delayedCall(2000, () => {
-        (this.scene as any).triggerVictory?.();
+        (this.scene as any).openEndlessChoice?.();
       });
       return;
     }
