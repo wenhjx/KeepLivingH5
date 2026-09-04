@@ -10,13 +10,30 @@
 ## 一、环境准备
 
 ```bash
-# 启动开发服务器（在项目根目录，F:\Projects\keep-living-h5）
+# 推荐：带日志的守护启动（stdout/stderr 落盘 + 异常退出码记录）
+scripts\dev-server.cmd
+
+# 崩溃自动重启模式（异常退出后 3s 自动拉起）
+scripts\dev-server.cmd --watch
+
+# 直接启动（无日志，不推荐用于排查）
 node node_modules\vite\bin\vite.js --port 5173
 ```
 
 - 浏览器打开 `http://localhost:5173/`
 - **每次代码热更新后建议整页刷新**：Vite HMR 脏状态可能导致 `Player.scene` 运行时为 `undefined`（报 `Cannot read properties of undefined (reading 'sys')`），整页刷新可解，非代码 bug。
 - 浏览器内直接控制台输入 `window.__debug` 可查看全部可用方法。
+
+### dev server 偶发"无声消失"的调查结论（2026-09-04）
+
+现象：Vite dev server 运行中无任何报错突然进程消失（HTTP 连不上、node 进程列表为空）。
+排查结果：
+
+1. **无 Vite/esbuild 崩溃痕迹**：无 npm-debug 日志、无 WerFault 记录、无 JS heap OOM（内存充足，16G 空闲 6.9G）；
+2. **系统层有异常佐证**：同一时段系统事件日志出现 `LiveKernelEvent 117/141`（显卡驱动挂起/内核级崩溃）+ `AppTermFailureEvent`，环境为云电脑/还原卡场景，存在外部进程终止先例（历史多次"进程被锁"）；
+3. **结论**：大概率是**外部环境因素终止了 node 进程**，而非 Vite 热更新自身崩溃——同样的改动/刷新操作下，重启后的 server 一直稳定。
+
+对策：`scripts\dev-server.cmd` 把全部输出与退出码落盘到 `logs\vite-*.log`，再次异常消失时可凭日志区分"Vite 崩"与"外部杀"；`--watch` 模式可自动拉起。
 
 ---
 
