@@ -84,9 +84,9 @@ export class UpgradeScene extends Phaser.Scene {
   }
 
   /**
-   * AI 升级选择策略：完全随机 + 一条保命兜底
-   * 说明：当前没有明确的 build 导向（无羁绊/流派），玩家也未必知道"最高战力"，
-   * 硬编码稀有度/核心武器优先级反而可能选错。改为随机贴近真人手感，
+   * AI 升级选择策略：稀有度优先 + 一条保命兜底
+   * 优先拿高稀有度词条（epic > rare > common），因为稀有度越高数值/机制越强；
+   * 同稀有度多个时随机，保持 build 多样性。
    * 仅保留血量危急时优先生命强化，避免 AI 无脑送死、局局早夭。
    */
   private selectBestUpgrade(options: any[], player: any): any {
@@ -94,10 +94,17 @@ export class UpgradeScene extends Phaser.Scene {
     if (!player) return options[Math.floor(Math.random() * options.length)];
 
     const hpPercent = player.stats?.hp / player.stats?.maxHealth;
-    // 血量危急时优先生命强化（唯一保命兜底，其余完全随机）
+    // 血量危急时优先生命强化（保命兜底优先于稀有度）
     if (hpPercent < 0.4) {
       const heal = options.find((o) => o.id === 'max_hp');
       if (heal) return heal;
+    }
+
+    // 稀有度优先：从最高稀有度开始，取该档中的随机一项
+    const rarityOrder = ['common', 'rare', 'epic', 'legendary'];
+    for (let r = rarityOrder.length - 1; r >= 0; r--) {
+      const pool = options.filter((o) => o.rarity === rarityOrder[r]);
+      if (pool.length > 0) return pool[Math.floor(Math.random() * pool.length)];
     }
     return options[Math.floor(Math.random() * options.length)];
   }
