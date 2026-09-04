@@ -29,6 +29,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
   private aoeRadius: number = 0;
   // 回旋镖状态
   private returning: boolean = false;
+  // 追踪弹（Boss 技能）：每帧朝玩家转向
+  private homing: boolean = false;
+  private homingTurnRate: number = 0; // 弧度/秒
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0, GameConfig.themeKey('bullet'));
@@ -109,8 +112,15 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  /** 敌人子弹初始化 */
-  spawnEnemyBullet(x: number, y: number, angle: number, speed: number, damage: number): void {
+  /** 敌人子弹初始化（options：color 颜色 / homing 追踪 / homingTurnRate 转向速率弧度每秒 / scale 缩放） */
+  spawnEnemyBullet(
+    x: number,
+    y: number,
+    angle: number,
+    speed: number,
+    damage: number,
+    options?: { color?: number; homing?: boolean; homingTurnRate?: number; scale?: number }
+  ): void {
     this.isEnemyBullet = true;
     this.damage = damage;
     this.range = 800;
@@ -121,7 +131,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.boomerang = false;
     this.aoeRadius = 0;
     this.returning = false;
-    this.setScale(1);
+    this.homing = options?.homing || false;
+    this.homingTurnRate = options?.homingTurnRate || 0;
+    this.setScale(options?.scale ?? 1);
 
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
@@ -131,7 +143,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.setVisible(true);
     this.setDepth(7);
     this.setCircle(6);
-    this.setTint(0xff4444);
+    this.setTint(options?.color ?? 0xff4444);
     this.setRotation(angle);
     this.clearAlpha();
 
@@ -165,6 +177,25 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
           this.despawn();
           return;
         }
+      }
+    }
+
+    // 追踪弹：每帧朝玩家方向微调朝向（限速转向）
+    if (this.homing) {
+      const scene = this.scene as any;
+      const player = scene?.getPlayer?.();
+      if (player && player.active) {
+        const targetAngle = Math.atan2(player.y - this.y, player.x - this.x);
+        const curAngle = Math.atan2(this.vy, this.vx);
+        let diff = targetAngle - curAngle;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        const maxTurn = this.homingTurnRate * (delta / 1000);
+        const newAngle = curAngle + (diff > 0 ? Math.min(diff, maxTurn) : Math.max(diff, -maxTurn));
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        this.vx = Math.cos(newAngle) * speed;
+        this.vy = Math.sin(newAngle) * speed;
+        this.setRotation(newAngle);
       }
     }
 

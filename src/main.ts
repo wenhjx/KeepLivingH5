@@ -94,6 +94,9 @@ const config: Phaser.Types.Core.GameConfig = {
 // 启动游戏
 const game = new Phaser.Game(config);
 
+// 暴露游戏实例到全局，便于调试（Boss 战验证/压力测试等通过控制台驱动）
+window.__game = game;
+
 // 禁用"页面不可见/窗口失焦时自动暂停"：让游戏支持后台运行（切窗不暂停），
 // 方便后台挂机/自动游玩持续进行。Phaser 3.80 已移除 disableVisibilityChange 配置，
 // 改为移除其内部 HIDDEN/VISIBLE/BLUR/FOCUS 监听（onHidden/onVisible 会暂停/恢复主循环）。

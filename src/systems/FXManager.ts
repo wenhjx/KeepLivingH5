@@ -101,6 +101,28 @@ export class FXManager {
     });
   }
 
+  /**
+   * 地面AOE预警圈（Boss 技能）：红色实心淡圈 + 描边，闪烁警示，duration 后自动消失。
+   * 用于"蓄力后爆炸"类技能，给玩家走位反应时间。
+   */
+  telegraph(x: number, y: number, radius: number, duration: number = 800, color: number = 0xff4444): void {
+    const g = this.scene.add.graphics().setDepth(60);
+    g.fillStyle(color, 0.16);
+    g.fillCircle(x, y, radius);
+    g.lineStyle(3, color, 0.9);
+    g.strokeCircle(x, y, radius);
+    // 闪烁警示
+    this.scene.tweens.add({
+      targets: g,
+      alpha: 0.35,
+      yoyo: true,
+      repeat: -1,
+      duration: 160,
+    });
+    // 到期销毁
+    this.scene.time.delayedCall(duration, () => g.destroy());
+  }
+
   /** 灼烧火焰（灼烧 DOT 持续伤害）：橙红小火苗上飘 */
   burn(x: number, y: number): void {
     this.emit(x, y, 'particle_hit', 0xff6600, 5, {

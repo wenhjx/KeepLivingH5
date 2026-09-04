@@ -4,6 +4,7 @@ import { EventBus } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import { GameConfig } from '../game/GameConfig';
+import { GameManager } from '../game/GameManager';
 import { ENEMY_CONFIGS } from '../data/enemies';
 import type { EnemyConfig, EnemyType } from '../types';
 import type { Player } from './Player';
@@ -42,6 +43,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private affixAtkBoost = 1;
   private affixSpeedMult = 1;
   private affixText!: Phaser.GameObjects.Text;
+  // ===== Boss 专属：阶段系统 + 技能状态 =====
+  private bossPhase = 1;                              // 1/2/3（血量阈值 66%/33%）
+  private bossSkillLast: Record<string, number> = {}; // 各技能上次释放时间
+  private bossChargeState = 0;                        // 0 无 / 1 蓄力 / 2 冲锋中
+  private bossChargeTimer = 0;
+  private bossChargeAngle = 0;
+  private bossChargeSpeed = 0;
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0, GameConfig.themeKey('enemy_normal'));
@@ -123,6 +131,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       // 分裂：死亡分裂 2 只小怪、紫色视觉
       this.setTint(0xcc88ff);
     }
+    // Boss 专属状态重置（对象池复用，必须重置以免残留上一只的状态）
+    if (config.type === 'boss') {
+      this.bossPhase = 1;
+      this.bossSkillLast = {};
+      this.bossChargeState = 0;
+      this.bossChargeTimer = 0;
+      this.bossChargeAngle = 0;
+      this.bossChargeSpeed = 0;
+    }
+
     // 词缀图标（跟随头顶）
     const affixIcons: Record<string, string> = { enrage: '🔥', shield: '🛡️', split: '💥' };
     if (!this.affixText) {
@@ -146,6 +164,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.shieldPool = 0;
     this.affixAtkBoost = 1;
     this.affixSpeedMult = 1;
+    this.bossPhase = 1;
+    this.bossSkillLast = {};
+    this.bossChargeState = 0;
+    this.bossChargeTimer = 0;
     if (this.affixText) this.affixText.setVisible(false);
     this.hideHpBar();
     this.setActive(false);
@@ -302,7 +324,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.hitFlashTimer -= delta;
       if (this.hitFlashTimer <= 0) {
         this.clearTint();
-        if (this.config?.color) this.setTint(this.config.color);
+        if (this.config?.type === 'boss') {
+          this.setTint(this.getBossTint());
+        } else if (this.config?.color) {
+          this.setTint(this.config.color);
+        }
       }
     }
 
@@ -510,22 +536,192 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  /** Boss：多种攻击模式 */
+  /** Boss：阶段系统 + 多技能（环形/扇形/追踪弹/冲锋/召唤/地面AOE），随阶段与血量增强 */
   private bossAI(delta: number, player: Player, dist: number): void {
-    const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
-    const v = this.avoidObstacles(angle, speed);
-    this.setVelocity(v.vx, v.vy);
+    // 阶段检查（血量阈值切换，狂暴改变行为与数值）
+    this.updateBossPhase();
 
-    // 接触伤害
-    if (dist < this.config.attackRange && this.attackCooldown <= 0) {
+    const now = this.scene.time.now;
+    const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
+
+    // 冲锋状态机：蓄力中静止（带警示），冲锋中全速突进
+    if (this.bossChargeState === 1) {
+      this.setVelocity(0, 0);
+      this.bossChargeTimer -= delta;
+      if (this.bossChargeTimer <= 0) {
+        this.bossChargeState = 2;
+        this.bossChargeTimer = this.getBossChargeDuration();
+      }
+    } else if (this.bossChargeState === 2) {
+      this.setVelocity(
+        Math.cos(this.bossChargeAngle) * this.bossChargeSpeed,
+        Math.sin(this.bossChargeAngle) * this.bossChargeSpeed
+      );
+      this.bossChargeTimer -= delta;
+      if (this.bossChargeTimer <= 0) {
+        this.bossChargeState = 0;
+        this.setTint(this.getBossTint());
+      }
+    } else {
+      // 正常追踪玩家（移速带阶段加成）
+      const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult * this.getBossPhaseSpeed();
+      const v = this.avoidObstacles(angle, speed);
+      this.setVelocity(v.vx, v.vy);
+    }
+
+    // 接触伤害（蓄力时不出手）
+    if (dist < this.config.attackRange && this.attackCooldown <= 0 && this.bossChargeState !== 1) {
       this.attackPlayer(player);
     }
 
-    // 周期性弹幕（每3秒）
-    if (Math.floor(this.scene.time.now / 3000) !== Math.floor((this.scene.time.now - delta) / 3000)) {
-      this.bossBarrage();
+    // 技能轮转：各技能独立CD，随阶段缩短
+    const cd = (key: string, base: number) => now - (this.bossSkillLast[key] || 0) >= this.getBossCD(base);
+    const mark = (key: string) => { this.bossSkillLast[key] = now; };
+
+    // 环形弹幕（全阶段）
+    if (cd('ring', 3000)) { this.bossBarrage(); mark('ring'); }
+    // 扇形弹幕（阶段2+）
+    if (this.bossPhase >= 2 && cd('fan', 2600)) { this.bossFan(player); mark('fan'); }
+    // 追踪弹（阶段2+）
+    if (this.bossPhase >= 2 && cd('homing', 4500)) { this.bossHoming(player); mark('homing'); }
+    // 冲锋（阶段2+，破除放风筝）
+    if (this.bossPhase >= 2 && this.bossChargeState === 0 && cd('charge', 5000)) {
+      this.bossChargeStart(player);
+      mark('charge');
     }
+    // 召唤小怪（Boss战持续压力）
+    if (cd('summon', 7000)) { this.bossSummon(); mark('summon'); }
+    // 地面AOE（阶段3狂暴）
+    if (this.bossPhase >= 3 && cd('aoe', 3500)) { this.bossAOE(player); mark('aoe'); }
+  }
+
+  /** Boss 当前阶段（1/2/3，血量阈值 66%/33%） */
+  private updateBossPhase(): void {
+    const hpPct = this.maxHealth > 0 ? this.health / this.maxHealth : 1;
+    let target = 1;
+    if (hpPct <= 0.33) target = 3;
+    else if (hpPct <= 0.66) target = 2;
+    if (target === this.bossPhase) return;
+    this.bossPhase = target;
+    this.setTint(this.getBossTint());
+    // 阶段切换特效：冲击波 + 狂暴大红圈
+    (this.scene as any).getFXManager?.()?.shockwave?.(this.x, this.y, this.config.size * 2, target === 3 ? 0xff2222 : 0xff8844);
+    if (target === 3) {
+      (this.scene as any).getFXManager?.()?.telegraph?.(this.x, this.y, 130, 1000, 0xff2222);
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_BOSS_ALERT, 1);
+    }
+  }
+
+  /** Boss 阶段色调（受击闪烁恢复时也用） */
+  private getBossTint(): number {
+    if (this.bossPhase >= 3) return 0xff2222;
+    if (this.bossPhase === 2) return 0xff8844;
+    return 0xff4444;
+  }
+
+  /** Boss 阶段移速倍率 */
+  private getBossPhaseSpeed(): number {
+    if (this.bossPhase >= 3) return 1.35;
+    if (this.bossPhase === 2) return 1.15;
+    return 1;
+  }
+
+  /** Boss 技能CD随阶段缩短 */
+  private getBossCD(base: number): number {
+    if (this.bossPhase >= 3) return base * 0.6;
+    if (this.bossPhase === 2) return base * 0.8;
+    return base;
+  }
+
+  /** Boss 技能伤害（含阶段攻击加成） */
+  private getBossSkillDamage(mult: number): number {
+    const phaseAtk = this.bossPhase >= 3 ? 1.5 : this.bossPhase === 2 ? 1.2 : 1;
+    return this.config.attackPower * mult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost * phaseAtk;
+  }
+
+  /** 扇形弹幕：朝玩家方向散射 */
+  private bossFan(player: Player): void {
+    const scene = this.scene as any;
+    if (!scene || !scene.getObjectPool) return;
+    const pool = scene.getObjectPool();
+    const baseAngle = MathUtils.angle(this.x, this.y, player.x, player.y);
+    const count = this.bossPhase >= 3 ? 7 : 5;
+    const spread = Math.PI / 6;
+    const dmg = this.getBossSkillDamage(0.4);
+    for (let i = 0; i < count; i++) {
+      const t = i / (count - 1);
+      const angle = baseAngle + (t - 0.5) * 2 * spread;
+      pool.spawnEnemyBullet(this.x, this.y, angle, 280, dmg, { color: 0xffaa44 });
+    }
+  }
+
+  /** 追踪弹：朝玩家发射并持续转向 */
+  private bossHoming(player: Player): void {
+    const scene = this.scene as any;
+    if (!scene || !scene.getObjectPool) return;
+    const pool = scene.getObjectPool();
+    const baseAngle = MathUtils.angle(this.x, this.y, player.x, player.y);
+    const count = this.bossPhase >= 3 ? 5 : 3;
+    const dmg = this.getBossSkillDamage(0.4);
+    for (let i = 0; i < count; i++) {
+      const angle = baseAngle + (i - (count - 1) / 2) * 0.25;
+      pool.spawnEnemyBullet(this.x, this.y, angle, 240, dmg, { color: 0x66ff66, homing: true, homingTurnRate: 3.2 });
+    }
+  }
+
+  /** 冲锋：蓄力警示后高速突进（破除放风筝） */
+  private bossChargeStart(player: Player): void {
+    this.bossChargeAngle = MathUtils.angle(this.x, this.y, player.x, player.y);
+    this.bossChargeState = 1;
+    this.bossChargeTimer = 500; // 蓄力 0.5s（玩家有反应时间）
+    this.bossChargeSpeed = 380 + this.difficultyMultiplier * 12;
+    this.setTint(0xffffff); // 蓄力闪白警示
+    (this.scene as any).getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size, 500, 0xffaa00);
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_BOSS_ALERT, 0.8);
+  }
+
+  private getBossChargeDuration(): number {
+    return 650;
+  }
+
+  /** 召唤小怪：Boss战补充压力（受同屏上限约束，避免无限膨胀） */
+  private bossSummon(): void {
+    const scene = this.scene as any;
+    if (!scene || !scene.getObjectPool) return;
+    const pool = scene.getObjectPool();
+    const gm = GameManager.getInstance();
+    const maxEnemies = gm.qualitySettings.maxEnemies;
+    if (pool.getActiveEnemyCount() >= maxEnemies * 0.6) return;
+    const types: EnemyType[] = ['normal', 'fast', 'elite'];
+    for (let i = 0; i < 2; i++) {
+      const type = types[Math.floor(Math.random() * types.length)];
+      const cfg = ENEMY_CONFIGS[type];
+      if (!cfg) continue;
+      const ang = Math.random() * Math.PI * 2;
+      const off = this.config.size + 40;
+      pool.spawnEnemy(cfg, this.x + Math.cos(ang) * off, this.y + Math.sin(ang) * off, this.difficultyMultiplier * 0.7);
+    }
+    (this.scene as any).getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size + 30, 400, 0xcc44ff);
+  }
+
+  /** 地面AOE：锁定玩家当前位置预警后爆炸（阶段3） */
+  private bossAOE(player: Player): void {
+    const scene = this.scene as any;
+    const fx = scene?.getFXManager?.();
+    const radius = 110;
+    const dmg = this.getBossSkillDamage(1);
+    const x = player.x;
+    const y = player.y;
+    fx?.telegraph?.(x, y, radius, 800, 0xff2222);
+    this.scene.time.delayedCall(800, () => {
+      if (this.isDead || !this.active) return;
+      fx?.explosion?.(x, y, radius);
+      const p = scene?.getPlayer?.();
+      if (p && p.active) {
+        const d = MathUtils.distance(x, y, p.x, p.y);
+        if (d <= radius) p.takeDamage(dmg);
+      }
+    });
   }
 
   /**
@@ -564,14 +760,17 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     return { vx, vy };
   }
 
+  /** 环形弹幕（密度/速度随阶段提升，轻微旋转增加观赏性） */
   private bossBarrage(): void {
     const scene = this.scene as any;
     if (!scene || !scene.getObjectPool) return;
     const pool = scene.getObjectPool();
-    // 8方向弹幕
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      pool.spawnEnemyBullet(this.x, this.y, angle, 200, this.config.attackPower * 0.5 * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost);
+    const count = this.bossPhase >= 3 ? 16 : this.bossPhase === 2 ? 12 : 8;
+    const speed = this.bossPhase >= 3 ? 250 : this.bossPhase === 2 ? 220 : 190;
+    const dmg = this.getBossSkillDamage(0.5);
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + this.scene.time.now * 0.00025;
+      pool.spawnEnemyBullet(this.x, this.y, angle, speed, dmg, { color: 0xff4444 });
     }
   }
 

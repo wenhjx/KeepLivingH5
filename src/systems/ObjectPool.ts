@@ -160,7 +160,14 @@ export class ObjectPool {
 
   // ========== 敌人子弹 ==========
 
-  spawnEnemyBullet(x: number, y: number, angle: number, speed: number, damage: number): Bullet | null {
+  spawnEnemyBullet(
+    x: number,
+    y: number,
+    angle: number,
+    speed: number,
+    damage: number,
+    options?: { color?: number; homing?: boolean; homingTurnRate?: number; scale?: number }
+  ): Bullet | null {
     let bullet = this.enemyBulletPool.find((b) => !b.active);
 
     if (!bullet) {
@@ -173,7 +180,7 @@ export class ObjectPool {
       }
     }
 
-    bullet.spawnEnemyBullet(x, y, angle, speed, damage);
+    bullet.spawnEnemyBullet(x, y, angle, speed, damage, options);
     this.bulletGroup?.add(bullet);
 
     return bullet;
