@@ -1,11 +1,9 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
-import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { UILayout } from '../utils/UILayout';
 import { GameConfig } from '../game/GameConfig';
-import { TextSmoothing } from '../utils/UIText';
 
 /**
  * HUD 抬头显示
@@ -47,10 +45,6 @@ export class HUD {
   private buffContainer!: Phaser.GameObjects.Container;
   private buffIcons: Map<string, Phaser.GameObjects.Container> = new Map();
   private lastBuffCount: number = -1;
-
-  // 独立武器栏（武器系统分离展示：图标 + 等级；含 nova）
-  private weaponIcons: Map<string, Phaser.GameObjects.Container> = new Map();
-  private lastWeaponCount: number = -1;
 
   // buff 点击提示（tooltip）
   private tooltipContainer!: Phaser.GameObjects.Container;
@@ -334,7 +328,6 @@ export class HUD {
         this.levelText.setText(`Lv.${player.getLevel()}`);
         this.coinText.setText(`💰 ${player.getCoins?.() ?? 0}`);
         this.updateBuffs(player);
-        this.updateWeapons(player);
       }
       // 唯一 Boss 顶部大血条
       this.updateBossBar(gameScene.getActiveBoss?.());
@@ -352,24 +345,41 @@ export class HUD {
     }
   }
 
-  /** 更新被动增益列表（stat 属性在 C 键面板；武器已独立为左侧武器栏） */
+  /** 更新血条上方增益列表（被动 + 武器统一展示；stat 属性在 C 键面板） */
   private updateBuffs(player: any): void {
     const passives = player.getPassives?.() || [];
+    const weapons = player.getWeapons?.() || [];
 
     // 合并为统一格式（附加 desc 描述，供点击提示显示）
-    const allBuffs = passives
-      .map((p: any) => {
-        const opt = UPGRADE_OPTIONS.find((u) => u.id === p.id);
-        return {
-          id: p.id,
-          name: p.name,
-          level: p.level,
-          maxLevel: p.maxLevel,
-          desc: opt?.description || '',
-          ...this.passiveVisuals[p.id],
-        };
-      })
-      .filter((b: any) => b.icon); // 过滤掉没有图标的未知项
+    const allBuffs: Array<{ id: string; name: string; level: number; maxLevel?: number; desc: string; icon: string; color: number; bt?: number }> = [];
+    passives.forEach((p: any) => {
+      const opt = UPGRADE_OPTIONS.find((u) => u.id === p.id);
+      const vis = this.passiveVisuals[p.id];
+      if (!vis?.icon) return; // 过滤没有图标的未知项
+      allBuffs.push({
+        id: p.id,
+        name: p.name,
+        level: p.level,
+        maxLevel: p.maxLevel,
+        desc: opt?.description || '',
+        icon: vis.icon,
+        color: vis.color,
+      });
+    });
+    weapons.forEach((w: any) => {
+      const opt = UPGRADE_OPTIONS.find((u) => u.type === 'weapon' && u.effect?.weaponId === w.id);
+      const vis = this.weaponVisuals[w.id];
+      if (!vis?.icon) return;
+      allBuffs.push({
+        id: w.id,
+        name: opt?.name || w.name || w.id,
+        level: w.level,
+        maxLevel: w.maxLevel,
+        desc: opt?.description || '',
+        icon: vis.icon,
+        color: vis.color,
+      });
+    });
 
     // 数量变化时重建列表
     if (allBuffs.length !== this.lastBuffCount) {
@@ -383,75 +393,9 @@ export class HUD {
       if (icon) {
         const levelText = icon.getAt(2) as Phaser.GameObjects.Text;
         if (levelText) {
-          // 有突破次数时显示 "5+2"（升级满级5 + 突破2），否则仅显示等级
           levelText.setText(b.bt > 0 ? `${b.level}+${b.bt}` : `${b.level}`);
         }
       }
-    });
-  }
-
-  /** 独立武器栏：显示所有已拥有武器（含 nova），图标 + 等级 */
-  private updateWeapons(player: any): void {
-    const weapons = player.getWeapons?.() || [];
-
-    let changed = weapons.length !== this.lastWeaponCount;
-    if (!changed) {
-      for (const w of weapons) {
-        const c = this.weaponIcons.get(w.id);
-        if (!c || c.getData('level') !== w.level) { changed = true; break; }
-      }
-    }
-    if (changed) {
-      this.rebuildWeaponBar(weapons);
-      this.lastWeaponCount = weapons.length;
-    }
-
-    // 更新等级文字
-    weapons.forEach((w: any) => {
-      const c = this.weaponIcons.get(w.id);
-      if (c) {
-        const lv = c.getAt(2) as Phaser.GameObjects.Text;
-        if (lv) lv.setText(`${w.level}`);
-      }
-    });
-  }
-
-  /** 重建武器栏（左侧竖排；武器数量固定≤9，逐项向下铺开） */
-  private rebuildWeaponBar(weapons: any[]): void {
-    this.weaponIcons.forEach((c) => c.destroy());
-    this.weaponIcons.clear();
-
-    // 位置：左下角横排（与右下角物品栏对称），避开左上角小地图与底部中央血条；后续可按需求调整
-    const barX = this.padding;
-    const barTopY = 560;
-    const col = new UILayout({ x: barX, y: barTopY, direction: 'row', itemSize: 34, spacing: 6 });
-
-    weapons.forEach((w: any) => {
-      const vis = this.weaponVisuals[w.id];
-      if (!vis?.icon) return;
-      const c = this.scene.add.container(0, 0);
-      const bg = this.scene.add.graphics();
-      bg.fillStyle(vis.color, 0.9);
-      bg.fillRoundedRect(-17, -17, 34, 34, 6);
-      bg.lineStyle(1, 0xffffff, 0.35);
-      bg.strokeRoundedRect(-17, -17, 34, 34, 6);
-      const icon = this.scene.add.text(0, -3, vis.icon, { fontSize: '19px' }).setOrigin(0.5)
-        .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
-      TextSmoothing.apply(icon);
-      const lv = this.scene.add.text(9, 10, `${w.level}`, {
-          fontSize: '10px',
-          color: '#ffffff',
-          fontStyle: 'bold',
-          stroke: '#000000',
-          strokeThickness: 2,
-        })
-        .setOrigin(0.5)
-        .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
-      TextSmoothing.apply(lv);
-      c.add([bg, icon, lv]);
-      c.setData('level', w.level);
-      this.weaponIcons.set(w.id, c);
-      col.place(c);
     });
   }
 
