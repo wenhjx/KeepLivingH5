@@ -63,5 +63,10 @@ export const DEFAULT_TERRAIN: TerrainConfig = {
     { id: 'rock_10', x: 1500, y: 2500, width: 120, height: 60, type: 'rock' },
     { id: 'rock_11', x: 500, y: 1500, width: 60, height: 120, type: 'rock' },
     { id: 'rock_12', x: 2500, y: 1500, width: 60, height: 120, type: 'rock' },
+    // 可破坏木箱（奖励点：击破掉金币/经验/血包/宝箱，分布在中部与四区之间）
+    { id: 'crate_01', x: 1150, y: 900, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
+    { id: 'crate_02', x: 1950, y: 1150, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
+    { id: 'crate_03', x: 1150, y: 2050, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
+    { id: 'crate_04', x: 2050, y: 1950, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
   ],
 };

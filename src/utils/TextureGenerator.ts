@@ -374,6 +374,19 @@ export class TextureGenerator {
       palette: { M: 0x9a6bff, W: 0xd8baff, D: 0x3d1a66 },
       scale: 4,
     },
+    obstacle_crate: {
+      grid: [
+        'BBBBBBBBBBBBBBBB',
+        'BHHWWWWWBWWWWWW',
+        'BHWWWWWWBWWWWWW',
+        'BBBBBBBBBBBBBBBB',
+        'BWWWWWWWBWWWWWW',
+        'BWWWWWWWBWWWWWW',
+        'BBBBBBBBBBBBBBBB',
+      ],
+      palette: { B: 0x5a3d1f, W: 0xa97a3e, H: 0xd9b077 },
+      scale: 4,
+    },
   };
 
   private generateEnemies(): void {
@@ -1424,6 +1437,8 @@ export class TextureGenerator {
     this.generateWall('obstacle_wall_classic', 0x4a4a5e, 160, 40);
     // 水晶障碍物
     this.generateCrystal('obstacle_crystal_classic', 0x8844ff, 60, 90);
+    // 木箱障碍物（可破坏，classic 主题）
+    this.generateCrate('obstacle_crate_classic', 0x8a6a3a, 90, 70);
   }
 
   private generateRock(key: string, color: number, w: number, h: number): void {
@@ -1553,6 +1568,38 @@ export class TextureGenerator {
     // 核心发光
     g.fillStyle(0xffffff, 0.6);
     g.fillCircle(cx, cy - h * 0.05, w * 0.12);
+
+    g.generateTexture(key, w + pad * 2, h + pad * 2);
+    g.destroy();
+  }
+
+  private generateCrate(key: string, color: number, w: number, h: number): void {
+    const pad = 6;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = (w + pad * 2) / 2;
+    const cy = (h + pad * 2) / 2;
+
+    // 外发光
+    g.fillStyle(color, 0.15);
+    g.fillRoundedRect(pad - 1, pad - 1, w + 2, h + 2, 6);
+
+    // 主体（木质箱体）
+    g.fillStyle(color, 1);
+    g.fillRoundedRect(pad, pad, w, h, 5);
+
+    // 横向木板纹理
+    g.lineStyle(2, 0x000000, 0.25);
+    g.lineBetween(pad, cy - h * 0.25, pad + w, cy - h * 0.25);
+    g.lineBetween(pad, cy, pad + w, cy);
+    g.lineBetween(pad, cy + h * 0.25, pad + w, cy + h * 0.25);
+
+    // 金属包边（四角 + 边缘）
+    g.lineStyle(3, 0x2b1a0a, 0.7);
+    g.strokeRoundedRect(pad, pad, w, h, 5);
+
+    // 高光（左上）
+    g.fillStyle(0xffffff, 0.12);
+    g.fillRoundedRect(pad + 3, pad + 2, w * 0.4, 5, 2);
 
     g.generateTexture(key, w + pad * 2, h + pad * 2);
     g.destroy();

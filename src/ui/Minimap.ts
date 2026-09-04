@@ -61,10 +61,10 @@ export class Minimap {
     const scaleX = this.width / this.mapWidth;
     const scaleY = this.height / this.mapHeight;
 
-    // 障碍物轮廓
+    // 障碍物轮廓（可破坏木箱用暖棕色区分）
     if (terrainManager) {
-      g.fillStyle(0x556677, 0.55);
       for (const obs of terrainManager.getObstacles()) {
+        g.fillStyle(obs.type === 'crate' ? 0x8a6a3a : 0x556677, 0.55);
         const ox = this.x + obs.x * scaleX;
         const oy = this.y + obs.y * scaleY;
         const ow = Math.max(1, obs.width * scaleX);

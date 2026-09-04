@@ -334,12 +334,28 @@ export class GameScene extends Phaser.Scene {
     // 玩家/敌人被障碍物阻挡
     this.physics.add.collider(this.player, obstacleGroup);
     this.physics.add.collider(this.enemies, obstacleGroup);
-    // 子弹碰到障碍物销毁（爆炸子弹先触发爆炸）
+    // 子弹碰到障碍物：可破坏木箱扣血（血空销毁并掉落），不可破坏的销毁（爆炸子弹先爆炸）
     this.physics.add.overlap(
       this.bullets,
       obstacleGroup,
-      (bullet) => {
+      (bullet, obstacle) => {
         const b = bullet as any;
+        const obs = obstacle as Phaser.GameObjects.Image;
+        // 可破坏障碍物（木箱）：受击扣血，血空销毁并掉落奖励
+        if (obs.getData?.('destructible')) {
+          const dmg = b.getDamage?.() ?? b.damage ?? 1;
+          const destroyed = this.terrainManager.damageObstacle(obs, dmg);
+          if (destroyed) {
+            this.dropCrateLoot(obs.x, obs.y);
+          } else {
+            // 受击反馈：白闪
+            obs.setTintFill(0xffffff);
+            this.time.delayedCall(60, () => obs.clearTint());
+          }
+          b.despawn?.();
+          return;
+        }
+        // 不可破坏障碍物：原逻辑
         if (b.explosive) {
           EventBus.emit('bullet:explode', {
             x: b.x,
@@ -960,12 +976,45 @@ export class GameScene extends Phaser.Scene {
         nx /= nlen;
         ny /= nlen;
       }
+      // 墙体避让：目标方向被障碍物阻挡时逐步旋转探测可通行方向（沿墙滑动），
+      // 避免"玩家与敌人被墙隔开时 AI 顶着墙蹭、卡死在墙一侧"。
+      const steered = this.avoidWall(this.player.x, this.player.y, nx, ny);
+      nx = steered.x;
+      ny = steered.y;
       this.aiCurrentDir = { x: nx, y: ny };
       this.inputManager.setAIDirection(nx, ny);
     } else {
       this.aiCurrentDir = { x: 0, y: 0 };
       this.inputManager.clearAIDirection();
     }
+  }
+
+  /**
+   * AI 墙体避让：目标方向前方被障碍物阻挡时，逐步旋转（±15°~±90°）探测第一个可通行方向，
+   * 让 AI 沿墙滑动绕行而非顶着墙蹭。四周都被堵（被包围）时保持原方向交给物理系统处理。
+   */
+  private avoidWall(px: number, py: number, nx: number, ny: number): { x: number; y: number } {
+    const PROBE = 56; // 探测距离：大于玩家半宽 + 余量，表示"前方这么远是否被挡"
+    if (!this.isPositionBlocked(px + nx * PROBE, py + ny * PROBE)) {
+      return { x: nx, y: ny };
+    }
+    for (const deg of [15, 30, 45, 60, 75, 90]) {
+      for (const sign of [1, -1]) {
+        const rad = (deg * sign * Math.PI) / 180;
+        const tx = nx * Math.cos(rad) - ny * Math.sin(rad);
+        const ty = nx * Math.sin(rad) + ny * Math.cos(rad);
+        if (!this.isPositionBlocked(px + tx * PROBE, py + ty * PROBE)) {
+          return { x: tx, y: ty };
+        }
+      }
+    }
+    return { x: nx, y: ny };
+  }
+
+  /** 该点半径 R 内是否与静态障碍物（岩石/墙/木箱）重叠（只检测静态障碍物，忽略动态物体） */
+  private isPositionBlocked(x: number, y: number): boolean {
+    const R = 22;
+    return this.physics.overlapRect(x - R, y - R, R * 2, R * 2, false, true).length > 0;
   }
 
   /** 获取最近敌人距离 */
@@ -1082,5 +1131,24 @@ export class GameScene extends Phaser.Scene {
       }
     }
     this.objectPool.spawnPickup(config, x, y);
+  }
+
+  /** 木箱破坏掉落：金币（必掉）+ 概率经验/血包/宝箱 */
+  private dropCrateLoot(x: number, y: number): void {
+    if (!this.objectPool) return;
+    this.spawnPickup(
+      { type: 'coin', texture: 'pickup_coin', value: 2 + Math.floor(Math.random() * 4), magnetSpeed: 300 },
+      x,
+      y
+    );
+    if (Math.random() < 0.4) {
+      this.spawnPickup({ type: 'exp', texture: 'pickup_exp', value: 4, magnetSpeed: 300 }, x + 12, y - 10);
+    }
+    if (Math.random() < 0.08) {
+      this.spawnPickup({ type: 'health', texture: 'pickup_health', value: 20, magnetSpeed: 300 }, x - 12, y + 8);
+    }
+    if (Math.random() < 0.05) {
+      this.spawnPickup({ type: 'chest', texture: 'pickup_chest', value: 0, magnetSpeed: 200 }, x + 8, y + 10);
+    }
   }
 }

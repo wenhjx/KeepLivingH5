@@ -31,7 +31,7 @@ export class TerrainManager {
   private static readonly TEXTURE_MAP: Record<string, string> = {
     rock: 'obstacle_rock',
     wall: 'obstacle_wall',
-    crate: 'obstacle_rock', // 暂用岩石纹理代替木箱
+    crate: 'obstacle_crate',
     crystal: 'obstacle_crystal',
   };
 
@@ -45,6 +45,13 @@ export class TerrainManager {
         .image(obs.x, obs.y, textureKey)
         .setDisplaySize(obs.width, obs.height)
         .setDepth(1);
+
+      // 可破坏物标记（木箱）
+      if (obs.destructible) {
+        img.setData('destructible', true);
+        img.setData('health', obs.health ?? 30);
+        img.setData('obstacleId', obs.id);
+      }
 
       // 加入静态物理组
       this.obstacleGroup.add(img);
@@ -66,6 +73,24 @@ export class TerrainManager {
   /** 障碍物配置列表（供小地图渲染轮廓） */
   getObstacles(): ObstacleConfig[] {
     return this.obstacleList;
+  }
+
+  /**
+   * 可破坏障碍物（木箱）受击：扣血；血空销毁并从碰撞组/列表移除（小地图同步消失）。
+   * @returns 是否被破坏（血空）
+   */
+  damageObstacle(img: Phaser.GameObjects.Image, damage: number): boolean {
+    if (!img.getData?.('destructible')) return false;
+    const hp = (img.getData('health') as number) - damage;
+    img.setData('health', hp);
+    if (hp > 0) return false;
+    // 血空：先取 id（销毁后 data 会被清空），再从列表移除（小地图同步消失）
+    const id = img.getData('obstacleId') as string;
+    this.obstacleGroup.remove(img, true, true);
+    if (id) {
+      this.obstacleList = this.obstacleList.filter((o) => o.id !== id);
+    }
+    return true;
   }
 
   /** 切换地形（以后新增区域时调用，会销毁旧障碍物并创建新的） */
