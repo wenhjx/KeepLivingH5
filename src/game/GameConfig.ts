@@ -19,7 +19,7 @@ export class GameConfig {
    * 两套纹理并存于 TextureGenerator，实体按当前主题解析纹理 key，
    * 可运行时切换（DebugAPI.setTheme），切换后新实体生效、已有实体即时 setTexture。
    */
-  static VISUAL_THEME: 'pixel' | 'classic' = 'pixel';
+  static VISUAL_THEME: 'pixel' | 'classic' = 'classic';
   /** 按当前主题解析纹理 key：classic 使用 `_classic` 后缀的矢量纹理，pixel 使用原像素纹理 */
   static themeKey(base: string): string {
     return GameConfig.VISUAL_THEME === 'classic' ? `${base}_classic` : base;

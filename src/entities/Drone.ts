@@ -23,6 +23,10 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
   private hitRadius: number = 24; // 接触伤害半径
   private shootCooldown: number = 0; // 自动射击冷却（毫秒）
   private shootInterval: number = 1000; // 自动射击间隔（毫秒）
+  // 子弹吸收（防御拦截）：每架独立冷却 + 有限半径，避免弹幕被全挡导致失衡
+  private absorbCooldown: number = 0; // 吸收冷却（毫秒）
+  private absorbInterval: number = 400; // 每次吸收间隔（毫秒）
+  private absorbRadius: number = 34; // 吸收半径（像素，随等级微增）
 
   constructor(scene: Phaser.Scene, player: Player, config: WeaponConfig, level: number, index: number, total: number) {
     super(scene, player.x, player.y, GameConfig.themeKey('drone'));
@@ -72,6 +76,43 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
     if (this.shootCooldown <= 0) {
       this.shootCooldown = this.shootInterval;
       this.autoShoot();
+    }
+
+    // 吸收敌方子弹（防御拦截）：冷却驱动，每架独立，避免弹幕被全挡
+    this.absorbCooldown -= delta;
+    if (this.absorbCooldown <= 0) {
+      this.absorbEnemyBullets();
+      this.absorbCooldown = this.absorbInterval;
+    }
+  }
+
+  /** 吸收附近敌方子弹（平衡：冷却 + 半径限制 + 每次最多 1 发） */
+  private absorbEnemyBullets(): void {
+    const scene = this.scene as any;
+    if (!scene || !scene.getBullets) return;
+    const bullets = scene.getBullets();
+    if (!bullets) return;
+
+    let absorbed = false;
+    bullets.children.each((b: any) => {
+      if (!b?.active) return true;
+      if (!b.isFromEnemy?.()) return true; // 只拦截敌方子弹
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, b.x, b.y);
+      if (dist <= this.absorbRadius) {
+        b.despawn?.(); // 回收进对象池而非直接销毁
+        absorbed = true;
+        return false; // 每架每冷却周期最多吸收 1 发
+      }
+      return true;
+    });
+
+    if (absorbed) {
+      // 反馈：白闪 + 命中粒子（复用 FXManager，不新增系统）
+      this.setTint(0xffffff);
+      this.scene.time.delayedCall(80, () => {
+        if (this.active) this.setTint(0x66ffff);
+      });
+      scene.getFXManager?.()?.hit(this.x, this.y, false);
     }
   }
 
@@ -157,10 +198,11 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
   /** 更新无人机等级（武器升级时调用） */
   upgrade(level: number, total: number): void {
     this.level = level;
-    // 升级时略微增加环绕速度、伤害半径和射击频率
+    // 升级时略微增加环绕速度、伤害半径、射击频率与吸收半径
     this.orbitSpeed = 3.5 + level * 0.3;
     this.hitRadius = 24 + level * 2;
     this.shootInterval = Math.max(600, 1000 - level * 50);
+    this.absorbRadius = 34 + level * 2;
   }
 
   /** 重新均匀排布环绕角度（新增无人机时由 Player 统一调用，保证轨道分布均匀美观） */
