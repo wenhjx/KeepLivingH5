@@ -92,8 +92,14 @@ export class ShopScene extends Phaser.Scene {
     // AI 自动玩：进入商店后自动购物（按稀有度购买 → 刷新 → 直到金币耗尽）
     const gameScene = this.scene.get('GameScene') as any;
     if (gameScene?.isAutoPlay?.()) {
-      this.time.delayedCall(600, () => this.runAIShopping());
+      this.triggerAutoPlay();
     }
+  }
+
+  /** 自动购物入口：create 时已开托管，或托管开启时商店已弹出（由 GameScene 广播触发）都会走到这里；runAIShopping 自带防重 */
+  triggerAutoPlay(): void {
+    if (this.aiShoppingStarted) return;
+    this.time.delayedCall(600, () => this.runAIShopping());
   }
 
   // ========== AI 自动购物 ==========

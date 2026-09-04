@@ -28,6 +28,8 @@ export class WeaponSelectScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = setupUICamera(this);
+    // 场景实例会复用：stop 后再 launch 重新走 create，自动选择标记必须重置
+    this.autoTriggered = false;
 
     // 半透明背景
     this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0);
@@ -56,24 +58,35 @@ export class WeaponSelectScene extends Phaser.Scene {
     // AI 自动玩：选择一把武器（新武器优先，其次升级核心）
     const gameScene = this.scene.get('GameScene') as any;
     if (gameScene?.isAutoPlay?.()) {
-      this.time.delayedCall(800, () => {
-        const shown = this.upgradePanel.getOptions();
-        const best = this.selectBestWeapon(shown, gameScene.getPlayer?.());
-        if (best) {
-          const idx = shown.indexOf(best);
-          if (idx >= 0) {
-            console.log(`[AI 托管] 武器选择: ${best.icon} ${best.name}`);
-            this.upgradePanel.setSelectedIndex(idx, true);
-            this.time.delayedCall(1000, () => {
-              if (this.upgradePanel.isVisible() && this.upgradePanel.getSelectedIndex() === idx) {
-                console.log(`[AI 托管] 确认武器: ${best.icon} ${best.name}`);
-                this.upgradePanel.confirmSelection();
-              }
-            });
-          }
-        }
-      });
+      this.triggerAutoPlay();
     }
+  }
+
+  /** 已触发过自动选择（防重） */
+  private autoTriggered = false;
+
+  /** 自动选择逻辑：create 时已开托管，或托管开启时面板已弹出（由 GameScene 广播触发）都会走到这里 */
+  triggerAutoPlay(): void {
+    if (this.autoTriggered) return;
+    this.autoTriggered = true;
+    const gameScene = this.scene.get('GameScene') as any;
+    this.time.delayedCall(800, () => {
+      const shown = this.upgradePanel.getOptions();
+      const best = this.selectBestWeapon(shown, gameScene?.getPlayer?.());
+      if (best) {
+        const idx = shown.indexOf(best);
+        if (idx >= 0) {
+          console.log(`[AI 托管] 武器选择: ${best.icon} ${best.name}`);
+          this.upgradePanel.setSelectedIndex(idx, true);
+          this.time.delayedCall(1000, () => {
+            if (this.upgradePanel.isVisible() && this.upgradePanel.getSelectedIndex() === idx) {
+              console.log(`[AI 托管] 确认武器: ${best.icon} ${best.name}`);
+              this.upgradePanel.confirmSelection();
+            }
+          });
+        }
+      }
+    });
   }
 
   /** 生成武器候选（新武器 + 已有武器升级，过滤已满级） */

@@ -822,6 +822,14 @@ export class GameScene extends Phaser.Scene {
     this.aiCurrentDir = { x: 0, y: 0 };
     if (!enabled) {
       this.inputManager.clearAIDirection();
+    } else {
+      // 对当前已弹出的选择界面（升级/商店/武器强化/突破/无尽）即时广播托管开启。
+      // 各选择场景只在 create 时检查一次托管状态，若"先弹出选择界面、后开托管"会卡住。
+      this.scene.manager.getScenes(true).forEach((sc) => {
+        if (sc !== this && typeof (sc as any).triggerAutoPlay === 'function') {
+          (sc as any).triggerAutoPlay();
+        }
+      });
     }
   }
 

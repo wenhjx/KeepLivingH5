@@ -27,6 +27,8 @@ export class BreakthroughScene extends Phaser.Scene {
   create(): void {
     // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
     const { width, height } = setupUICamera(this);
+    // 场景实例会复用：stop 后再 launch 重新走 create，自动选择标记必须重置
+    this.autoTriggered = false;
 
     // 半透明背景
     this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0);
@@ -62,18 +64,28 @@ export class BreakthroughScene extends Phaser.Scene {
 
     // AI 自动玩：突破选择策略简单（选第一个可突破项即可），延迟 0.8s 选中 + 1s 后确认
     if (gameScene?.isAutoPlay?.()) {
-      this.time.delayedCall(800, () => {
-        const shown = this.upgradePanel.getOptions();
-        if (shown.length > 0 && this.upgradePanel.isVisible()) {
-          this.upgradePanel.setSelectedIndex(0, true);
-          this.time.delayedCall(1000, () => {
-            if (this.upgradePanel.isVisible() && this.upgradePanel.getSelectedIndex() === 0) {
-              this.upgradePanel.confirmSelection();
-            }
-          });
-        }
-      });
+      this.triggerAutoPlay();
     }
+  }
+
+  /** 已触发过自动选择（防重） */
+  private autoTriggered = false;
+
+  /** 自动选择逻辑：create 时已开托管，或托管开启时面板已弹出（由 GameScene 广播触发）都会走到这里 */
+  triggerAutoPlay(): void {
+    if (this.autoTriggered) return;
+    this.autoTriggered = true;
+    this.time.delayedCall(800, () => {
+      const shown = this.upgradePanel.getOptions();
+      if (shown.length > 0 && this.upgradePanel.isVisible()) {
+        this.upgradePanel.setSelectedIndex(0, true);
+        this.time.delayedCall(1000, () => {
+          if (this.upgradePanel.isVisible() && this.upgradePanel.getSelectedIndex() === 0) {
+            this.upgradePanel.confirmSelection();
+          }
+        });
+      }
+    });
   }
 
   /** 选择突破项：应用突破 + 顶部提示 + 关闭面板 */

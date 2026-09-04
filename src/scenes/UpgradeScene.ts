@@ -29,6 +29,8 @@ export class UpgradeScene extends Phaser.Scene {
   create(): void {
     // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
     const { width, height } = setupUICamera(this);
+    // 场景实例会复用：stop 后再 launch 重新走 create，自动选择标记必须重置
+    this.autoTriggered = false;
 
     // 半透明背景
     this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0);
@@ -62,25 +64,36 @@ export class UpgradeScene extends Phaser.Scene {
     // 流程：延迟0.8秒选中（显示"即将选择..."）→ 再延迟1秒自动确认
     const gameScene = this.scene.get('GameScene') as any;
     if (gameScene?.isAutoPlay?.()) {
-      this.time.delayedCall(800, () => {
-        const shownOptions = this.upgradePanel.getOptions();
-        const best = this.selectBestUpgrade(shownOptions, gameScene.getPlayer?.());
-        if (best) {
-          const idx = shownOptions.indexOf(best);
-          if (idx >= 0) {
-            console.log(`[AI 托管] 选中升级: ${best.icon} ${best.name}`);
-            this.upgradePanel.setSelectedIndex(idx, true);
-            // 1秒后自动确认
-            this.time.delayedCall(1000, () => {
-              if (this.upgradePanel.isVisible() && this.upgradePanel.getSelectedIndex() === idx) {
-                console.log(`[AI 托管] 确认选择: ${best.icon} ${best.name}`);
-                this.upgradePanel.confirmSelection();
-              }
-            });
-          }
-        }
-      });
+      this.triggerAutoPlay();
     }
+  }
+
+  /** 已触发过自动选择（防重：create 触发后，托管开启广播不再重复调度） */
+  private autoTriggered = false;
+
+  /** 自动选择逻辑：create 时已开托管，或托管开启时面板已弹出（由 GameScene 广播触发）都会走到这里 */
+  triggerAutoPlay(): void {
+    if (this.autoTriggered) return;
+    this.autoTriggered = true;
+    const gameScene = this.scene.get('GameScene') as any;
+    this.time.delayedCall(800, () => {
+      const shownOptions = this.upgradePanel.getOptions();
+      const best = this.selectBestUpgrade(shownOptions, gameScene?.getPlayer?.());
+      if (best) {
+        const idx = shownOptions.indexOf(best);
+        if (idx >= 0) {
+          console.log(`[AI 托管] 选中升级: ${best.icon} ${best.name}`);
+          this.upgradePanel.setSelectedIndex(idx, true);
+          // 1秒后自动确认
+          this.time.delayedCall(1000, () => {
+            if (this.upgradePanel.isVisible() && this.upgradePanel.getSelectedIndex() === idx) {
+              console.log(`[AI 托管] 确认选择: ${best.icon} ${best.name}`);
+              this.upgradePanel.confirmSelection();
+            }
+          });
+        }
+      }
+    });
   }
 
   /**

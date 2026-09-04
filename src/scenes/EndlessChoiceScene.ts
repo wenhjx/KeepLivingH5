@@ -16,6 +16,8 @@ export class EndlessChoiceScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = setupUICamera(this);
+    // 场景实例会复用：stop 后再 launch 重新走 create，自动选择标记必须重置
+    this.autoTriggered = false;
     const centerX = width / 2;
 
     // 半透明背景
@@ -52,13 +54,23 @@ export class EndlessChoiceScene extends Phaser.Scene {
     // AI 自动玩：直接选择继续征战（配合调试面板自动游玩跑无尽测试）
     const gameScene = this.scene.get('GameScene') as any;
     if (gameScene?.isAutoPlay?.()) {
-      this.time.delayedCall(1500, () => {
-        if (this.scene.isActive()) {
-          console.log('[AI 托管] 通关结算 → 继续征战无尽模式');
-          EventBus.emit('endlesschoice:continue');
-        }
-      });
+      this.triggerAutoPlay();
     }
+  }
+
+  /** 已触发过自动选择（防重） */
+  private autoTriggered = false;
+
+  /** 自动选择逻辑：create 时已开托管，或托管开启时面板已弹出（由 GameScene 广播触发）都会走到这里 */
+  triggerAutoPlay(): void {
+    if (this.autoTriggered) return;
+    this.autoTriggered = true;
+    this.time.delayedCall(1500, () => {
+      if (this.scene.isActive()) {
+        console.log('[AI 托管] 通关结算 → 继续征战无尽模式');
+        EventBus.emit('endlesschoice:continue');
+      }
+    });
   }
 
   private createChoiceButton(x: number, y: number, label: string, color: number, event: string): void {
