@@ -163,7 +163,7 @@ export class DebugPanel {
     col.step(this.btnHeight + this.btnSpacing);
     this.addRow(col, { text: '⏪ 减速', fn: () => this.adjustSpeed(-0.25) }, { text: '⏩ 加速', fn: () => this.adjustSpeed(0.25) });
     this.addRow(col, { text: '🐢 0.5×', fn: () => this.setGameSpeed(0.5) }, { text: '🐇 2×', fn: () => this.setGameSpeed(2) });
-    this.addRow(col, { text: '▶ 1×', fn: () => this.setGameSpeed(1) }, { text: '🚀 4×', fn: () => this.setGameSpeed(4) });
+    this.addRow(col, { text: '▶ 1×', fn: () => this.setGameSpeed(1) });
     // 高倍速下 AI 决策粒度误差随物理位移放大、易跟不上，自动游玩建议 ≤2×（倍速定位为调试/观察）
     const tip = createUIText(this.scene, 0, col.y, '⚠ 自动游玩建议 ≤2×（高倍速决策易跟不上）', {
         fontSize: '10px',
@@ -246,8 +246,8 @@ export class DebugPanel {
     const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
     // 商店道具（FALLBACK_UPGRADES）2 行
     const shopRows = Math.ceil(FALLBACK_UPGRADES.length / 2);
-    // 游戏速度区 = 当前值行 + 3 行按钮 + 提示行（计 5 行）
-    return 28 + sectionH(6) + sectionH(5) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
+    // 游戏速度区 = 当前值行 + 2 行按钮 + 提示行（计 4 行）
+    return 28 + sectionH(6) + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
   }
 
   /** 分区标题（content 内） */
