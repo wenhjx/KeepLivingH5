@@ -733,6 +733,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     passives: Array<{ id: string; name: string; level: number }>;
     statUpgrades?: Array<{ id: string; name: string; level: number }>;
     breakthroughs?: Array<{ id: string; name: string; level: number }>;
+    inventory?: Array<{ id: string; count: number }>;
   }): void {
     if (saved.stats) {
       // 防御：存档中非法数值（null/NaN 等）不覆盖当前基础属性，
@@ -783,6 +784,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         if (opt?.maxLevel) {
           this.breakthroughs.set(b.id, { id: b.id, name: b.name, level: b.level, maxLevel: opt.maxLevel });
         }
+      }
+    }
+    // 重建背包道具（旧存档无 inventory 字段则跳过；负数/0 数量防御）
+    this.inventory.clear();
+    if (saved.inventory) {
+      for (const it of saved.inventory) {
+        if (it && it.id && it.count > 0) this.inventory.set(it.id, it.count);
       }
     }
     // 同步无人机数量

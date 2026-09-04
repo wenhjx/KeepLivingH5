@@ -179,5 +179,7 @@ export interface SavedRun {
     statUpgrades?: Array<{ id: string; name: string; level: number }>;
     /** Boss 突破奖励记录（已满级 stat 的额外成长，突破上限=原 maxLevel，受 Boss 数量硬限制） */
     breakthroughs?: Array<{ id: string; name: string; level: number }>;
+    /** 背包道具（商店购买的鸡腿/护盾/炸弹等，随存档保留） */
+    inventory?: Array<{ id: string; count: number }>;
   };
 }

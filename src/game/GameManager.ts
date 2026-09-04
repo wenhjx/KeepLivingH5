@@ -224,6 +224,7 @@ export class GameManager {
         passives: player.getPassives().map((p) => ({ id: p.id, name: p.name, level: p.level })),
         statUpgrades: player.getStatUpgrades().map((s) => ({ id: s.id, name: s.name, level: s.level })),
         breakthroughs: player.getBreakthroughs().map((b) => ({ id: b.id, name: b.name, level: b.level })),
+        inventory: player.getInventory(),
       },
     };
     this._saveSystem.save(data);
