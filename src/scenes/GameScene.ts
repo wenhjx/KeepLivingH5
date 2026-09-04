@@ -590,6 +590,9 @@ export class GameScene extends Phaser.Scene {
       gm.saveProgress();
       gm.saveRun(this.player);
     }
+
+    // 物理倍速：所有实体已在本帧 setVelocity 原始值，统一缩放 body 速度以维持 gameSpeed 倍移动
+    this.applySpeedToBodies();
   }
 
   private onPlayerDeath(): void {
@@ -649,12 +652,42 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  /** 设置全局游戏速度（0.25~4 倍速调试）：同步 Arcade 物理 / 补间动画，逻辑层 delta 在 update 中缩放 */
+  /**
+   * 设置全局游戏速度（0.25~4 倍速调试）。
+   * 三层联动：① 补间 tweens.timeScale；② 逻辑层 delta 在 update 中缩放；③ 物理移动靠每帧统一缩放 body velocity。
+   * 注意：Arcade world.timeScale 是"帧率节流"参数（msPerFrame = frameTime * timeScale），并非时间缩放，
+   * 设大反而让物理更新变稀疏、body 移动变慢（实测 4x 时敌人位移反而约为 1/4），故绝不使用它变速。
+   */
   setGameSpeed(speed: number): void {
-    this.gameSpeed = Phaser.Math.Clamp(speed, 0.25, 4);
-    this.physics.world.timeScale = this.gameSpeed;
+    const target = Phaser.Math.Clamp(speed, 0.25, 4);
+    const ratio = target / this.gameSpeed;
+    this.gameSpeed = target;
+    // 把场上所有 body 的当前速度与速度上限按倍率缩放（实体每帧会 setVelocity 原始值，由 applySpeedToBodies 逐帧维持）
+    const bodies = this.physics.world.bodies.entries;
+    for (let i = 0; i < bodies.length; i++) {
+      const b = bodies[i] as any;
+      if (b && b.enable && b.moves) {
+        b.velocity.x *= ratio;
+        b.velocity.y *= ratio;
+        b.maxVelocity.x *= ratio;
+        b.maxVelocity.y *= ratio;
+      }
+    }
     this.tweens.timeScale = this.gameSpeed;
     EventBus.emit('game:speed', this.gameSpeed);
+  }
+
+  /** 每帧在实体 update 之后调用：body 速度统一缩放回 gameSpeed 倍（实体每帧 setVelocity 原始值会覆盖，需逐帧乘以维持倍速） */
+  private applySpeedToBodies(): void {
+    if (this.gameSpeed === 1) return;
+    const bodies = this.physics.world.bodies.entries;
+    for (let i = 0; i < bodies.length; i++) {
+      const b = bodies[i] as any;
+      if (b && b.enable && b.moves && (b.velocity.x !== 0 || b.velocity.y !== 0)) {
+        b.velocity.x *= this.gameSpeed;
+        b.velocity.y *= this.gameSpeed;
+      }
+    }
   }
 
   /** 获取当前游戏速度 */
