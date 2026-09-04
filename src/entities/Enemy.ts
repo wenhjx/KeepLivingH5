@@ -387,6 +387,20 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.attackCooldown > 0) {
       this.attackCooldown -= delta;
     }
+
+    // 地图边界约束：防冲锋/击退把敌人推出地图外（尤其 Boss 冲锋会沿固定方向一路冲出，
+    // 之后追踪逻辑因 dist 过大失效、在地图外无限漂移，玩家看不到本体、小地图也无标记）
+    const mapSize = (this.scene as any).getMapSize?.();
+    if (mapSize && this.body) {
+      const m = 24; // 边界留白（约一个敌人半径）
+      const cx = Phaser.Math.Clamp(this.x, m, mapSize.width - m);
+      const cy = Phaser.Math.Clamp(this.y, m, mapSize.height - m);
+      if (cx !== this.x || cy !== this.y) {
+        this.x = cx;
+        this.y = cy;
+        this.body.position.set(cx, cy);
+      }
+    }
   }
 
   private updateAI(time: number, delta: number, player: Player): void {
