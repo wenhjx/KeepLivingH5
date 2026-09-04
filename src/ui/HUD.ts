@@ -4,6 +4,7 @@ import { GameManager } from '../game/GameManager';
 import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { UILayout } from '../utils/UILayout';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * HUD 抬头显示
@@ -412,7 +413,8 @@ export class HUD {
       bg.fillRoundedRect(-17, -17, 34, 34, 6);
       bg.lineStyle(1, 0xffffff, 0.35);
       bg.strokeRoundedRect(-17, -17, 34, 34, 6);
-      const icon = this.scene.add.text(0, -3, vis.icon, { fontSize: '19px' }).setOrigin(0.5);
+      const icon = this.scene.add.text(0, -3, vis.icon, { fontSize: '19px' }).setOrigin(0.5)
+        .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
       const lv = this.scene.add.text(9, 10, `${w.level}`, {
           fontSize: '10px',
           color: '#ffffff',
@@ -420,7 +422,8 @@ export class HUD {
           stroke: '#000000',
           strokeThickness: 2,
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
       c.add([bg, icon, lv]);
       c.setData('level', w.level);
       this.weaponIcons.set(w.id, c);

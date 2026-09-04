@@ -144,7 +144,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 词缀图标（跟随头顶）
     const affixIcons: Record<string, string> = { enrage: '🔥', shield: '🛡️', split: '💥' };
     if (!this.affixText) {
-      this.affixText = this.scene.add.text(0, 0, '', { fontSize: '12px', fontFamily: 'Arial' }).setDepth(6).setOrigin(0.5);
+      this.affixText = this.scene.add.text(0, 0, '', { fontSize: '12px', fontFamily: 'Arial' }).setDepth(6).setOrigin(0.5)
+        .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
     }
     const affixIcon = affixIcons[this.affix] || '';
     this.affixText.setText(affixIcon)

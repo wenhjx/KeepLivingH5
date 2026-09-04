@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 浮动伤害数字管理器（池化）
@@ -25,6 +26,7 @@ export class DamageTextManager {
       });
       text.setOrigin(0.5);
       text.setDepth(20);
+      text.setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
     }
 
     const value = String(Math.round(damage));
@@ -73,6 +75,7 @@ export class DamageTextManager {
       });
       t.setOrigin(0.5);
       t.setDepth(20);
+      t.setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
     }
     t.setColor(color);
     t.setFontSize(15);
