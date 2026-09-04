@@ -42,8 +42,8 @@ export class WeaponSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // 提示
-    createUIText(this, width / 2, 118, '击败强敌，选择一把武器强化', {
+    // 提示（通用：Boss 后/前期武器奖励节点均会弹出，不特指"击败强敌"）
+    createUIText(this, width / 2, 118, '选择一把武器强化', {
         fontSize: '16px',
         color: '#aaaaaa',
       })

@@ -91,7 +91,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       critDamage: GameConfig.PLAYER.baseCritDamage,
       pickupRadius: GameConfig.PLAYER.pickupRadius,
       luck: 0,
-      coins: 0,
+      coins: 30,
     };
 
     scene.add.existing(this);

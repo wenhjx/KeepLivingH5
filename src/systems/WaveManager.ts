@@ -204,10 +204,15 @@ export class WaveManager {
     const isBossWave = next % GameConfig.WAVE.bossWaveInterval === 0;
     // 刚打完 Boss 波（当前波是 Boss 波）→ 弹武器强化三选一作为战力成长奖励
     const justBeatBoss = this.currentWave % GameConfig.WAVE.bossWaveInterval === 0;
+    // 前期武器前置：非 Boss 波的第 3、7 波结束也发一次武器强化，
+    // 避免玩家前期只有初始武器、干等到第 5/10 波商店/ Boss 才拿到武器（"前期太穷/到十波才有武器"）
+    const justWeaponReward = this.currentWave === 3 || this.currentWave === 7;
 
-    // 短暂间隔后：Boss 波后→武器强化；Boss 波前→战前商店；普通→直接下一波
+    // 短暂间隔后：Boss 波后→武器强化；前期武器奖励波→武器强化；Boss 波前→战前商店；普通→直接下一波
     this.scene.time.delayedCall(2000, () => {
       if (justBeatBoss) {
+        (this.scene as any).openWeaponSelectAfterBoss?.(next);
+      } else if (justWeaponReward) {
         (this.scene as any).openWeaponSelectAfterBoss?.(next);
       } else if (isBossWave) {
         (this.scene as any).openShopBeforeBoss?.(next);

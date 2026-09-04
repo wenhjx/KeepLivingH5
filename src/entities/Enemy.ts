@@ -987,9 +987,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private getCoinDrop(): { chance: number; min: number; max: number } | null {
     switch (this.config?.type) {
       case 'normal':
-        return { chance: 0.3, min: 2, max: 5 };
+        // 前期经济：普通怪掉率/数量上调，缓解第一个商店（wave5 前）太穷买不起
+        return { chance: 0.45, min: 3, max: 6 };
       case 'fast':
-        return { chance: 0.3, min: 2, max: 4 };
+        return { chance: 0.4, min: 3, max: 5 };
       case 'tank':
         return { chance: 0.5, min: 4, max: 7 };
       case 'ranged':
