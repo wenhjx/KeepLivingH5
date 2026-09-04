@@ -25,6 +25,7 @@ export class InventoryUI {
     key: Phaser.GameObjects.Text;
     itemId: string;
   }> = [];
+  private unsubscribe: () => void = () => {};
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -56,8 +57,8 @@ export class InventoryUI {
       this.createSlot(x, y, itemId, index);
     });
 
-    // 监听物品栏变化
-    EventBus.on('player:inventoryChanged', () => this.refresh());
+    // 监听物品栏变化（保存退订函数，场景关闭时移除，避免残留监听访问已销毁对象导致 texture null 崩溃）
+    this.unsubscribe = EventBus.on('player:inventoryChanged', () => this.refresh());
 
     // 快捷键 1-6（物品栏槽位数）
     const keys = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];
@@ -132,6 +133,8 @@ export class InventoryUI {
   refresh(): void {
     const player = this.getPlayer();
     this.slots.forEach((slot) => {
+      // 场景已关闭/Text 已销毁时不再刷新（texture 可能已释放为 null，setText 会崩溃）
+      if (!slot.icon.scene || !slot.icon.active || !slot.count.scene || !slot.count.active) return;
       const count = player?.getItemCount(slot.itemId) ?? 0;
       if (count > 0) {
         slot.icon.setAlpha(1);
@@ -158,6 +161,7 @@ export class InventoryUI {
   }
 
   destroy(): void {
+    this.unsubscribe();
     this.container.destroy();
   }
 }
