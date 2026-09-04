@@ -3,6 +3,7 @@ import {
   type TerrainConfig,
   type ObstacleConfig,
 } from '../data/terrain';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 地形管理器
@@ -39,7 +40,7 @@ export class TerrainManager {
     this.obstacleGroup = this.scene.physics.add.staticGroup();
 
     for (const obs of this.config.obstacles) {
-      const textureKey = TerrainManager.TEXTURE_MAP[obs.type] || 'obstacle_rock';
+      const textureKey = GameConfig.themeKey(TerrainManager.TEXTURE_MAP[obs.type] || 'obstacle_rock');
       const img = this.scene.add
         .image(obs.x, obs.y, textureKey)
         .setDisplaySize(obs.width, obs.height)

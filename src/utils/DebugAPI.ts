@@ -223,7 +223,7 @@ export function initDebugAPI(game: Phaser.Game): void {
       });
       // 场上已有子弹/掉落物即时更新（仅双套纹理的 key）
       const themedBulletKeys = ['bullet', 'bullet_classic'];
-      const themedPickupBase = ['pickup_exp', 'pickup_health', 'pickup_coin'];
+      const themedPickupBase = ['pickup_exp', 'pickup_health', 'pickup_coin', 'pickup_chest'];
       gs?.bullets?.children?.each?.((b: any) => {
         if (!b || !b.setTexture || !b.active) return true;
         if (themedBulletKeys.includes(b.texture?.key)) b.setTexture(GameConfig.themeKey('bullet'));
@@ -235,6 +235,20 @@ export function initDebugAPI(game: Phaser.Game): void {
         const base = themedPickupBase.find((b) => k === b || k === `${b}_classic`);
         if (base) p.setTexture(GameConfig.themeKey(base));
         return true;
+      });
+      // 场上已有障碍物即时更新（岩石/墙体/水晶，pixel 与 classic 双套）
+      const terrain = gs?.terrainManager;
+      if (terrain?.getObstacleGroup?.()) {
+        terrain.getObstacleGroup().children.each((o: any) => {
+          if (!o || !o.setTexture) return true;
+          const k = o.texture?.key || '';
+          o.setTexture(GameConfig.themeKey(k.replace(/_classic$/, '')));
+          return true;
+        });
+      }
+      // 场上已有无人机即时更新
+      player?.drones?.forEach?.((d: any) => {
+        if (d && d.setTexture) d.setTexture(GameConfig.themeKey('drone'));
       });
       console.log(`[debug] 视觉主题已切换: ${theme}`);
       return `主题已切换: ${theme}`;

@@ -315,6 +315,67 @@ export class TextureGenerator {
     D: 0x14141f, // 暗部/眼睛（tint 后保留深色）
   };
 
+  /** 像素风障碍物（pixel 主题默认）：岩石/墙体/水晶，格子统一 16 宽、深色描边 + 高光，风格与敌人/拾取物一致 */
+  private static readonly OBSTACLE_PIXELS: Record<
+    string,
+    { grid: string[]; palette: Record<string, number>; scale: number }
+  > = {
+    obstacle_rock: {
+      grid: [
+        '......WWWWWW......',
+        '....WWWWWWWWW.....',
+        '...WWWWWWWWWWW....',
+        '..WWWMMWWWWWWW....',
+        '..WWMMMMWWWWWW....',
+        '.WWMMMMMMWWWWW....',
+        '.WWMMMMMMMMWWW....',
+        '.WWMMMMMMMWWWW....',
+        '..WWWMMWWWWWW.....',
+        '...WWWWWWWWW......',
+        '....WWWWWWW.......',
+        '.....DDDDDD.......',
+      ],
+      palette: { W: 0x6f8296, M: 0x9fb3c6, D: 0x14141f },
+      scale: 4,
+    },
+    obstacle_wall: {
+      grid: [
+        'BBBBBBBBBBBBBBBB',
+        'BKKKKKKKKBKKKKKKK',
+        'BKKKKKKKKBKKKKKKK',
+        'BBBBBBBBBBBBBBBB',
+        'KKKKBKKKKKKKKBKKK',
+        'KKKKBKKKKKKKKBKKK',
+        'BBBBBBBBBBBBBBBB',
+        'BKKKKKKKKBKKKKKKK',
+        'BKKKKKKKKBKKKKKKK',
+        'BBBBBBBBBBBBBBBB',
+      ],
+      palette: { B: 0x6b6b86, K: 0x20202e },
+      scale: 4,
+    },
+    obstacle_crystal: {
+      grid: [
+        '.......MM.......',
+        '......MWWM......',
+        '.....MWWWWM.....',
+        '....MWWWWWWM....',
+        '...MWWMMMMWWM...',
+        '..MWWMMDDMMWWM..',
+        '..MWMMDDDDMMWM..',
+        '.MWMMDDDDDDMMWM.',
+        '.MWMMDDDDDDMMWM.',
+        '.MWMMWDDDDWMMWM.',
+        '..MWMMWDDWMMWM..',
+        '...MWMMMMMMWM...',
+        '....MMMMMMMM....',
+        '.....MMMMMM.....',
+      ],
+      palette: { M: 0x9a6bff, W: 0xd8baff, D: 0x3d1a66 },
+      scale: 4,
+    },
+  };
+
   private generateEnemies(): void {
     const pixels = TextureGenerator.ENEMY_PIXELS;
     const palette = TextureGenerator.ENEMY_PALETTE;
@@ -1350,12 +1411,19 @@ export class TextureGenerator {
 
   // ========== 障碍物纹理 ==========
   private generateObstacles(): void {
+    // ===== pixel 主题（默认）：像素块障碍物，风格与敌人/拾取物统一 =====
+    const obsPixels = TextureGenerator.OBSTACLE_PIXELS;
+    (Object.keys(obsPixels) as string[]).forEach((key) => {
+      this.drawPixelTexture(key, obsPixels[key].grid, obsPixels[key].palette, obsPixels[key].scale);
+    });
+
+    // ===== classic 主题（_classic 后缀）：经典矢量霓虹障碍物 =====
     // 岩石障碍物
-    this.generateRock('obstacle_rock', 0x556677, 120, 80);
+    this.generateRock('obstacle_rock_classic', 0x556677, 120, 80);
     // 墙体障碍物
-    this.generateWall('obstacle_wall', 0x4a4a5e, 160, 40);
+    this.generateWall('obstacle_wall_classic', 0x4a4a5e, 160, 40);
     // 水晶障碍物
-    this.generateCrystal('obstacle_crystal', 0x8844ff, 60, 90);
+    this.generateCrystal('obstacle_crystal_classic', 0x8844ff, 60, 90);
   }
 
   private generateRock(key: string, color: number, w: number, h: number): void {
