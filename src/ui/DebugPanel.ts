@@ -36,6 +36,7 @@ export class DebugPanel {
   private themeText: Phaser.GameObjects.Text | null = null;
   private themeBg: Phaser.GameObjects.Graphics | null = null;
   private enemyBoostText: Phaser.GameObjects.Text | null = null;
+  private speedText: Phaser.GameObjects.Text | null = null;
 
   private readonly panelWidth = 340;
   private readonly btnWidth = 152;
@@ -151,6 +152,20 @@ export class DebugPanel {
     this.addThemeRow(col);
     col.step(this.sectionSpacing);
 
+    // 游戏速度调节（0.25~4 倍速，模拟明日方舟 2 倍速 / 慢速观察细节；快捷键 - / =）
+    this.addSectionTitle(col, '⏱ 游戏速度（快捷键 -/=）');
+    this.speedText = createUIText(this.scene, 0, col.y, `当前速度 ×${this.getGameSpeed().toFixed(2)}`, {
+        fontSize: '11px',
+        color: '#88ccff',
+      })
+      .setOrigin(0, 0);
+    this.content.add(this.speedText);
+    col.step(this.btnHeight + this.btnSpacing);
+    this.addRow(col, { text: '⏪ 减速', fn: () => this.adjustSpeed(-0.25) }, { text: '⏩ 加速', fn: () => this.adjustSpeed(0.25) });
+    this.addRow(col, { text: '🐢 0.5×', fn: () => this.setGameSpeed(0.5) }, { text: '🐇 2×', fn: () => this.setGameSpeed(2) });
+    this.addRow(col, { text: '▶ 1×', fn: () => this.setGameSpeed(1) }, { text: '🚀 4×', fn: () => this.setGameSpeed(4) });
+    col.step(this.sectionSpacing);
+
     // 属性调整
     this.addSectionTitle(col, '📊 属性调整');
     this.addRow(col, { text: '🧲 拾取+50', fn: () => this.addPickupRadius(50) }, { text: '🧲 拾取+200', fn: () => this.addPickupRadius(200) });
@@ -223,7 +238,8 @@ export class DebugPanel {
     const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
     // 商店道具（FALLBACK_UPGRADES）2 行
     const shopRows = Math.ceil(FALLBACK_UPGRADES.length / 2);
-    return 28 + sectionH(6) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
+    // 游戏速度区 = 当前值行 + 3 行按钮（计 4 行）
+    return 28 + sectionH(6) + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
   }
 
   /** 分区标题（content 内） */
@@ -520,6 +536,32 @@ export class DebugPanel {
     this.scene.input.keyboard?.on('keydown-BACKTICK', () => {
       this.toggle();
     });
+    // 游戏速度快捷键：- 减速 / = 加速（步进 0.25，范围 0.25~4）
+    this.scene.input.keyboard?.on('keydown-MINUS', () => {
+      this.adjustSpeed(-0.25);
+    });
+    this.scene.input.keyboard?.on('keydown-EQUALS', () => {
+      this.adjustSpeed(0.25);
+    });
+  }
+
+  // ===== 游戏速度 =====
+  private getGameSpeed(): number {
+    return (this.getGameScene() as any)?.gameSpeed ?? 1;
+  }
+
+  private setGameSpeed(v: number): void {
+    (this.getGameScene() as any)?.setGameSpeed?.(v);
+    this.refreshSpeedText();
+  }
+
+  private adjustSpeed(delta: number): void {
+    const cur = this.getGameSpeed();
+    this.setGameSpeed(Math.round((cur + delta) * 100) / 100);
+  }
+
+  private refreshSpeedText(): void {
+    if (this.speedText) this.speedText.setText(`当前速度 ×${this.getGameSpeed().toFixed(2)}`);
   }
 
   toggle(): void {

@@ -59,6 +59,10 @@ export interface DebugAPI {
   completeWave: () => string;
   /** 直接弹出通关结算窗口（继续征战 / 结束征程） */
   openEndlessChoice: () => string;
+  /** 设置全局游戏速度（0.25~4 倍速；2=加速一倍，0.25=慢速观察） */
+  setGameSpeed: (speed: number) => string;
+  /** 获取当前游戏速度 */
+  getGameSpeed: () => number;
 }
 
 export function initDebugAPI(game: Phaser.Game): void {
@@ -320,6 +324,15 @@ export function initDebugAPI(game: Phaser.Game): void {
       gs.openEndlessChoice?.();
       return 'opened endless choice';
     },
+
+    setGameSpeed: (speed: number) => {
+      const gs = getGameScene();
+      if (!gs?.setGameSpeed) return 'no game scene';
+      gs.setGameSpeed(speed);
+      return `game speed -> ${gs.getGameSpeed?.() ?? gs.gameSpeed}×`;
+    },
+
+    getGameSpeed: () => getGameScene()?.gameSpeed ?? 1,
   };
 
   (window as any).__debug = api;

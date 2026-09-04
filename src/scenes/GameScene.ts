@@ -55,6 +55,8 @@ export class GameScene extends Phaser.Scene {
   private endlessMode = false;
   // 通关窗口延迟重试防抖（遇其他模态时 500ms 后重试，避免窗口被守卫吞掉）
   private _endlessChoiceRetry = false;
+  // 全局游戏速度（调试 0.25~4 倍速，默认 1）：同步 Arcade 物理 / 补间 / 逻辑 delta
+  private gameSpeed = 1;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -522,28 +524,33 @@ export class GameScene extends Phaser.Scene {
     // 暂停时不更新游戏逻辑
     if (gm.isPaused || gm.isGameOver) return;
 
+    // 全局时间缩放（调试 0.25~4 倍速）：缩放本帧逻辑 delta。
+    // 移动走 Arcade 物理（physics.world.timeScale 同步）、补间走 tweens.timeScale，
+    // 此处只负责冷却/计时/AI/拾取等逻辑层，互不叠加。
+    const d = delta * this.gameSpeed;
+
     // 更新存活时间
-    gm.addSurvivalTime(delta);
+    gm.addSurvivalTime(d);
 
     // AI 自动玩：计算移动方向（躲敌人 / 捡经验）
     if (this.autoPlayEnabled) {
-      this.updateAIDirection(delta);
-      this.updateAIItems(delta);
+      this.updateAIDirection(d);
+      this.updateAIItems(d);
     }
 
     // 更新玩家
-    this.player.update(time, delta, this.inputManager);
+    this.player.update(time, d, this.inputManager);
 
     // 更新无人机
-    this.player.updateDrones(time, delta);
+    this.player.updateDrones(time, d);
 
     // 更新波次
-    this.waveManager.update(time, delta);
+    this.waveManager.update(time, d);
 
     // 更新所有敌人
     this.enemies.children.each((enemy: any) => {
       if (enemy.active && enemy.update) {
-        enemy.update(time, delta, this.player);
+        enemy.update(time, d, this.player);
       }
       return true;
     });
@@ -551,7 +558,7 @@ export class GameScene extends Phaser.Scene {
     // 更新所有子弹
     this.bullets.children.each((bullet: any) => {
       if (bullet.active && bullet.update) {
-        bullet.update(time, delta);
+        bullet.update(time, d);
       }
       return true;
     });
@@ -559,7 +566,7 @@ export class GameScene extends Phaser.Scene {
     // 更新所有拾取物（磁吸效果）
     this.pickups.children.each((pickup: any) => {
       if (pickup.active && pickup.update) {
-        pickup.update(time, delta, this.player);
+        pickup.update(time, d, this.player);
       }
       return true;
     });
@@ -576,7 +583,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // 自动存档（统计信息 + 进行中对局进度）
-    this.autoSaveTimer += delta;
+    this.autoSaveTimer += d;
     if (this.autoSaveTimer >= GameConfig.SAVE.autoSaveInterval) {
       this.autoSaveTimer = 0;
       const gm = GameManager.getInstance();
@@ -640,6 +647,19 @@ export class GameScene extends Phaser.Scene {
       this.scene.stop('UIScene');
       this.scene.start('GameOverScene', { mode: 'victory' });
     });
+  }
+
+  /** 设置全局游戏速度（0.25~4 倍速调试）：同步 Arcade 物理 / 补间动画，逻辑层 delta 在 update 中缩放 */
+  setGameSpeed(speed: number): void {
+    this.gameSpeed = Phaser.Math.Clamp(speed, 0.25, 4);
+    this.physics.world.timeScale = this.gameSpeed;
+    this.tweens.timeScale = this.gameSpeed;
+    EventBus.emit('game:speed', this.gameSpeed);
+  }
+
+  /** 获取当前游戏速度 */
+  getGameSpeed(): number {
+    return this.gameSpeed;
   }
 
   /** 无尽模式访问器 */
