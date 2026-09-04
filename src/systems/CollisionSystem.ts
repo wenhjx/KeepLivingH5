@@ -65,6 +65,11 @@ export class CollisionSystem {
     const isCrit = Math.random() < critRate;
     const finalDamage = isCrit ? damage * critDamage : damage;
 
+    // 演出事件：玩家暴击命中（GameFeedback 订阅播震屏/顿帧；纯表现）
+    if (isCrit) {
+      EventBus.emit('combat:crit', { x: bullet.x, y: bullet.y, damage: finalDamage });
+    }
+
     enemy.takeDamage(finalDamage, isCrit, bullet.x, bullet.y);
 
     // 玩家被动效果触发（吸血/冰冻/灼烧/闪电链/弹射）

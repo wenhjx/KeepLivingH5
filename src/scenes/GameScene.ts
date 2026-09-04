@@ -13,6 +13,7 @@ import { GuideManager } from '../systems/GuideManager';
 import { DamageTextManager } from '../ui/DamageTextManager';
 import { TerrainManager } from '../systems/TerrainManager';
 import { FXManager } from '../systems/FXManager';
+import { GameFeedback } from '../systems/GameFeedback';
 import { DEFAULT_TERRAIN } from '../data/terrain';
 import { EventBus } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
@@ -33,6 +34,7 @@ export class GameScene extends Phaser.Scene {
   private damageTextManager!: DamageTextManager;
   private terrainManager!: TerrainManager;
   private fxManager!: FXManager;
+  private gameFeedback!: GameFeedback;
   private activeBoss: Enemy | null = null;
   private pendingLevelUps = 0;
   private upgradeQueued = false;
@@ -147,6 +149,9 @@ export class GameScene extends Phaser.Scene {
       this.eventUnsubscribers.forEach((unsub) => unsub());
       this.eventUnsubscribers = [];
 
+      // 清理演出层订阅与横幅
+      this.gameFeedback?.destroy();
+
       // 移除页面卸载前的存档监听
       if (this.beforeUnloadHandler) {
         window.removeEventListener('beforeunload', this.beforeUnloadHandler);
@@ -235,6 +240,9 @@ export class GameScene extends Phaser.Scene {
 
     // 视觉特效统一入口（所有命中/死亡/爆炸/升级/拾取/枪口闪光走这里）
     this.fxManager = new FXManager(this);
+
+    // 演出/反馈层（波次横幅/Boss演出/暴击震屏顿帧，纯表现，通过事件总线与玩法解耦）
+    this.gameFeedback = new GameFeedback(this);
   }
 
   private createMap(): void {

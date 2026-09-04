@@ -41,11 +41,12 @@ export class MainMenuScene extends Phaser.Scene {
     this.quality = gm.qualityLevel;
     this.muted = audio.isMuted();
 
-    // 背景
+    // 背景 + 星点装饰
     this.add.rectangle(0, 0, width, height, 0x0a0a0f).setOrigin(0);
+    this.createBackgroundStars(width, height);
 
     // 标题
-    createUIText(this, centerX, height * 0.25, 'KEEP LIVING', {
+    const title = createUIText(this, centerX, height * 0.25, 'KEEP LIVING', {
         fontSize: '56px',
         fontFamily: 'Arial',
         color: '#ff6b35',
@@ -54,6 +55,17 @@ export class MainMenuScene extends Phaser.Scene {
         strokeThickness: 4,
       })
       .setOrigin(0.5);
+
+    // 标题发光 + 呼吸动效（纯视觉，不绑定玩法）
+    title.setShadow(0, 0, '#ff6b35', 14, true, true);
+    this.tweens.add({
+      targets: title,
+      scale: { from: 1, to: 1.04 },
+      duration: 1500,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.InOut',
+    });
 
     // 副标题
     createUIText(this, centerX, height * 0.25 + 50, '2D 割草生存', {
@@ -96,6 +108,28 @@ export class MainMenuScene extends Phaser.Scene {
 
     // 创建设置面板（初始隐藏）
     this.createSettingsOverlay();
+  }
+
+  /** 背景星点（纯装饰，轻量，低配设备可承受） */
+  private createBackgroundStars(width: number, height: number): void {
+    for (let i = 0; i < 26; i++) {
+      const star = this.add.circle(
+        Math.random() * width,
+        Math.random() * height,
+        0.6 + Math.random() * 1.2,
+        0xffffff,
+        0.25 + Math.random() * 0.5
+      );
+      this.tweens.add({
+        targets: star,
+        alpha: 0.06,
+        duration: 900 + Math.random() * 1400,
+        delay: Math.random() * 900,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.InOut',
+      });
+    }
   }
 
   private createMenuButton(x: number, y: number, text: string, callback: () => void): void {

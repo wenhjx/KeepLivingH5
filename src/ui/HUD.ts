@@ -24,6 +24,7 @@ export class HUD {
   private levelText!: Phaser.GameObjects.Text;
 
   private waveText!: Phaser.GameObjects.Text;
+  private bossWarnText!: Phaser.GameObjects.Text;
   private killsText!: Phaser.GameObjects.Text;
   private scoreText!: Phaser.GameObjects.Text;
   private coinText!: Phaser.GameObjects.Text;
@@ -203,6 +204,13 @@ export class HUD {
       })
       .setOrigin(1, 0);
 
+    // 波次预告：距下个 Boss 波还有几波（给玩家战前节奏预期）
+    this.bossWarnText = createUIText(this.scene, rightX, infoTop + 88, '', {
+        fontSize: '13px',
+        color: '#ff6b6b',
+      })
+      .setOrigin(1, 0);
+
     // ========== 顶部中间：存活时间 ==========
     this.timeText = createUIText(this.scene, width / 2, topY, '00:00', {
         fontSize: '20px',
@@ -312,6 +320,8 @@ export class HUD {
     // 更新波次、击杀、分数（无尽模式追加 ∞ 标记）
     this.waveText.setText(`波次: ${runData.wave}${gameScene?.isEndlessMode?.() ? ' ∞' : ''}`);
     this.killsText.setText(`击杀: ${runData.kills}`);
+    // 波次预告：距下个 Boss 波还有几波
+    this.updateBossWarning(runData.wave);
     this.scoreText.setText(`分数: ${runData.score}`);
     this.timeText.setText(this.formatTime(runData.survivalTime));
 
@@ -328,6 +338,17 @@ export class HUD {
       }
       // 唯一 Boss 顶部大血条
       this.updateBossBar(gameScene.getActiveBoss?.());
+    }
+  }
+
+  /** 更新"距下个 Boss 波"预告提示（纯展示，不依赖玩法细节） */
+  private updateBossWarning(wave: number): void {
+    const interval = GameConfig.WAVE.bossWaveInterval || 5;
+    const rem = wave % interval;
+    if (rem === 0) {
+      this.bossWarnText.setText('⚑ BOSS 波！').setColor('#ff4444');
+    } else {
+      this.bossWarnText.setText(`⚑ 距 Boss ${interval - rem} 波`).setColor('#ff6b6b');
     }
   }
 
@@ -692,6 +713,7 @@ export class HUD {
     this.killsText.setVisible(visible);
     this.scoreText.setVisible(visible);
     this.coinText.setVisible(visible);
+    this.bossWarnText?.setVisible(visible);
     this.timeText.setVisible(visible);
     this.bossContainer?.setVisible(visible && this.bossContainer.visible);
     this.buffContainer?.setVisible(visible);
