@@ -203,6 +203,12 @@ export class WaveManager {
     // 通关判定：打完第 victoryWave 波且未进入无尽 → 弹通关结算（继续征战/结束征程）
     // 无尽模式下不拦截，波次继续无限增长，Boss 每 bossWaveInterval 波继续增强
     if (this.currentWave >= GameConfig.WAVE.victoryWave && !(this.scene as any).isEndlessMode?.()) {
+      // 通关清敌：波次为计时制（waveDuration 到即通关），清完 boss 后小怪仍会残留/继续生成。
+      // 若不清空，弹窗前的 2s 空档里低血量玩家会被残留敌人打死 → 直接 GameOver 且清存档，
+      // "继续征战"窗口永远弹不出来。先清敌再弹窗，玩家安全进入通关结算。
+      this.objectPool.despawnAllEnemies();
+      const gameScene = this.scene as any;
+      if (gameScene.activeBoss) gameScene.activeBoss = null;
       this.scene.time.delayedCall(2000, () => {
         (this.scene as any).openEndlessChoice?.();
       });

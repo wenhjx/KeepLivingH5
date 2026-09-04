@@ -53,6 +53,8 @@ export class GameScene extends Phaser.Scene {
   private victoryTriggered = false;
   // 无尽模式：通关结算选择"继续征战"后为 true，波次无限增长不再触发通关
   private endlessMode = false;
+  // 通关窗口延迟重试防抖（遇其他模态时 500ms 后重试，避免窗口被守卫吞掉）
+  private _endlessChoiceRetry = false;
 
   // 实体组
   private enemies!: Phaser.Physics.Arcade.Group;
@@ -658,9 +660,20 @@ export class GameScene extends Phaser.Scene {
     if (this.victoryTriggered) return;
     const gm = GameManager.getInstance();
     if (gm.isGameOver) return;
+    // 其他模态（如 15 波 Boss 死亡弹出的突破奖励/升级三选一/商店）正在打开 → 延迟重试，
+    // 而不是直接 return 吞掉窗口：否则玩家会卡在无怪地图上永远等不到通关结算
     if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') ||
         this.scene.isActive('WeaponSelectScene') || this.scene.isActive('BreakthroughScene') ||
-        this.scene.isActive('EndlessChoiceScene')) return;
+        this.scene.isActive('EndlessChoiceScene')) {
+      if (!this._endlessChoiceRetry) {
+        this._endlessChoiceRetry = true;
+        this.time.delayedCall(500, () => {
+          this._endlessChoiceRetry = false;
+          this.openEndlessChoice();
+        });
+      }
+      return;
+    }
     // 先启动结算场景，再延迟一帧暂停：scene.launch 的场景要到下一帧才真正 RUNNING
     //（isActive 才为 true）。若立即 setPaused(true)，run:pause 触发时 UIScene 识别不到
     // 模态场景，暂停覆盖层会与结算面板重叠显示"游戏暂停/继续游戏"。
