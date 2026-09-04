@@ -67,6 +67,20 @@ const config: Phaser.Types.Core.GameConfig = {
     width: RENDER_WIDTH,
     height: RENDER_HEIGHT,
   },
+  fps: {
+    target: 60,
+    // 关键：后台运行支持。默认 Phaser 用 requestAnimationFrame 驱动主循环，
+    // 页面切走(不可见)时浏览器会停止 RAF，导致游戏时间/波次不再推进。
+    // forceSetTimeOut 让主循环改用 setTimeout 驱动——后台页面仍会以低频继续
+    // 执行，实现挂机/自动游玩后台持续运行；切回前台恢复满帧。
+    forceSetTimeOut: true,
+    // 关键：禁用 delta 平滑。Phaser 的 smoothDelta 会在页面失焦(!inFocus)或
+    // delta 过大时把每帧 delta 钳制到 ~16.7ms（_target/_min），导致后台虽然
+    // 主循环在跑，但游戏内时间/波次几乎不走（"数据流转但时间不动"）。
+    // smoothStep=false 后 delta 直接用真实原始值——后台 1 秒/帧 → delta=1000ms，
+    // 游戏时间照常推进，实现真正的后台挂机。
+    smoothStep: false,
+  },
   physics: {
     default: 'arcade',
     arcade: {
