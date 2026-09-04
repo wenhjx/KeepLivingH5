@@ -8,6 +8,7 @@ import { GameManager } from '../game/GameManager';
 import { ENEMY_CONFIGS } from '../data/enemies';
 import type { EnemyConfig, EnemyType } from '../types';
 import type { Player } from './Player';
+import { TextSmoothing } from '../utils/UIText';
 
 /**
  * 敌人实体基类
@@ -146,6 +147,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (!this.affixText) {
       this.affixText = this.scene.add.text(0, 0, '', { fontSize: '12px', fontFamily: 'Arial' }).setDepth(6).setOrigin(0.5)
         .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
+      TextSmoothing.apply(this.affixText);
     }
     const affixIcon = affixIcons[this.affix] || '';
     this.affixText.setText(affixIcon)

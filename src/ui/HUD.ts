@@ -5,6 +5,7 @@ import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { UILayout } from '../utils/UILayout';
 import { GameConfig } from '../game/GameConfig';
+import { TextSmoothing } from '../utils/UIText';
 
 /**
  * HUD 抬头显示
@@ -415,6 +416,7 @@ export class HUD {
       bg.strokeRoundedRect(-17, -17, 34, 34, 6);
       const icon = this.scene.add.text(0, -3, vis.icon, { fontSize: '19px' }).setOrigin(0.5)
         .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
+      TextSmoothing.apply(icon);
       const lv = this.scene.add.text(9, 10, `${w.level}`, {
           fontSize: '10px',
           color: '#ffffff',
@@ -424,6 +426,7 @@ export class HUD {
         })
         .setOrigin(0.5)
         .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
+      TextSmoothing.apply(lv);
       c.add([bg, icon, lv]);
       c.setData('level', w.level);
       this.weaponIcons.set(w.id, c);

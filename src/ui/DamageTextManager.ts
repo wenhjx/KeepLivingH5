@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TextSmoothing } from '../utils/UIText';
 import { GameConfig } from '../game/GameConfig';
 
 /**
@@ -27,6 +28,7 @@ export class DamageTextManager {
       text.setOrigin(0.5);
       text.setDepth(20);
       text.setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
+      TextSmoothing.apply(text);
     }
 
     const value = String(Math.round(damage));
@@ -76,6 +78,7 @@ export class DamageTextManager {
       t.setOrigin(0.5);
       t.setDepth(20);
       t.setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
+      TextSmoothing.apply(t);
     }
     t.setColor(color);
     t.setFontSize(15);
