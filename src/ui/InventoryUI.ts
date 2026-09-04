@@ -26,6 +26,9 @@ export class InventoryUI {
     itemId: string;
   }> = [];
   private unsubscribe: () => void = () => {};
+  // 槽位命中矩形（uiRoot 局部坐标 = pointer.x/y），手动坐标判定用
+  private slotHitRects: Array<{ index: number; x: number; y: number }> = [];
+  private pointerDownHandler: ((pointer: Phaser.Input.Pointer) => void) | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -51,6 +54,23 @@ export class InventoryUI {
     const totalWidth = INVENTORY_ORDER.length * this.slotSize + (INVENTORY_ORDER.length - 1) * this.slotSpacing;
     const startX = width - 12 - totalWidth + this.slotSize / 2;
     const y = height - 12 - this.slotSize / 2;
+
+    // 点击判定采用手动坐标检测（uiRoot 局部坐标 = pointer.x/y），彻底规避嵌套 Container +
+    // 父级 scale 时 setInteractive hitArea 命中偏移（曾导致点击区域整体偏上一个槽位高度）。
+    this.pointerDownHandler = (pointer: Phaser.Input.Pointer) => {
+      for (const r of this.slotHitRects) {
+        if (
+          pointer.x >= r.x &&
+          pointer.x <= r.x + this.slotSize &&
+          pointer.y >= r.y &&
+          pointer.y <= r.y + this.slotSize
+        ) {
+          this.useSlot(r.index);
+          return;
+        }
+      }
+    };
+    scene.input.on('pointerdown', this.pointerDownHandler);
 
     INVENTORY_ORDER.forEach((itemId, index) => {
       const x = startX + index * (this.slotSize + this.slotSpacing);
@@ -102,15 +122,10 @@ export class InventoryUI {
 
     const slotContainer = this.scene.add.container(x, y);
     slotContainer.add([bg, icon, count, key]);
-    slotContainer.setSize(this.slotSize, this.slotSize);
-    // 显式 hitArea：以容器原点（槽位中心）为基准的对称矩形，与视觉背景完全对齐。
-    // Container 默认 hitArea 为 Rectangle(0,0,w,h)，从原点向右下展开，会让命中区偏离视觉半格
-    slotContainer.setInteractive(
-      new Phaser.Geom.Rectangle(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize),
-      Phaser.Geom.Rectangle.Contains
-    );
-    if (slotContainer.input) slotContainer.input.cursor = 'pointer';
-    slotContainer.on('pointerdown', () => this.useSlot(index));
+    // 注意：不再对槽位 Container setInteractive——嵌套 Container + 父级 scale（uiRoot）
+    // 的 hitArea 会命中偏移，点击区域整体偏上。改为全局 pointerdown 手动坐标判定
+    // （见 constructor 的 pointerDownHandler / slotHitRects）。
+    this.slotHitRects.push({ index, x: x - this.slotSize / 2, y: y - this.slotSize / 2 });
 
     this.container.add(slotContainer);
     this.slots.push({ bg, icon, count, key, itemId });
@@ -162,6 +177,11 @@ export class InventoryUI {
 
   destroy(): void {
     this.unsubscribe();
+    if (this.pointerDownHandler) {
+      this.scene.input.off('pointerdown', this.pointerDownHandler);
+      this.pointerDownHandler = null;
+    }
+    this.slotHitRects = [];
     this.container.destroy();
   }
 }
