@@ -48,6 +48,17 @@ export interface DebugAPI {
   giveAllBuffs: (level?: number) => string;
   /** 触发一次武器强化三选一（击败 Boss 奖励；调试用） */
   openWeaponSelect: () => string;
+  // ========== 波次/战斗测试辅助（快速定位特定波次，不经过正常推进） ==========
+  /** 获取当前波次 */
+  getWave: () => number;
+  /** 场上存活敌人数 */
+  getEnemyCount: () => number;
+  /** 跳到指定波次（直接 startWave，Boss 波自动生成 Boss；跳过中间奖励） */
+  jumpToWave: (n: number) => string;
+  /** 把当前波计时拨满 → 下一帧触发下一波/通关判定（配合 jumpToWave 快速走完 15 波） */
+  completeWave: () => string;
+  /** 直接弹出通关结算窗口（继续征战 / 结束征程） */
+  openEndlessChoice: () => string;
 }
 
 export function initDebugAPI(game: Phaser.Game): void {
@@ -277,6 +288,37 @@ export function initDebugAPI(game: Phaser.Game): void {
       const wave = (gs.waveManager?.getCurrentWave?.() || 0) + 1;
       gs.openWeaponSelectAfterBoss?.(wave);
       return `open weapon select before wave ${wave}`;
+    },
+
+    getWave: () => getGameScene()?.waveManager?.getCurrentWave?.() ?? -1,
+
+    getEnemyCount: () => getGameScene()?.getEnemies?.()?.countActive?.(true) ?? -1,
+
+    // 直接跳到指定波：startWave 会重置 waveTimer/spawnTimer 并生成对应敌人/Boss。
+    // 注意：会跳过中间波次的商店/武器强化/突破奖励，仅用于快速定位特定波次玩法。
+    jumpToWave: (n: number) => {
+      const gs = getGameScene();
+      if (!gs?.waveManager) return 'no game scene';
+      gs.waveManager.waveActive = false;
+      gs.waveManager.startWave(n);
+      return `jumped to wave ${n}${n % GameConfig.WAVE.bossWaveInterval === 0 ? '（Boss 波）' : ''}`;
+    },
+
+    // 波次为计时制（waveDuration 到即 nextWave）：把 waveTimer 拨满，
+    // 下一帧 update 即触发下一波/通关判定。配合 jumpToWave(n)+killAll 可快速走完单关。
+    completeWave: () => {
+      const gs = getGameScene();
+      const wm = gs?.waveManager;
+      if (!wm) return 'no game scene';
+      wm.waveTimer = GameConfig.WAVE.waveDuration;
+      return `wave ${wm.getCurrentWave()} timer -> end (2s 后进入下一波/通关结算)`;
+    },
+
+    openEndlessChoice: () => {
+      const gs = getGameScene();
+      if (!gs) return 'no game scene';
+      gs.openEndlessChoice?.();
+      return 'opened endless choice';
     },
   };
 
