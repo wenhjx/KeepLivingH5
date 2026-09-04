@@ -95,13 +95,19 @@ const config: Phaser.Types.Core.GameConfig = {
 const game = new Phaser.Game(config);
 
 // 暴露游戏实例到全局，便于调试（Boss 战验证/压力测试等通过控制台驱动）
-window.__game = game;
+(window as any).__game = game;
 
 // 禁用"页面不可见/窗口失焦时自动暂停"：让游戏支持后台运行（切窗不暂停），
-// 方便后台挂机/自动游玩持续进行。Phaser 3.80 已移除 disableVisibilityChange 配置，
-// 改为移除其内部 HIDDEN/VISIBLE/BLUR/FOCUS 监听（onHidden/onVisible 会暂停/恢复主循环）。
+// 方便后台挂机/自动游玩持续进行。Phaser 3.80 已移除 disableVisibilityChange 配置。
+// 关键：Phaser 的 HIDDEN/VISIBLE/BLUR/FOCUS 暂停监听是在 Game.start() 中注册的，
+// 而 start() 由异步纹理加载(texturesReady)触发，所以 new Phaser.Game() 后立刻 off()
+// 时机太早、监听尚未注册，导致失焦仍会暂停。这里改为等 READY 事件后再于下一 tick 移除。
 // 游戏内暂停仍由 GameManager.setPaused 控制，不受影响。
-game.events.off('hidden');
-game.events.off('visible');
-game.events.off('blur');
-game.events.off('focus');
+game.events.once(Phaser.Core.Events.READY, () => {
+  setTimeout(() => {
+    game.events.off(Phaser.Core.Events.HIDDEN);
+    game.events.off(Phaser.Core.Events.VISIBLE);
+    game.events.off(Phaser.Core.Events.BLUR);
+    game.events.off(Phaser.Core.Events.FOCUS);
+  }, 0);
+});
