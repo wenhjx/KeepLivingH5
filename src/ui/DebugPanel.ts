@@ -278,9 +278,9 @@ export class DebugPanel {
   private addRow3(col: UILayout, a: BtnSpec, b: BtnSpec, c: BtnSpec): void {
     const y = col.y;
     const nw = Math.floor((this.panelWidth - this.padding * 2 - this.btnSpacing * 2) / 3);
-    this.placeButton(this.makeButton(a.text, a.fn, nw), 0, y);
-    this.placeButton(this.makeButton(b.text, b.fn, nw), nw + this.btnSpacing, y);
-    this.placeButton(this.makeButton(c.text, c.fn, nw), (nw + this.btnSpacing) * 2, y);
+    this.placeButton(this.makeButton(a.text, a.fn, nw), 0, y, nw);
+    this.placeButton(this.makeButton(b.text, b.fn, nw), nw + this.btnSpacing, y, nw);
+    this.placeButton(this.makeButton(c.text, c.fn, nw), (nw + this.btnSpacing) * 2, y, nw);
     col.step(this.btnHeight + this.btnSpacing);
   }
 
@@ -342,11 +342,11 @@ export class DebugPanel {
     return { bg, txt, hit };
   }
 
-  /** 将按钮组定位到 (x, y) 并加入 content */
-  private placeButton(b: BtnParts, x: number, y: number): void {
+  /** 将按钮组定位到 (x, y) 并加入 content；w 为实际按钮宽（默认标准半宽），文本/命中区按 w 居中 */
+  private placeButton(b: BtnParts, x: number, y: number, w: number = this.btnWidth): void {
     b.bg.setPosition(x, y);
-    b.txt.setPosition(x + this.btnWidth / 2, y + this.btnHeight / 2);
-    b.hit.setPosition(x + this.btnWidth / 2, y + this.btnHeight / 2);
+    b.txt.setPosition(x + w / 2, y + this.btnHeight / 2);
+    b.hit.setPosition(x + w / 2, y + this.btnHeight / 2);
     this.content.add([b.bg, b.txt, b.hit]);
   }
 
