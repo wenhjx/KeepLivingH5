@@ -387,12 +387,22 @@ export class GameScene extends Phaser.Scene {
       if (this.pendingLevelUps > 0) {
         this.time.delayedCall(250, () => this.showNextUpgrade());
       } else {
-        this.time.delayedCall(300, () => this.tryOpenShop());
+        // 升级排队清空后同时重试商店与武器强化排队，避免任一方被升级阻塞后死锁
+        // （修复：Boss 波结束瞬间恰好有升级排队时，WeaponSelectScene 永不弹出的卡死）
+        this.time.delayedCall(300, () => {
+          this.tryOpenShop();
+          this.tryOpenWeaponSelect();
+        });
       }
     }));
 
-    // 商店关闭：若之前是为 Boss 波开的（战前补给），则开始该 Boss 波
+    // 商店关闭：若还有武器强化排队则优先补开（防御并发），否则若之前是为 Boss 波
+    // 开的（战前补给），则开始该 Boss 波
     sub(EventBus.on('shop:closed', () => {
+      if (this.pendingWeaponSelect) {
+        this.tryOpenWeaponSelect();
+        return;
+      }
       if (this.pendingBossWave > 0) {
         const wave = this.pendingBossWave;
         this.pendingBossWave = 0;
