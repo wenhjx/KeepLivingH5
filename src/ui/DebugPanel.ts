@@ -161,9 +161,12 @@ export class DebugPanel {
       .setOrigin(0, 0);
     this.content.add(this.speedText);
     col.step(this.btnHeight + this.btnSpacing);
+    this.addRow3(col,
+      { text: '🐢 0.5×', fn: () => this.setGameSpeed(0.5) },
+      { text: '▶ 1×', fn: () => this.setGameSpeed(1) },
+      { text: '🐇 2×', fn: () => this.setGameSpeed(2) },
+    );
     this.addRow(col, { text: '⏪ 减速', fn: () => this.adjustSpeed(-0.25) }, { text: '⏩ 加速', fn: () => this.adjustSpeed(0.25) });
-    this.addRow(col, { text: '🐢 0.5×', fn: () => this.setGameSpeed(0.5) }, { text: '🐇 2×', fn: () => this.setGameSpeed(2) });
-    this.addRow(col, { text: '▶ 1×', fn: () => this.setGameSpeed(1) });
     // 高倍速下 AI 决策粒度误差随物理位移放大、易跟不上，自动游玩建议 ≤2×（倍速定位为调试/观察）
     const tip = createUIText(this.scene, 0, col.y, '⚠ 自动游玩建议 ≤2×（高倍速决策易跟不上）', {
         fontSize: '10px',
@@ -268,6 +271,16 @@ export class DebugPanel {
     const y = col.y;
     if (left) this.placeButton(this.makeButton(left.text, left.fn, this.btnWidth), 0, y);
     if (right) this.placeButton(this.makeButton(right.text, right.fn, this.btnWidth), this.btnWidth + this.btnSpacing, y);
+    col.step(this.btnHeight + this.btnSpacing);
+  }
+
+  /** 排一行三个等宽按钮（用于档位类均匀排列，如速度 0.5×/1×/2×） */
+  private addRow3(col: UILayout, a: BtnSpec, b: BtnSpec, c: BtnSpec): void {
+    const y = col.y;
+    const nw = Math.floor((this.panelWidth - this.padding * 2 - this.btnSpacing * 2) / 3);
+    this.placeButton(this.makeButton(a.text, a.fn, nw), 0, y);
+    this.placeButton(this.makeButton(b.text, b.fn, nw), nw + this.btnSpacing, y);
+    this.placeButton(this.makeButton(c.text, c.fn, nw), (nw + this.btnSpacing) * 2, y);
     col.step(this.btnHeight + this.btnSpacing);
   }
 
