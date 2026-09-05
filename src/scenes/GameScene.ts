@@ -12,9 +12,11 @@ import { AudioManager } from '../systems/AudioManager';
 import { GuideManager } from '../systems/GuideManager';
 import { DamageTextManager } from '../ui/DamageTextManager';
 import { TerrainManager } from '../systems/TerrainManager';
+import { ModifierSystem } from '../systems/ModifierSystem';
 import { FXManager } from '../systems/FXManager';
+import { getLevelByIndex, type LevelConfig, type QuickStartConfig } from '../data/levels';
+import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { GameFeedback } from '../systems/GameFeedback';
-import { DEFAULT_TERRAIN } from '../data/terrain';
 import { EventBus } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
 import type { EnemyConfig, PickupConfig } from '../types';
@@ -33,6 +35,10 @@ export class GameScene extends Phaser.Scene {
   private audioManager!: AudioManager;
   private damageTextManager!: DamageTextManager;
   private terrainManager!: TerrainManager;
+  /** 当前关卡配置（数据驱动：地形/敌人构成/规则/Boss/直进包） */
+  private levelConfig!: LevelConfig;
+  /** 关卡特殊规则（嗜血/霜蚀） */
+  private modifierSystem!: ModifierSystem;
   private fxManager!: FXManager;
   private gameFeedback!: GameFeedback;
   private activeBoss: Enemy | null = null;
@@ -93,13 +99,17 @@ export class GameScene extends Phaser.Scene {
 
   init(): void {
     const gm = GameManager.getInstance();
-    // 存在进行中对局存档时进入恢复模式，否则开始新对局
-    if (gm.hasSavedRun()) {
+    // 启动分流：
+    //  1) 内存 pendingRun（跨关继承，advanceToNextLevel 设置）→ 恢复模式
+    //  2) 本地进行中存档（继续游戏）→ 恢复模式
+    //  3) 全新对局（MainMenu 开始/直进选关时已 startNewRun(level)）
+    if (gm.pendingRun) {
+      this.resumeMode = true;
+    } else if (gm.hasSavedRun()) {
       this.resumeMode = true;
       gm.restoreRun();
     } else {
       this.resumeMode = false;
-      gm.startNewRun();
     }
   }
 
@@ -226,8 +236,11 @@ export class GameScene extends Phaser.Scene {
     // 输入管理
     this.inputManager = new InputManager(this);
 
-    // 波次管理
-    this.waveManager = new WaveManager(this, this.objectPool);
+    // 当前关卡配置（数据驱动）
+    this.levelConfig = getLevelByIndex(GameManager.getInstance().currentLevelIndex);
+
+    // 波次管理（消费关卡配置：敌人构成 / Boss 类型 / 数值倍率）
+    this.waveManager = new WaveManager(this, this.objectPool, this.levelConfig);
 
     // 碰撞系统
     this.collisionSystem = new CollisionSystem(this);
@@ -235,8 +248,12 @@ export class GameScene extends Phaser.Scene {
     // 伤害数字
     this.damageTextManager = new DamageTextManager(this);
 
-    // 地形管理（数据驱动，可扩展；以后新增区域调用 setTerrain 切换）
-    this.terrainManager = new TerrainManager(this, DEFAULT_TERRAIN);
+    // 地形管理（消费关卡地形：障碍物 + 减速区）
+    this.terrainManager = new TerrainManager(this, this.levelConfig.terrain);
+
+    // 关卡特殊规则（嗜血回血 / 霜蚀掉血）
+    this.modifierSystem = new ModifierSystem(this);
+    this.modifierSystem.setModifiers(this.levelConfig.modifiers ?? []);
 
     // 音频管理
     this.audioManager = AudioManager.getInstance();
@@ -290,13 +307,55 @@ export class GameScene extends Phaser.Scene {
     // 将对象池与组关联
     this.objectPool.setGroups(this.enemies, this.bullets, this.pickups, this.particles);
 
-    // 继续游戏：恢复玩家状态（等级/武器/被动/属性）
+    // 继续游戏 / 跨关继承：恢复玩家状态（等级/武器/被动/属性）
     if (this.resumeMode) {
       const pending = GameManager.getInstance().pendingRun;
       if (pending) {
         this.player.applySavedState(pending.player);
+        // 跨关继承时回满血（进入新区域前满状态，玩家在上一关的损耗不计入）
+        this.player.heal(this.player.getMaxHealth());
+      }
+    } else {
+      // 直进模式（主菜单选关）：应用快速开局包，补偿跳过前几关缺失的 build 积累
+      const gm = GameManager.getInstance();
+      const qs = gm.quickStart;
+      if (qs) {
+        this.applyQuickStart(qs);
+        gm.clearQuickStart();
       }
     }
+  }
+
+  /** 应用直进模式快速开局包（复用 applySavedState 重建 build，再补等级/金币） */
+  private applyQuickStart(qs: QuickStartConfig): void {
+    const p = this.player;
+    const stats = p.getStats();
+    if (qs.startLevel && qs.startLevel > 1) {
+      stats.level = qs.startLevel;
+    }
+    p.applySavedState({
+      stats,
+      weapons: qs.weapons ?? [],
+      passives: (qs.passives ?? []).map((x) => ({ id: x.id, name: '', level: x.level })),
+      statUpgrades: (qs.statUpgrades ?? []).map((x) => ({ id: x.id, name: '', level: x.level })),
+      breakthroughs: [],
+      inventory: qs.inventory ?? [],
+    });
+    // applySavedState 只重建 stat 升级记录，不修改 stats 本身；
+    // 这里按记录的应用次数补上真实属性加成（与升级/商店入口一致，走 modifyStat）
+    if (qs.statUpgrades) {
+      for (const su of qs.statUpgrades) {
+        const opt = UPGRADE_OPTIONS.find((u) => u.id === su.id);
+        if (opt?.effect?.stat) {
+          for (let i = 0; i < su.level; i++) {
+            p.modifyStat(opt.effect.stat, opt.effect.value ?? 0, opt.effect.isPercent ?? false);
+          }
+        }
+      }
+    }
+    // 直进开局默认满血（生命强化自带回血，也避免低血量开局暴毙）
+    p.heal(p.getMaxHealth());
+    if (qs.coins) p.addCoins(qs.coins);
   }
 
   private setupCollisions(): void {
@@ -463,6 +522,15 @@ export class GameScene extends Phaser.Scene {
       this.triggerVictory();
     }));
 
+    // 关卡化：进入下一关 → 跨关继承 build 并重启（地形/波次/规则全部按新关配置重建）
+    sub(EventBus.on('endlesschoice:nextlevel', () => {
+      const gm = GameManager.getInstance();
+      gm.setPaused(false);
+      this.scene.stop('EndlessChoiceScene');
+      gm.advanceToNextLevel(this.player);
+      this.scene.start('GameScene');
+    }));
+
     // 子弹爆炸（火箭筒等）：范围伤害 + 视觉效果
     sub(EventBus.on('bullet:explode', (data: { x: number; y: number; damage: number; radius: number }) => {
       this.handleExplosion(data.x, data.y, data.damage, data.radius);
@@ -473,6 +541,8 @@ export class GameScene extends Phaser.Scene {
       if (enemy?.isBoss?.()) this.activeBoss = enemy;
     }));
     sub(EventBus.on('enemy:death', (config: EnemyConfig) => {
+      // 关卡规则：嗜血（击杀回血）
+      this.modifierSystem.onEnemyKilled(this.player);
       if (config?.type === 'boss') {
         this.activeBoss = null;
         // Boss 战利品：弹出突破奖励（已满级 stat 突破 +1 级）
@@ -537,6 +607,12 @@ export class GameScene extends Phaser.Scene {
       this.updateAIDirection(d);
       this.updateAIItems(d);
     }
+
+    // 地形减速区：按玩家所在区域设置移动倍率（冰原减速区）
+    this.player.movementMultiplier = this.terrainManager.getSlowFactorAt(this.player.x, this.player.y);
+
+    // 关卡特殊规则（霜蚀持续掉血；内部每帧按秒结算）
+    this.modifierSystem.update(d, this.player);
 
     // 更新玩家
     this.player.update(time, d, this.inputManager);

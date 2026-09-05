@@ -6,6 +6,7 @@ import { AudioManager } from '../systems/AudioManager';
 import { SOUND_KEYS } from '../data/sounds';
 import { setupUICamera } from '../utils/CameraHelper';
 import type { QualityLevel } from '../game/GameConfig';
+import { LEVELS } from '../data/levels';
 
 /**
  * 主菜单场景
@@ -23,6 +24,8 @@ export class MainMenuScene extends Phaser.Scene {
   private sfxVolText!: Phaser.GameObjects.Text;
   private qualityTexts: Record<QualityLevel, Phaser.GameObjects.Text> = {} as Record<QualityLevel, Phaser.GameObjects.Text>;
   private muteText!: Phaser.GameObjects.Text;
+  // 关卡选择面板
+  private levelSelectOverlay!: Phaser.GameObjects.Container;
 
   constructor() {
     super('MainMenuScene');
@@ -78,7 +81,7 @@ export class MainMenuScene extends Phaser.Scene {
     const buttonY = height * 0.5;
     const buttonSpacing = 60;
 
-    this.createMenuButton(centerX, buttonY, '开始游戏', () => this.startGame());
+    this.createMenuButton(centerX, buttonY, '开始游戏', () => this.openLevelSelect());
     this.createMenuButton(centerX, buttonY + buttonSpacing, '继续游戏', () => this.continueGame());
     this.createMenuButton(centerX, buttonY + buttonSpacing * 2, '设置', () => this.openSettings());
 
@@ -106,8 +109,9 @@ export class MainMenuScene extends Phaser.Scene {
         .setOrigin(0, 1);
     }
 
-    // 创建设置面板（初始隐藏）
+    // 创建设置面板 + 关卡选择面板（初始隐藏）
     this.createSettingsOverlay();
+    this.createLevelSelectOverlay();
   }
 
   /** 背景星点（纯装饰，轻量，低配设备可承受） */
@@ -154,11 +158,27 @@ export class MainMenuScene extends Phaser.Scene {
     });
   }
 
-  private startGame(): void {
-    // startNewRun 会清除进行中存档，确保这是全新对局
-    GameManager.getInstance().startNewRun();
+  /** 开始对局：levelIndex=0 全新第 1 关；>0 直进模式（附快速开局包补偿 build 积累） */
+  private startGame(levelIndex = 0): void {
+    const gm = GameManager.getInstance();
+    if (levelIndex === 0) {
+      // 正常全新对局
+      gm.startNewRun(0);
+    } else {
+      // 直进选关：直接在该关卡开局，应用快速开局包
+      const cfg = LEVELS[levelIndex];
+      gm.startNewRun(levelIndex);
+      if (cfg.quickStart) gm.setQuickStart(cfg.quickStart);
+    }
     this.scene.start('GameScene');
     this.scene.launch('UIScene');
+  }
+
+  /** 打开关卡选择面板（未解锁关卡灰色不可点） */
+  private openLevelSelect(): void {
+    // 刷新面板内各关卡按钮的可点击/文案状态
+    this.refreshLevelSelect();
+    this.levelSelectOverlay.setVisible(true);
   }
 
   private continueGame(): void {
@@ -176,6 +196,114 @@ export class MainMenuScene extends Phaser.Scene {
   private openSettings(): void {
     // 打开面板前刷新当前值
     this.settingsOverlay.setVisible(true);
+  }
+
+  // ========== 关卡选择面板 ==========
+
+  private levelSelectButtons: Phaser.GameObjects.Text[] = [];
+
+  private createLevelSelectOverlay(): void {
+    const width = GameConfig.GAME_WIDTH;
+    const height = GameConfig.GAME_HEIGHT;
+    const cx = width / 2;
+    const cy = height / 2;
+    const panelW = 520;
+    const panelH = 420;
+
+    this.levelSelectOverlay = this.add.container(0, 0).setDepth(200).setVisible(false);
+
+    // 全屏遮罩
+    const mask = this.add
+      .rectangle(width / 2, height / 2, width, height, 0x000000, 0.7)
+      .setInteractive();
+    mask.on('pointerdown', () => this.levelSelectOverlay.setVisible(false));
+    this.levelSelectOverlay.add(mask);
+
+    // 面板背景
+    const bg = this.add.graphics();
+    bg.fillStyle(0x16161f, 0.98);
+    bg.fillRoundedRect(cx - panelW / 2, cy - panelH / 2, panelW, panelH, 14);
+    bg.lineStyle(2, 0xff6b35, 0.4);
+    bg.strokeRoundedRect(cx - panelW / 2, cy - panelH / 2, panelW, panelH, 14);
+    this.levelSelectOverlay.add(bg);
+
+    // 标题
+    this.levelSelectOverlay.add(
+      createUIText(this, cx, cy - panelH / 2 + 40, '选择区域', { fontSize: '28px', color: '#ff6b35', fontStyle: 'bold' })
+        .setOrigin(0.5)
+    );
+
+    // 说明
+    this.levelSelectOverlay.add(
+      createUIText(this, cx, cy - panelH / 2 + 78, '通关前置区域后解锁；已解锁区域可随时直进（附快速开局包）', {
+        fontSize: '13px',
+        color: '#888888',
+      })
+        .setOrigin(0.5)
+    );
+
+    // 各关卡按钮（第 1 关恒解锁）
+    const startY = cy - panelH / 2 + 130;
+    const gm = GameManager.getInstance();
+    this.levelSelectButtons = [];
+    LEVELS.forEach((lv, i) => {
+      const y = startY + i * 80;
+      const unlocked = i === 0 || gm.isLevelUnlocked(i);
+      const label = `${i === 0 ? '🌿' : i === 1 ? '🏚️' : '❄️'} ${lv.name}  ${unlocked ? '' : '🔒'}`;
+      const btn = createUIText(this, cx, y, label, {
+          fontSize: '20px',
+          color: unlocked ? '#e0e0e0' : '#555555',
+          backgroundColor: unlocked ? '#252530' : '#1a1a22',
+          padding: { left: 46, right: 46, top: 12, bottom: 12 },
+        })
+        .setOrigin(0.5);
+      if (unlocked) {
+        btn.setInteractive({ useHandCursor: true });
+        btn.on('pointerover', () => btn.setStyle({ color: '#ff6b35', backgroundColor: '#353555' }));
+        btn.on('pointerout', () => btn.setStyle({ color: '#e0e0e0', backgroundColor: '#252530' }));
+        btn.on('pointerdown', () => {
+          this.levelSelectOverlay.setVisible(false);
+          this.startGame(i);
+        });
+      }
+      this.levelSelectOverlay.add(btn);
+      this.levelSelectButtons.push(btn);
+    });
+
+    // 关闭
+    const closeBtn = createUIText(this, cx, cy + panelH / 2 - 32, '关闭', {
+        fontSize: '18px',
+        color: '#e0e0e0',
+        backgroundColor: '#1a1a25',
+        padding: { left: 36, right: 36, top: 10, bottom: 10 },
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerover', () => closeBtn.setStyle({ color: '#ff6b35', backgroundColor: '#2a2a35' }));
+    closeBtn.on('pointerout', () => closeBtn.setStyle({ color: '#e0e0e0', backgroundColor: '#1a1a25' }));
+    closeBtn.on('pointerdown', () => this.levelSelectOverlay.setVisible(false));
+    this.levelSelectOverlay.add(closeBtn);
+  }
+
+  /** 打开前刷新解锁状态（通关后回到主菜单，新区域应变为可点） */
+  private refreshLevelSelect(): void {
+    const gm = GameManager.getInstance();
+    this.levelSelectButtons.forEach((btn, i) => {
+      const lv = LEVELS[i];
+      if (!lv) return;
+      const unlocked = i === 0 || gm.isLevelUnlocked(i);
+      btn.setText(`${i === 0 ? '🌿' : i === 1 ? '🏚️' : '❄️'} ${lv.name}  ${unlocked ? '' : '🔒'}`);
+      btn.setStyle({ color: unlocked ? '#e0e0e0' : '#555555', backgroundColor: unlocked ? '#252530' : '#1a1a22' });
+      if (unlocked && !btn.input?.enabled) {
+        btn.setInteractive({ useHandCursor: true });
+        btn.on('pointerover', () => btn.setStyle({ color: '#ff6b35', backgroundColor: '#353555' }));
+        btn.on('pointerout', () => btn.setStyle({ color: '#e0e0e0', backgroundColor: '#252530' }));
+        btn.on('pointerdown', () => {
+          this.levelSelectOverlay.setVisible(false);
+          this.startGame(i);
+        });
+      }
+    });
   }
 
   // ========== 设置面板 ==========

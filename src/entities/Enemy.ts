@@ -591,25 +591,26 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.attackPlayer(player);
     }
 
-    // 技能轮转：各技能独立CD，随阶段缩短
+    // 技能轮转：各技能独立CD，随阶段缩短；技能 CD 可被 bossTuning 覆盖（关卡差异化 Boss）
+    const t = this.config.bossTuning;
     const cd = (key: string, base: number) => now - (this.bossSkillLast[key] || 0) >= this.getBossCD(base);
     const mark = (key: string) => { this.bossSkillLast[key] = now; };
 
     // 环形弹幕（全阶段）
-    if (cd('ring', 3000)) { this.bossBarrage(); mark('ring'); }
+    if (cd('ring', t?.ringCd ?? 3000)) { this.bossBarrage(); mark('ring'); }
     // 扇形弹幕（阶段2+）
-    if (this.bossPhase >= 2 && cd('fan', 2600)) { this.bossFan(player); mark('fan'); }
+    if (this.bossPhase >= 2 && cd('fan', t?.fanCd ?? 2600)) { this.bossFan(player); mark('fan'); }
     // 追踪弹（阶段2+）
-    if (this.bossPhase >= 2 && cd('homing', 4500)) { this.bossHoming(player); mark('homing'); }
+    if (this.bossPhase >= 2 && cd('homing', t?.homingCd ?? 4500)) { this.bossHoming(player); mark('homing'); }
     // 冲锋（阶段2+，破除放风筝）
-    if (this.bossPhase >= 2 && this.bossChargeState === 0 && cd('charge', 5000)) {
+    if (this.bossPhase >= 2 && this.bossChargeState === 0 && cd('charge', t?.chargeCd ?? 5000)) {
       this.bossChargeStart(player);
       mark('charge');
     }
     // 召唤小怪（Boss战持续压力）
-    if (cd('summon', 7000)) { this.bossSummon(); mark('summon'); }
+    if (cd('summon', t?.summonCd ?? 7000)) { this.bossSummon(); mark('summon'); }
     // 地面AOE（阶段3狂暴）
-    if (this.bossPhase >= 3 && cd('aoe', 3500)) { this.bossAOE(player); mark('aoe'); }
+    if (this.bossPhase >= 3 && cd('aoe', t?.aoeCd ?? 3500)) { this.bossAOE(player); mark('aoe'); }
   }
 
   /** Boss 当前阶段（1/2/3，血量阈值 66%/33%） */
@@ -650,10 +651,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     return base;
   }
 
-  /** Boss 技能伤害（含阶段攻击加成） */
+  /** Boss 技能伤害（含阶段攻击加成）；弹幕型 Boss 可叠加 barrageAtkMult */
   private getBossSkillDamage(mult: number): number {
     const phaseAtk = this.bossPhase >= 3 ? 1.5 : this.bossPhase === 2 ? 1.2 : 1;
-    return this.config.attackPower * mult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost * phaseAtk;
+    const barrageMult = this.config.bossTuning?.barrageAtkMult ?? 1;
+    return this.config.attackPower * mult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost * phaseAtk * barrageMult;
   }
 
   /** 扇形弹幕：朝玩家方向散射 */
@@ -709,8 +711,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const gm = GameManager.getInstance();
     const maxEnemies = gm.qualitySettings.maxEnemies;
     if (pool.getActiveEnemyCount() >= maxEnemies * 0.6) return;
-    const types: EnemyType[] = ['normal', 'fast', 'elite'];
-    for (let i = 0; i < 2; i++) {
+    const t = this.config.bossTuning;
+    const types: EnemyType[] = t?.summonTypes ?? ['normal', 'fast', 'elite'];
+    const count = t?.summonCount ?? 2;
+    for (let i = 0; i < count; i++) {
       const type = types[Math.floor(Math.random() * types.length)];
       const cfg = ENEMY_CONFIGS[type];
       if (!cfg) continue;

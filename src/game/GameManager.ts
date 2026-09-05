@@ -4,6 +4,7 @@ import { SaveSystem } from '../systems/SaveSystem';
 import { AudioManager } from '../systems/AudioManager';
 import type { GameSaveData, SavedRun } from '../types';
 import type { Player } from '../entities/Player';
+import { LEVELS, type QuickStartConfig } from '../data/levels';
 
 /**
  * 游戏全局管理器（单例）
@@ -22,6 +23,8 @@ export class GameManager {
   };
   private _runData = {
     wave: 1,
+    /** 当前关卡序号（0 起，对应 LEVELS 下标） */
+    level: 0,
     kills: 0,
     score: 0,
     survivalTime: 0,
@@ -29,6 +32,10 @@ export class GameManager {
     isGameOver: false,
     isVictory: false,
   };
+  /** 已解锁关卡 id 列表（默认第 1 关） */
+  private _unlocked: string[] = [LEVELS[0].id];
+  /** 直进模式快速开局包（主菜单选关时设置，GameScene 消费后清除） */
+  private _quickStart: QuickStartConfig | null = null;
   private _saveSystem: SaveSystem | null = null;
   private _pendingRun: SavedRun | null = null;
   private _initialized = false;
@@ -94,9 +101,11 @@ export class GameManager {
     return 'medium';
   }
 
-  startNewRun(): void {
+  /** 开始新对局（可选指定起始关卡，默认第 1 关；直进选关时 level>0 且已 setQuickStart） */
+  startNewRun(level = 0): void {
     this._runData = {
       wave: 1,
+      level,
       kills: 0,
       score: 0,
       survivalTime: 0,
@@ -194,6 +203,7 @@ export class GameManager {
     this._pendingRun = run;
     this._runData = {
       wave: run.wave,
+      level: run.level ?? 0,
       kills: run.kills,
       score: run.score,
       survivalTime: run.survivalTime,
@@ -215,6 +225,7 @@ export class GameManager {
     const data = this._saveSystem.load() || this.buildSaveData();
     data.run = {
       wave: this._runData.wave,
+      level: this._runData.level,
       score: this._runData.score,
       kills: this._runData.kills,
       survivalTime: this._runData.survivalTime,
@@ -262,6 +273,10 @@ export class GameManager {
     const data = this._saveSystem.load();
     if (data) {
       this._stats = { ...this._stats, ...data.stats };
+      // 恢复已解锁关卡（旧存档无 unlocked 时保留默认第 1 关）
+      if (data.unlocked && Array.isArray(data.unlocked) && data.unlocked.length > 0) {
+        this._unlocked = data.unlocked;
+      }
       // 恢复设置（画质、音量、静音）
       if (data.settings) {
         this._qualityLevel = data.settings.quality || 'medium';
@@ -290,8 +305,89 @@ export class GameManager {
       },
       // 保留已有的进行中对局存档（endRun 会先 clearSavedRun 再调用，所以死亡时不会残留）
       run: (existing as any).run,
+      // 已解锁关卡（关卡化）
+      unlocked: this._unlocked,
     };
     this._saveSystem.save(data);
+  }
+
+  // ========== 关卡化 ==========
+
+  /** 当前关卡序号 */
+  get currentLevelIndex(): number {
+    return this._runData.level;
+  }
+
+  /** 已解锁关卡 id 列表 */
+  get unlockedLevels(): string[] {
+    return [...this._unlocked];
+  }
+
+  /** 是否已解锁指定序号关卡 */
+  isLevelUnlocked(index: number): boolean {
+    const cfg = LEVELS[index];
+    return !!cfg && this._unlocked.includes(cfg.id);
+  }
+
+  /** 通关某关后解锁下一关（最高只到最后一关） */
+  unlockLevel(index: number): void {
+    const cfg = LEVELS[index];
+    if (!cfg || this._unlocked.includes(cfg.id)) return;
+    this._unlocked.push(cfg.id);
+    this.saveProgress();
+  }
+
+  /** 设置直进模式快速开局包（主菜单选关时调用） */
+  setQuickStart(qs: QuickStartConfig): void {
+    this._quickStart = qs;
+  }
+
+  /** 直进模式快速开局包（GameScene 消费后清空） */
+  get quickStart(): QuickStartConfig | null {
+    return this._quickStart;
+  }
+
+  clearQuickStart(): void {
+    this._quickStart = null;
+  }
+
+  /**
+   * 跨关继承：进入下一关。
+   * 保留当前 build（武器/被动/属性/背包）到内存 pendingRun，重置波次到 1，
+   * 解锁下一关并作废旧进行中存档；由 GameScene.restart 触发 init 恢复。
+   */
+  advanceToNextLevel(player: Player): void {
+    const next = this._runData.level + 1;
+    this.unlockLevel(next);
+    this._pendingRun = {
+      wave: 1,
+      level: next,
+      score: 0,
+      kills: 0,
+      survivalTime: 0,
+      player: {
+        stats: player.getStats(),
+        weapons: player.getWeapons().map((w) => ({ id: w.id, level: w.level })),
+        passives: player.getPassives().map((p) => ({ id: p.id, name: p.name, level: p.level })),
+        statUpgrades: player.getStatUpgrades().map((s) => ({ id: s.id, name: s.name, level: s.level })),
+        breakthroughs: player.getBreakthroughs().map((b) => ({ id: b.id, name: b.name, level: b.level })),
+        inventory: player.getInventory(),
+      },
+    };
+    this._runData = {
+      ...this._runData,
+      level: next,
+      wave: 1,
+      kills: 0,
+      score: 0,
+      survivalTime: 0,
+      isVictory: false,
+      isGameOver: false,
+    };
+    this._quickStart = null;
+    // 旧进行中存档作废（进入新关后旧存档不应再"继续游戏"）
+    this.clearSavedRun();
+    EventBus.emit('run:start', this._runData);
   }
 
   get isMobile(): boolean {

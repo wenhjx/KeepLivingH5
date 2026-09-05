@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import {
   type TerrainConfig,
   type ObstacleConfig,
+  type SlowZoneConfig,
 } from '../data/terrain';
 import { GameConfig } from '../game/GameConfig';
 
@@ -21,6 +22,8 @@ export class TerrainManager {
   private config: TerrainConfig;
   private obstacleGroup!: Phaser.Physics.Arcade.StaticGroup;
   private obstacleList: ObstacleConfig[] = [];
+  private slowZoneList: SlowZoneConfig[] = [];
+  private slowZoneLayer!: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene, config: TerrainConfig) {
     this.scene = scene;
@@ -35,9 +38,10 @@ export class TerrainManager {
     crystal: 'obstacle_crystal',
   };
 
-  /** 创建所有障碍物（在 GameScene.create 中调用） */
+  /** 创建所有障碍物 + 减速区（在 GameScene.create 中调用） */
   create(): void {
     this.obstacleGroup = this.scene.physics.add.staticGroup();
+    this.createSlowZones();
 
     for (const obs of this.config.obstacles) {
       const textureKey = GameConfig.themeKey(TerrainManager.TEXTURE_MAP[obs.type] || 'obstacle_rock');
@@ -63,6 +67,33 @@ export class TerrainManager {
 
       this.obstacleList.push(obs);
     }
+  }
+
+  /** 创建减速区：半透明色块视觉 + 数据存储（不参与物理，逻辑在 GameScene 每帧查询） */
+  private createSlowZones(): void {
+    this.slowZoneList = [...(this.config.slowZones ?? [])];
+    this.slowZoneLayer = this.scene.add.graphics().setDepth(0.5);
+    for (const z of this.slowZoneList) {
+      this.slowZoneLayer.fillStyle(z.color ?? 0x3aa6dd, 0.18);
+      this.slowZoneLayer.fillRect(z.x - z.width / 2, z.y - z.height / 2, z.width, z.height);
+      this.slowZoneLayer.lineStyle(1, z.color ?? 0x3aa6dd, 0.4);
+      this.slowZoneLayer.strokeRect(z.x - z.width / 2, z.y - z.height / 2, z.width, z.height);
+    }
+  }
+
+  /** 查询某点所在减速区的减速系数（不在任何减速区返回 1） */
+  getSlowFactorAt(x: number, y: number): number {
+    for (const z of this.slowZoneList) {
+      if (x > z.x - z.width / 2 && x < z.x + z.width / 2 && y > z.y - z.height / 2 && y < z.y + z.height / 2) {
+        return z.slowFactor;
+      }
+    }
+    return 1;
+  }
+
+  /** 减速区列表 */
+  getSlowZones(): SlowZoneConfig[] {
+    return this.slowZoneList;
   }
 
   /** 障碍物物理组（供 GameScene 设置碰撞） */
@@ -95,8 +126,9 @@ export class TerrainManager {
 
   /** 切换地形（以后新增区域时调用，会销毁旧障碍物并创建新的） */
   setTerrain(config: TerrainConfig): void {
-    // 销毁旧障碍物
+    // 销毁旧障碍物 + 减速区
     this.obstacleGroup?.clear(true, true);
+    this.slowZoneLayer?.destroy();
     this.obstacleList = [];
     this.config = config;
     this.create();

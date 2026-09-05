@@ -34,7 +34,7 @@ export interface PlayerStats extends EntityStats {
   coins: number;
 }
 
-export type EnemyType = 'normal' | 'fast' | 'tank' | 'ranged' | 'elite' | 'boss' | 'suicider' | 'splitter' | 'shielded';
+export type EnemyType = 'normal' | 'fast' | 'tank' | 'ranged' | 'elite' | 'boss' | 'suicider' | 'splitter' | 'shielded' | 'boss_summoner' | 'boss_barrage';
 
 export interface EnemyConfig {
   type: EnemyType;
@@ -60,6 +60,27 @@ export interface EnemyConfig {
   splitInto?: { type: EnemyType; count: number };
   /** 精英词缀（固定指定用）：enrage 狂暴 / shield 护盾 / split 分裂；不填则精英怪随机分配 */
   affix?: string;
+  /** Boss 行为风格参数（type 为 boss 时生效）：差异化各技能 CD/召唤，驱动召唤型/弹幕型 Boss */
+  bossTuning?: BossTuning;
+}
+
+/** Boss 行为调参（关卡差异化：召唤型 / 弹幕型 / 均衡型） */
+export interface BossTuning {
+  /** 行为风格标识（信息性） */
+  style?: 'generic' | 'summoner' | 'barrage';
+  /** 各技能基础 CD（ms），覆盖默认值 */
+  ringCd?: number;
+  fanCd?: number;
+  homingCd?: number;
+  chargeCd?: number;
+  summonCd?: number;
+  aoeCd?: number;
+  /** 每次召唤的小怪数量（默认 2） */
+  summonCount?: number;
+  /** 召唤的小怪类型池（默认 normal/fast/elite） */
+  summonTypes?: EnemyType[];
+  /** 弹幕类技能伤害额外倍率（弹幕型强化） */
+  barrageAtkMult?: number;
 }
 
 // ========== 武器与技能 ==========
@@ -172,6 +193,8 @@ export interface SavedRun {
   score: number;
   kills: number;
   survivalTime: number;
+  /** 当前关卡序号（0 起；旧存档无此字段时默认第 1 关） */
+  level?: number;
   player: {
     stats: PlayerStats;
     weapons: Array<{ id: string; level: number }>;

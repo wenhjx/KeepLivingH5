@@ -8,6 +8,7 @@ import { EventBus } from '../utils/EventBus';
 import type { ObjectPool } from './ObjectPool';
 import type { EnemyConfig, EnemyType, WaveConfig } from '../types';
 import { ENEMY_CONFIGS } from '../data/enemies';
+import type { LevelConfig } from '../data/levels';
 
 /**
  * 波次管理器
@@ -16,6 +17,7 @@ import { ENEMY_CONFIGS } from '../data/enemies';
 export class WaveManager {
   private scene: Phaser.Scene;
   private objectPool: ObjectPool;
+  private levelConfig: LevelConfig;
 
   private currentWave: number = 1;
   private waveTimer: number = 0;
@@ -26,9 +28,15 @@ export class WaveManager {
   // 当前波次的生成表
   private currentSpawnTable: { type: EnemyType; weight: number }[] = [];
 
-  constructor(scene: Phaser.Scene, objectPool: ObjectPool) {
+  constructor(scene: Phaser.Scene, objectPool: ObjectPool, levelConfig: LevelConfig) {
     this.scene = scene;
     this.objectPool = objectPool;
+    this.levelConfig = levelConfig;
+  }
+
+  /** 切换关卡配置（关卡重启时由 GameScene 重建；保留方法以备复用同一实例） */
+  setLevelConfig(cfg: LevelConfig): void {
+    this.levelConfig = cfg;
   }
 
   /** 开始指定波次 */
@@ -56,47 +64,61 @@ export class WaveManager {
     }
   }
 
-  /** 构建当前波次的敌人生成权重表 */
+  /** 构建当前波次的敌人生成权重表（默认构成 × 关卡 enemyOverrides 权重倍率） */
   private buildSpawnTable(wave: number): void {
     this.currentSpawnTable = [];
+    // 关卡敌人构成覆盖：按敌人类型放大/缩小默认权重
+    const mult = (type: EnemyType): number => this.levelConfig.enemyOverrides?.[type]?.weightMult ?? 1;
 
     // 基础敌人始终出现
-    this.currentSpawnTable.push({ type: 'normal', weight: 100 });
+    this.currentSpawnTable.push({ type: 'normal', weight: 100 * mult('normal') });
 
     // 第2波开始出现快速敌人
     if (wave >= 2) {
-      this.currentSpawnTable.push({ type: 'fast', weight: 30 + wave * 2 });
+      this.currentSpawnTable.push({ type: 'fast', weight: (30 + wave * 2) * mult('fast') });
     }
 
     // 第3波开始出现坦克
     if (wave >= 3) {
-      this.currentSpawnTable.push({ type: 'tank', weight: 15 + wave });
+      this.currentSpawnTable.push({ type: 'tank', weight: (15 + wave) * mult('tank') });
     }
 
     // 第4波开始出现远程
     if (wave >= 4) {
-      this.currentSpawnTable.push({ type: 'ranged', weight: 10 + wave });
+      this.currentSpawnTable.push({ type: 'ranged', weight: (10 + wave) * mult('ranged') });
     }
 
     // 第5波开始出现自爆怪
     if (wave >= 5) {
-      this.currentSpawnTable.push({ type: 'suicider', weight: 12 + wave });
+      this.currentSpawnTable.push({ type: 'suicider', weight: (12 + wave) * mult('suicider') });
     }
 
     // 第7波开始出现护盾怪
     if (wave >= 7) {
-      this.currentSpawnTable.push({ type: 'shielded', weight: 10 + wave * 0.8 });
+      this.currentSpawnTable.push({ type: 'shielded', weight: (10 + wave * 0.8) * mult('shielded') });
     }
 
     // 第8波开始出现分裂怪
     if (wave >= 8) {
-      this.currentSpawnTable.push({ type: 'splitter', weight: 8 + wave * 0.6 });
+      this.currentSpawnTable.push({ type: 'splitter', weight: (8 + wave * 0.6) * mult('splitter') });
     }
 
     // 第6波开始出现精英
     if (wave >= 6) {
-      this.currentSpawnTable.push({ type: 'elite', weight: 5 + wave * 0.5 });
+      this.currentSpawnTable.push({ type: 'elite', weight: (5 + wave * 0.5) * mult('elite') });
     }
+  }
+
+  /** 关卡数值调参：血量/攻击 × 关卡倍率（克隆配置避免污染 ENEMY_CONFIGS） */
+  private applyLevelTuning(config: EnemyConfig): EnemyConfig {
+    const hpMult = this.levelConfig.enemyHpMultiplier;
+    const dmgMult = this.levelConfig.enemyDmgMultiplier;
+    if (!hpMult && !dmgMult) return config;
+    return {
+      ...config,
+      maxHealth: config.maxHealth * (hpMult ?? 1),
+      attackPower: config.attackPower * (dmgMult ?? 1),
+    };
   }
 
   update(time: number, delta: number): void {
@@ -137,8 +159,9 @@ export class WaveManager {
     const enemyType = MathUtils.weightedRandom(types, weights);
 
     // 获取配置
-    const config = ENEMY_CONFIGS[enemyType];
-    if (!config) return;
+    const baseConfig = ENEMY_CONFIGS[enemyType];
+    if (!baseConfig) return;
+    const config = this.applyLevelTuning(baseConfig);
 
     // 计算生成位置（玩家周围屏幕外）
     const gameScene = this.scene as any;
@@ -174,10 +197,11 @@ export class WaveManager {
     return { x, y };
   }
 
-  /** 生成 Boss */
+  /** 生成 Boss（类型由关卡 bossType 决定，可做召唤型/弹幕型差异化） */
   private spawnBoss(): void {
-    const config = ENEMY_CONFIGS['boss'];
-    if (!config) return;
+    const baseConfig = ENEMY_CONFIGS[this.levelConfig.bossType ?? 'boss'];
+    if (!baseConfig) return;
+    const config = this.applyLevelTuning(baseConfig);
 
     const gameScene = this.scene as any;
     const player = gameScene.getPlayer();

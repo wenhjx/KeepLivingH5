@@ -54,6 +54,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // 无敌状态
   private invincible = false;
   private invincibleTimer = 0;
+  /** 地形减速倍率（冰原减速区等）：GameScene 每帧按所在区域设置，移动速度 × 该值 */
+  movementMultiplier = 1;
   // 护盾（无敌 + 圆环视觉）
   private shieldActive = false;
   private shieldRing: Phaser.GameObjects.Arc | null = null;
@@ -154,7 +156,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // 移动
     const moveDir = input.getMoveDirection();
-    this.setVelocity(moveDir.x * this.stats.moveSpeed, moveDir.y * this.stats.moveSpeed);
+    this.setVelocity(
+      moveDir.x * this.stats.moveSpeed * this.movementMultiplier,
+      moveDir.y * this.stats.moveSpeed * this.movementMultiplier
+    );
 
     // 更新朝向（朝移动方向），并旋转箭头指向移动方向
     if (moveDir.x !== 0 || moveDir.y !== 0) {
@@ -525,6 +530,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   heal(amount: number): void {
     this.stats.health = Math.min(this.stats.maxHealth, this.stats.health + amount);
     EventBus.emit('player:heal', amount);
+  }
+
+  /**
+   * 环境/规则伤害（如冰原"霜蚀"持续掉血）：绕过无敌帧，按最大生命百分比流失；
+   * 归零时正常触发死亡。不触发受击闪烁/荆棘反弹/受击音效。
+   */
+  damageFromHazard(amount: number): void {
+    if (this.stats.health <= 0) return;
+    this.stats.health -= amount;
+    EventBus.emit('player:damage', amount);
+    if (this.stats.health <= 0) {
+      this.stats.health = 0;
+      this.die();
+    }
   }
 
   private die(): void {
