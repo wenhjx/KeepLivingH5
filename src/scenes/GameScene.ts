@@ -187,6 +187,14 @@ export class GameScene extends Phaser.Scene {
    */
   private triggerTutorial(): void {
     const guide = GuideManager.getInstance();
+    // 仅首次进入游戏提示基础操作：localStorage 持久化，之后刷新/重进/新对局都不再弹
+    const SEEN_KEY = 'kl_tutorial_seen_v1';
+    try {
+      if (localStorage.getItem(SEEN_KEY)) return;
+      localStorage.setItem(SEEN_KEY, '1');
+    } catch {
+      // 隐私模式等 localStorage 不可用时忽略持久化（本次仍照常显示）
+    }
     const isMobile = GameManager.getInstance().isMobile;
 
     const moveDesc = isMobile
