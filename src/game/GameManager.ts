@@ -1,8 +1,9 @@
 import { GameConfig, QualityLevel } from './GameConfig';
 import { EventBus } from '../utils/EventBus';
 import { SaveSystem } from '../systems/SaveSystem';
+import { AchievementManager } from '../systems/AchievementManager';
 import { AudioManager } from '../systems/AudioManager';
-import type { GameSaveData, SavedRun } from '../types';
+import type { AchievementSaveData, GameSaveData, SaveStats, SavedRun } from '../types';
 import type { Player } from '../entities/Player';
 import { LEVELS, type QuickStartConfig } from '../data/levels';
 
@@ -15,11 +16,17 @@ export class GameManager {
 
   private _qualityLevel: QualityLevel = 'medium';
   private _isMobile: boolean = false;
-  private _stats = {
+  private _stats: SaveStats = {
     totalKills: 0,
     totalPlayTime: 0,
     highScore: 0,
     gamesPlayed: 0,
+    totalCoinsEarned: 0,
+    totalCoinsSpent: 0,
+    bossesKilled: 0,
+    wins: 0,
+    maxWaveReached: 0,
+    weaponsCollected: [],
   };
   private _runData = {
     wave: 1,
@@ -58,6 +65,9 @@ export class GameManager {
 
     this._saveSystem = new SaveSystem();
     this.loadProgress();
+
+    // 成就系统：读存档 + 注册事件 + 补解锁（必须在统计恢复之后）
+    AchievementManager.getInstance().init();
 
     EventBus.emit('game:initialized', {
       isMobile: this._isMobile,
@@ -273,6 +283,13 @@ export class GameManager {
     const data = this._saveSystem.load();
     if (data) {
       this._stats = { ...this._stats, ...data.stats };
+      // 成就统计缺省兜底（老存档无这些字段）
+      this._stats.totalCoinsEarned = this._stats.totalCoinsEarned ?? 0;
+      this._stats.totalCoinsSpent = this._stats.totalCoinsSpent ?? 0;
+      this._stats.bossesKilled = this._stats.bossesKilled ?? 0;
+      this._stats.wins = this._stats.wins ?? 0;
+      this._stats.maxWaveReached = this._stats.maxWaveReached ?? 0;
+      this._stats.weaponsCollected = this._stats.weaponsCollected ?? [];
       // 恢复已解锁关卡（旧存档无 unlocked 时保留默认第 1 关）
       if (data.unlocked && Array.isArray(data.unlocked) && data.unlocked.length > 0) {
         this._unlocked = data.unlocked;
@@ -307,8 +324,33 @@ export class GameManager {
       run: (existing as any).run,
       // 已解锁关卡（关卡化）
       unlocked: this._unlocked,
+      // 成就系统状态（解锁/加成/称号；AchievementManager 每次解锁也单独落盘，这里避免覆盖丢失）
+      achievements: (existing as any).achievements,
     };
     this._saveSystem.save(data);
+  }
+
+  // ========== 成就系统 ==========
+
+  /** 原地修改全局统计并落盘（成就计数专用；统计字段见 SaveStats 扩展） */
+  mutateStats(fn: (s: SaveStats) => void): void {
+    fn(this._stats);
+    this.saveProgress();
+  }
+
+  /** 成就存档（解锁状态 + 永久加成 + 称号） */
+  get achievementsData(): AchievementSaveData | undefined {
+    return this._saveSystem?.load()?.achievements;
+  }
+
+  /** 写入成就存档并落盘（不覆盖进行中对局 run） */
+  saveAchievementsData(data: AchievementSaveData): void {
+    if (!this._saveSystem) return;
+    const existing = this._saveSystem.load();
+    this._saveSystem.save({
+      ...(existing ?? { version: 1, timestamp: Date.now(), stats: this._stats, settings: { quality: this._qualityLevel, soundVolume: 1, musicVolume: 0.7, muted: false } }),
+      achievements: data,
+    });
   }
 
   // ========== 关卡化 ==========

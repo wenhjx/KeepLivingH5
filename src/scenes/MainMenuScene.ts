@@ -97,6 +97,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.createMenuButton(centerX, buttonY, '开始游戏', () => this.openLevelSelect());
     this.createMenuButton(centerX, buttonY + buttonSpacing, '继续游戏', () => this.continueGame());
     this.createMenuButton(centerX, buttonY + buttonSpacing * 2, '设置', () => this.openSettings());
+    this.createMenuButton(centerX, buttonY + buttonSpacing * 3, '🏅 成就', () => this.openAchievements());
 
     // 底部信息
     const stats = gm.stats;
@@ -241,6 +242,12 @@ export class MainMenuScene extends Phaser.Scene {
       // 无存档：直接开始新游戏
       this.startGame();
     }
+  }
+
+  /** 打开成就面板（独立场景，返回时重建主菜单） */
+  private openAchievements(): void {
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
+    this.scene.start('AchievementScene');
   }
 
   private openSettings(): void {

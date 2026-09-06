@@ -236,6 +236,9 @@ export class ShopScene extends Phaser.Scene {
     }
     this.updateCoin();
 
+    // 成就统计：商店累计消费（财迷系列）
+    EventBus.emit('shop:purchase', { price: item.price });
+
     // 该格标记已售
     card.setData('sold', true);
     card.list.forEach((obj) => {

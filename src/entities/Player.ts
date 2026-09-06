@@ -8,6 +8,7 @@ import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { USABLE_ITEMS } from '../data/items';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
+import { AchievementManager } from '../systems/AchievementManager';
 import type { PlayerStats, WeaponConfig, UpgradeOption } from '../types';
 import type { InputManager } from '../systems/InputManager';
 
@@ -78,21 +79,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 按当前视觉主题解析玩家纹理（classic 矢量 / pixel 像素）
     super(scene, x, y, GameConfig.themeKey('player'));
 
-    // 初始化属性
+    // 初始化属性（叠加成就系统永久加成：温和数值，见 data/achievements.ts 说明）
+    const ach = AchievementManager.getInstance();
     this.stats = {
-      maxHealth: GameConfig.PLAYER.maxHealth,
-      health: GameConfig.PLAYER.maxHealth,
+      maxHealth: GameConfig.PLAYER.maxHealth + ach.getBonus('maxHealth'),
+      health: GameConfig.PLAYER.maxHealth + ach.getBonus('maxHealth'),
       moveSpeed: GameConfig.PLAYER.moveSpeed,
-      attackPower: GameConfig.PLAYER.baseAttackPower,
+      attackPower: GameConfig.PLAYER.baseAttackPower + ach.getBonus('attackPower'),
       attackSpeed: GameConfig.PLAYER.baseAttackSpeed,
       defense: 0,
       level: 1,
       exp: 0,
       expToNext: GameConfig.LEVEL.baseExp,
-      critRate: GameConfig.PLAYER.baseCritRate,
-      critDamage: GameConfig.PLAYER.baseCritDamage,
-      pickupRadius: GameConfig.PLAYER.pickupRadius,
-      luck: 0,
+      critRate: GameConfig.PLAYER.baseCritRate + ach.getBonus('critRate'),
+      critDamage: GameConfig.PLAYER.baseCritDamage + ach.getBonus('critDamage'),
+      pickupRadius: GameConfig.PLAYER.pickupRadius + ach.getBonus('pickupRadius'),
+      luck: ach.getBonus('luck'),
       coins: 30,
     };
 
@@ -518,6 +520,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     const actualDamage = Math.max(1, amount - this.stats.defense);
     this.stats.health -= actualDamage;
+    // 成就：本局受击标记（无伤通关判定，run:start 时由 AchievementManager 重置）
+    EventBus.emit('player:hit');
     this.invincible = true;
     this.invincibleTimer = GameConfig.PLAYER.invincibleTime;
     this.setTint(0xff4444);
@@ -593,6 +597,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     this.stats.coins += Math.floor(amount);
     EventBus.emit('player:coins', this.stats.coins);
+    // 成就统计：累计获得金币（含被动加成的最终值）
+    EventBus.emit('coin:earned', amount);
   }
 
   getCoins(): number {

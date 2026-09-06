@@ -1,5 +1,6 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 引导提示卡片配置
@@ -63,7 +64,10 @@ export class GuideCard {
    * 构建卡片内容
    */
   private build(): void {
-    const { width, height } = this.scene.scale;
+    // 统一使用逻辑分辨率定位（UI 放入 uiRoot 反向缩放容器 / 相机 zoom 补偿后均为 960x640 坐标系；
+    // 用物理尺寸 scene.scale.width/height 会导致高清屏下卡片跑到屏幕外）
+    const width = GameConfig.GAME_WIDTH;
+    const height = GameConfig.GAME_HEIGHT;
     const color = this.config.color ?? 0x00ffff;
     const position = this.config.position ?? 'top-right';
 

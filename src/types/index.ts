@@ -175,6 +175,17 @@ export interface GameSaveData {
   unlocked?: string[];
   /** 进行中的对局存档（用于"继续游戏"） */
   run?: SavedRun;
+  /** 成就系统：解锁记录 + 永久加成（跨对局永久生效，随全局存档保存） */
+  achievements?: AchievementSaveData;
+}
+
+/** 成就存档（解锁状态 + 永久加成 + 称号） */
+export interface AchievementSaveData {
+  unlocked: string[];
+  /** 永久属性加成（stat 字段名 → 数值，如 maxHealth: 10） */
+  bonuses: Record<string, number>;
+  /** 已获得称号（装饰性，最新在前） */
+  titles: string[];
 }
 
 export interface SaveStats {
@@ -182,6 +193,19 @@ export interface SaveStats {
   totalPlayTime: number;
   highScore: number;
   gamesPlayed: number;
+  // ===== 成就统计（老存档缺省为 0/空，loadProgress 合并时兜底） =====
+  /** 累计获得金币 */
+  totalCoinsEarned?: number;
+  /** 商店累计消费金币 */
+  totalCoinsSpent?: number;
+  /** 累计击杀 Boss 数 */
+  bossesKilled?: number;
+  /** 通关次数（胜利结算） */
+  wins?: number;
+  /** 历史到达最大波次 */
+  maxWaveReached?: number;
+  /** 跨局累积收集的武器 id（去重，武器大师系列用） */
+  weaponsCollected?: string[];
 }
 
 export interface SaveSettings {
