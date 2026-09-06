@@ -103,7 +103,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     expReward: 14,
     scoreReward: 25,
     size: 26,
-    color: 0xcc44ff,
+    color: 0x55ddff,
     splitInto: { type: 'normal', count: 2 },
   },
   shielded: {
@@ -118,7 +118,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     expReward: 16,
     scoreReward: 30,
     size: 26,
-    color: 0x88aaff,
+    color: 0x44ccff,
     shieldFrontReduction: 0.75,
   },
   // 召唤怪：保持距离持续召唤小怪，优先击杀断增援

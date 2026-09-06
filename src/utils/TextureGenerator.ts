@@ -21,8 +21,8 @@ export class TextureGenerator {
     enemyElite: 0xffaa00,
     enemyBoss: 0xff2244,
     enemySuicider: 0xff5500,
-    enemySplitter: 0xcc44ff,
-    enemyShielded: 0x88aaff,
+    enemySplitter: 0x55ddff,
+    enemyShielded: 0x44ccff,
     bullet: 0xffffff,
     bulletGlow: 0x00ffff,
     exp: 0x00ffff,
@@ -144,22 +144,22 @@ export class TextureGenerator {
     enemy_fast: {
       scale: 48 / 16,
       grid: [
+        '................',
+        '.......WW.......',
         '.......WW.......',
         '......WWWW......',
+        '......WWWW......',
+        '.....WWWWWW.....',
         '.....WWWWWW.....',
         '....WWWWWWWW....',
+        '....WWWWWWWW....',
+        '...WWWWWWWWWW...',
         '...WWWWWWWWWW...',
         '..WWWWWWWWWWWW..',
         '..WWWWWWWWWWWW..',
         '.WWWWWWWWWWWWWW.',
         '.WWWWWWWWWWWWWW.',
-        '..WWWWWWWWWWWW..',
-        '..WWWWWWWWWWWW..',
-        '...WWWWWWWWWW...',
-        '....WWWWWWWW....',
-        '.....WWWWWW.....',
-        '......WWWW......',
-        '.......WW.......',
+        '.....DDDDDD.....',
       ],
     },
     enemy_tank: {
@@ -186,22 +186,22 @@ export class TextureGenerator {
     enemy_ranged: {
       scale: 50 / 16,
       grid: [
-        '....DDDDDDDD....',
-        '..DDWWWWWWWWDD..',
-        '.DWWWWWWWWWWWWD.',
-        '.DWWWWWWWWWWWWD.',
-        '.DWWDDWWWWDDWWD.',
-        '.DWWDDWWWWDDWWD.',
-        '.DWWWWWWWWWWWWD.',
-        '.DWWWWWWWWWWWWD.',
-        '.DWWWWWWWWWWWWD.',
-        '.DWWWWWWWWWWWWD.',
-        '.DWWWWWWWWWWWWD.',
-        '..DWWWWWWWWWWD..',
-        '...DDWWWWWWDD...',
+        '.......WW.......',
+        '.......WW.......',
+        '......WWWW......',
+        '.....WWWWWW.....',
+        '....WWWWWWWW....',
+        '...WWWWWWWWWW...',
+        '..WWWWWWWWWWWW..',
+        '...WWWWWWWWWW...',
+        '...WWWWWWWWWW...',
+        '..WWWWWWWWWWWW..',
+        '..WWDDWWWWDDWW..',
+        '..WWDDWWWWDDWW..',
+        '.WWWWWWWWWWWWWW.',
+        '.WWWWWWWWWWWWWW.',
+        '..WWWWWWWWWWWW..',
         '.....DDDDDD.....',
-        '................',
-        '................',
       ],
     },
     enemy_elite: {
@@ -249,22 +249,22 @@ export class TextureGenerator {
     enemy_suicider: {
       scale: 52 / 16,
       grid: [
-        '......WWWW......',
-        '....WWWWWWWW....',
-        '...WWWWWWWWWW...',
-        '..WWWWWWWWWWWW..',
-        '..WWWWWWWWWWWW..',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWDDWWWWDDWWW.',
-        '.WWWDDWWWWDDWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '..WWWWWWWWWWWW..',
-        '..WWWWWWWWWWWW..',
-        '...WWWWWWWWWW...',
-        '....WWWWWWWW....',
-        '.....WWDDWW.....',
         '......DDDD......',
+        '......WWWW......',
+        '.......WW.......',
+        '.......WW.......',
+        'W....WWWWWW....W',
+        'WW..WWWWWWWW..WW',
+        '..WWWWWWWWWWWW..',
+        '..WWWWWWWWWWWW..',
+        '.WWWDDWWWWDDWWW.',
+        '.WWWDDWWWWDDWWW.',
+        '..WWWWWWWWWWWW..',
+        '..WWWWWWWWWWWW..',
+        'WW..WWWWWWWW..WW',
+        'W....WWWWWW....W',
+        '.....WWWWWW.....',
+        '.....DDDDDD.....',
       ],
     },
     enemy_splitter: {
@@ -306,6 +306,69 @@ export class TextureGenerator {
         '................',
         '................',
         '................',
+        '................',
+      ],
+    },
+    enemy_summoner: {
+      scale: 62 / 16,
+      grid: [
+        '................',
+        '.......WW.......',
+        '......WWWW......',
+        '.......WW.......',
+        '.......WW.......',
+        '......WWWW......',
+        '.....WWWWWW.....',
+        '....WWWWWWWW....',
+        '...WWWWWWWWWW...',
+        '..WWDDWWWWDDWW..',
+        '..WWDDWWWWDDWW..',
+        '...WWWWWWWWWW...',
+        '....WWWWWWWW....',
+        '.....WWWWWW.....',
+        '......WWWW......',
+        '................',
+      ],
+    },
+    enemy_charger: {
+      scale: 62 / 16,
+      grid: [
+        '................',
+        '.......WW.......',
+        '......WWWW......',
+        '.....WWWWWW.....',
+        '....WWWWWWWW....',
+        '...WWWWWWWWWW...',
+        '..WWWWWWWWWWWW..',
+        '.WWWWWWWWWWWWWW.',
+        '.WWDDDDDDDDDDWW.',
+        '.WWWWWWWWWWWWWW.',
+        '..WWWWWWWWWWWW..',
+        '...WWWWWWWWWW...',
+        '....WWWWWWWW....',
+        '.....WWWWWW.....',
+        '......WWWW......',
+        '................',
+      ],
+    },
+    enemy_healer: {
+      scale: 52 / 16,
+      grid: [
+        '......WWWW......',
+        '....WWWWWWWW....',
+        '...WWWWWWWWWW...',
+        '..WWWWWWWWWWWW..',
+        '..WWDDWWWWDDWW..',
+        '..WWDDWWWWDDWW..',
+        '.WWWWWWWWWWWWWW.',
+        '.WWWWWWWWWWWWWW.',
+        '.WWWWDDDDDDWWWW.',
+        '.WWWWDDWWDDWWWW.',
+        '..WWWWDDDDWWWW..',
+        '..WWWWWWWWWWWW..',
+        '...WWWWWWWWWW...',
+        '....WWWWWWWW....',
+        '......WWWW......',
         '................',
       ],
     },
@@ -519,16 +582,25 @@ export class TextureGenerator {
     g.fillStyle(0xffcc44, 1);
     g.fillCircle(cx, cy, r * 0.2);
 
-    // 引线火花（四周小刺）
-    g.fillStyle(0xffff00, 0.9);
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2 + 0.5;
-      g.fillCircle(cx + Math.cos(a) * r * 1.1, cy + Math.sin(a) * r * 1.1, 2.5);
+    // 四向尖刺（炸弹剪影，区别于普通圆怪）
+    g.fillStyle(color, 1);
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      g.fillCircle(cx + Math.cos(a) * r * 1.15, cy + Math.sin(a) * r * 1.15, r * 0.22);
+      g.fillCircle(cx + Math.cos(a) * r * 1.32, cy + Math.sin(a) * r * 1.32, r * 0.13);
     }
 
     // 警示黑边
     g.lineStyle(2, 0x222222, 0.6);
     g.strokeCircle(cx, cy, r);
+
+    // 顶部引信（短柄 + 火花）
+    g.lineStyle(3, 0x222222, 0.9);
+    g.lineBetween(cx, cy - r, cx, cy - r - 9);
+    g.fillStyle(0xffdd00, 1);
+    g.fillCircle(cx, cy - r - 11, 3.5);
+    g.fillStyle(0xff8800, 1);
+    g.fillCircle(cx, cy - r - 11, 1.8);
 
     g.generateTexture(key, size, size);
     g.destroy();
@@ -749,9 +821,9 @@ export class TextureGenerator {
     g.destroy();
   }
 
-  /** 快速敌人：晶体碎片（锐利菱形 + 速度线） */
+  /** 快速敌人：细长尖梭（高速箭头剪影 + 三道拖尾，一眼可辨的"快"） */
   private generateEnemyShard(key: string, color: number, r: number): void {
-    const size = r * 2 + 12;
+    const size = r * 2 + 14;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
     const cx = size / 2;
     const cy = size / 2;
@@ -760,40 +832,43 @@ export class TextureGenerator {
     g.fillStyle(color, 0.2);
     g.fillCircle(cx, cy, r + 4);
 
-    // 速度线（后方拖影）
-    g.fillStyle(color, 0.3);
+    // 速度线（尾部三道拖影，突出高速感）
+    g.fillStyle(color, 0.35);
     g.beginPath();
-    g.moveTo(cx, cy + r * 0.3);
-    g.lineTo(cx - r * 0.5, cy + r * 1.2);
-    g.lineTo(cx + r * 0.5, cy + r * 1.2);
+    g.moveTo(cx, cy + r * 0.45);
+    g.lineTo(cx - r * 0.5, cy + r * 1.3);
+    g.lineTo(cx - r * 0.15, cy + r * 1.1);
+    g.lineTo(cx, cy + r * 1.35);
+    g.lineTo(cx + r * 0.15, cy + r * 1.1);
+    g.lineTo(cx + r * 0.5, cy + r * 1.3);
     g.closePath();
     g.fillPath();
 
-    // 主体（锐利晶体，上下不对称）
+    // 主体：细长尖梭（高 > 宽，方向感强烈）
     g.fillStyle(color, 1);
     g.beginPath();
-    g.moveTo(cx, cy - r);
-    g.lineTo(cx + r * 0.7, cy - r * 0.1);
-    g.lineTo(cx + r * 0.5, cy + r * 0.6);
-    g.lineTo(cx, cy + r * 0.9);
-    g.lineTo(cx - r * 0.5, cy + r * 0.6);
-    g.lineTo(cx - r * 0.7, cy - r * 0.1);
+    g.moveTo(cx, cy - r * 1.2);
+    g.lineTo(cx + r * 0.5, cy - r * 0.1);
+    g.lineTo(cx + r * 0.32, cy + r * 0.75);
+    g.lineTo(cx, cy + r * 0.95);
+    g.lineTo(cx - r * 0.32, cy + r * 0.75);
+    g.lineTo(cx - r * 0.5, cy - r * 0.1);
     g.closePath();
     g.fillPath();
 
-    // 内部切面（晶体感）
-    g.fillStyle(0xffffff, 0.35);
+    // 中心亮线（速度感）
+    g.fillStyle(0xffffff, 0.5);
     g.beginPath();
-    g.moveTo(cx, cy - r);
-    g.lineTo(cx + r * 0.3, cy - r * 0.1);
-    g.lineTo(cx, cy + r * 0.2);
-    g.lineTo(cx - r * 0.3, cy - r * 0.1);
+    g.moveTo(cx, cy - r * 0.85);
+    g.lineTo(cx + r * 0.16, cy - r * 0.05);
+    g.lineTo(cx, cy + r * 0.5);
+    g.lineTo(cx - r * 0.16, cy - r * 0.05);
     g.closePath();
     g.fillPath();
 
-    // 核心发光点
-    g.fillStyle(0xffffff, 0.8);
-    g.fillCircle(cx, cy, r * 0.15);
+    // 尖端高光
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx, cy - r * 1.0, r * 0.12);
 
     g.generateTexture(key, size, size);
     g.destroy();
@@ -844,9 +919,9 @@ export class TextureGenerator {
     g.destroy();
   }
 
-  /** 远程敌人：施法者（圆形 + 能量环 + 瞄准核心） */
+  /** 远程敌人：法师（尖顶帽 + 宽帽檐 + 圆身，施法者剪影一眼可辨） */
   private generateEnemyCaster(key: string, color: number, r: number): void {
-    const size = r * 2 + 14;
+    const size = r * 2 + 28;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
     const cx = size / 2;
     const cy = size / 2;
@@ -855,38 +930,45 @@ export class TextureGenerator {
     g.fillStyle(color, 0.2);
     g.fillCircle(cx, cy, r + 7);
 
-    // 旋转能量环（虚线感，用弧线段）
-    g.lineStyle(2, color, 0.6);
-    for (let i = 0; i < 8; i++) {
-      const a1 = (i / 8) * Math.PI * 2;
-      const a2 = a1 + 0.3;
-      g.beginPath();
-      g.arc(cx, cy, r + 4, a1, a2, false);
-      g.strokePath();
-    }
-
-    // 主体
+    // 圆身（身体）
     g.fillStyle(color, 1);
-    g.fillCircle(cx, cy, r);
+    g.fillCircle(cx, cy + r * 0.25, r);
 
-    // 暗部
-    g.fillStyle(0x000000, 0.3);
-    g.fillCircle(cx + r * 0.25, cy + r * 0.25, r * 0.7);
+    // 宽帽檐（椭圆盘，压住头顶）
+    g.fillStyle(color, 1);
+    g.fillEllipse(cx, cy - r * 0.5, r * 1.9, r * 0.5);
 
-    // 瞄准核心（十字准星）
+    // 尖顶帽（长三角）
+    g.fillStyle(color, 1);
+    g.beginPath();
+    g.moveTo(cx, cy - r * 1.65);
+    g.lineTo(cx + r * 0.95, cy - r * 0.5);
+    g.lineTo(cx - r * 0.95, cy - r * 0.5);
+    g.closePath();
+    g.fillPath();
+    // 帽尖微弯（巫师感）
+    g.fillStyle(color, 1);
+    g.fillCircle(cx + r * 0.22, cy - r * 1.55, r * 0.3);
+
+    // 帽檐装饰带（白色）
+    g.lineStyle(2, 0xffffff, 0.55);
+    g.beginPath();
+    g.arc(cx, cy - r * 0.5, r * 0.95, Math.PI * 1.08, Math.PI * 1.92, false);
+    g.strokePath();
+
+    // 帽下眼睛（两颗）
+    g.fillStyle(0x000000, 0.85);
+    g.fillCircle(cx - r * 0.32, cy - r * 0.05, r * 0.13);
+    g.fillCircle(cx + r * 0.32, cy - r * 0.05, r * 0.13);
     g.fillStyle(0xffffff, 0.9);
-    g.fillCircle(cx, cy, r * 0.25);
-    g.fillStyle(color, 1);
-    g.fillCircle(cx, cy, r * 0.15);
-    g.fillStyle(0xffffff, 1);
-    g.fillCircle(cx, cy, r * 0.06);
+    g.fillCircle(cx - r * 0.32, cy - r * 0.05, r * 0.05);
+    g.fillCircle(cx + r * 0.32, cy - r * 0.05, r * 0.05);
 
-    // 准星十字线
-    g.lineStyle(1.5, 0xffffff, 0.7);
-    g.lineBetween(cx - r * 0.5, cy, cx - r * 0.3, cy);
-    g.lineBetween(cx + r * 0.3, cy, cx + r * 0.5, cy);
-    g.lineBetween(cx, cy - r * 0.5, cx, cy - r * 0.3);
-    g.lineBetween(cx, cy + r * 0.3, cx, cy + r * 0.5);
+    // 法杖光点（右侧悬浮，施法感）
+    g.fillStyle(color, 0.6);
+    g.fillCircle(cx + r * 1.4, cy + r * 0.5, r * 0.34);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx + r * 1.4, cy + r * 0.5, r * 0.2);
 
     g.generateTexture(key, size, size);
     g.destroy();
