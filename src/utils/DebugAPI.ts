@@ -296,7 +296,17 @@ export function initDebugAPI(game: Phaser.Game): void {
 
     getWave: () => getGameScene()?.waveManager?.getCurrentWave?.() ?? -1,
 
-    getEnemyCount: () => getGameScene()?.getEnemies?.()?.countActive?.(true) ?? -1,
+    getEnemyCount: () => {
+      // 手动遍历计数并防御半初始化对象（jumpToWave 快速刷怪时池中可能有 body 未就绪的实体，
+      // countActive 遍历会因 size/body undefined 抛错，导致跳波后调试计数不可用）
+      const enemies = getGameScene()?.getEnemies?.();
+      if (!enemies) return -1;
+      let count = 0;
+      enemies.getChildren().forEach((e: any) => {
+        if (e?.active && typeof e.size === 'number' && typeof e.takeDamage === 'function') count++;
+      });
+      return count;
+    },
 
     // 直接跳到指定波：startWave 会重置 waveTimer/spawnTimer 并生成对应敌人/Boss。
     // 注意：会跳过中间波次的商店/武器强化/突破奖励，仅用于快速定位特定波次玩法。

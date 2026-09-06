@@ -78,13 +78,17 @@ export class GameConfig {
   };
 
   // ========== 性能分级（多端适配） ==========
-  // 注：resolutionScale 表示"渲染分辨率倍率上限"（低1.25/中1.5/高2）。
-  // 画布内部渲染分辨率 = 逻辑分辨率(960x640) × 渲染倍率，配合 camera zoom 补偿视觉比例
+  // 注：resolutionScale 表示"渲染分辨率倍率上限"（低1.5/中2/高2.5）。
+  // 画布内部渲染分辨率 = 逻辑分辨率(960x640) × 渲染倍率，配合 camera zoom 补偿视觉比例。
+  // 倍率上限 = 内部分辨率上限，需 ≥ 常见窗口的 fit×dpr 才不糊：
+  //   Phaser Text 非矢量，字形先光栅化到位图纹理；当 fit×dpr 超上限被截断时，
+  //   画布内部像素 < 显示像素 → 浏览器双线性放大 → 文字/画面发糊。
+  //   1080p 全屏 + Windows 125% 缩放 → fit×dpr≈2.1 → 高2.5 覆盖 1:1；4K 场景允许轻微缩小。
   static readonly QUALITY = {
     low: {
       maxEnemies: 60,
       particleScale: 0.4,
-      resolutionScale: 1.25,
+      resolutionScale: 1.5,
       targetFPS: 30,
       enableShadows: false,
       enablePostFX: false,
@@ -92,7 +96,7 @@ export class GameConfig {
     medium: {
       maxEnemies: 120,
       particleScale: 0.7,
-      resolutionScale: 1.5,
+      resolutionScale: 2,
       targetFPS: 60,
       enableShadows: true,
       enablePostFX: false,
@@ -100,7 +104,7 @@ export class GameConfig {
     high: {
       maxEnemies: 200,
       particleScale: 1.0,
-      resolutionScale: 2,
+      resolutionScale: 2.5,
       targetFPS: 60,
       enableShadows: true,
       enablePostFX: true,
