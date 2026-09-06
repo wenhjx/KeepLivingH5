@@ -34,7 +34,7 @@ export interface PlayerStats extends EntityStats {
   coins: number;
 }
 
-export type EnemyType = 'normal' | 'fast' | 'tank' | 'ranged' | 'elite' | 'boss' | 'suicider' | 'splitter' | 'shielded' | 'boss_summoner' | 'boss_barrage';
+export type EnemyType = 'normal' | 'fast' | 'tank' | 'ranged' | 'elite' | 'boss' | 'suicider' | 'splitter' | 'shielded' | 'summoner' | 'charger' | 'healer' | 'boss_summoner' | 'boss_barrage';
 
 export interface EnemyConfig {
   type: EnemyType;

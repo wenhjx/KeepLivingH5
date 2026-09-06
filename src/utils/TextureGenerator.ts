@@ -614,6 +614,97 @@ export class TextureGenerator {
     g.destroy();
   }
 
+  /** 召唤师：紫球 + 头顶悬浮召唤环（法阵感） */
+  private generateEnemySummoner(key: string, color: number, r: number): void {
+    const size = r * 2 + 14;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 6);
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+    // 内部法阵：双同心环 + 星点
+    g.lineStyle(1.5, 0xffffff, 0.75);
+    g.strokeCircle(cx, cy, r * 0.45);
+    g.lineStyle(1, 0xffffff, 0.5);
+    g.strokeCircle(cx, cy, r * 0.22);
+    g.fillStyle(0xffffff, 0.9);
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2;
+      g.fillCircle(cx + Math.cos(a) * r * 0.45, cy + Math.sin(a) * r * 0.45, 1.8);
+    }
+    // 头顶召唤环（悬浮法阵）
+    g.fillStyle(color, 0.9);
+    g.fillCircle(cx, cy - r - 5, 5);
+    g.lineStyle(1.5, 0xffffff, 0.8);
+    g.strokeCircle(cx, cy - r - 5, 4);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(cx, cy - r - 5, 1.5);
+    // 底部暗影
+    g.fillStyle(0x000000, 0.25);
+    g.fillCircle(cx, cy + r * 0.7, r * 0.4);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 冲锋怪：橙红箭头冲撞体 + 中心亮核（冲刺方向感） */
+  private generateEnemyCharger(key: string, color: number, r: number): void {
+    const size = r * 2 + 14;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 6);
+    // 箭头主体（朝上，冲撞感）
+    g.fillStyle(color, 1);
+    g.beginPath();
+    g.moveTo(cx, cy - r);
+    g.lineTo(cx + r * 0.9, cy + r * 0.5);
+    g.lineTo(cx, cy + r * 0.15);
+    g.lineTo(cx - r * 0.9, cy + r * 0.5);
+    g.closePath();
+    g.fillPath();
+    // 中心亮核（蓄力高能）
+    g.fillStyle(0xffffff, 0.85);
+    g.fillCircle(cx, cy, r * 0.32);
+    g.fillStyle(0xffdd55, 1);
+    g.fillCircle(cx, cy, r * 0.18);
+    // 冲刺气流尾迹
+    g.fillStyle(0xffffff, 0.4);
+    g.fillCircle(cx - r * 0.6, cy + r * 0.65, 2.5);
+    g.fillCircle(cx + r * 0.6, cy + r * 0.65, 2.5);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** 治疗怪：绿球 + 白十字（医疗标识） */
+  private generateEnemyHealer(key: string, color: number, r: number): void {
+    const size = r * 2 + 12;
+    const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+    const cx = size / 2;
+    const cy = size / 2;
+
+    g.fillStyle(color, 0.2);
+    g.fillCircle(cx, cy, r + 5);
+    g.fillStyle(color, 1);
+    g.fillCircle(cx, cy, r);
+    // 白十字
+    g.fillStyle(0xffffff, 0.9);
+    g.fillRect(cx - 2.5, cy - r * 0.45, 5, r * 0.9);
+    g.fillRect(cx - r * 0.45, cy - 2.5, r * 0.9, 5);
+    // 高光
+    g.fillStyle(0xffffff, 0.3);
+    g.fillCircle(cx - r * 0.3, cy - r * 0.3, r * 0.25);
+
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
   /** 普通敌人：感染体（不规则圆形 + 破损边缘 + 眼睛） */
   private generateEnemyBlob(key: string, color: number, radius: number): void {
     const size = radius * 2 + 12;

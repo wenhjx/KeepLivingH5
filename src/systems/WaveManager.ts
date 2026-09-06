@@ -93,6 +93,21 @@ export class WaveManager {
       this.currentSpawnTable.push({ type: 'suicider', weight: (12 + wave) * mult('suicider') });
     }
 
+    // 第5波开始出现冲锋怪
+    if (wave >= 5) {
+      this.currentSpawnTable.push({ type: 'charger', weight: (8 + wave * 0.6) * mult('charger') });
+    }
+
+    // 第6波开始出现召唤师
+    if (wave >= 6) {
+      this.currentSpawnTable.push({ type: 'summoner', weight: (6 + wave * 0.5) * mult('summoner') });
+    }
+
+    // 第7波开始出现治疗怪
+    if (wave >= 7) {
+      this.currentSpawnTable.push({ type: 'healer', weight: (6 + wave * 0.4) * mult('healer') });
+    }
+
     // 第7波开始出现护盾怪
     if (wave >= 7) {
       this.currentSpawnTable.push({ type: 'shielded', weight: (10 + wave * 0.8) * mult('shielded') });

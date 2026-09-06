@@ -148,6 +148,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.bossChargeTimer = 0;
       this.bossChargeAngle = 0;
       this.bossChargeSpeed = 0;
+      this.chargerState = 0;
+      this.chargerTimer = 0;
+      this.chargerAngle = 0;
+      this.summonerLast = 0;
+      this.healerLast = 0;
       // 类型标识色：classic 下也 tint（区分 基础红/召唤橙/弹幕蓝），阶段色在其上加深
       this.bossTypeColor = config.color ?? 0xff2222;
       this.setTint(this.bossTypeColor);
@@ -190,6 +195,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.bossSkillLast = {};
     this.bossChargeState = 0;
     this.bossChargeTimer = 0;
+    this.chargerState = 0;
+    this.chargerTimer = 0;
+    this.chargerAngle = 0;
+    this.summonerLast = 0;
+    this.healerLast = 0;
+    this.setRotation(0);
     if (this.affixText) this.affixText.setVisible(false);
     this.hideHpBar();
     this.setActive(false);
@@ -449,6 +460,15 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       case 'shielded':
         this.shieldedAI(delta, player, dist);
         break;
+      case 'summoner':
+        this.summonerAI(delta, player, dist);
+        break;
+      case 'charger':
+        this.chargerAI(delta, player, dist);
+        break;
+      case 'healer':
+        this.healerAI(delta, player, dist);
+        break;
       default:
         this.normalAI(delta, player, dist);
         break;
@@ -516,6 +536,134 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 接触攻击
     if (dist < this.config.attackRange && this.attackCooldown <= 0) {
       this.attackPlayer(player);
+    }
+  }
+
+  /** 召唤师：接近到施法距离停住，周期性召唤小怪（受同屏上限约束） */
+  private summonerAI(delta: number, player: Player, dist: number): void {
+    const KEEP_DIST = 230;
+    if (dist > KEEP_DIST + 60) {
+      const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
+      const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
+      const v = this.avoidObstacles(angle, speed);
+      this.setVelocity(v.vx, v.vy);
+    } else {
+      const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
+      const strafe = angle + Math.PI / 2 * (Math.sin(this.scene.time.now / 900 + this.x * 0.01) > 0 ? 1 : -1);
+      const speed = this.config.moveSpeed * 0.5 * this.difficultyMultiplier;
+      const v = this.avoidObstacles(strafe, speed);
+      this.setVelocity(v.vx, v.vy);
+    }
+
+    // 周期召唤（4s）：紫色预警圈 + 召唤 2 只普通小怪
+    const now = this.scene.time.now;
+    if (now - this.summonerLast >= 4000) {
+      this.summonerLast = now;
+      const scene = this.scene as any;
+      const pool = scene?.getObjectPool?.();
+      const gm = GameManager.getInstance();
+      const maxEnemies = gm.qualitySettings.maxEnemies;
+      if (!pool || pool.getActiveEnemyCount() >= maxEnemies * 0.6) return;
+      scene?.getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size + 14, 500, 0xcc66ff);
+      this.scene.time.delayedCall(500, () => {
+        if (this.isDead || !this.active) return;
+        const cfg = ENEMY_CONFIGS['normal'];
+        if (!cfg) return;
+        for (let i = 0; i < 2; i++) {
+          const ang = Math.random() * Math.PI * 2;
+          const off = this.config.size + 30;
+          pool.spawnEnemy(cfg, this.x + Math.cos(ang) * off, this.y + Math.sin(ang) * off, this.difficultyMultiplier * 0.8);
+        }
+      });
+    }
+  }
+
+  /** 冲锋怪：踱步 → 蓄力预警(0.45s闪白) → 高速直线冲刺(0.55s) → 硬直(0.5s) */
+  private chargerAI(delta: number, player: Player, dist: number): void {
+    if (this.chargerState === 1) {
+      this.setVelocity(0, 0);
+      this.chargerTimer -= delta;
+      if (this.chargerTimer <= 0) {
+        this.chargerState = 2;
+        this.chargerTimer = 550;
+        this.setTint(this.getChargerTint());
+      }
+      return;
+    }
+    if (this.chargerState === 2) {
+      this.setVelocity(
+        Math.cos(this.chargerAngle) * 430,
+        Math.sin(this.chargerAngle) * 430
+      );
+      this.setRotation(this.chargerAngle + Math.PI / 2);
+      this.chargerTimer -= delta;
+      if (this.chargerTimer <= 0) {
+        this.chargerState = 3;
+        this.chargerTimer = 500;
+        this.setVelocity(0, 0);
+        this.setRotation(0);
+        this.clearTint();
+      }
+      return;
+    }
+    if (this.chargerState === 3) {
+      this.setVelocity(0, 0);
+      this.chargerTimer -= delta;
+      if (this.chargerTimer <= 0) this.chargerState = 0;
+      return;
+    }
+    // 踱步：缓慢接近玩家
+    const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
+    const speed = this.config.moveSpeed * 0.55 * this.difficultyMultiplier * this.affixSpeedMult;
+    const v = this.avoidObstacles(angle, speed);
+    this.setVelocity(v.vx, v.vy);
+
+    // 周期进入蓄力（3.5s）
+    const now = this.scene.time.now;
+    if (now - this.summonerLast >= 3500) {
+      this.summonerLast = now;
+      if (dist < 420) {
+        this.chargerState = 1;
+        this.chargerTimer = 450;
+        this.chargerAngle = angle;
+        this.setVelocity(0, 0);
+        this.setTint(0xffffff); // 蓄力闪白
+        (this.scene as any).getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size + 8, 450, 0xff8833);
+      }
+    }
+  }
+
+  /** 治疗怪：缓慢接近，周期性给周围敌人回血（绿色飘字 + 优先击杀价值） */
+  private healerAI(delta: number, player: Player, dist: number): void {
+    const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
+    const speed = this.config.moveSpeed * 0.7 * this.difficultyMultiplier * this.affixSpeedMult;
+    const v = this.avoidObstacles(angle, speed);
+    this.setVelocity(v.vx, v.vy);
+
+    if (dist < this.config.attackRange && this.attackCooldown <= 0) {
+      this.attackPlayer(player);
+    }
+
+    // 周期治疗（1.2s）：180px 内最多 4 个敌人
+    const now = this.scene.time.now;
+    if (now - this.healerLast >= 1200) {
+      this.healerLast = now;
+      const scene = this.scene as any;
+      const enemies = scene?.getEnemies?.();
+      if (!enemies) return;
+      const radius = 180;
+      let healed = 0;
+      const healAmount = Math.max(3, Math.round(this.config.attackPower * 0.9 * this.difficultyMultiplier));
+      enemies.getChildren().forEach((e: any) => {
+        if (!e.active || e === this || e.isDead || healed >= 4) return;
+        const d = MathUtils.distance(this.x, this.y, e.x, e.y);
+        if (d <= radius && e.maxHealth && e.health < e.maxHealth) {
+          e.health = Math.min(e.maxHealth, e.health + healAmount);
+          healed++;
+          scene?.spawnEventText?.(e.x, e.y - 24, `+${healAmount}`, '#44ff88');
+          scene?.getFXManager?.()?.telegraph?.(e.x, e.y, e.config?.size ?? 20, 300, 0x44ff88);
+        }
+      });
     }
   }
 
@@ -849,8 +997,14 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   private attackPlayer(player: Player): void {
     const bossMult = this.config.type === 'boss' ? 1.3 : 1;
-    player.takeDamage(this.config.attackPower * bossMult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost);
+    const chargeMult = this.chargerState === 2 ? 1.6 : 1;
+    player.takeDamage(this.config.attackPower * bossMult * chargeMult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost);
     this.attackCooldown = this.config.attackCooldown;
+  }
+
+  /** 冲锋怪冲刺色调（冲刺时用类型色） */
+  private getChargerTint(): number {
+    return this.config.color ?? 0xff8833;
   }
 
   private rangedAttack(player: Player): void {
