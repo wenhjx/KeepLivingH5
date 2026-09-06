@@ -32,6 +32,11 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 调试场景常驻保障：主菜单阶段也确保 DebugScene 可用（异常停掉后自动恢复）
+    if (!this.scene.isActive('DebugScene')) {
+      this.scene.launch('DebugScene');
+    }
+
     // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
     const { width, height } = setupUICamera(this);
     const gm = GameManager.getInstance();

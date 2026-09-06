@@ -15,6 +15,7 @@ import { TerrainManager } from '../systems/TerrainManager';
 import { ModifierSystem } from '../systems/ModifierSystem';
 import { FXManager } from '../systems/FXManager';
 import { getLevelByIndex, type LevelConfig, type QuickStartConfig } from '../data/levels';
+import { getBackgroundByLevelId } from '../data/backgrounds';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { GameFeedback } from '../systems/GameFeedback';
 import { EventBus } from '../utils/EventBus';
@@ -114,6 +115,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 调试场景常驻保障：DebugScene 只在 BootScene 启动一次，若被意外 stop（如测试操作）
+    // 则 ` 键热键与调试面板全部失效；每局开局自动拉起，保证管理员面板永远可用。
+    if (!this.scene.isActive('DebugScene')) {
+      this.scene.launch('DebugScene');
+    }
+
     // 每局状态重置：Phaser 场景实例复用（scene.start 不重建对象，字段保留上次值），
     // 必须显式清空，否则同页面重开后 endlessMode/victoryTriggered/待弹队列会残留。
     this.endlessMode = false;
@@ -275,28 +282,91 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createMap(): void {
-    // 创建 tiled 地图（占位：使用纯色背景 + 网格）
-    const graphics = this.add.graphics();
-
-    // 背景
-    graphics.fillStyle(0x12121a, 1);
-    graphics.fillRect(0, 0, this.mapWidth, this.mapHeight);
-
-    // 网格线
-    graphics.lineStyle(1, 0x1e1e2a, 0.5);
-    const gridSize = 100;
-    for (let x = 0; x <= this.mapWidth; x += gridSize) {
-      graphics.lineBetween(x, 0, x, this.mapHeight);
-    }
-    for (let y = 0; y <= this.mapHeight; y += gridSize) {
-      graphics.lineBetween(0, y, this.mapWidth, y);
-    }
+    // 背景纹理（数据驱动：按当前关卡 id 查找 backgrounds.ts 配置，classic/pixel 双主题）
+    this.drawBackground();
 
     // 地图边界
     this.physics.world.setBounds(0, 0, this.mapWidth, this.mapHeight);
 
     // 创建地形障碍物（在地图背景之上）
     this.terrainManager.create();
+  }
+
+  /**
+   * 绘制关卡背景纹理
+   * 数据驱动：按 levelConfig.id 查找 backgrounds.ts；缺失回退草原
+   * 主题联动：classic 柔和色块+草丛+光点 / pixel 块状+像素细节
+   * 固定随机种子（关卡 id 哈希）：同一关纹理稳定，不闪变
+   */
+  private drawBackground(): void {
+    const cfg = getBackgroundByLevelId(this.levelConfig.id);
+    const isPixel = GameConfig.VISUAL_THEME === 'pixel';
+    const graphics = this.add.graphics();
+
+    // 底色
+    graphics.fillStyle(cfg.baseColor, 1);
+    graphics.fillRect(0, 0, this.mapWidth, this.mapHeight);
+
+    // 固定种子（关卡 id 哈希）
+    let seed = 0;
+    for (let i = 0; i < cfg.id.length; i++) seed = (seed * 31 + cfg.id.charCodeAt(i)) >>> 0;
+    const rng = (): number => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+
+    if (isPixel) {
+      // ---- 像素主题：块状色块 + 像素草丛/光点 ----
+      const { patchColors, cellSize, detail } = cfg.pixel;
+      for (let y = 0; y < this.mapHeight; y += cellSize) {
+        for (let x = 0; x < this.mapWidth; x += cellSize) {
+          graphics.fillStyle(patchColors[Math.floor(rng() * patchColors.length)], 1);
+          graphics.fillRect(x, y, cellSize, cellSize);
+        }
+      }
+      graphics.fillStyle(detail.detailColor, 0.75);
+      for (let i = 0; i < detail.detailCount; i++) {
+        const x = Math.floor(rng() * (this.mapWidth / cellSize)) * cellSize;
+        const y = Math.floor(rng() * (this.mapHeight / cellSize)) * cellSize;
+        const len = detail.detailLen[0] + rng() * (detail.detailLen[1] - detail.detailLen[0]);
+        graphics.fillRect(x + cellSize * 0.25, y - len, cellSize * 0.2, len);
+        graphics.fillRect(x + cellSize * 0.55, y - len * 0.6, cellSize * 0.2, len * 0.6);
+      }
+      graphics.fillStyle(detail.sparkleColor, detail.sparkleAlpha);
+      for (let i = 0; i < detail.sparkleCount; i++) {
+        const x = Math.floor(rng() * (this.mapWidth / cellSize)) * cellSize;
+        const y = Math.floor(rng() * (this.mapHeight / cellSize)) * cellSize;
+        graphics.fillRect(x, y, cellSize * 0.25, cellSize * 0.25);
+      }
+      return;
+    }
+
+    // ---- 经典主题：柔和色块 + 弯曲草丛/碎石/冰裂纹 + 光点 ----
+    const { patchColors, patchAlpha, patchSize, detail } = cfg.classic;
+    const alphaRange = patchAlpha[1] - patchAlpha[0];
+    for (let y = 0; y < this.mapHeight; y += patchSize) {
+      for (let x = 0; x < this.mapWidth; x += patchSize) {
+        graphics.fillStyle(
+          patchColors[Math.floor(rng() * patchColors.length)],
+          patchAlpha[0] + rng() * alphaRange
+        );
+        graphics.fillRect(x, y, patchSize, patchSize);
+      }
+    }
+    const lenRange = detail.detailLen[1] - detail.detailLen[0];
+    const alphaD = detail.detailAlpha[1] - detail.detailAlpha[0];
+    for (let i = 0; i < detail.detailCount; i++) {
+      const x = rng() * this.mapWidth;
+      const y = rng() * this.mapHeight;
+      const len = detail.detailLen[0] + rng() * lenRange;
+      const bend = (rng() - 0.5) * 3;
+      graphics.lineStyle(1.5, detail.detailColor, detail.detailAlpha[0] + rng() * alphaD);
+      graphics.lineBetween(x, y, x + bend, y - len);
+    }
+    for (let i = 0; i < detail.sparkleCount; i++) {
+      graphics.fillStyle(detail.sparkleColor, detail.sparkleAlpha);
+      graphics.fillCircle(rng() * this.mapWidth, rng() * this.mapHeight, detail.sparkleRadius);
+    }
   }
 
   private createEntities(): void {
@@ -1016,7 +1086,7 @@ export class GameScene extends Phaser.Scene {
    * - 每 120-200ms 重新决策一次（不每帧精确转向）
    * - 方向上加 15% 随机噪声（不会走完美直线）
    * - 偶尔短暂"犹豫"（停止 0.3-0.8s）
-   * 决策逻辑：危险时躲敌人，安全时捡经验
+   * 决策逻辑：危险时躲敌人/子弹，安全时捡掉落物（经验/金币/血包/宝箱）
    */
   private updateAIDirection(delta: number): void {
     // 犹豫中：不移动
@@ -1044,7 +1114,7 @@ export class GameScene extends Phaser.Scene {
 
     const px = this.player.x;
     const py = this.player.y;
-    const SAFE_DIST = 160;
+    const SAFE_DIST = 110; // 危险判定收窄到近战射程级：怪稍远即可去捡，避免永远在躲
     const BULLET_DIST = 120;
     let targetX = 0;
     let targetY = 0;
@@ -1112,11 +1182,11 @@ export class GameScene extends Phaser.Scene {
       targetX = avoidX;
       targetY = avoidY;
     } else {
-      // 安全：找最近的经验宝石
-      const nearestExp = this.getNearestExp();
-      if (nearestExp) {
-        targetX = nearestExp.x - px;
-        targetY = nearestExp.y - py;
+      // 安全：找最近的掉落物（经验/金币/血包/宝箱，600px 内才追）
+      const nearestPickup = this.getNearestPickup(600);
+      if (nearestPickup) {
+        targetX = nearestPickup.x - px;
+        targetY = nearestPickup.y - py;
       }
     }
 
@@ -1239,13 +1309,17 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /** 获取最近的经验宝石 */
-  private getNearestExp(): any {
+  /**
+   * 获取最近的掉落物（经验/金币/血包/宝箱）
+   * @param maxDist 追捡距离上限：超出视为不值得绕路（玩家也不会千里迢迢去捡一个金币）
+   */
+  private getNearestPickup(maxDist = 600): any {
     let nearest: any = null;
-    let nearestDist = Infinity;
+    let nearestDist = maxDist;
     this.pickups.children.each((pickup: any) => {
       if (!pickup.active) return true;
-      if (pickup.getType?.() !== 'exp') return true;
+      const t = pickup.getType?.();
+      if (t !== 'exp' && t !== 'coin' && t !== 'health' && t !== 'chest') return true;
       const dx = pickup.x - this.player.x;
       const dy = pickup.y - this.player.y;
       const dist = Math.sqrt(dx * dx + dy * dy);

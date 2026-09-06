@@ -85,14 +85,77 @@ export class GameOverScene extends Phaser.Scene {
         .setOrigin(1, 0.5);
     });
 
-    // 新纪录提示
+    // 新纪录徽章（右下角，仪式感动画）：金色辉光标题 + 副标题 + 光晕呼吸 + 星点闪烁 + 弹跳入场
     if (runData.score >= stats.highScore && runData.score > 0) {
-      createUIText(this, centerX, dataY + statsData.length * lineHeight + 20, '新纪录！', {
-          fontSize: '24px',
-          color: '#ffb347',
+      // 标题右侧同一行：不遮挡中央数据列表与底部按钮（标题居中 x=480，徽章中心 x=710 安全留白）
+      const bx = width * 0.74;
+      const by = height * 0.18;
+      const badge = this.add.container(bx, by);
+
+      // 光晕层（双层呼吸，收敛半径避免与标题/数据区重叠）
+      const glow = this.add.circle(0, 0, 58, 0xffd700, 0.12);
+      const glow2 = this.add.circle(0, 0, 36, 0xffb347, 0.18);
+      badge.add([glow, glow2]);
+
+      // 主标题：大号金色 + 橙色辉光阴影
+      const title = createUIText(this, 0, -6, '新纪录！', {
+          fontSize: '36px',
+          color: '#ffd700',
           fontStyle: 'bold',
+          shadow: { color: '#ff8c00', blur: 14, offsetX: 0, offsetY: 0 },
         })
         .setOrigin(0.5);
+      badge.add(title);
+
+      // 副标题
+      const sub = createUIText(this, 0, 32, '历史最高分已刷新', {
+          fontSize: '14px',
+          color: '#ffb347',
+          shadow: { color: '#000000', blur: 0, offsetX: 0, offsetY: 0 },
+        })
+        .setOrigin(0.5);
+      badge.add(sub);
+
+      // 环绕星点（错峰闪烁）
+      const stars: Phaser.GameObjects.Arc[] = [];
+      for (let i = 0; i < 6; i++) {
+        const ang = (i / 6) * Math.PI * 2;
+        const rad = 46 + Math.random() * 20;
+        const s = this.add
+          .circle(Math.cos(ang) * rad, Math.sin(ang) * rad, 2 + Math.random() * 2, 0xffe9a8, 0.9)
+          .setAlpha(0);
+        stars.push(s);
+        badge.add(s);
+      }
+
+      // 入场：延迟 0.6s（先看数据再看纪录），弹跳放大 + 渐入
+      badge.setScale(0).setAlpha(0);
+      this.tweens.add({
+        targets: badge,
+        scale: 1.18,
+        alpha: 1,
+        duration: 320,
+        delay: 600,
+        ease: 'Back.Out',
+        onComplete: () => {
+          this.tweens.add({ targets: badge, scale: 1, duration: 180, ease: 'Back.Out' });
+        },
+      });
+      // 光晕呼吸
+      this.tweens.add({ targets: glow, scale: 1.35, alpha: 0.04, duration: 950, yoyo: true, repeat: -1, delay: 950 });
+      this.tweens.add({ targets: glow2, scale: 1.22, alpha: 0.08, duration: 1250, yoyo: true, repeat: -1, delay: 950 });
+      // 星点闪烁
+      stars.forEach((s, i) => {
+        this.tweens.add({
+          targets: s,
+          alpha: 0.15,
+          duration: 350 + i * 90,
+          delay: 950 + i * 70,
+          yoyo: true,
+          repeat: -1,
+          repeatDelay: 300,
+        });
+      });
     }
 
     // 按钮
