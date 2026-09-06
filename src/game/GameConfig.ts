@@ -120,6 +120,13 @@ export class GameConfig {
     joystickKnobRadius: 25,
     joystickDeadZone: 0.2,
   };
+
+  // ========== 升级 ==========
+  static readonly UPGRADE = {
+    // 三选一跳过补偿（金币）：放弃本次升级拿金币走人（参考崩铁专家邀请函的第五选项）。
+    // 数值：商店 RARE 45 金币 → 跳一次正好够买一件 RARE，前期保底不亏；后期物价不变则相对贬值，符合"前期救急"定位。
+    skipReward: 50,
+  };
 }
 
 /** 画质等级枚举 */

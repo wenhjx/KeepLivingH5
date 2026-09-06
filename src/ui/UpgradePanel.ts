@@ -18,8 +18,10 @@ export class UpgradePanel {
   private options: UpgradeOption[] = [];
   private cardContainers: Phaser.GameObjects.Container[] = [];
   private onSelectCallback: ((option: UpgradeOption) => void) | null = null;
+  private onSkipCallback: (() => void) | null = null;
   private selectedIndex = -1;
   private confirmBtn: { bg: Phaser.GameObjects.Graphics; txt: Phaser.GameObjects.Text; hit: Phaser.GameObjects.Rectangle } | null = null;
+  private skipBtn: { bg: Phaser.GameObjects.Graphics; txt: Phaser.GameObjects.Text; hit: Phaser.GameObjects.Rectangle } | null = null;
 
   private readonly cardWidth = 200;
   private readonly cardHeight = 280;
@@ -41,9 +43,15 @@ export class UpgradePanel {
    * 显示升级面板
    * @param onSelect 选择回调
    * @param availableOptions 可选升级列表（默认从全部中随机）
+   * @param onSkip 跳过回调（提供时渲染"跳过拿金币"按钮；突破/武器强化场景不传则不显示）
    */
-  show(onSelect: (option: UpgradeOption) => void, availableOptions?: UpgradeOption[]): void {
+  show(
+    onSelect: (option: UpgradeOption) => void,
+    availableOptions?: UpgradeOption[],
+    onSkip?: () => void
+  ): void {
     this.onSelectCallback = onSelect;
+    this.onSkipCallback = onSkip ?? null;
     this.selectedIndex = -1;
     this.container.setVisible(true);
 
@@ -53,12 +61,22 @@ export class UpgradePanel {
 
     this.renderOptions();
     this.renderConfirmButton();
+    this.renderSkipButton();
+  }
+
+  /** 直接触发跳过（不选中任何卡片，拿金币走人） */
+  skipSelection(): void {
+    if (this.onSkipCallback) {
+      this.onSkipCallback();
+    }
+    this.hide();
   }
 
   /** 隐藏面板 */
   hide(): void {
     this.container.setVisible(false);
     this.onSelectCallback = null;
+    this.onSkipCallback = null;
     this.selectedIndex = -1;
   }
 
@@ -160,6 +178,52 @@ export class UpgradePanel {
         card.setScale(1);
       }
     });
+  }
+
+  /** 渲染底部跳过按钮（金币补偿，不选卡片直接走人；仅在提供了 onSkip 时显示） */
+  private renderSkipButton(): void {
+    if (!this.onSkipCallback) return;
+    if (this.skipBtn) {
+      this.skipBtn.bg.destroy();
+      this.skipBtn.txt.destroy();
+      this.skipBtn.hit.destroy();
+      this.skipBtn = null;
+    }
+
+    const btnWidth = 180;
+    const btnHeight = 44;
+    const x = GameConfig.GAME_WIDTH / 2 + 220;
+    const y = GameConfig.GAME_HEIGHT - 60;
+    const reward = GameConfig.UPGRADE.skipReward;
+
+    const bg = this.scene.add.graphics();
+    const txt = createUIText(this.scene, x, y, `跳过 +${reward} 金币`, {
+        fontSize: '16px',
+        color: '#ffd77a',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    const hit = this.scene.add
+      .rectangle(x, y, btnWidth, btnHeight, 0xffffff, 0)
+      .setOrigin(0.5);
+
+    const draw = (hover: boolean) => {
+      bg.clear();
+      bg.fillStyle(hover ? 0x7a5c1a : 0x4a3a14, 1);
+      bg.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+      bg.lineStyle(2, hover ? 0xffd77a : 0x8a7a3a, 0.9);
+      bg.strokeRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+    };
+    draw(false);
+
+    hit.setInteractive({ useHandCursor: true });
+    hit.on('pointerover', () => draw(true));
+    hit.on('pointerout', () => draw(false));
+    hit.on('pointerdown', () => this.skipSelection());
+
+    this.container.add([bg, txt, hit]);
+    this.skipBtn = { bg, txt, hit };
   }
 
   /** 渲染底部确认按钮 */

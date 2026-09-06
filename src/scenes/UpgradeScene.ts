@@ -58,7 +58,11 @@ export class UpgradeScene extends Phaser.Scene {
 
     // 升级面板
     this.upgradePanel = new UpgradePanel(this);
-    this.upgradePanel.show((option: UpgradeOption) => this.onSelect(option), choices);
+    this.upgradePanel.show(
+      (option: UpgradeOption) => this.onSelect(option),
+      choices,
+      () => this.onSkip()
+    );
 
     // AI 自动玩：从显示的3个选项中智能选择
     // 流程：延迟0.8秒选中（显示"即将选择..."）→ 再延迟1秒自动确认
@@ -229,6 +233,35 @@ export class UpgradeScene extends Phaser.Scene {
     GameManager.getInstance().setPaused(false);
     this.scene.stop('UpgradeScene');
     // 通知 GameScene：本次选择完成，若有剩余升级（跨多级）则继续弹出下一个三选一
+    EventBus.emit('upgrade:chosen');
+  }
+
+  /**
+   * 跳过本次升级：放弃成长词条，拿金币补偿走人（崩铁专家邀请函第五选项式设计）。
+   * 金币数见 GameConfig.UPGRADE.skipReward，方便数值审计统一校准。
+   */
+  private onSkip(): void {
+    const gameScene = this.scene.get('GameScene') as any;
+    const player = gameScene?.getPlayer() as Player | undefined;
+    const reward = GameConfig.UPGRADE.skipReward;
+
+    if (player) {
+      player.addCoins(reward);
+      GuideManager.getInstance().show({
+        title: '已跳过升级',
+        description: `获得 ${reward} 金币，留给神秘商店更划算`,
+        icon: '🪙',
+        color: 0xffd77a,
+        position: 'top-right',
+        duration: 3000,
+        showButton: false,
+      });
+    }
+
+    // 恢复游戏
+    GameManager.getInstance().setPaused(false);
+    this.scene.stop('UpgradeScene');
+    // 与正常选择一致：若有剩余升级（跨多级）继续弹下一个三选一
     EventBus.emit('upgrade:chosen');
   }
 }

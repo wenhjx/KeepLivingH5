@@ -55,6 +55,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private bossChargeTimer = 0;
   private bossChargeAngle = 0;
   private bossChargeSpeed = 0;
+  // ===== 新三敌状态（召唤师/冲锋怪/治疗怪；对象池复用必须在 spawn 重置） =====
+  private chargerState = 0;    // 冲锋怪状态机: 0=踱步 1=蓄力 2=冲刺 3=硬直
+  private chargerTimer = 0;
+  private chargerAngle = 0;
+  private summonerLast = 0;    // 召唤师召唤 CD（时间戳）
+  private healerLast = 0;      // 治疗怪治疗 CD（时间戳）
 
   constructor(scene: Phaser.Scene) {
     super(scene, 0, 0, GameConfig.themeKey('enemy_normal'));
@@ -148,11 +154,6 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.bossChargeTimer = 0;
       this.bossChargeAngle = 0;
       this.bossChargeSpeed = 0;
-      this.chargerState = 0;
-      this.chargerTimer = 0;
-      this.chargerAngle = 0;
-      this.summonerLast = 0;
-      this.healerLast = 0;
       // 类型标识色：classic 下也 tint（区分 基础红/召唤橙/弹幕蓝），阶段色在其上加深
       this.bossTypeColor = config.color ?? 0xff2222;
       this.setTint(this.bossTypeColor);
@@ -160,6 +161,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       const fx = (this.scene as any).getFXManager?.();
       this.bossAuraRing = fx?.bossAura?.(this.x, this.y, config.size || 48, this.bossTypeColor);
     }
+
+    // 新三敌状态重置（普通召唤师/冲锋怪/治疗怪，非 Boss；对象池复用必须清干净）
+    this.chargerState = 0;
+    this.chargerTimer = 0;
+    this.chargerAngle = 0;
+    this.summonerLast = 0;
+    this.healerLast = 0;
 
     // 词缀图标（跟随头顶）
     const affixIcons: Record<string, string> = { enrage: '🔥', shield: '🛡️', split: '💥' };
