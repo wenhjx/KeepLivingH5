@@ -19,10 +19,10 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
   private orbitAngle: number = 0;
   private orbitSpeed: number = 3.5; // 弧度/秒，环绕速度
   private damageCooldown: number = 0; // 伤害冷却（毫秒）
-  private damageInterval: number = 400; // 每次伤害间隔
-  private hitRadius: number = 24; // 接触伤害半径
+  private damageInterval: number = 260; // 每次伤害间隔（更密的切割环）
+  private hitRadius: number = 26; // 接触伤害半径
   private shootCooldown: number = 0; // 自动射击冷却（毫秒）
-  private shootInterval: number = 1000; // 自动射击间隔（毫秒）
+  private shootInterval: number = 800; // 自动射击间隔（毫秒）
   // 子弹吸收（防御拦截）：每架独立冷却 + 有限半径，避免弹幕被全挡导致失衡
   private absorbCooldown: number = 0; // 吸收冷却（毫秒）
   private absorbInterval: number = 400; // 每次吸收间隔（毫秒）
@@ -199,10 +199,10 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
   upgrade(level: number, total: number): void {
     this.level = level;
     // 升级时略微增加环绕速度、伤害半径、射击频率与吸收半径
-    this.orbitSpeed = 3.5 + level * 0.3;
-    this.hitRadius = 24 + level * 2;
-    this.shootInterval = Math.max(600, 1000 - level * 50);
-    this.absorbRadius = 34 + level * 2;
+    this.orbitSpeed = 3.5 + level * 0.4;
+    this.hitRadius = 26 + level * 2.5;
+    this.shootInterval = Math.max(420, 800 - level * 60);
+    this.absorbRadius = 36 + level * 2.5;
   }
 
   /** 重新均匀排布环绕角度（新增无人机时由 Player 统一调用，保证轨道分布均匀美观） */

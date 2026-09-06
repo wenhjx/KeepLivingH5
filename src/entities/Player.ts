@@ -305,6 +305,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           pierce: config.pierce,
           explosive: config.explosive,
           aoeRadius: config.aoeRadius,
+          knockback: config.knockback,
           color: visual.color,
           scaleX: visual.scaleX,
           scaleY: visual.scaleY,

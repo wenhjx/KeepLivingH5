@@ -72,6 +72,12 @@ export class CollisionSystem {
 
     enemy.takeDamage(finalDamage, isCrit, bullet.x, bullet.y);
 
+    // 霰弹枪等武器：命中击退（近身轰开敌人制造安全距离）
+    const knockback = bullet.getKnockback?.();
+    if (knockback && enemy.applyKnockback) {
+      enemy.applyKnockback(bullet.x, bullet.y, knockback);
+    }
+
     // 玩家被动效果触发（吸血/冰冻/灼烧/闪电链/弹射）
     const player = gameScene?.getPlayer?.();
     if (player) enemy.applyPlayerEffects?.(finalDamage, player, bullet.x, bullet.y);

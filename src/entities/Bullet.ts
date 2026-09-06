@@ -27,6 +27,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
   private explosive: boolean = false;
   private boomerang: boolean = false;
   private aoeRadius: number = 0;
+  private knockback: number = 0;
   // 回旋镖状态
   private returning: boolean = false;
   // 追踪弹（Boss 技能）：每帧朝玩家转向
@@ -55,6 +56,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
       explosive?: boolean;
       boomerang?: boolean;
       aoeRadius?: number;
+      knockback?: number;   // 命中击退力（霰弹枪）
       color?: number;       // 子弹颜色（tint）
       scaleX?: number;      // 水平缩放
       scaleY?: number;      // 垂直缩放
@@ -71,6 +73,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.explosive = options?.explosive || false;
     this.boomerang = options?.boomerang || false;
     this.aoeRadius = options?.aoeRadius || 0;
+    this.knockback = options?.knockback || 0;
     this.returning = false;
 
     this.vx = Math.cos(angle) * speed;
@@ -290,5 +293,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
 
   isExplosive(): boolean {
     return this.explosive;
+  }
+
+  getKnockback(): number {
+    return this.knockback;
   }
 }

@@ -107,6 +107,7 @@ export interface WeaponConfig {
   spread?: number;        // 散射角度（弧度），默认 0.3
   extraProjectilesPerLevel?: number; // 每升一级额外增加的弹丸数（如霰弹枪）
   nova?: boolean;                    // 环形冲击波：360° 全向范围伤害 + 击退（被围堵时的救急脱困）
+  knockback?: number;                // 子弹命中击退力（霰弹枪近身轰开敌人制造安全距离）
 }
 
 export type UpgradeType = 'weapon' | 'passive' | 'stat';
