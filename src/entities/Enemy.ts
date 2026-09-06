@@ -40,6 +40,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private hpBarTimer = 0;
   /** 精英词缀：enrage(狂暴)/shield(护盾)/split(分裂)，仅精英怪随机附加 */
   private affix = '';
+  /** Boss 类型标识色（区分 基础/召唤魔像/弹幕机械），阶段色在其上加深 */
+  private bossTypeColor = 0xff2222;
+  /** Boss 脚下呼吸光环（跟随敌人，despawn 时销毁） */
+  private bossAuraRing: Phaser.GameObjects.Arc | undefined = undefined;
   private shieldPool = 0;
   private affixAtkBoost = 1;
   private affixSpeedMult = 1;
@@ -140,6 +144,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.bossChargeTimer = 0;
       this.bossChargeAngle = 0;
       this.bossChargeSpeed = 0;
+      // 类型标识色：classic 下也 tint（区分 基础红/召唤橙/弹幕蓝），阶段色在其上加深
+      this.bossTypeColor = config.color ?? 0xff2222;
+      this.setTint(this.bossTypeColor);
+      // 脚下呼吸光环（类型色）
+      const fx = (this.scene as any).getFXManager?.();
+      this.bossAuraRing = fx?.bossAura?.(this.x, this.y, config.size || 48, this.bossTypeColor);
     }
 
     // 词缀图标（跟随头顶）
@@ -164,6 +174,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.burnTimer = 0;
     this.burnDamage = 0;
     this.affix = '';
+    this.bossTypeColor = 0xff2222;
+    if (this.bossAuraRing) {
+      this.bossAuraRing.destroy();
+      this.bossAuraRing = undefined;
+    }
     this.shieldPool = 0;
     this.affixAtkBoost = 1;
     this.affixSpeedMult = 1;
@@ -338,6 +353,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 词缀图标跟随敌人
     if (this.affixText && this.affixText.visible) {
       this.affixText.setPosition(this.x, this.y - (this.config?.size || 32) / 2 - 22);
+    }
+
+    // Boss 光环跟随敌人
+    if (this.bossAuraRing) {
+      this.bossAuraRing.setPosition(this.x, this.y);
     }
 
     // 灼烧 DOT（持续火焰伤害，每 500ms 一跳）
@@ -631,10 +651,20 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** Boss 阶段色调（受击闪烁恢复时也用） */
+  /** Boss 受击恢复/阶段变色：在类型标识色基础上按阶段加深（1 原色 / 2 加深 / 3 更深） */
   private getBossTint(): number {
-    if (this.bossPhase >= 3) return 0xff2222;
-    if (this.bossPhase === 2) return 0xff8844;
-    return 0xff4444;
+    const base = this.bossTypeColor ?? 0xff2222;
+    if (this.bossPhase >= 3) return this.scaleColor(base, 0.55);
+    if (this.bossPhase === 2) return this.scaleColor(base, 0.75);
+    return base;
+  }
+
+  /** 颜色按系数变暗（用于 Boss 阶段反馈） */
+  private scaleColor(c: number, f: number): number {
+    const r = Math.floor(((c >> 16) & 0xff) * f);
+    const g = Math.floor(((c >> 8) & 0xff) * f);
+    const b = Math.floor((c & 0xff) * f);
+    return (r << 16) | (g << 8) | b;
   }
 
   /** Boss 阶段移速倍率 */

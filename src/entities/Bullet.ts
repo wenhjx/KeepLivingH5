@@ -30,6 +30,10 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
   private knockback: number = 0;
   // 回旋镖状态
   private returning: boolean = false;
+  // 弹道拖尾（玩家子弹）：颜色 + 每 N 帧生成一段渐隐光带
+  private trailColor: number | undefined = undefined;
+  private trailEvery: number = 0;
+  private trailTimer: number = 0;
   // 追踪弹（Boss 技能）：每帧朝玩家转向
   private homing: boolean = false;
   private homingTurnRate: number = 0; // 弧度/秒
@@ -60,6 +64,8 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
       color?: number;       // 子弹颜色（tint）
       scaleX?: number;      // 水平缩放
       scaleY?: number;      // 垂直缩放
+      trailColor?: number;  // 弹道拖尾颜色（不传则不生成拖尾）
+      trailEvery?: number;  // 每 N 帧生成一段拖尾（默认 3）
     }
   ): void {
     this.isEnemyBullet = false;
@@ -75,6 +81,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.aoeRadius = options?.aoeRadius || 0;
     this.knockback = options?.knockback || 0;
     this.returning = false;
+    this.trailColor = options?.trailColor;
+    this.trailEvery = options?.trailEvery ?? 0;
+    this.trailTimer = 0;
 
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
@@ -202,6 +211,21 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
+    // 弹道拖尾：按武器视觉节流生成渐隐光带（只玩家子弹）
+    if (this.trailColor !== undefined && this.trailEvery > 0) {
+      this.trailTimer++;
+      if (this.trailTimer >= this.trailEvery) {
+        this.trailTimer = 0;
+        const scene = this.scene as any;
+        scene?.getFXManager?.()?.bulletTrail(
+          this.x,
+          this.y,
+          Math.atan2(this.vy, this.vx),
+          this.trailColor
+        );
+      }
+    }
+
     // 每帧重设速度，确保不被未知机制清零
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
@@ -270,6 +294,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.setVisible(false);
     this.setScale(1);
     this.clearTint();
+    this.trailColor = undefined;
+    this.trailEvery = 0;
+    this.trailTimer = 0;
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
       body.enable = false;

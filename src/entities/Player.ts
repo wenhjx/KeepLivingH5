@@ -309,22 +309,31 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           color: visual.color,
           scaleX: visual.scaleX,
           scaleY: visual.scaleY,
+          trailColor: visual.trailColor,
+          trailEvery: visual.trailEvery,
         }
       );
     }
   }
 
-  /** 获取武器视觉参数（颜色/缩放），用于区分不同武器子弹 */
-  private getWeaponVisual(weaponId: string): { color?: number; scaleX?: number; scaleY?: number } {
+  /**
+   * 获取武器视觉参数（颜色/缩放/弹道拖尾），用于区分不同武器子弹
+   * 每把武器一套专属视觉：颜色 + 形状 + 拖尾颜色/密度
+   */
+  private getWeaponVisual(
+    weaponId: string
+  ): { color?: number; scaleX?: number; scaleY?: number; trailColor?: number; trailEvery?: number } {
     switch (weaponId) {
       case 'machine_gun':
-        return { color: 0xffcc00, scaleX: 0.7, scaleY: 0.7 }; // 橙黄小弹
+        return { color: 0xffcc00, scaleX: 0.7, scaleY: 0.7, trailColor: 0xffaa00, trailEvery: 3 }; // 橙黄小弹+橙黄拖尾
       case 'shotgun':
-        return { color: 0xff5555, scaleX: 0.9, scaleY: 0.9 }; // 红色散弹
+        return { color: 0xff5555, scaleX: 0.9, scaleY: 0.9, trailColor: 0xff5533, trailEvery: 3 }; // 红色散弹+红拖尾
       case 'laser':
-        return { color: 0x00ffff, scaleX: 2.5, scaleY: 0.4 }; // 青色细长激光
+        return { color: 0x00ffff, scaleX: 2.5, scaleY: 0.4, trailColor: 0x00ffff, trailEvery: 4 }; // 青色细长激光+青拖尾
+      case 'rocket':
+        return { color: 0xff6600, scaleX: 1.5, scaleY: 1.0, trailColor: 0xff8833, trailEvery: 4 }; // 橙色火箭弹+橙拖尾
       case 'default_gun':
-        return { color: 0xffffff }; // 白色默认
+        return { color: 0xffffff, trailColor: 0x88ccff, trailEvery: 3 }; // 白色默认+淡蓝拖尾
       default:
         return {};
     }
@@ -371,6 +380,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         pierce: true,
         boomerang: true,
         aoeRadius: config.aoeRadius,
+        trailColor: 0x66ff66,
+        trailEvery: 4,
       }
     );
   }
@@ -459,6 +470,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         color: 0x00ffff,
         scaleX: 2.0,
         scaleY: 0.45,
+        trailColor: 0x00ffff,
+        trailEvery: 3,
       }
     );
   }

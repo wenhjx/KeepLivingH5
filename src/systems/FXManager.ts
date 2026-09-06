@@ -89,6 +89,41 @@ export class FXManager {
     });
   }
 
+  /**
+   * Boss 专属光环：脚下常驻呼吸圆环（类型标识色），帮助区分不同 Boss。
+   * 返回圆环对象，由调用方随敌人销毁；位置需调用方每帧同步到敌人坐标。
+   */
+  bossAura(x: number, y: number, size: number, color: number): Phaser.GameObjects.Arc {
+    const ring = this.scene.add.circle(x, y, Math.max(18, size * 0.62), color, 0).setDepth(4);
+    ring.setStrokeStyle(4, color, 0.9);
+    this.scene.tweens.add({
+      targets: ring,
+      alpha: { from: 0.6, to: 0.25 },
+      yoyo: true,
+      repeat: -1,
+      duration: 650,
+      delay: Math.random() * 300,
+    });
+    return ring;
+  }
+
+  /**
+   * 弹道拖尾：子弹飞行留下的渐隐光带（沿弹道方向拉伸的短矩形，快速淡出）
+   * 轻量短命对象（tween 后自毁），供各武器弹道按节流频率调用
+   */
+  bulletTrail(x: number, y: number, angle: number, color: number = 0xffffff, width: number = 4): void {
+    const r = this.scene.add.rectangle(x, y, 22, width, color, 0.75).setDepth(7);
+    r.setRotation(angle);
+    this.scene.tweens.add({
+      targets: r,
+      alpha: 0,
+      scaleX: 0.4,
+      scaleY: 0.6,
+      duration: 220,
+      onComplete: () => r.destroy(),
+    });
+  }
+
   /** 环形冲击波：空心双环扩散 + 粒子迸发（环形冲击波武器等全向范围攻击） */
   shockwave(x: number, y: number, radius: number, color: number = 0x00ffff): void {
     this.ringStroke(x, y, radius, color, 380, 0.2, 1.6);

@@ -141,6 +141,8 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
         color: 0x66ffff,
         scaleX: 0.65,
         scaleY: 0.65,
+        trailColor: 0x66ffff,
+        trailEvery: 3,
       }
     );
   }
