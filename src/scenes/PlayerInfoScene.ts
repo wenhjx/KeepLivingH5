@@ -2,6 +2,7 @@ import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { setupUICamera } from '../utils/CameraHelper';
+import { UIScrollBar } from '../utils/UIScrollBar';
 import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { SOUND_KEYS } from '../data/sounds';
@@ -211,20 +212,12 @@ export class PlayerInfoScene extends Phaser.Scene {
     let scrollOff = 0;
     const zoom = this.cameras.main.zoom;
 
-    // 滚动条（轨道 + 滑块）
-    const scrollBarTrack = this.add.graphics();
-    scrollBarTrack.fillStyle(0xffffff, 0.08);
-    scrollBarTrack.fillRoundedRect(barX, scrollY, 5, scrollH, 2);
-    const scrollBarThumb = this.add.graphics();
+    // 滚动条（统一组件：轨道+滑块一体，无可滚动内容时不显示）
+    const scrollBar = new UIScrollBar(this, barX, scrollY, 5, scrollH);
+    scrollBar.setRange(contentH, scrollH);
     const applyScroll = () => {
       scrollContent.setY(scrollY - scrollOff);
-      scrollBarThumb.clear();
-      if (maxScroll > 0) {
-        const thumbH = Math.max(24, scrollH * (scrollH / contentH));
-        const thumbY = scrollY + (scrollH - thumbH) * (scrollOff / maxScroll);
-        scrollBarThumb.fillStyle(0xffffff, 0.35);
-        scrollBarThumb.fillRoundedRect(barX, thumbY, 5, thumbH, 2);
-      }
+      scrollBar.update(scrollOff);
     };
     applyScroll();
 

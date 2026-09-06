@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { setupUICamera } from '../utils/CameraHelper';
 import { UILayout } from '../utils/UILayout';
+import { UIScrollBar } from '../utils/UIScrollBar';
 import { ACHIEVEMENTS, ACHIEVEMENT_SERIES, type AchievementDef, type AchievementSeries } from '../data/achievements';
 import { AchievementManager } from '../systems/AchievementManager';
 import { SOUND_KEYS } from '../data/sounds';
@@ -21,7 +22,7 @@ export class AchievementScene extends Phaser.Scene {
   private scrollH = 0;
   private maxScroll = 0;
   private scrollOff = 0;
-  private scrollBarThumb!: Phaser.GameObjects.Graphics;
+  private scrollBar!: UIScrollBar;
   private tabTexts: Record<string, Phaser.GameObjects.Text> = {};
 
   constructor() {
@@ -109,9 +110,8 @@ export class AchievementScene extends Phaser.Scene {
     this.scrollContent = this.add.container(scrollX, scrollY).setDepth(10);
     this.scrollContent.setMask(mask);
 
-    // 滚动条
-    this.add.graphics().fillStyle(0xffffff, 0.08).fillRoundedRect(scrollX + listW + 4, scrollY, 5, listH, 2);
-    this.scrollBarThumb = this.add.graphics();
+    // 滚动条（统一组件：轨道+滑块一体，无可滚动内容时不显示）
+    this.scrollBar = new UIScrollBar(this, scrollX + listW + 4, scrollY, 5, listH);
 
     // 点击 Tab 重绘列表（初始为"全部"）
     this.setSeries('all');
@@ -177,6 +177,7 @@ export class AchievementScene extends Phaser.Scene {
     this.scrollH = defs.length * rowH;
     this.maxScroll = Math.max(0, this.scrollH - 380);
     this.scrollOff = 0;
+    this.scrollBar.setRange(this.scrollH, 380);
     this.applyScroll();
   }
 
@@ -281,12 +282,6 @@ export class AchievementScene extends Phaser.Scene {
 
   private applyScroll(): void {
     this.scrollContent.setY(168 - this.scrollOff);
-    this.scrollBarThumb.clear();
-    if (this.maxScroll > 0) {
-      const thumbH = Math.max(28, 380 * (380 / this.scrollH));
-      const thumbY = 168 + (380 - thumbH) * (this.scrollOff / this.maxScroll);
-      this.scrollBarThumb.fillStyle(0xffffff, 0.3);
-      this.scrollBarThumb.fillRoundedRect(60 + 800 + 4, thumbY, 5, thumbH, 2);
-    }
+    this.scrollBar.update(this.scrollOff);
   }
 }
