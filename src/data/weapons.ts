@@ -18,6 +18,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     pierce: true,
     description: '基础远程攻击，稳定输出，可穿透敌人',
     maxLevel: 8,
+    iconTexture: 'weapon_icon_default_gun',
   },
   shotgun: {
     id: 'shotgun',
@@ -34,6 +35,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     knockback: 90,
     description: '近距离爆发：散射弹丸命中击退，被围堵时一枪轰开',
     maxLevel: 6,
+    iconTexture: 'weapon_icon_shotgun',
   },
   machine_gun: {
     id: 'machine_gun',
@@ -47,6 +49,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     projectileCount: 1,
     description: '极高射速，单发伤害低',
     maxLevel: 6,
+    iconTexture: 'weapon_icon_machine_gun',
   },
   boomerang: {
     id: 'boomerang',
@@ -63,6 +66,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     boomerang: true,
     description: '可穿透敌人的回旋攻击',
     maxLevel: 6,
+    iconTexture: 'weapon_icon_boomerang',
   },
   drone: {
     id: 'drone',
@@ -76,6 +80,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     projectileCount: 1,
     description: '环绕切割无人机：接触伤害+自动射击，升级强化环绕速度与射击频率',
     maxLevel: 6,
+    iconTexture: 'weapon_icon_drone',
   },
   lightsaber: {
     id: 'lightsaber',
@@ -88,6 +93,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     aoeRadius: 120,
     description: '近战范围攻击，挥砍附带远程剑气',
     maxLevel: 6,
+    iconTexture: 'weapon_icon_lightsaber',
   },
   rocket: {
     id: 'rocket',
@@ -103,6 +109,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     explosive: true,
     description: '范围爆炸伤害，攻速慢',
     maxLevel: 5,
+    iconTexture: 'weapon_icon_rocket',
   },
   laser: {
     id: 'laser',
@@ -117,6 +124,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     pierce: true,
     description: '超高速激光，穿透敌人',
     maxLevel: 6,
+    iconTexture: 'weapon_icon_laser',
   },
   nova: {
     id: 'nova',
@@ -130,6 +138,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     nova: true,
     description: '周期性释放环形冲击波，击退周围所有敌人，被围堵时的救急武器',
     maxLevel: 6,
+    iconTexture: 'weapon_icon_nova',
   },
 };
 

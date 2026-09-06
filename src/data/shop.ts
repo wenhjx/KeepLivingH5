@@ -21,6 +21,8 @@ export interface ShopItem {
   id: string;
   name: string;
   icon: string;
+  /** 矢量图标贴图（武器类商品透传自升级项，缺省回退 emoji） */
+  iconTexture?: string;
   desc: string;
   price: number;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
@@ -45,6 +47,7 @@ function fromUpgrade(upgradeId: string, kind: ShopItemKind, price: number): Shop
     id: `shop_${upgradeId}`,
     name: opt.name,
     icon: opt.icon,
+    iconTexture: opt.iconTexture,
     desc: opt.description,
     price,
     rarity: opt.rarity as ShopItem['rarity'],

@@ -49,9 +49,12 @@ export class MainMenuScene extends Phaser.Scene {
     this.quality = gm.qualityLevel;
     this.muted = audio.isMuted();
 
-    // 背景 + 星点装饰
-    this.add.rectangle(0, 0, width, height, 0x0a0a0f).setOrigin(0);
+    // 背景：垂直渐变夜空（上深下微蓝紫）+ 星点 + 漂移光点装饰
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x0a0a12, 0x0a0a12, 0x151a30, 0x151a30, 1);
+    bg.fillRect(0, 0, width, height);
     this.createBackgroundStars(width, height);
+    this.createDriftingOrbs(width, height);
 
     // 标题
     const title = createUIText(this, centerX, height * 0.25, 'KEEP LIVING', {
@@ -74,6 +77,11 @@ export class MainMenuScene extends Phaser.Scene {
       repeat: -1,
       ease: 'Sine.InOut',
     });
+
+    // 标题背后双层光晕（收敛半径，与徽章金色星点风格区分：橙色呼吸晕）
+    const halo1 = this.add.circle(centerX, height * 0.25, 120, 0xff6b35, 0.07).setDepth(-1);
+    const halo2 = this.add.circle(centerX, height * 0.25, 78, 0xff8844, 0.1).setDepth(-1);
+    this.tweens.add({ targets: [halo1, halo2], alpha: 0.035, duration: 1900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
 
     // 副标题
     createUIText(this, centerX, height * 0.25 + 50, '2D 割草生存', {
@@ -119,6 +127,39 @@ export class MainMenuScene extends Phaser.Scene {
     this.createLevelSelectOverlay();
   }
 
+  /** 漂移光点：大而朦胧的光团缓慢水平漂移 + 呼吸（与闪烁星点错开，增强背景层次） */
+  private createDriftingOrbs(width: number, height: number): void {
+    for (let i = 0; i < 7; i++) {
+      const r = 14 + Math.random() * 26;
+      const orb = this.add.circle(
+        Math.random() * width,
+        Math.random() * height,
+        r,
+        i % 2 === 0 ? 0x3355aa : 0xff8844,
+        0.05 + Math.random() * 0.04
+      ).setDepth(-1);
+      const speed = 12 + Math.random() * 18;
+      const dir = Math.random() > 0.5 ? 1 : -1;
+      const startX = orb.x;
+      this.tweens.add({
+        targets: orb,
+        x: startX + dir * (30 + Math.random() * 40),
+        duration: 2600 + Math.random() * 2200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.InOut',
+      });
+      this.tweens.add({
+        targets: orb,
+        alpha: 0.02,
+        duration: 1500 + Math.random() * 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.InOut',
+      });
+    }
+  }
+
   /** 背景星点（纯装饰，轻量，低配设备可承受） */
   private createBackgroundStars(width: number, height: number): void {
     for (let i = 0; i < 26; i++) {
@@ -150,6 +191,10 @@ export class MainMenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
+
+    btn.on('pointerdown', () => {
+      this.tweens.add({ targets: btn, scaleX: 0.94, scaleY: 0.94, duration: 70, yoyo: true });
+    });
 
     btn.on('pointerover', () => {
       btn.setStyle({ color: '#ff6b35', backgroundColor: '#2a2a35' });

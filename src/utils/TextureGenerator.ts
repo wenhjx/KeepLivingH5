@@ -1420,6 +1420,121 @@ export class TextureGenerator {
 
     g.generateTexture('weapon_sword', size, size);
     g.destroy();
+
+    // 全武器矢量图标（48px，颜色对齐弹道拖尾色系，供升级/商店卡片使用）
+    this.generateWeaponIcons();
+  }
+
+  /** 生成 9 把武器专属矢量图标（每把武器一眼可辨，替代共用 emoji 🔫） */
+  private generateWeaponIcons(): void {
+    const S = 48;
+    const C = S / 2;
+    const mk = (key: string) => {
+      const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
+      return { g, key };
+    };
+    const done = (a: { g: any; key: string }) => {
+      a.g.generateTexture(a.key, S, S);
+      a.g.destroy();
+    };
+
+    // 基础枪：手枪（灰身 + 橙扳机护圈 + 白高光）
+    {
+      const a = mk('weapon_icon_default_gun');
+      a.g.fillStyle(0x999999, 1); a.g.fillRoundedRect(C - 14, C - 8, 22, 10, 3);          // 枪管
+      a.g.fillStyle(0x777777, 1); a.g.fillRoundedRect(C - 12, C + 2, 12, 10, 3);          // 握把
+      a.g.fillStyle(0xff8833, 1); a.g.fillCircle(C + 6, C + 4, 4);                        // 扳机圈
+      a.g.fillStyle(0xffffff, 0.7); a.g.fillRect(C - 12, C - 6, 18, 2);                   // 高光
+      done(a);
+    }
+
+    // 机枪：长枪管 + 弹匣（黄）
+    {
+      const a = mk('weapon_icon_machine_gun');
+      a.g.fillStyle(0xffcc00, 1); a.g.fillRoundedRect(C - 17, C - 6, 30, 8, 3);           // 长管
+      a.g.fillStyle(0xcc9900, 1); a.g.fillRoundedRect(C - 6, C + 2, 12, 12, 3);           // 弹匣
+      a.g.fillStyle(0xffffff, 0.8); a.g.fillRect(C - 15, C - 4, 8, 2);                    // 高光
+      a.g.fillStyle(0x222222, 1); a.g.fillRect(C + 11, C - 8, 2, 12);                     // 准星
+      done(a);
+    }
+
+    // 霰弹枪：双管宽身（红）
+    {
+      const a = mk('weapon_icon_shotgun');
+      a.g.fillStyle(0xff5555, 1); a.g.fillRoundedRect(C - 16, C - 10, 26, 8, 3);          // 上管
+      a.g.fillStyle(0xcc4444, 1); a.g.fillRoundedRect(C - 16, C - 2, 26, 8, 3);           // 下管
+      a.g.fillStyle(0x8a5a2a, 1); a.g.fillRoundedRect(C - 13, C + 6, 14, 9, 3);           // 枪托
+      a.g.fillStyle(0xffffff, 0.7); a.g.fillRect(C - 14, C - 8, 10, 2);                   // 高光
+      done(a);
+    }
+
+    // 激光：细长光束 + 尾端光点（青）
+    {
+      const a = mk('weapon_icon_laser');
+      a.g.fillStyle(0x00ffff, 1); a.g.fillRoundedRect(C - 18, C - 2, 30, 4, 2);           // 光束
+      a.g.fillStyle(0x66ffff, 1); a.g.fillCircle(C - 18, C, 5);                           // 尾端光点
+      a.g.fillStyle(0xffffff, 1); a.g.fillCircle(C + 12, C, 3);                           // 弹头高光
+      a.g.fillStyle(0xffffff, 0.6); a.g.fillRect(C - 14, C - 3, 22, 1);                   // 光芯
+      done(a);
+    }
+
+    // 火箭筒：锥形弹体 + 尾焰（橙）
+    {
+      const a = mk('weapon_icon_rocket');
+      a.g.fillStyle(0xff6600, 1); a.g.fillRoundedRect(C - 12, C - 6, 20, 12, 4);          // 弹体
+      a.g.fillStyle(0xffcc33, 1); a.g.beginPath(); a.g.moveTo(C - 14, C - 8); a.g.lineTo(C - 22, C); a.g.lineTo(C - 14, C + 8); a.g.closePath(); a.g.fillPath(); // 尾焰
+      a.g.fillStyle(0xcccccc, 1); a.g.beginPath(); a.g.moveTo(C + 8, C - 6); a.g.lineTo(C + 14, C); a.g.lineTo(C + 8, C + 6); a.g.closePath(); a.g.fillPath(); // 弹头
+      a.g.fillStyle(0xffffff, 0.8); a.g.fillRect(C - 10, C - 4, 14, 2);                   // 高光
+      done(a);
+    }
+
+    // 回旋镖：V 形弯（绿）
+    {
+      const a = mk('weapon_icon_boomerang');
+      a.g.lineStyle(6, 0x66ff66, 1);
+      a.g.beginPath();
+      a.g.moveTo(C - 4, C + 12); a.g.lineTo(C - 4, C - 6); a.g.lineTo(C + 10, C - 14);
+      a.g.strokePath();
+      a.g.lineStyle(2, 0xccffcc, 0.9);
+      a.g.beginPath();
+      a.g.moveTo(C - 4, C + 12); a.g.lineTo(C - 4, C - 6); a.g.lineTo(C + 10, C - 14);
+      a.g.strokePath();
+      done(a);
+    }
+
+    // 无人机：圆体 + 十字旋翼（青蓝）
+    {
+      const a = mk('weapon_icon_drone');
+      a.g.fillStyle(0x66ffff, 1); a.g.fillCircle(C, C, 10);                               // 机体
+      a.g.fillStyle(0x226666, 1); a.g.fillRect(C - 2, C - 6, 4, 12);                      // 中心条
+      a.g.fillStyle(0x88ccdd, 0.8); a.g.fillRect(C - 16, C - 3, 32, 6);                   // 横旋翼
+      a.g.fillStyle(0xffffff, 0.9); a.g.fillCircle(C - 16, C, 2); a.g.fillCircle(C + 16, C, 2); // 翼端灯
+      done(a);
+    }
+
+    // 光剑：蓝色剑刃 + 金色护手（蓝）
+    {
+      const a = mk('weapon_icon_lightsaber');
+      a.g.fillStyle(0x33aaff, 1); a.g.fillRoundedRect(C - 3, C - 16, 6, 22, 3);           // 剑刃
+      a.g.fillStyle(0x99ddff, 0.9); a.g.fillRect(C - 1, C - 16, 2, 22);                   // 刃芯
+      a.g.fillStyle(0xffcc00, 1); a.g.fillRect(C - 9, C + 7, 18, 4);                      // 护手
+      a.g.fillStyle(0x8b4513, 1); a.g.fillRect(C - 2, C + 11, 4, 6);                      // 剑柄
+      done(a);
+    }
+
+    // 环形冲击波：同心双环 + 粒子（紫）
+    {
+      const a = mk('weapon_icon_nova');
+      a.g.lineStyle(4, 0xcc88ff, 1); a.g.strokeCircle(C, C, 14);                          // 外环
+      a.g.lineStyle(2, 0xeeccff, 0.9); a.g.strokeCircle(C, C, 7);                         // 内环
+      a.g.fillStyle(0xffffff, 1); a.g.fillCircle(C, C, 2.5);                              // 中心
+      a.g.fillStyle(0xcc88ff, 0.9);
+      for (let i = 0; i < 4; i++) {
+        const ang = (Math.PI / 2) * i + 0.6;
+        a.g.fillCircle(C + Math.cos(ang) * 18, C + Math.sin(ang) * 18, 2.2);
+      }
+      done(a);
+    }
   }
 
   // ========== 障碍物纹理 ==========

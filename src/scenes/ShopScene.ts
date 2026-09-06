@@ -197,6 +197,7 @@ export class ShopScene extends Phaser.Scene {
     const card = createOptionCard(this, x, y, {
       name: item.name,
       icon: item.icon,
+      iconTexture: item.iconTexture,
       desc: item.desc,
       rarity: item.rarity,
       cardWidth: this.cardWidth,

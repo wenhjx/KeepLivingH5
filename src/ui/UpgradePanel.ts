@@ -128,6 +128,7 @@ export class UpgradePanel {
       const card = createOptionCard(this.scene, x, cardY, {
         name: option.name,
         icon: option.icon,
+        iconTexture: option.iconTexture,
         desc: option.description,
         rarity: option.rarity as 'common' | 'rare' | 'epic' | 'legendary',
         cardWidth: this.cardWidth,

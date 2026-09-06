@@ -100,6 +100,8 @@ export interface WeaponConfig {
   aoeRadius?: number;
   description: string;
   maxLevel: number;
+  /** 武器专属矢量图标贴图（升级/商店卡片用，缺省回退 emoji） */
+  iconTexture?: string;
   // 行为标记
   pierce?: boolean;       // 穿透敌人
   explosive?: boolean;    // 命中后爆炸范围伤害
@@ -118,6 +120,8 @@ export interface UpgradeOption {
   type: UpgradeType;
   description: string;
   icon: string;
+  /** 矢量图标贴图（武器类升级项用，缺省回退 emoji icon） */
+  iconTexture?: string;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   effect: UpgradeEffect;
   /** 该升级项最多可选次数（stat 类满级后不再出现在升级/商店候选池，防止无限叠加数值爆炸） */

@@ -10,6 +10,8 @@ import Phaser from 'phaser';
 export interface OptionCardConfig {
   name: string;
   icon: string;
+  /** 矢量图标贴图（优先于 emoji icon 渲染） */
+  iconTexture?: string;
   desc: string;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   /** 底部附加文字（如价格），不传则不显示 */
@@ -88,11 +90,19 @@ export function createOptionCard(
   iconBg.fillCircle(0, -cardHeight / 2 + 78, 34);
   card.add(iconBg);
 
-  // 图标
-  const iconText = createUIText(scene, 0, -cardHeight / 2 + 78, config.icon, {
-    fontSize: '28px',
-  }).setOrigin(0.5);
-  card.add(iconText);
+  // 图标（矢量贴图优先，emoji 回退）
+  if (config.iconTexture && scene.textures.exists(config.iconTexture)) {
+    const iconImg = scene.add
+      .image(0, -cardHeight / 2 + 78, config.iconTexture)
+      .setDisplaySize(44, 44)
+      .setOrigin(0.5);
+    card.add(iconImg);
+  } else {
+    const iconText = createUIText(scene, 0, -cardHeight / 2 + 78, config.icon, {
+      fontSize: '28px',
+    }).setOrigin(0.5);
+    card.add(iconText);
+  }
 
   // 名称
   const nameText = createUIText(
