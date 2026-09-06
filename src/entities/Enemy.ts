@@ -103,6 +103,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setActive(true);
     this.setVisible(true);
     this.setCircle(config.size / 2 || 16);
+    // Boss 视觉尺寸对齐碰撞直径：贴图固定 56px，Boss 改大后必须按 size 放大显示
+    if (config.type === 'boss') {
+      this.setDisplaySize(config.size * 2, config.size * 2);
+    }
     this.setDepth(5);
     this.clearTint();
     this.setAlpha(1);
@@ -600,8 +604,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.setTint(this.getBossTint());
       }
     } else {
-      // 正常追踪玩家（移速带阶段加成）
-      const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult * this.getBossPhaseSpeed();
+      // 正常追踪玩家（移速带阶段加成；Boss 封顶 130，慢速压迫、技能施压为主）
+      const rawSpeed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult * this.getBossPhaseSpeed();
+      const speed = this.config.type === 'boss' ? Math.min(rawSpeed, 130) : rawSpeed;
       const v = this.avoidObstacles(angle, speed);
       this.setVelocity(v.vx, v.vy);
     }
@@ -669,8 +674,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   /** Boss 阶段移速倍率 */
   private getBossPhaseSpeed(): number {
-    if (this.bossPhase >= 3) return 1.35;
-    if (this.bossPhase === 2) return 1.15;
+    if (this.bossPhase >= 3) return 1.18;
+    if (this.bossPhase === 2) return 1.08;
     return 1;
   }
 
@@ -693,15 +698,22 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const scene = this.scene as any;
     if (!scene || !scene.getObjectPool) return;
     const pool = scene.getObjectPool();
-    const baseAngle = MathUtils.angle(this.x, this.y, player.x, player.y);
+    const sceneRef = this.scene;
+    const poolRef = pool;
     const count = this.bossPhase >= 3 ? 7 : 5;
     const spread = Math.PI / 6;
-    const dmg = this.getBossSkillDamage(0.4);
-    for (let i = 0; i < count; i++) {
-      const t = i / (count - 1);
-      const angle = baseAngle + (t - 0.5) * 2 * spread;
-      pool.spawnEnemyBullet(this.x, this.y, angle, 280, dmg, { color: 0xffaa44 });
-    }
+    const dmg = this.getBossSkillDamage(0.55);
+    // 预警 500ms：橙色预警圈，玩家横向闪避扇形
+    (sceneRef as any).getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size * 1.1, 500, 0xffaa44);
+    this.scene.time.delayedCall(500, () => {
+      if (this.isDead || !this.active) return;
+      const baseAngle = MathUtils.angle(this.x, this.y, player.x, player.y);
+      for (let i = 0; i < count; i++) {
+        const t = i / (count - 1);
+        const angle = baseAngle + (t - 0.5) * 2 * spread;
+        poolRef.spawnEnemyBullet(this.x, this.y, angle, 250, dmg, { color: 0xffaa44 });
+      }
+    });
   }
 
   /** 追踪弹：朝玩家发射并持续转向 */
@@ -709,13 +721,18 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const scene = this.scene as any;
     if (!scene || !scene.getObjectPool) return;
     const pool = scene.getObjectPool();
-    const baseAngle = MathUtils.angle(this.x, this.y, player.x, player.y);
     const count = this.bossPhase >= 3 ? 5 : 3;
-    const dmg = this.getBossSkillDamage(0.4);
-    for (let i = 0; i < count; i++) {
-      const angle = baseAngle + (i - (count - 1) / 2) * 0.25;
-      pool.spawnEnemyBullet(this.x, this.y, angle, 240, dmg, { color: 0x66ff66, homing: true, homingTurnRate: 3.2 });
-    }
+    const dmg = this.getBossSkillDamage(0.55);
+    // 预警 500ms：绿色预警圈；弹速与转向下调，玩家保持移动可甩开
+    scene.getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size * 1.1, 500, 0x66ff66);
+    this.scene.time.delayedCall(500, () => {
+      if (this.isDead || !this.active) return;
+      const baseAngle = MathUtils.angle(this.x, this.y, player.x, player.y);
+      for (let i = 0; i < count; i++) {
+        const angle = baseAngle + (i - (count - 1) / 2) * 0.25;
+        pool.spawnEnemyBullet(this.x, this.y, angle, 200, dmg, { color: 0x66ff66, homing: true, homingTurnRate: 2.6 });
+      }
+    });
   }
 
   /** 冲锋：蓄力警示后高速突进（破除放风筝） */
@@ -760,7 +777,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const scene = this.scene as any;
     const fx = scene?.getFXManager?.();
     const radius = 110;
-    const dmg = this.getBossSkillDamage(1);
+    const dmg = this.getBossSkillDamage(1.25);
     const x = player.x;
     const y = player.y;
     fx?.telegraph?.(x, y, radius, 800, 0xff2222);
@@ -817,16 +834,22 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (!scene || !scene.getObjectPool) return;
     const pool = scene.getObjectPool();
     const count = this.bossPhase >= 3 ? 16 : this.bossPhase === 2 ? 12 : 8;
-    const speed = this.bossPhase >= 3 ? 250 : this.bossPhase === 2 ? 220 : 190;
-    const dmg = this.getBossSkillDamage(0.5);
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2 + this.scene.time.now * 0.00025;
-      pool.spawnEnemyBullet(this.x, this.y, angle, speed, dmg, { color: 0xff4444 });
-    }
+    const speed = this.bossPhase >= 3 ? 225 : this.bossPhase === 2 ? 195 : 165;
+    const dmg = this.getBossSkillDamage(0.65);
+    // 预警 650ms：红光圈提示弹幕即将覆盖，玩家借旋转间隙走位
+    scene.getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size * 1.15, 650, 0xff4444);
+    this.scene.time.delayedCall(650, () => {
+      if (this.isDead || !this.active) return;
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2 + this.scene.time.now * 0.00025;
+        pool.spawnEnemyBullet(this.x, this.y, angle, speed, dmg, { color: 0xff4444 });
+      }
+    });
   }
 
   private attackPlayer(player: Player): void {
-    player.takeDamage(this.config.attackPower * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost);
+    const bossMult = this.config.type === 'boss' ? 1.3 : 1;
+    player.takeDamage(this.config.attackPower * bossMult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost);
     this.attackCooldown = this.config.attackCooldown;
   }
 
