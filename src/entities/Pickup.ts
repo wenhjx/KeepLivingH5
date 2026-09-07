@@ -42,6 +42,8 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
     this.setVisible(true);
     this.setDepth(6);
     this.setCircle(12);
+    // 碰撞圆以贴图显示中心为圆心（拾取物纹理 26~30px，body 24px，避免偏左上）
+    this.body!.setOffset((this.displayWidth - 24) / 2, (this.displayHeight - 24) / 2);
     this.setAlpha(1);
 
     // 初始随机散开

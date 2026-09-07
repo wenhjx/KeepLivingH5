@@ -105,6 +105,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 物理设置
     this.setCollideWorldBounds(true);
     this.setCircle(16);
+    // 确保碰撞圆以贴图显示中心为圆心（某些情况下 setCircle 的 offset 会落到 0,0）
+    this.body!.setOffset((this.displayWidth - 32) / 2, (this.displayHeight - 32) / 2);
     this.setDepth(10);
 
     // 初始武器（默认武器，配置来自统一数据源 src/data/weapons.ts）
