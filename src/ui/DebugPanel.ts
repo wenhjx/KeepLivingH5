@@ -148,6 +148,7 @@ export class DebugPanel {
         );
       }
     } });
+    this.addRow(col, { text: '🏆 清空成就', fn: () => this.callDebug('resetAchievements') }, { text: '🧨 清空全部', fn: () => this.callDebug('resetAllData') });
     this.addAutoPlayRow(col);
     this.addThemeRow(col);
     col.step(this.sectionSpacing);
@@ -551,6 +552,16 @@ export class DebugPanel {
 
   private getGameScene(): any {
     return this.scene.scene.get('GameScene');
+  }
+
+  /** 调用 window.__debug 上的方法（若不存在则跳过） */
+  private callDebug(name: string): void {
+    const api = (window as any).__debug;
+    if (api && typeof api[name] === 'function') {
+      api[name]();
+    } else {
+      console.warn('[debug] __debug.' + name + ' 不可用');
+    }
   }
 
   private setupHotkey(): void {

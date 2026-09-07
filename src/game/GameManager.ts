@@ -262,6 +262,51 @@ export class GameManager {
     }
   }
 
+  /** 只清空成就相关：解锁记录/加成/称号 + 成就统计（含击杀数，因击杀成就依赖它）；保留最高分/局数/时长 */
+  resetAchievements(): void {
+    if (!this._saveSystem) return;
+    const data = this._saveSystem.load() || (this.buildSaveData() as GameSaveData);
+    data.achievements = { unlocked: [], bonuses: {}, titles: [] };
+    const s = data.stats || ({} as SaveStats);
+    s.totalKills = 0;
+    s.totalCoinsEarned = 0;
+    s.totalCoinsSpent = 0;
+    s.bossesKilled = 0;
+    s.wins = 0;
+    s.maxWaveReached = 0;
+    s.weaponsCollected = [];
+    data.stats = s;
+    this._saveSystem.save(data);
+    // 同步内存统计（避免刷新前读到旧值）
+    this._stats.totalKills = 0;
+    this._stats.totalCoinsEarned = 0;
+    this._stats.totalCoinsSpent = 0;
+    this._stats.bossesKilled = 0;
+    this._stats.wins = 0;
+    this._stats.maxWaveReached = 0;
+    this._stats.weaponsCollected = [];
+    console.log('[debug] 成就已清空（保留最高分/局数/时长）');
+  }
+
+  /** 彻底清空全部存档（成就/全部统计/进行中对局），下次启动从零开始 */
+  resetAllData(): void {
+    this._saveSystem?.clearLocalSave();
+    this._stats = {
+      totalKills: 0,
+      totalPlayTime: 0,
+      highScore: 0,
+      gamesPlayed: 0,
+      totalCoinsEarned: 0,
+      totalCoinsSpent: 0,
+      bossesKilled: 0,
+      wins: 0,
+      maxWaveReached: 0,
+      weaponsCollected: [],
+    };
+    this._pendingRun = null;
+    console.log('[debug] 全部存档已清空（含成就/统计/最高分）');
+  }
+
   /** 构造一份基础存档数据（无对局进度） */
   private buildSaveData(): GameSaveData {
     const audio = AudioManager.getInstance();

@@ -38,6 +38,10 @@ export interface DebugAPI {
   getSave: () => string;
   /** 清除存档 */
   clearSave: () => void;
+  /** 清空成就（解锁/加成/称号 + 成就统计），保留最高分等展示数据；刷新生效 */
+  resetAchievements: () => string;
+  /** 彻底清空全部存档（成就/统计/最高分/对局），刷新生效 */
+  resetAllData: () => string;
   /** 开关 AI 自动玩 */
   autoPlay: (enabled?: boolean) => boolean;
   /** 稳定测试态：无敌 + 不升级 + 关闭所有覆盖面板（避免升级/商店弹窗干扰 UI 点击测试） */
@@ -163,6 +167,22 @@ export function initDebugAPI(game: Phaser.Game): void {
     clearSave: () => {
       gm.clearSavedRun();
       console.log('[debug] 存档已清除');
+    },
+
+    /** 清空成就（解锁/加成/称号 + 成就统计），保留最高分等展示数据；刷新生效 */
+    resetAchievements: () => {
+      gm.resetAchievements();
+      console.log('[debug] 成就已清空，1 秒后刷新页面生效');
+      setTimeout(() => window.location.reload(), 800);
+      return 'achievements cleared';
+    },
+
+    /** 彻底清空全部存档（成就/统计/最高分/对局），刷新生效 */
+    resetAllData: () => {
+      gm.resetAllData();
+      console.log('[debug] 全部存档已清空，1 秒后刷新页面生效');
+      setTimeout(() => window.location.reload(), 800);
+      return 'all data cleared';
     },
 
     autoPlay: (enabled?: boolean) => {
