@@ -33,7 +33,7 @@ export class UpgradeScene extends Phaser.Scene {
     this.autoTriggered = false;
 
     // 半透明背景
-    this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0).setInteractive();
 
     // 标题
     createUIText(this, width / 2, 70, 'LEVEL UP!', {

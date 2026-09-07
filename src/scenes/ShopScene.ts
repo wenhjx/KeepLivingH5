@@ -45,7 +45,7 @@ export class ShopScene extends Phaser.Scene {
     this.aiShoppingStarted = false;
 
     // 半透明背景
-    this.add.rectangle(0, 0, width, height, 0x000000, 0.82).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, 0x000000, 0.82).setOrigin(0).setInteractive();
 
     // 标题
     createUIText(this, width / 2, 60, '🛒 神秘商店', {

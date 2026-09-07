@@ -30,7 +30,7 @@ export class EndlessChoiceScene extends Phaser.Scene {
     const nextName = hasNext ? LEVELS[levelIndex + 1].name : '';
 
     // 半透明背景
-    this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0).setInteractive();
 
     // 标题
     createUIText(this, centerX, height * 0.22, '🎉 通关成功！', {

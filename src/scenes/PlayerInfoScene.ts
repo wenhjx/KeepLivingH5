@@ -40,7 +40,7 @@ export class PlayerInfoScene extends Phaser.Scene {
     this.player = player;
 
     // 半透明背景（盖住暂停遮罩与游戏画面）
-    this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0).setInteractive();
 
     // 中央面板尺寸
     const panelW = 700;

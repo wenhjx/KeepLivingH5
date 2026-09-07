@@ -107,7 +107,7 @@ export class UIScene extends Phaser.Scene {
     this.pauseOverlay.setDepth(100);
 
     // 半透明背景
-    const bg = this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0);
+    const bg = this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0).setInteractive();
     this.pauseOverlay.add(bg);
 
     // 暂停文字
