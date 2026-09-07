@@ -557,6 +557,10 @@ export class TextureGenerator {
     this.generateEnemySuicider('enemy_suicider_classic', TextureGenerator.COLORS.enemySuicider, 20);
     this.generateEnemySplitter('enemy_splitter_classic', TextureGenerator.COLORS.enemySplitter, 24);
     this.generateEnemyShielded('enemy_shielded_classic', TextureGenerator.COLORS.enemyShielded, 24);
+    // 新三敌（召唤师/冲锋怪/治疗怪）：classic 主题缺失纹理会导致显示 Phaser 占位方块，必须补齐
+    this.generateEnemySummoner('enemy_summoner_classic', 0xcc66ff, 13);
+    this.generateEnemyCharger('enemy_charger_classic', 0xff8833, 13);
+    this.generateEnemyHealer('enemy_healer_classic', 0x44ee77, 11);
   }
 
   /** 自爆怪：膨胀的不稳定球体 + 引线火花，危险感 */
