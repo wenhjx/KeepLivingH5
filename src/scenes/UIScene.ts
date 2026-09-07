@@ -23,6 +23,7 @@ export class UIScene extends Phaser.Scene {
   private minimap!: Minimap;
   private inventoryUI!: InventoryUI;
   private pauseButton!: Phaser.GameObjects.Text;
+  private debugButton!: Phaser.GameObjects.Text; // 移动端调试面板开关
   private pauseOverlay!: Phaser.GameObjects.Container;
   private uiRoot!: Phaser.GameObjects.Container;
   // EventBus 监听器取消函数（场景关闭时统一清理）
@@ -83,6 +84,22 @@ export class UIScene extends Phaser.Scene {
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_PAUSE, 0.6);
       gm.setPaused(pausing);
     });
+
+    // 移动端调试按钮（暂停按钮左侧）：触屏设备没有 ` 快捷键，床上玩也能唤起调试面板
+    if (GameManager.getInstance().isMobile) {
+      this.debugButton = createUIText(this, this.scale.width - 64, 16, '🛠️', {
+        fontSize: '20px',
+        backgroundColor: '#1a1a25',
+        padding: { left: 10, right: 10, top: 5, bottom: 5 },
+      })
+        .setOrigin(1, 0)
+        .setInteractive({ useHandCursor: true });
+
+      this.debugButton.on('pointerdown', () => {
+        const ds = this.scene.get('DebugScene') as any;
+        ds?.getDebugPanel?.()?.toggle();
+      });
+    }
 
     // 按 C 打开玩家属性面板的逻辑放在 GameScene（其键盘监听可靠生效），
     // 此处不重复监听，避免双触发。

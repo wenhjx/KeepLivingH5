@@ -101,6 +101,19 @@ export class DebugPanel {
       .setOrigin(0.5);
     this.container.add(title);
 
+    // 关闭按钮（标题栏右侧；触屏端没有 ` 快捷键，面板打开后又会盖住唤起按钮，
+    // 必须有可视关闭入口。桌面端同样可用）
+    const closeBtn = createUIText(this.scene, this.panelX + this.panelWidth - 14, this.panelY + 14, '✕', {
+        fontSize: '16px',
+        color: '#ff6b35',
+        fontStyle: 'bold',
+        padding: { left: 8, right: 8, top: 2, bottom: 2 },
+      })
+      .setOrigin(1, 0.5)
+      .setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerdown', () => this.toggle());
+    this.container.add(closeBtn);
+
     // 内容容器（滚动对象）——局部坐标以 (panelX+padding, panelY+40) 为原点
     this.content = this.scene.add.container(this.panelX + this.padding, this.panelY + 40);
     this.container.add(this.content);
