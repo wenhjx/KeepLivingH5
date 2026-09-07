@@ -281,7 +281,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: '成就猎手',
     description: '解锁全部成就',
     icon: '🏅',
-    check: (p) => (p?.unlockedCount ?? 0) >= ACHIEVEMENTS.length,
+    // 自身是成就之一：达成条件为"除自己外全部解锁"（length-1），否则永远无法解锁（死锁）
+    check: (p) => (p?.unlockedCount ?? 0) >= ACHIEVEMENTS.length - 1,
     reward: { title: '成就猎手' },
   },
 ];
