@@ -227,9 +227,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'hidden_90',
     series: 'hidden',
-    name: '???' ,
-    description: '达成条件保密',
-    icon: '❓',
+    name: '深渊守望者',
+    description: '存活至第 90 波',
+    icon: '🌀',
     hidden: true,
     target: 90,
     progress: (s) => s.maxWaveReached ?? 0,
