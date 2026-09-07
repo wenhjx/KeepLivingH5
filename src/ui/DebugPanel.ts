@@ -149,6 +149,8 @@ export class DebugPanel {
       }
     } });
     this.addRow(col, { text: '🏆 清空成就', fn: () => this.callDebug('resetAchievements') }, { text: '🧨 清空全部', fn: () => this.callDebug('resetAllData') });
+    this.addRow(col, { text: '⚡ 跳满级', fn: () => this.callDebug('setLevel', 100) }, { text: '♾ 超限+1', fn: () => this.callDebug('addOverflow', 1) });
+    this.addRow(col, { text: '♾ 超限+10', fn: () => this.callDebug('addOverflow', 10) }, { text: '♾ 超限+50', fn: () => this.callDebug('addOverflow', 50) });
     this.addAutoPlayRow(col);
     this.addThemeRow(col);
     col.step(this.sectionSpacing);
@@ -555,10 +557,10 @@ export class DebugPanel {
   }
 
   /** 调用 window.__debug 上的方法（若不存在则跳过） */
-  private callDebug(name: string): void {
+  private callDebug(name: string, ...args: unknown[]): void {
     const api = (window as any).__debug;
     if (api && typeof api[name] === 'function') {
-      api[name]();
+      (api[name] as (...a: unknown[]) => void)(...args);
     } else {
       console.warn('[debug] __debug.' + name + ' 不可用');
     }

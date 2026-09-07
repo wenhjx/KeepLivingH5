@@ -324,8 +324,8 @@ export class HUD {
       const player = gameScene.getPlayer();
       if (player) {
         this.updateHealthBar(player.getHealth(), player.getMaxHealth());
-        this.updateExpBar(player.getExp(), player.getExpToNext());
-        this.levelText.setText(`Lv.${player.getLevel()}`);
+        // 等级文本 + 经验条统一走 updateLevel（满级时转金色超限强化条）
+        this.updateLevel();
         this.coinText.setText(`💰 ${player.getCoins?.() ?? 0}`);
         this.updateBuffs(player);
       }
@@ -571,8 +571,16 @@ export class HUD {
     if (gameScene && gameScene.getPlayer) {
       const player = gameScene.getPlayer();
       if (player) {
-        this.levelText.setText(`Lv.${player.getLevel()}`);
-        this.updateExpBar(player.getExp(), player.getExpToNext());
+        const lv = player.getLevel();
+        if (lv >= GameConfig.LEVEL.maxLevel) {
+          // 满级：经验条转金色超限强化条
+          const oc = player.getOverflowCount?.() ?? 0;
+          this.levelText.setText(oc > 0 ? `MAX ♾${oc}` : 'MAX');
+          this.updateExpBar(player.getExp(), player.getOverflowThreshold ?? player.getExpToNext(), true);
+        } else {
+          this.levelText.setText(`Lv.${lv}`);
+          this.updateExpBar(player.getExp(), player.getExpToNext(), false);
+        }
       }
     }
   }
@@ -631,10 +639,10 @@ export class HUD {
     this.healthText.setText(`${Math.ceil(current)}/${max}`);
   }
 
-  private updateExpBar(current: number, max: number): void {
+  private updateExpBar(current: number, max: number, overflow = false): void {
     const percent = Math.max(0, Math.min(1, current / max));
     this.expBar.clear();
-    this.expBar.fillStyle(0x4488ff, 1);
+    this.expBar.fillStyle(overflow ? 0xffcc44 : 0x4488ff, 1);
     this.expBar.fillRoundedRect(this.barLeftX + 3, this.expBarY + 2, (this.barWidth - 6) * percent, 4, 2);
   }
 

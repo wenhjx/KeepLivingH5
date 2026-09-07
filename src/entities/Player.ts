@@ -96,6 +96,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       pickupRadius: GameConfig.PLAYER.pickupRadius + ach.getBonus('pickupRadius'),
       luck: ach.getBonus('luck'),
       coins: 30,
+      overflowCount: 0,
     };
 
     scene.add.existing(this);
@@ -520,6 +521,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     const actualDamage = Math.max(1, amount - this.stats.defense);
     this.stats.health -= actualDamage;
+    // 立即 clamp 到 0：否则广播 player:damage 时 HUD 同步刷新会读到"大负数"
+    // （后期 Boss 单次伤害可达数十万，695 血会瞬间被扣成 -999999305 级并显示在血条上）
+    if (this.stats.health < 0) this.stats.health = 0;
     // 成就：本局受击标记（无伤通关判定，run:start 时由 AchievementManager 重置）
     EventBus.emit('player:hit');
     this.invincible = true;
@@ -557,6 +561,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   damageFromHazard(amount: number): void {
     if (this.stats.health <= 0) return;
     this.stats.health -= amount;
+    if (this.stats.health < 0) this.stats.health = 0;
     EventBus.emit('player:damage', amount);
     if (this.stats.health <= 0) {
       this.stats.health = 0;
@@ -713,6 +718,74 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.stats.exp -= this.stats.expToNext;
       this.levelUp();
     }
+
+    // 满级后：经验转"超限强化条"——需求固定（= 满级 expToNext），每满一管自动轮换一轮属性收益，
+    // 不弹窗不打断战斗（需求固定避免 15% 递增导致后期突破卡死）
+    if (this.stats.level >= GameConfig.LEVEL.maxLevel) {
+      const threshold = this.overflowThreshold;
+      while (this.stats.exp >= threshold) {
+        this.stats.exp -= threshold;
+        this.applyOverflow();
+      }
+    }
+  }
+
+  /** 超限强化需求（固定 = 满级 expToNext，约 6324） */
+  get overflowThreshold(): number {
+    return this.calcExpToNext(GameConfig.LEVEL.maxLevel);
+  }
+
+  /**
+   * 应用一轮超限强化（自动轮换，共 4 项循环）：
+   * 攻击 ×1.03 → 暴击率 +1% → 爆伤 +3% → 生命 ×1.05
+   */
+  private applyOverflow(): void {
+    const idx = this.stats.overflowCount % 4;
+    switch (idx) {
+      case 0:
+        this.stats.attackPower *= 1.03;
+        break;
+      case 1:
+        this.stats.critRate += 0.01; // 小数单位（0.05 = 5%）
+        break;
+      case 2:
+        this.stats.critDamage += 0.03; // 倍率单位（1.5 = 150%）
+        break;
+      case 3: {
+        const oldMax = this.stats.maxHealth;
+        this.stats.maxHealth = Math.floor(this.stats.maxHealth * 1.05);
+        // 保持当前血量比例（不回满，避免超限 = 免费回血）
+        this.stats.health = Math.min(this.stats.maxHealth, this.stats.health + (this.stats.maxHealth - oldMax));
+        break;
+      }
+    }
+    this.stats.overflowCount++;
+    EventBus.emit('player:overflow', this.stats.overflowCount);
+    AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_LEVEL_UP, 0.6);
+  }
+
+  /** 调试：直接跳到指定等级（补足升级属性，不触发 player:levelup → 不弹三选一） */
+  forceLevel(target: number): void {
+    const max = GameConfig.LEVEL.maxLevel;
+    const t = Math.max(this.stats.level, Math.min(target, max));
+    const diff = t - this.stats.level;
+    if (diff <= 0) return;
+    this.stats.maxHealth += 5 * diff;
+    this.stats.health = this.stats.maxHealth;
+    this.stats.attackPower += 2 * diff;
+    this.stats.level = t;
+    this.stats.exp = 0;
+    this.stats.expToNext = this.calcExpToNext(t);
+  }
+
+  /** 调试：直接获得 n 管超限强化（模拟攒满 n 管经验） */
+  addOverflow(count: number): void {
+    for (let i = 0; i < count; i++) this.applyOverflow();
+  }
+
+  /** 超限强化累计次数 */
+  getOverflowCount(): number {
+    return this.stats.overflowCount;
   }
 
   private levelUp(): void {

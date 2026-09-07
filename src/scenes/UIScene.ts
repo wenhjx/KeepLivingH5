@@ -215,6 +215,10 @@ export class UIScene extends Phaser.Scene {
       this.hud.updateLevel();
     }));
 
+    sub(EventBus.on('player:overflow', () => {
+      this.hud.updateLevel();
+    }));
+
     // 场景关闭时清理所有 EventBus 监听器 + 销毁物品栏（其内部监听/Text 一并释放）
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.eventUnsubscribers.forEach((unsub) => unsub());

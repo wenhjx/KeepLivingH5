@@ -28,6 +28,10 @@ export interface DebugAPI {
   giveItem: (id: string, count?: number) => void;
   /** 玩家升 n 级 */
   addLevel: (n?: number) => void;
+  /** 调试：直接跳到指定等级（补属性但不弹升级三选一） */
+  setLevel: (level: number) => string;
+  /** 调试：直接获得 n 管超限强化（满级后经验机制，跳过攒经验） */
+  addOverflow: (n?: number) => string;
   /** 杀死所有敌人 */
   killAll: () => void;
   /** 获取玩家引用 */
@@ -142,6 +146,20 @@ export function initDebugAPI(game: Phaser.Game): void {
       for (let i = 0; i < n; i++) {
         player.addExp(player.stats.expToNext);
       }
+    },
+
+    setLevel: (level: number) => {
+      const player = getPlayer();
+      if (!player) return 'no player';
+      player.forceLevel?.(level);
+      return `level -> ${player.getLevel()} / ${player.getMaxHealth()}hp`;
+    },
+
+    addOverflow: (n = 1) => {
+      const player = getPlayer();
+      if (!player) return 'no player';
+      player.addOverflow?.(n);
+      return `overflow +${n} => ${player.getOverflowCount?.() ?? '?'}`;
     },
 
     killAll: () => {

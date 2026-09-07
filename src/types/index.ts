@@ -32,6 +32,8 @@ export interface PlayerStats extends EntityStats {
   pickupRadius: number;
   luck: number;
   coins: number;
+  /** 超限强化次数（满级后每攒满一管固定经验自动轮换一轮属性收益） */
+  overflowCount: number;
 }
 
 export type EnemyType = 'normal' | 'fast' | 'tank' | 'ranged' | 'elite' | 'boss' | 'suicider' | 'splitter' | 'shielded' | 'summoner' | 'charger' | 'healer' | 'boss_summoner' | 'boss_barrage';
