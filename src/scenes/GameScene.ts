@@ -20,6 +20,7 @@ import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { GameFeedback } from '../systems/GameFeedback';
 import { EventBus } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
+import { createUIText } from '../utils/UIText';
 import type { EnemyConfig, PickupConfig } from '../types';
 
 /**
@@ -43,6 +44,7 @@ export class GameScene extends Phaser.Scene {
   private fxManager!: FXManager;
   private gameFeedback!: GameFeedback;
   private activeBoss: Enemy | null = null;
+  private bossEntranceBanner: Phaser.GameObjects.Text | null = null; // Boss 入场横幅
   private pendingLevelUps = 0;
   private upgradeQueued = false;
   // 调试：怪物增强倍率（血量/攻击），作用于新生成敌人，方便测试阈值
@@ -616,7 +618,10 @@ export class GameScene extends Phaser.Scene {
 
     // Boss 唯一引用（供 HUD 顶部大血条使用）
     sub(EventBus.on('enemy:spawn', (enemy: Enemy) => {
-      if (enemy?.isBoss?.()) this.activeBoss = enemy;
+      if (enemy?.isBoss?.()) {
+        this.activeBoss = enemy;
+        this.playBossEntrance(enemy);
+      }
     }));
     sub(EventBus.on('enemy:death', (config: EnemyConfig) => {
       // 关卡规则：嗜血（击杀回血）
@@ -1005,6 +1010,44 @@ export class GameScene extends Phaser.Scene {
   /** 事件飘字（宝箱/商店等文本提示），支持自定义颜色 */
   spawnEventText(x: number, y: number, text: string, color: string = '#ffffff'): void {
     this.damageTextManager?.showText(x, y, text, color);
+  }
+
+  /**
+   * Boss 入场演出：屏幕震动 + 顶部横幅提示（纯表现，不打断战斗）
+   */
+  private playBossEntrance(boss: Enemy): void {
+    this.cameras.main.shake(300, 0.008);
+    // 清理上一个横幅（多 Boss 同帧出现时只保留最新）
+    this.bossEntranceBanner?.destroy();
+    const cam = this.cameras.main;
+    const cfg = (boss as any).config as EnemyConfig | undefined;
+    const name = cfg?.name ?? 'BOSS';
+    const banner = createUIText(this, cam.width / 2, cam.height * 0.16, `⚠ ${name} 来袭`, {
+      fontSize: '30px',
+      color: '#ff5555',
+      fontStyle: 'bold',
+      backgroundColor: 'rgba(10,0,0,0.6)',
+      padding: { left: 28, right: 28, top: 10, bottom: 10 },
+    })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(300)
+      .setAlpha(0);
+    this.bossEntranceBanner = banner;
+    this.tweens.add({
+      targets: banner,
+      alpha: 1,
+      duration: 250,
+      onComplete: () => {
+        this.tweens.add({
+          targets: banner,
+          alpha: 0,
+          duration: 600,
+          delay: 1500,
+          onComplete: () => banner.destroy(),
+        });
+      },
+    });
   }
 
   /** 当前唯一的 Boss（无则 null，供 HUD 顶部血条使用） */
