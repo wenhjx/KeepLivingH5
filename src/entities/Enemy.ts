@@ -34,6 +34,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private burnTimer = 0;
   private burnDamage = 0;
   private burnTick = 0;
+  /** 头顶状态图标（灼烧🔥/冰冻❄️ 等持续状态）：跟随敌人，到期淡出销毁 */
+  private statusIcons: { icon: Phaser.GameObjects.Text; until: number }[] = [];
   /** 头顶小血条（受伤时短暂显示，平时隐藏） */
   private hpBarBg!: Phaser.GameObjects.Graphics;
   private hpBar!: Phaser.GameObjects.Graphics;
@@ -89,6 +91,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.freezeTimer = 0;
     this.burnTimer = 0;
     this.burnDamage = 0;
+    this.clearStatusIcons();
     this.avoidSide = Math.random() > 0.5 ? 1 : -1;
 
     // 头顶小血条（Boss 用顶部大血条，不显示小血条）
@@ -190,6 +193,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.freezeTimer = 0;
     this.burnTimer = 0;
     this.burnDamage = 0;
+    this.clearStatusIcons();
     this.affix = '';
     this.bossTypeColor = 0xff2222;
     if (this.bossAuraRing) {
@@ -234,14 +238,40 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.isDead) return;
     this.freezeTimer = Math.max(this.freezeTimer, duration);
     this.setTint(0x88ddff);
+    this.setStatusIcon('❄️', duration);
   }
 
-  /** 灼烧（灼烧被动）：持续火焰伤害 */
+  /** 灼烧（灼烧被动）：持续火焰伤害，命中首跳即时结算（小怪也有即时反馈） */
   applyBurn(damage: number, duration: number): void {
     if (this.isDead) return;
     this.burnDamage = Math.max(this.burnDamage, damage);
     this.burnTimer = Math.max(this.burnTimer, duration);
-    this.burnTick = 0;
+    this.burnTick = 500;
+    this.setStatusIcon('🔥', duration);
+    this.takeDamage(this.burnDamage, false);
+    (this.scene as any).getFXManager?.()?.burn?.(this.x, this.y - 10);
+  }
+
+  /** 设置/延长头顶状态图标（持续状态专用：灼烧🔥/冰冻❄️，即时触发类效果不用图标） */
+  private setStatusIcon(emoji: string, duration: number): void {
+    if (this.isDead) return;
+    const existing = this.statusIcons.find(s => s.icon.text === emoji);
+    if (existing) {
+      existing.until = Math.max(existing.until, this.scene.time.now + duration);
+      return;
+    }
+    const text = this.scene.add.text(this.x, this.y - (this.config?.size || 32) / 2 - 30, emoji, {
+      fontSize: '14px',
+      stroke: '#000000',
+      strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(10);
+    this.statusIcons.push({ icon: text, until: this.scene.time.now + duration });
+  }
+
+  /** 清空状态图标（对象池回收 / 敌人销毁时调用） */
+  private clearStatusIcons(): void {
+    for (const s of this.statusIcons) s.icon.destroy();
+    this.statusIcons = [];
   }
 
   /**
@@ -265,10 +295,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       (this.scene as any).getFXManager?.()?.frost?.(this.x, this.y);
     }
 
-    // 灼烧：概率施加 DOT
+    // 灼烧：概率施加 DOT（命中首跳即时结算，小怪也有反馈）
     const brn = getLv('passive_burn');
-    if (brn > 0 && Math.random() < 0.1 * brn) {
-      this.applyBurn(Math.max(1, amount * 0.1 * brn), 3000);
+    if (brn > 0 && Math.random() < 0.15 * brn) {
+      this.applyBurn(Math.max(1, amount * 0.15 * brn), 3000);
     }
 
     // 闪电链：概率连锁伤害附近敌人（不递归触发其他被动）
@@ -280,7 +310,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 弹射：伤害弹射到附近敌人（不递归触发其他被动）
     const bnc = getLv('passive_bounce');
     if (bnc > 0) {
-      this.bounceHit(player, amount * 0.5, bnc, sourceX, sourceY);
+      this.bounceHit(player, amount * 0.7, bnc, sourceX, sourceY);
     }
   }
 
@@ -289,7 +319,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const scene = this.scene as any;
     let source: any = this;
     for (let i = 0; i < jumps; i++) {
-      const target = this.findNearbyEnemy(source, 160);
+      const target = this.findNearbyEnemy(source, 200);
       if (!target) break;
       target.takeDamage(damage, false);
       scene?.getFXManager?.()?.bounce?.(source.x, source.y, target.x, target.y);
@@ -376,6 +406,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 词缀图标跟随敌人
     if (this.affixText && this.affixText.visible) {
       this.affixText.setPosition(this.x, this.y - (this.config?.size || 32) / 2 - 22);
+    }
+
+    // 头顶状态图标跟随与到期清理（灼烧🔥/冰冻❄️）
+    for (let i = this.statusIcons.length - 1; i >= 0; i--) {
+      const s = this.statusIcons[i];
+      s.icon.setPosition(this.x, this.y - (this.config?.size || 32) / 2 - 30);
+      if (this.scene.time.now >= s.until) {
+        this.scene.tweens.add({ targets: s.icon, alpha: 0, duration: 200, onComplete: () => s.icon.destroy() });
+        this.statusIcons.splice(i, 1);
+      }
     }
 
     // Boss 光环跟随敌人

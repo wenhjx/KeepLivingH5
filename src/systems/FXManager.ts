@@ -169,13 +169,13 @@ export class FXManager {
     this.scene.time.delayedCall(duration, () => g.destroy());
   }
 
-  /** 灼烧火焰（灼烧 DOT 持续伤害）：橙红小火苗上飘 */
+  /** 灼烧火焰（灼烧 DOT 持续伤害）：橙红火苗上飘（更旺，首跳与每跳都有反馈） */
   burn(x: number, y: number): void {
-    this.emit(x, y, 'particle_hit', 0xff6600, 5, {
-      lifespan: 350,
-      speedMin: 20,
-      speedMax: 70,
-      scaleStart: 0.6,
+    this.emit(x, y, 'particle_hit', 0xff7722, 8, {
+      lifespan: 450,
+      speedMin: 25,
+      speedMax: 90,
+      scaleStart: 0.8,
       gravityY: -40,
     });
   }
@@ -190,26 +190,38 @@ export class FXManager {
     });
   }
 
-  /** 弹射轨迹（淡蓝连线） */
+  /** 弹射轨迹（亮蓝连线 + 目标受击火花）：链式收割看得见 */
   bounce(x1: number, y1: number, x2: number, y2: number): void {
-    this.ray(x1, y1, x2, y2, 0x88ccff);
+    this.ray(x1, y1, x2, y2, 0x66ccff, 4, 220);
+    this.emit(x2, y2, 'particle_hit', 0x88ccff, 5, {
+      lifespan: 250,
+      speedMin: 40,
+      speedMax: 110,
+      scaleStart: 0.5,
+    });
   }
 
-  /** 闪电链（金黄折线） */
+  /** 闪电链（金黄折线 + 目标电花） */
   chainLightning(x1: number, y1: number, x2: number, y2: number): void {
-    this.ray(x1, y1, x2, y2, 0xffee55);
+    this.ray(x1, y1, x2, y2, 0xffee55, 4, 200);
+    this.emit(x2, y2, 'particle_hit', 0xfff176, 6, {
+      lifespan: 220,
+      speedMin: 50,
+      speedMax: 130,
+      scaleStart: 0.6,
+    });
   }
 
-  /** 一次性连线：淡出销毁（弹射/闪电链轨迹） */
-  private ray(x1: number, y1: number, x2: number, y2: number, color: number): void {
+  /** 一次性连线：加粗淡出销毁（弹射/闪电链轨迹） */
+  private ray(x1: number, y1: number, x2: number, y2: number, color: number, width: number = 2, duration: number = 160): void {
     const g = this.scene.add.graphics();
-    g.lineStyle(2, color, 0.9);
+    g.lineStyle(width, color, 0.9);
     g.lineBetween(x1, y1, x2, y2);
     g.setDepth(50);
     this.scene.tweens.add({
       targets: g,
       alpha: 0,
-      duration: 160,
+      duration,
       onComplete: () => g.destroy(),
     });
   }
