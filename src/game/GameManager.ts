@@ -117,7 +117,8 @@ export class GameManager {
   }
 
   /** 开始新对局（可选指定起始关卡，默认第 1 关；直进选关时 level>0 且已 setQuickStart） */
-  startNewRun(level = 0): void {
+  startNewRun(level = 0, testMode = false): void {
+    this._testMode = testMode;
     this._runData = {
       wave: 1,
       level,
@@ -139,8 +140,7 @@ export class GameManager {
    * 仅收益侧全部短路——不写存档、不累计全局统计、不触发成就、不解锁关卡。
    */
   startTestRun(level = 0): void {
-    this._testMode = true;
-    this.startNewRun(level);
+    this.startNewRun(level, true);
   }
 
   /** 试玩场地开关（供 GameScene/AchievementManager/DebugAPI 判断收益短路） */
