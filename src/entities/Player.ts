@@ -146,9 +146,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.rageTimer -= delta;
       if (this.rageTimer <= 0) {
         this.rageActive = false;
-        // 恢复基础攻速/攻击力（与增益时乘的系数相反）
-        this.stats.attackSpeed /= 1.5;
-        this.stats.attackPower /= 1.5;
         this.rageRing?.destroy();
         this.rageRing = null;
       } else if (this.rageRing) {
@@ -222,7 +219,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       weapon.cooldown -= delta;
       if (weapon.cooldown <= 0) {
         this.fireWeapon(weapon.config, weapon.level);
-        weapon.cooldown = 1000 / (weapon.config.attackSpeed * this.stats.attackSpeed);
+        weapon.cooldown = 1000 / (weapon.config.attackSpeed * this.getStats().attackSpeed);
       }
     });
   }
@@ -233,7 +230,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
    * 杜绝 0/NaN 伤害（会导致怪物 health 被 NaN 污染而永久无敌）
    */
   private calcWeaponDamage(config: WeaponConfig, level: number): number {
-    const atk = Number(this.stats.attackPower);
+    const atk = Number(this.getStats().attackPower);
     const attackPower = isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
     const raw = config.damage * (1 + level * 0.2) * attackPower / 10;
     return isFinite(raw) && raw > 0 ? raw : config.damage;
@@ -711,8 +708,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   /** 狂暴药水：短时间攻速/攻击力 +50% + 红色光晕视觉 */
   applyRage(duration: number): void {
-    this.stats.attackSpeed *= 1.5;
-    this.stats.attackPower *= 1.5;
+    // 不直接修改 stats：狂暴加成在 getStats()/武器读数聚合，重复使用仅刷新时长不叠加
     this.rageActive = true;
     this.rageTimer = duration;
     if (this.rageRing) this.rageRing.destroy();
@@ -1098,7 +1094,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // ========== Getters ==========
 
   getStats(): PlayerStats {
-    return { ...this.stats };
+    const s = { ...this.stats };
+    // 狂暴激活期间临时加成（不落盘、不污染 stats，重复使用仅刷新时长）
+    if (this.rageActive) {
+      s.attackPower *= 1.5;
+      s.attackSpeed *= 1.5;
+    }
+    return s;
   }
 
   getHealth(): number {
