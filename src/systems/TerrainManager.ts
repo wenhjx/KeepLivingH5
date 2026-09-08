@@ -25,8 +25,8 @@ export class TerrainManager {
   private slowZoneList: SlowZoneConfig[] = [];
   private slowZoneLayer!: Phaser.GameObjects.Graphics;
 
-  /** 可破坏物被击碎后的默认恢复时间（ms） */
-  private static readonly DEFAULT_RESPAWN_MS = 20000;
+  /** 可破坏物被击碎后的默认恢复随机区间 [min, max]（ms）：20~40 秒，防蹲守且保留偶遇感 */
+  private static readonly DEFAULT_RESPAWN_RANGE: [number, number] = [20000, 40000];
   /** 待恢复的可破坏物定时任务（切图时统一清理，防止旧关木箱复活到新地图） */
   private pendingRespawns: Phaser.Time.TimerEvent[] = [];
 
@@ -137,9 +137,10 @@ export class TerrainManager {
     return true;
   }
 
-  /** 调度可破坏物恢复：延迟 respawnMs 后重建（含恢复动画） */
+  /** 调度可破坏物恢复：在配置的随机区间内取一次延迟，到点重建（防止玩家掐表蹲守） */
   private scheduleRespawn(obs: ObstacleConfig): void {
-    const delay = obs.respawnMs ?? TerrainManager.DEFAULT_RESPAWN_MS;
+    const [min, max] = obs.respawnRange ?? TerrainManager.DEFAULT_RESPAWN_RANGE;
+    const delay = min + Math.random() * (max - min);
     const timer = this.scene.time.delayedCall(delay, () => this.respawnObstacle(obs));
     this.pendingRespawns.push(timer);
   }

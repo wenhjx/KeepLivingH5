@@ -20,8 +20,11 @@ export interface ObstacleConfig {
   destructible?: boolean;
   /** 可破坏物的血量 */
   health?: number;
-  /** 可破坏物被击碎后恢复所需时间（ms，默认 20000 = 20 秒） */
-  respawnMs?: number;
+  /**
+   * 可破坏物被击碎后的恢复时间随机区间 [min, max] ms（默认 [20000, 40000]）。
+   * 随机化防止玩家掐表蹲守刷新，同时保证"时不时路过还能遇到"。
+   */
+  respawnRange?: [number, number];
   /** 覆盖默认颜色 */
   color?: number;
 }
