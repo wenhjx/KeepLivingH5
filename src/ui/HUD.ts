@@ -167,43 +167,46 @@ export class HUD {
       })
       .setOrigin(1, 0.5);
 
-    // ========== 右上角：波次、击杀、分数（暂停按钮下方，避免重叠） ==========
-    const rightX = width - this.padding;
-    const infoTop = topY + 44;
+    // ========== 左侧（小地图下方）：波次、击杀、分数、金币、Boss 预告 ==========
+    // 玩家需时常确认的信息统一放在小地图下方；右上角让位给暂停按钮与提示卡片（GuideCard），避免遮挡
+    const infoLeft = this.padding;
+    // 小地图位于 (10, 10, 160, 120)，底部 y = 130；信息区从地图下方开始排布
+    const minimapBottomY = 10 + 120;
+    const infoTop = minimapBottomY + 10;
 
-    this.waveText = createUIText(this.scene, rightX, infoTop, '波次: 1', {
+    this.waveText = createUIText(this.scene, infoLeft, infoTop, '波次: 1', {
         fontSize: '16px',
         color: '#ff6b35',
         fontStyle: 'bold',
       })
-      .setOrigin(1, 0);
+      .setOrigin(0, 0);
 
-    this.killsText = createUIText(this.scene, rightX, infoTop + 24, '击杀: 0', {
+    this.killsText = createUIText(this.scene, infoLeft, infoTop + 24, '击杀: 0', {
         fontSize: '14px',
         color: '#cccccc',
       })
-      .setOrigin(1, 0);
+      .setOrigin(0, 0);
 
-    this.scoreText = createUIText(this.scene, rightX, infoTop + 46, '分数: 0', {
+    this.scoreText = createUIText(this.scene, infoLeft, infoTop + 46, '分数: 0', {
         fontSize: '14px',
         color: '#ffb347',
       })
-      .setOrigin(1, 0);
+      .setOrigin(0, 0);
 
     // 金币
-    this.coinText = createUIText(this.scene, rightX, infoTop + 68, '💰 0', {
+    this.coinText = createUIText(this.scene, infoLeft, infoTop + 68, '💰 0', {
         fontSize: '14px',
         color: '#ffcc00',
         fontStyle: 'bold',
       })
-      .setOrigin(1, 0);
+      .setOrigin(0, 0);
 
     // 波次预告：距下个 Boss 波还有几波（给玩家战前节奏预期）
-    this.bossWarnText = createUIText(this.scene, rightX, infoTop + 88, '', {
+    this.bossWarnText = createUIText(this.scene, infoLeft, infoTop + 88, '', {
         fontSize: '13px',
         color: '#ff6b6b',
       })
-      .setOrigin(1, 0);
+      .setOrigin(0, 0);
 
     // ========== 顶部中间：存活时间 ==========
     this.timeText = createUIText(this.scene, width / 2, topY, '00:00', {
