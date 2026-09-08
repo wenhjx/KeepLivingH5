@@ -578,6 +578,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  /** 原地复活：满血 + 短暂无敌 + 恢复活动/可见（训练场与复活币共用核心逻辑） */
+  resurrect(invincibleMs = 2000): void {
+    this.stats.health = this.stats.maxHealth;
+    this.invincible = true;
+    this.invincibleTimer = invincibleMs;
+    this.setActive(true);
+    this.setVisible(true);
+    this.setAlpha(1);
+  }
+
   private die(): void {
     // 复活币：死亡时原地复活一次（满血 + 短暂无敌 + 清空周围敌人）
     if (this.reviveTokens > 0) {

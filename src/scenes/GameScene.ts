@@ -833,13 +833,7 @@ export class GameScene extends Phaser.Scene {
   private reviveInTraining(): void {
     this.victoryTriggered = false;
     const p = this.player;
-    if (p.getStats) {
-      const st = p.getStats();
-      st.health = st.maxHealth;
-    }
-    p.grantInvincible(1500, true);
-    p.setVisible(true);
-    p.setAlpha(1);
+    p.resurrect(1500); // die() 后 setActive(false)，resurrect 一并恢复血量/活动/可见
     p.setScale(1);
     p.setPosition(this.mapWidth / 2, this.mapHeight / 2);
     const px = p.x;

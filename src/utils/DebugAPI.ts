@@ -104,19 +104,14 @@ export function initDebugAPI(game: Phaser.Game): void {
   const getGameScene = () => getScene('GameScene');
   const getPlayer = () => getGameScene()?.getPlayer?.();
 
-  /** 稳定测试态：无敌 + 巨大血量 + 不升级 + 关闭覆盖面板（试玩场地默认启用，专注测特效/伤害） */
+  /** 试玩稳定态：仅锁升级 + 关闭覆盖面板。不掉血无敌——测试场地需正常受击（测新敌人/受击反馈），死亡走原地重召唤 */
   const applyStable = (): void => {
     const player = getPlayer();
     if (player) {
       if (player.stats) {
-        player.stats.maxHealth = 1e9;
-        player.stats.health = 1e9;
         player.stats.exp = 0;
         player.stats.expToNext = 1e9;
       }
-      player.invincible = true;
-      player.invincibleTimer = 1e9;
-      player.stableMode = true;
     }
     const gs = getGameScene();
     if (gs) gs.pendingLevelUps = 0;
@@ -152,7 +147,7 @@ export function initDebugAPI(game: Phaser.Game): void {
       sc.stop('MainMenuScene'); // 主菜单入口进入时关闭主菜单，避免场景叠层
       sc.start('GameScene');
       sc.launch('UIScene');
-      // 试玩默认稳定态：无敌+锁升级（专注测试特效/伤害，不被怪打死、升级弹窗不干扰）
+      // 试玩默认稳定态：锁升级+关面板（不无敌——正常掉血，被打死自动原地重召唤，可测受击）
       setTimeout(applyStable, 600);
     },
 
@@ -277,7 +272,7 @@ export function initDebugAPI(game: Phaser.Game): void {
 
     testStable: () => {
       applyStable();
-      console.log('[debug] 稳定测试态已启用（无敌+不升级+关面板）');
+      console.log('[debug] 试玩稳定态已启用（锁升级+关面板，不无敌）');
       return 'testStable active';
     },
 
