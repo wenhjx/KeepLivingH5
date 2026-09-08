@@ -25,6 +25,11 @@ export class TerrainManager {
   private slowZoneList: SlowZoneConfig[] = [];
   private slowZoneLayer!: Phaser.GameObjects.Graphics;
 
+  /** 可破坏物被击碎后的默认恢复时间（ms） */
+  private static readonly DEFAULT_RESPAWN_MS = 20000;
+  /** 待恢复的可破坏物定时任务（切图时统一清理，防止旧关木箱复活到新地图） */
+  private pendingRespawns: Phaser.Time.TimerEvent[] = [];
+
   constructor(scene: Phaser.Scene, config: TerrainConfig) {
     this.scene = scene;
     this.config = config;
@@ -44,29 +49,34 @@ export class TerrainManager {
     this.createSlowZones();
 
     for (const obs of this.config.obstacles) {
-      const textureKey = GameConfig.themeKey(TerrainManager.TEXTURE_MAP[obs.type] || 'obstacle_rock');
-      const img = this.scene.add
-        .image(obs.x, obs.y, textureKey)
-        .setDisplaySize(obs.width, obs.height)
-        .setDepth(1);
-
-      // 可破坏物标记（木箱）
-      if (obs.destructible) {
-        img.setData('destructible', true);
-        img.setData('health', obs.health ?? 30);
-        img.setData('obstacleId', obs.id);
-      }
-
-      // 加入静态物理组
-      this.obstacleGroup.add(img);
-      const body = img.body as Phaser.Physics.Arcade.StaticBody | null;
-      if (body) {
-        body.setSize(obs.width, obs.height);
-        body.updateFromGameObject();
-      }
-
-      this.obstacleList.push(obs);
+      this.spawnObstacle(obs);
     }
+  }
+
+  /** 创建单个障碍物（初始创建与击碎后恢复共用） */
+  private spawnObstacle(obs: ObstacleConfig): void {
+    const textureKey = GameConfig.themeKey(TerrainManager.TEXTURE_MAP[obs.type] || 'obstacle_rock');
+    const img = this.scene.add
+      .image(obs.x, obs.y, textureKey)
+      .setDisplaySize(obs.width, obs.height)
+      .setDepth(1);
+
+    // 可破坏物标记（木箱）
+    if (obs.destructible) {
+      img.setData('destructible', true);
+      img.setData('health', obs.health ?? 30);
+      img.setData('obstacleId', obs.id);
+    }
+
+    // 加入静态物理组
+    this.obstacleGroup.add(img);
+    const body = img.body as Phaser.Physics.Arcade.StaticBody | null;
+    if (body) {
+      body.setSize(obs.width, obs.height);
+      body.updateFromGameObject();
+    }
+
+    this.obstacleList.push(obs);
   }
 
   /** 创建减速区：半透明色块视觉 + 数据存储（不参与物理，逻辑在 GameScene 每帧查询） */
@@ -120,12 +130,33 @@ export class TerrainManager {
     this.obstacleGroup.remove(img, true, true);
     if (id) {
       this.obstacleList = this.obstacleList.filter((o) => o.id !== id);
+      // 可破坏物击碎后定时恢复（恢复前可从小地图确认已破坏）
+      const obs = this.config.obstacles.find((o) => o.id === id);
+      if (obs) this.scheduleRespawn(obs);
     }
     return true;
   }
 
+  /** 调度可破坏物恢复：延迟 respawnMs 后重建（含恢复动画） */
+  private scheduleRespawn(obs: ObstacleConfig): void {
+    const delay = obs.respawnMs ?? TerrainManager.DEFAULT_RESPAWN_MS;
+    const timer = this.scene.time.delayedCall(delay, () => this.respawnObstacle(obs));
+    this.pendingRespawns.push(timer);
+  }
+
+  /** 恢复被击碎的可破坏物：防重（已存在=已恢复或地图已切换）→ 重建物理与列表 */
+  private respawnObstacle(obs: ObstacleConfig): void {
+    this.pendingRespawns = this.pendingRespawns.filter((t) => !t.hasDispatched);
+    // 该 id 已重新出现在列表中：说明已恢复过，或 setTerrain 换图后旧配置不再适用 → 跳过
+    if (this.obstacleList.some((o) => o.id === obs.id)) return;
+    this.spawnObstacle(obs);
+  }
+
   /** 切换地形（以后新增区域时调用，会销毁旧障碍物并创建新的） */
   setTerrain(config: TerrainConfig): void {
+    // 取消所有待恢复任务（防止旧关木箱复活到新地图）
+    for (const t of this.pendingRespawns) t.remove(false);
+    this.pendingRespawns = [];
     // 销毁旧障碍物 + 减速区
     this.obstacleGroup?.clear(true, true);
     this.slowZoneLayer?.destroy();

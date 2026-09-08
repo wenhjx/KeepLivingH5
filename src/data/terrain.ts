@@ -20,6 +20,8 @@ export interface ObstacleConfig {
   destructible?: boolean;
   /** 可破坏物的血量 */
   health?: number;
+  /** 可破坏物被击碎后恢复所需时间（ms，默认 20000 = 20 秒） */
+  respawnMs?: number;
   /** 覆盖默认颜色 */
   color?: number;
 }
