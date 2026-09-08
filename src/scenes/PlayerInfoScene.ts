@@ -93,15 +93,21 @@ export class PlayerInfoScene extends Phaser.Scene {
     const pick = s.pickupRadius ?? 60;
     const coins = player.getCoins?.() ?? 0;
 
-    // 暴击溢出信息（1:2 转爆伤）
+    // 暴击溢出：直接封顶 100%（不附说明文字），多出部分按 1:2 转暴击伤害
     const critOverflow = Math.max(0, crit - 1);
-    const critDisplay = crit >= 1
-      ? `${(crit * 100).toFixed(0)}% (溢出 ${(critOverflow * 100).toFixed(0)}% → 爆伤+${(critOverflow * 200).toFixed(0)}%)`
-      : `${(crit * 100).toFixed(0)}%`;
-    const critDmgDisplay = `${((critDmg + critOverflow * 2) * 100).toFixed(0)}%`;
+    const critDisplay = crit >= 1 ? '100%' : `${(crit * 100).toFixed(0)}%`;
+    // 暴击伤害：基础部分白字，溢出转化部分暗金色标注
+    const critDmgBase = `${(critDmg * 100).toFixed(0)}%`;
+    const critDmgDisplay: string | Array<{ text: string; color: string }> =
+      critOverflow > 0
+        ? [
+            { text: critDmgBase, color: '#ffffff' },
+            { text: `+${(critOverflow * 200).toFixed(0)}%`, color: '#c9a227' },
+          ]
+        : critDmgBase;
 
     // 属性列表（左列：战斗；右列：生存）
-    const leftProps: Array<[string, string]> = [
+    const leftProps: Array<[string, string | Array<{ text: string; color: string }>]> = [
       ['⚔️ 攻击力', atk.toFixed(1)],
       ['⚡ 攻速', `${spd.toFixed(2)}/s`],
       ['🎯 暴击率', critDisplay],
@@ -121,17 +127,31 @@ export class PlayerInfoScene extends Phaser.Scene {
     const startY = cy - panelH / 2 + 85;
     const rowGap = 36;
 
-    const drawCol = (props: Array<[string, string]>, x: number) => {
+    const drawCol = (props: Array<[string, string | Array<{ text: string; color: string }>]>, x: number) => {
       props.forEach(([label, value], i) => {
         createUIText(this, x, startY + i * rowGap, label, {
           fontSize: '16px',
           color: '#bbbbbb',
         }).setOrigin(0, 0);
-        createUIText(this, x + 150, startY + i * rowGap, value, {
-          fontSize: '16px',
-          color: '#ffffff',
-          fontStyle: 'bold',
-        }).setOrigin(0, 0);
+        const vy = startY + i * rowGap;
+        if (Array.isArray(value)) {
+          // 富文本分段：逐段渲染并横向衔接（如暴击伤害 基础白字 + 溢出暗金）
+          let vx = x + 150;
+          for (const seg of value) {
+            const t = createUIText(this, vx, vy, seg.text, {
+              fontSize: '16px',
+              color: seg.color,
+              fontStyle: 'bold',
+            }).setOrigin(0, 0);
+            vx += t.width + 6;
+          }
+        } else {
+          createUIText(this, x + 150, vy, value, {
+            fontSize: '16px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+          }).setOrigin(0, 0);
+        }
       });
     };
     drawCol(leftProps, colX);
