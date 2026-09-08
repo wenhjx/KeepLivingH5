@@ -5,17 +5,33 @@ import { USABLE_ITEMS } from '../data/items';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { applyUpgradeToPlayer } from './UpgradeApplier';
 import { GuideManager } from '../systems/GuideManager';
+import { ENEMY_CONFIGS } from '../data/enemies';
+import type { EnemyConfig } from '../types';
 
 /**
  * 全局调试 API（仅开发环境使用，挂在 window.__debug 上）
  * 方便浏览器控制台 / 自动化测试直接调用游戏内部方法，
  * 避免通过坐标点击 Canvas 按钮（分辨率缩放导致坐标转换困难）。
  */
+/** 试玩场地自定义刷怪参数（全部可选） */
+export interface TestSpawnOptions {
+  /** 血量倍率（默认 1） */
+  hpMult?: number;
+  /** 攻击倍率（默认 1） */
+  atkMult?: number;
+  /** 速度倍率（默认 1） */
+  speedMult?: number;
+  /** 环绕玩家生成半径 px（默认 200） */
+  radius?: number;
+}
+
 export interface DebugAPI {
   /** 开始新游戏 */
   startGame: () => void;
-  /** 进入试玩场地（复用主场景全部战斗逻辑，不存档/不计统计/不触发成就） */
+  /** 进入试玩场地（复用主场景全部战斗逻辑，不存档/不计统计/不触发成就；默认稳定态：无敌+锁升级） */
   enterTestField: () => void;
+  /** 试玩场地自定义刷怪：按敌人配置类型生成 N 只环绕玩家（数据驱动，新敌人进配置表即可刷） */
+  spawnTestEnemies: (type: string, count?: number, opts?: TestSpawnOptions) => string;
   /** 继续游戏（有存档时） */
   continueGame: () => void;
   /** 返回主菜单 */
@@ -88,6 +104,34 @@ export function initDebugAPI(game: Phaser.Game): void {
   const getGameScene = () => getScene('GameScene');
   const getPlayer = () => getGameScene()?.getPlayer?.();
 
+  /** 稳定测试态：无敌 + 巨大血量 + 不升级 + 关闭覆盖面板（试玩场地默认启用，专注测特效/伤害） */
+  const applyStable = (): void => {
+    const player = getPlayer();
+    if (player) {
+      if (player.stats) {
+        player.stats.maxHealth = 1e9;
+        player.stats.health = 1e9;
+        player.stats.exp = 0;
+        player.stats.expToNext = 1e9;
+      }
+      player.invincible = true;
+      player.invincibleTimer = 1e9;
+      player.stableMode = true;
+    }
+    const gs = getGameScene();
+    if (gs) gs.pendingLevelUps = 0;
+    const sc = plugin();
+    if (sc) {
+      ['UpgradeScene', 'ShopScene', 'BreakthroughScene', 'PlayerInfoScene', 'GameOverScene'].forEach((k) => {
+        try {
+          if (sc.isActive(k)) sc.stop(k);
+        } catch (e) {
+          /* 忽略未运行场景 */
+        }
+      });
+    }
+  };
+
   const api: DebugAPI = {
     startGame: () => {
       gm.startNewRun();
@@ -107,6 +151,8 @@ export function initDebugAPI(game: Phaser.Game): void {
       sc.stop('GameOverScene');
       sc.start('GameScene');
       sc.launch('UIScene');
+      // 试玩默认稳定态：无敌+锁升级（专注测试特效/伤害，不被怪打死、升级弹窗不干扰）
+      setTimeout(applyStable, 600);
     },
 
     continueGame: () => {
@@ -229,34 +275,35 @@ export function initDebugAPI(game: Phaser.Game): void {
     },
 
     testStable: () => {
-      const player = getPlayer();
-      if (player) {
-        if (player.stats) {
-          // 巨大血量打不死 + 升级需求巨大不升级，避免战斗/升级弹窗干扰 UI 点击测试
-          player.stats.maxHealth = 1e9;
-          player.stats.health = 1e9;
-          player.stats.exp = 0;
-          player.stats.expToNext = 1e9;
-        }
-        player.invincible = true;
-        player.invincibleTimer = 1e9; // 持续无敌（timer 单位 ms）
-        player.stableMode = true; // 稳定测试态：持续无敌不闪烁
-      }
-      const gs = getGameScene();
-      if (gs) gs.pendingLevelUps = 0;
-      // 关闭所有覆盖面板（升级三选一/商店/突破/玩家属性/结算）
-      const sc = plugin();
-      if (sc) {
-        ['UpgradeScene', 'ShopScene', 'BreakthroughScene', 'PlayerInfoScene', 'GameOverScene'].forEach((k) => {
-          try {
-            if (sc.isActive(k)) sc.stop(k);
-          } catch (e) {
-            /* 忽略未运行场景 */
-          }
-        });
-      }
+      applyStable();
       console.log('[debug] 稳定测试态已启用（无敌+不升级+关面板）');
       return 'testStable active';
+    },
+
+    spawnTestEnemies: (type: string, count = 5, opts: TestSpawnOptions = {}) => {
+      const gs = getGameScene();
+      const player = getPlayer();
+      if (!gs || !player) return '需要先进入试玩场地（调试面板 → 🎯 试玩场地）';
+      const cfg = (ENEMY_CONFIGS as Record<string, EnemyConfig>)[type];
+      if (!cfg) {
+        return '未知敌人类型: ' + type + '（可用: ' + Object.keys(ENEMY_CONFIGS).join('/') + '）';
+      }
+      const n = Math.max(1, Math.min(50, Math.round(count) || 1));
+      const hpMult = opts.hpMult ?? 1;
+      const atkMult = opts.atkMult ?? 1;
+      const spdMult = opts.speedMult ?? 1;
+      const radius = opts.radius ?? 200;
+      for (let i = 0; i < n; i++) {
+        const ang = (i / n) * Math.PI * 2 + Math.random() * 0.3;
+        const c: EnemyConfig = {
+          ...cfg,
+          maxHealth: Math.max(1, Math.round(cfg.maxHealth * hpMult)),
+          attackPower: Math.max(0, Math.round(cfg.attackPower * atkMult)),
+          moveSpeed: Math.max(5, Math.round(cfg.moveSpeed * spdMult)),
+        };
+        gs.spawnEnemy(c, player.x + Math.cos(ang) * radius, player.y + Math.sin(ang) * radius);
+      }
+      return '已生成 ' + n + ' × ' + cfg.name + '（hp×' + hpMult + ' atk×' + atkMult + ' spd×' + spdMult + '，环绕半径 ' + radius + 'px）';
     },
 
     setTheme: (theme: 'pixel' | 'classic') => {

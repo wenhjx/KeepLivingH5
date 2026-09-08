@@ -170,6 +170,25 @@ export class DebugPanel {
       { text: '🎯 试玩场地', fn: () => this.callDebug('enterTestField') },
       { text: '🚪 回主菜单', fn: () => this.callDebug('backToMenu') },
     );
+    this.addSectionTitle(col, '🧪 试玩刷怪（环绕玩家，测特效/伤害）');
+    this.addRow3(col,
+      { text: '🦠 普通×5', fn: () => this.callDebug('spawnTestEnemies', 'normal', 5) },
+      { text: '🏃 疾速×5', fn: () => this.callDebug('spawnTestEnemies', 'fast', 5) },
+      { text: '🛡 重装×3', fn: () => this.callDebug('spawnTestEnemies', 'tank', 3) },
+    );
+    this.addRow3(col,
+      { text: '🏹 远程×5', fn: () => this.callDebug('spawnTestEnemies', 'ranged', 5) },
+      { text: '🧟 精英×2', fn: () => this.callDebug('spawnTestEnemies', 'elite', 2) },
+      { text: '💣 自爆×5', fn: () => this.callDebug('spawnTestEnemies', 'suicider', 5) },
+    );
+    const spawnTip = createUIText(this.scene, 0, col.y, '更多类型/倍率：__debug.spawnTestEnemies(splitter, 3, {hpMult:5, radius:300})', {
+        fontSize: '10px',
+        color: '#aa8866',
+      })
+      .setOrigin(0, 0);
+    this.content.add(spawnTip);
+    col.step(this.btnHeight + this.btnSpacing);
+    col.step(this.sectionSpacing);
     col.step(this.sectionSpacing);
 
     // 游戏速度调节（0.25~4 倍速，模拟明日方舟 2 倍速 / 慢速观察细节；快捷键 - / =）
