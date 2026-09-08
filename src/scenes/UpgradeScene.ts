@@ -45,16 +45,17 @@ export class UpgradeScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // 提示文字
-    createUIText(this, width / 2, 115, '选择一项升级', {
+    // 过滤掉玩家已满级的选项，不足时用兜底项补位
+    const availableOptions = this.getAvailableOptions();
+    const choices = this.getChoices(availableOptions);
+
+    // 提示文字：全部成长项满级时升级项由兜底补给（消耗品）补位 → 文案区分，
+    // 避免"提示选择升级、弹出的却是消耗品"的违和感
+    createUIText(this, width / 2, 115, availableOptions.length === 0 ? '选择一项补给' : '选择一项升级', {
         fontSize: '16px',
         color: '#aaaaaa',
       })
       .setOrigin(0.5);
-
-    // 过滤掉玩家已满级的选项，不足时用兜底项补位
-    const availableOptions = this.getAvailableOptions();
-    const choices = this.getChoices(availableOptions);
 
     // 升级面板
     this.upgradePanel = new UpgradePanel(this);

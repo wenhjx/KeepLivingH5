@@ -383,6 +383,18 @@ export class GameManager {
     this.saveProgress();
   }
 
+  /**
+   * 通关一关（无论玩家选择继续征战/进入下一关/结束征程均算通关）。
+   * 只计入成就胜利次数并触发成就检查，不触碰对局结算/存档语义
+   * （completeRun 仍专用于"结束征程"的完整胜利结算）。
+   */
+  recordLevelClear(): void {
+    this.mutateStats((s) => {
+      s.wins = (s.wins ?? 0) + 1;
+    });
+    EventBus.emit('level:clear');
+  }
+
   /** 成就存档（解锁状态 + 永久加成 + 称号） */
   get achievementsData(): AchievementSaveData | undefined {
     return this._saveSystem?.load()?.achievements;

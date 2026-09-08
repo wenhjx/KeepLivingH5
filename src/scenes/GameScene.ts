@@ -60,6 +60,8 @@ export class GameScene extends Phaser.Scene {
   private pendingWeaponWave = 0;
   // 通关胜利已触发（防止与死亡路径重复进入结算）
   private victoryTriggered = false;
+  /** 本局是否已计过一次"通关一关"成就胜利（通关结算弹出时计，跨关/重开重置） */
+  private victoryCounted = false;
   // 无尽模式：通关结算选择"继续征战"后为 true，波次无限增长不再触发通关
   private endlessMode = false;
   // 通关窗口延迟重试防抖（遇其他模态时 500ms 后重试，避免窗口被守卫吞掉）
@@ -127,6 +129,7 @@ export class GameScene extends Phaser.Scene {
     // 必须显式清空，否则同页面重开后 endlessMode/victoryTriggered/待弹队列会残留。
     this.endlessMode = false;
     this.victoryTriggered = false;
+    this.victoryCounted = false;
     this.pendingShop = false;
     this.pendingBossWave = 0;
     this.pendingWeaponSelect = false;
@@ -607,6 +610,8 @@ export class GameScene extends Phaser.Scene {
       const gm = GameManager.getInstance();
       gm.setPaused(false);
       this.scene.stop('EndlessChoiceScene');
+      // 收纳全场未拾取战利品（等价自动拾取入账），避免掉落物随区域切换直接消失
+      this.collectAllDrops();
       gm.advanceToNextLevel(this.player);
       this.scene.start('GameScene');
     }));
@@ -872,6 +877,11 @@ export class GameScene extends Phaser.Scene {
     if (this.victoryTriggered) return;
     const gm = GameManager.getInstance();
     if (gm.isGameOver) return;
+    // 打穿一关：无论后续选择继续征战/进下一关/结束征程，均计入成就胜利（防重计）
+    if (!this.victoryCounted) {
+      this.victoryCounted = true;
+      gm.recordLevelClear();
+    }
     // 其他模态（如 15 波 Boss 死亡弹出的突破奖励/升级三选一/商店）正在打开 → 延迟重试，
     // 而不是直接 return 吞掉窗口：否则玩家会卡在无怪地图上永远等不到通关结算
     if (this.scene.isActive('UpgradeScene') || this.scene.isActive('ShopScene') ||
@@ -1394,6 +1404,20 @@ export class GameScene extends Phaser.Scene {
     this.pickups.children.each((pickup: any) => {
       if (pickup.active) pickup.forceMagnet?.();
       return true;
+    });
+  }
+
+  /**
+   * 跨关前收纳全场战利品：对场上所有 active 拾取物执行一次完整拾取
+   * （金币/经验/血包入账、宝箱开奖），等价"自动拾取"，避免区域切换时掉落物消失。
+   */
+  collectAllDrops(): void {
+    const player = this.player;
+    if (!player || !this.pickups) return;
+    this.pickups.getChildren().forEach((p: any) => {
+      if (p?.active && typeof p.collect === 'function') {
+        p.collect(player);
+      }
     });
   }
 

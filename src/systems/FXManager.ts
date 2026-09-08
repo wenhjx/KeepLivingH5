@@ -17,9 +17,20 @@ import Phaser from 'phaser';
  */
 export class FXManager {
   private scene: Phaser.Scene;
+  /** 震屏节流：爆炸等高频特效避免镜头持续抖动（与暴击震屏的 140ms 节流同理） */
+  private lastShakeAt = 0;
+  private static readonly SHAKE_CD = 150;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+  }
+
+  /** 震屏（带内置 CD）：高频爆炸只让第一下震，防止镜头抖动到影响操作 */
+  private shake(strength: number, duration: number): void {
+    const now = this.scene.time.now;
+    if (now - this.lastShakeAt < FXManager.SHAKE_CD) return;
+    this.lastShakeAt = now;
+    this.scene.cameras.main.shake(duration, strength);
   }
 
   // ========== 底层辅助 ==========
@@ -248,7 +259,7 @@ export class FXManager {
       speedMax: 260,
       scaleStart: 0.7,
     });
-    this.scene.cameras.main.shake(100, 0.005);
+    this.shake(0.005, 100);
   }
 
   /** 玩家死亡消散：青色粒子上升消散（玩家主题色），无震屏 */

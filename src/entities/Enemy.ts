@@ -483,10 +483,20 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  /**
+   * 追踪移速（带上限）：普通怪速度 = moveSpeed × 波次难度 × 词缀倍率，
+   * 若不封顶，无尽后期怪物全屏乱飞甚至脱离场景（Boss 已在 update 中单独封顶 130）。
+   * 封顶值保持高压但可控，玩家仍能靠走位/地形应对。
+   */
+  private getTrackSpeed(): number {
+    const raw = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
+    return Math.min(raw, 140);
+  }
+
   /** 自爆怪：高速冲向玩家，进入爆炸半径后自爆 */
   private suiciderAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
+    const speed = this.getTrackSpeed();
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
 
@@ -534,7 +544,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /** 护盾怪：缓慢接近，正面减伤，侧面/背面正常受伤 */
   private shieldedAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
+    const speed = this.getTrackSpeed();
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
 
@@ -552,7 +562,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const KEEP_DIST = 230;
     if (dist > KEEP_DIST + 60) {
       const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-      const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
+      const speed = this.getTrackSpeed();
       const v = this.avoidObstacles(angle, speed);
       this.setVelocity(v.vx, v.vy);
     } else {
@@ -678,7 +688,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /** 普通敌人：直接冲向玩家 */
   private normalAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
+    const speed = this.getTrackSpeed();
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
 
@@ -694,7 +704,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 加入正弦波动实现Z字
     const wobble = Math.sin(this.scene.time.now / 200 + this.x * 0.01) * 0.5;
     const angle = baseAngle + wobble;
-    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
+    const speed = this.getTrackSpeed();
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
 
@@ -706,7 +716,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   /** 远程敌人：保持距离并射击 */
   private rangedAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
+    const speed = this.getTrackSpeed();
     const preferredDist = 250;
 
     let moveAngle = angle;

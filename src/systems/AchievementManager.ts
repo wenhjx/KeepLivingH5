@@ -61,6 +61,7 @@ export class AchievementManager {
     EventBus.on('player:hit', () => this.handlePlayerHit());
     EventBus.on('run:end', (r) => this.handleRunEnd(r));
     EventBus.on('run:start', () => this.handleRunStart());
+    EventBus.on('level:clear', () => this.checkAll());
 
     // 旧存档/历史统计达标 → 立即补解锁（如已 1000 杀的存档）
     this.checkAll();

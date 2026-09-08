@@ -7,6 +7,11 @@ import type { InputManager } from '../systems/InputManager';
  * 移动端触屏控制，支持两种模式：
  * - fixed:   固定位置（按下摇杆附近区域激活）
  * - dynamic: 动态摇杆（左半屏任意位置触碰即在按下处弹出，避免固定位置误触/触摸困难）
+ *
+ * 坐标约定：内部一律使用"屏幕逻辑坐标"（与 scale.width/height 同空间）。
+ * UI 相机存在 zoom（高清渲染），Pointer 的 world 坐标与屏幕坐标相差 zoom 倍，
+ * 直接混用会导致摇杆弹出/位移与手指位置偏差（相机滚动/缩放越明显偏差越大）。
+ * 进出 UI 相机时用 getScreenPoint/getWorldPoint 双向换算，保证任何相机配置下都精确贴合手指。
  */
 export class VirtualJoystick {
   private scene: Phaser.Scene;
@@ -17,7 +22,7 @@ export class VirtualJoystick {
   private base!: Phaser.GameObjects.GameObject;
   private knob!: Phaser.GameObjects.GameObject;
 
-  // 位置
+  // 位置（屏幕逻辑坐标，与 scale.width/height 同空间）
   private baseX: number;
   private baseY: number;
   private baseRadius: number;
@@ -94,19 +99,18 @@ export class VirtualJoystick {
     // 监听指针按下
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (this.active) return;
+      // pointer.world 坐标 → 屏幕逻辑坐标（UI 相机 zoom 高清渲染下两空间差 zoom 倍）
+      const sp = this.toScreen(pointer.x, pointer.y);
 
       if (this.mode === 'dynamic') {
         // 动态模式：左半屏任意位置触碰，即在按下位置弹出摇杆
-        // 注意：pointer 坐标是 world 坐标（相机 zoom 影响），需先转屏幕坐标判断左右半屏
-        const cam = this.scene.cameras.main;
-        const screenX = (pointer.x - cam.scrollX) * cam.zoom;
-        if (screenX < this.scene.scale.width / 2) {
-          this.setPosition(pointer.x, pointer.y);
+        if (sp.x < this.scene.scale.width / 2) {
+          this.setPosition(sp.x, sp.y);
           this.activate(pointer);
         }
       } else {
-        // 固定模式：仅在摇杆附近区域按下激活
-        const dist = Phaser.Math.Distance.Between(pointer.x, pointer.y, this.baseX, this.baseY);
+        // 固定模式：仅在摇杆附近区域按下激活（同为屏幕逻辑坐标）
+        const dist = Phaser.Math.Distance.Between(sp.x, sp.y, this.baseX, this.baseY);
         if (dist < this.baseRadius * 2) {
           this.activate(pointer);
         }
@@ -116,7 +120,8 @@ export class VirtualJoystick {
     // 监听指针移动
     this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (!this.active || pointer.id !== this.pointerId) return;
-      this.updateKnob(pointer.x, pointer.y);
+      const sp = this.toScreen(pointer.x, pointer.y);
+      this.updateKnob(sp.x, sp.y);
     });
 
     // 监听指针释放
@@ -131,6 +136,15 @@ export class VirtualJoystick {
     });
   }
 
+  /** world 坐标 → 屏幕逻辑坐标（Phaser 无 getScreenPoint，手动按相机 scroll/zoom 换算） */
+  private toScreen(worldX: number, worldY: number): { x: number; y: number } {
+    const cam = this.scene.cameras.main;
+    return {
+      x: (worldX - cam.scrollX) * cam.zoom,
+      y: (worldY - cam.scrollY) * cam.zoom,
+    };
+  }
+
   private activate(pointer: Phaser.Input.Pointer): void {
     this.active = true;
     this.pointerId = pointer.id;
@@ -141,6 +155,7 @@ export class VirtualJoystick {
   }
 
   private updateKnob(pointerX: number, pointerY: number): void {
+    // 入参为屏幕逻辑坐标（与 baseX/baseY 同空间）
     const dx = pointerX - this.baseX;
     const dy = pointerY - this.baseY;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -156,8 +171,10 @@ export class VirtualJoystick {
       knobDy = dy * ratio;
     }
 
-    // 旋钮相对容器中心位移（容器在 baseX/baseY）
-    (this.knob as any).setPosition(knobDx, knobDy);
+    // 旋钮相对容器中心位移（容器在 world 坐标系 → 渲染时 × zoom 回到屏幕逻辑，
+    // 故这里把屏幕逻辑位移 ÷ zoom 换算回 world，保证视觉位移与手指精确一致）
+    const zoom = this.scene.cameras.main.zoom || 1;
+    (this.knob as any).setPosition(knobDx / zoom, knobDy / zoom);
 
     // 计算方向和强度
     this.currentAngle = Math.atan2(dy, dx);
@@ -219,19 +236,18 @@ export class VirtualJoystick {
     return this.active;
   }
 
-  /** 设置位置（动态模式触碰时调用，自动 clamp 在屏幕内；坐标为 world 坐标） */
+  /** 设置位置（屏幕逻辑坐标；动态模式触碰时调用，自动 clamp 在屏幕内） */
   setPosition(x: number, y: number): void {
-    // 屏幕可见范围（world 坐标）由相机决定，clamp 摇杆底座不超出屏幕边缘
-    const cam = this.scene.cameras.main;
-    const topLeft = cam.getWorldPoint(0, 0);
-    const bottomRight = cam.getWorldPoint(this.scene.scale.width, this.scene.scale.height);
-    const minX = topLeft.x + this.baseRadius;
-    const maxX = bottomRight.x - this.baseRadius;
-    const minY = topLeft.y + this.baseRadius;
-    const maxY = bottomRight.y - this.baseRadius;
+    // 以屏幕边界 clamp（scale.width/height 即逻辑空间），摇杆底座不超出屏幕边缘
+    const minX = this.baseRadius;
+    const maxX = this.scene.scale.width - this.baseRadius;
+    const minY = this.baseRadius;
+    const maxY = this.scene.scale.height - this.baseRadius;
     this.baseX = Math.max(minX, Math.min(maxX, x));
     this.baseY = Math.max(minY, Math.min(maxY, y));
-    this.container.setPosition(this.baseX, this.baseY);
+    // 容器渲染按 world 坐标（scrollFactor 0 → 屏幕位置 = world × zoom），换算回去
+    const w = this.scene.cameras.main.getWorldPoint(this.baseX, this.baseY);
+    this.container.setPosition(w.x, w.y);
   }
 
   /** 显示/隐藏 */
