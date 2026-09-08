@@ -1,6 +1,5 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
-import { GameConfig } from '../game/GameConfig';
 
 /**
  * 引导提示卡片配置
@@ -64,10 +63,10 @@ export class GuideCard {
    * 构建卡片内容
    */
   private build(): void {
-    // 统一使用逻辑分辨率定位（UI 放入 uiRoot 反向缩放容器 / 相机 zoom 补偿后均为 960x640 坐标系；
-    // 用物理尺寸 scene.scale.width/height 会导致高清屏下卡片跑到屏幕外）
-    const width = GameConfig.GAME_WIDTH;
-    const height = GameConfig.GAME_HEIGHT;
+    // 定位统一使用物理尺寸 scene.scale（UIScene 的 uiRoot 反向缩放容器局部坐标 = 物理空间，
+    // 与 HUD/暂停按钮等一致；若用逻辑 960x640 定位，在 1200x800 物理屏幕上卡片会偏到中间）
+    const width = this.scene.scale.width;
+    const height = this.scene.scale.height;
     const color = this.config.color ?? 0x00ffff;
     const position = this.config.position ?? 'top-right';
 
