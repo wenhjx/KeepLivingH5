@@ -46,6 +46,8 @@ export class GameManager {
   private _saveSystem: SaveSystem | null = null;
   private _pendingRun: SavedRun | null = null;
   private _initialized = false;
+  /** 试玩场地：复用主场景全部战斗逻辑，但不产生任何收益（不存档/不计统计/不解锁/不触发成就） */
+  private _testMode = false;
 
   private constructor() {}
 
@@ -128,7 +130,28 @@ export class GameManager {
     EventBus.emit('run:start', this._runData);
   }
 
+  /**
+   * 进入试玩场地（调试面板/__debug 调用）：
+   * 与正常对局共用同一个 GameScene（地图/敌人/弹道/特效/波次/商店/升级零差距），
+   * 仅收益侧全部短路——不写存档、不累计全局统计、不触发成就、不解锁关卡。
+   */
+  startTestRun(level = 0): void {
+    this._testMode = true;
+    this.startNewRun(level);
+  }
+
+  /** 试玩场地开关（供 GameScene/AchievementManager/DebugAPI 判断收益短路） */
+  get testMode(): boolean {
+    return this._testMode;
+  }
+
   endRun(): void {
+    // 试玩场地：不累计统计、不写存档，仅同步对局状态与事件（结算场景依赖）
+    if (this._testMode) {
+      this._runData.isGameOver = true;
+      EventBus.emit('run:end', { ...this._runData, highScore: this._stats.highScore });
+      return;
+    }
     this._runData.isGameOver = true;
     this._stats.gamesPlayed++;
     this._stats.totalKills += this._runData.kills;
@@ -156,6 +179,11 @@ export class GameManager {
    * 使玩家可以通过"继续游戏"恢复。与 endRun() 的区别是不清除 run 存档。
    */
   exitRun(): void {
+    // 试玩场地：不累计统计、不写存档（试玩也从不写 run 存档，无需保留恢复）
+    if (this._testMode) {
+      this._runData.isGameOver = true;
+      return;
+    }
     this._runData.isGameOver = true;
     this._stats.gamesPlayed++;
     this._stats.totalKills += this._runData.kills;
@@ -231,6 +259,8 @@ export class GameManager {
 
   /** 保存当前对局进度（供"继续游戏"恢复） */
   saveRun(player: Player): void {
+    // 试玩场地不写进行中存档，避免污染"继续游戏"
+    if (this._testMode) return;
     if (!this._saveSystem || !player) return;
     const data = this._saveSystem.load() || this.buildSaveData();
     data.run = {
@@ -379,6 +409,8 @@ export class GameManager {
 
   /** 原地修改全局统计并落盘（成就计数专用；统计字段见 SaveStats 扩展） */
   mutateStats(fn: (s: SaveStats) => void): void {
+    // 试玩场地：成就/统计计数全部短路
+    if (this._testMode) return;
     fn(this._stats);
     this.saveProgress();
   }
@@ -430,6 +462,8 @@ export class GameManager {
 
   /** 通关某关后解锁下一关（最高只到最后一关） */
   unlockLevel(index: number): void {
+    // 试玩场地不解锁关卡
+    if (this._testMode) return;
     const cfg = LEVELS[index];
     if (!cfg || this._unlocked.includes(cfg.id)) return;
     this._unlocked.push(cfg.id);

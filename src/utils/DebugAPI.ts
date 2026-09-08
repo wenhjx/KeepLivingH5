@@ -14,6 +14,8 @@ import { GuideManager } from '../systems/GuideManager';
 export interface DebugAPI {
   /** 开始新游戏 */
   startGame: () => void;
+  /** 进入试玩场地（复用主场景全部战斗逻辑，不存档/不计统计/不触发成就） */
+  enterTestField: () => void;
   /** 继续游戏（有存档时） */
   continueGame: () => void;
   /** 返回主菜单 */
@@ -97,6 +99,16 @@ export function initDebugAPI(game: Phaser.Game): void {
       sc.launch('UIScene');
     },
 
+    enterTestField: () => {
+      gm.startTestRun();
+      const sc = plugin();
+      if (!sc) return;
+      sc.stop('UIScene');
+      sc.stop('GameOverScene');
+      sc.start('GameScene');
+      sc.launch('UIScene');
+    },
+
     continueGame: () => {
       if (!gm.hasSavedRun()) {
         console.warn('[debug] 无存档，无法继续游戏');
@@ -115,6 +127,7 @@ export function initDebugAPI(game: Phaser.Game): void {
       sc.stop('UIScene');
       sc.stop('GameScene');
       sc.stop('GameOverScene');
+      GameConfig.OVERLAY_SCENES.forEach((k) => sc.stop(k));
       sc.start('MainMenuScene');
     },
 

@@ -166,6 +166,10 @@ export class DebugPanel {
     this.addRow(col, { text: '♾ 超限+10', fn: () => this.callDebug('addOverflow', 10) }, { text: '♾ 超限+50', fn: () => this.callDebug('addOverflow', 50) });
     this.addAutoPlayRow(col);
     this.addThemeRow(col);
+    this.addRow(col,
+      { text: '🎯 试玩场地', fn: () => this.callDebug('enterTestField') },
+      { text: '🚪 回主菜单', fn: () => this.callDebug('backToMenu') },
+    );
     col.step(this.sectionSpacing);
 
     // 游戏速度调节（0.25~4 倍速，模拟明日方舟 2 倍速 / 慢速观察细节；快捷键 - / =）

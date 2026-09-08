@@ -185,6 +185,7 @@ export class UIScene extends Phaser.Scene {
       // 此处不调用 endRun，否则会 clearSavedRun 导致"继续游戏"失效
       this.scene.stop('GameScene');
       this.scene.stop('UIScene');
+      GameConfig.OVERLAY_SCENES.forEach((k) => this.scene.stop(k));
       this.scene.start('MainMenuScene');
     });
     this.pauseOverlay.add(menuBtn);

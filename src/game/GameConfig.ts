@@ -118,6 +118,18 @@ export class GameConfig {
     cloudSyncEnabled: false,
   };
 
+  // ========== 场景 ==========
+  /** 游戏内覆盖模态场景（升级/商店/突破/结算/属性/武器选择等）；返回主菜单时统一清理，防止残留覆盖层挡住菜单 */
+  static readonly OVERLAY_SCENES = [
+    'UpgradeScene',
+    'WeaponSelectScene',
+    'EndlessChoiceScene',
+    'ShopScene',
+    'BreakthroughScene',
+    'PlayerInfoScene',
+    'AchievementScene',
+  ];
+
   // ========== 输入 ==========
   static readonly INPUT = {
     joystickBaseRadius: 50,

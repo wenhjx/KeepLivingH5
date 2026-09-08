@@ -164,6 +164,47 @@ function avgCoinsPerKill(wave: number): number {
 }
 
 // ============================================================
+// 1b. 被动收益分析（公式与 Enemy.applyPlayerEffects 一致）
+// ============================================================
+/** 成型 build：基础枪 Lv8、力量5级(攻击24.9)、急速5级(攻速1.75)、双爆成型(55%/506%) */
+const PASSIVE_BUILD = { attackPower: 24.9, attackSpeedMult: 1.75, critRate: 0.55, critDamage: 5.06 };
+/** 单发伤害（含攻击力/10 与暴击期望） */
+const passivePerHit = weaponBaseDmg('default_gun', 8) * (PASSIVE_BUILD.attackPower / 10) * (1 + PASSIVE_BUILD.critRate * (PASSIVE_BUILD.critDamage - 1));
+/** 每秒命中事件（群战命中 1.5 目标 / Boss 单目标） */
+const passiveEventsGroup = WEAPONS.default_gun.attackSpeed * PASSIVE_BUILD.attackSpeedMult * HIT_RATE * 1.5;
+const passiveEventsSingle = WEAPONS.default_gun.attackSpeed * PASSIVE_BUILD.attackSpeedMult * HIT_RATE;
+/** 邻近敌人假设：群战 5 只（弹射/闪电链最多 lv 跳，源目标外 4 跳），Boss 战 1 只（断链） */
+const GROUP_ENEMIES = 5;
+
+interface PassiveAuditRow {
+  id: string;
+  name: string;
+  /** 1/3/5 级群战期望收益（伤害类=dps，生存类=等效值） */
+  group: [number, number, number];
+  /** 1/3/5 级 Boss 战期望收益 */
+  boss: [number, number, number];
+  note: string;
+}
+
+function calcPassiveRows(): PassiveAuditRow[] {
+  const p = passivePerHit;
+  const g = passiveEventsGroup;
+  const s = passiveEventsSingle;
+  const dotDps = (lv: number, targets: number) => (0.15 * lv) * (0.15 * lv) * p * (7 / 3) * targets;
+  const bounceDps = (lv: number, events: number) => 0.7 * p * Math.min(lv, GROUP_ENEMIES - 1) * events;
+  const chainDps = (lv: number, events: number) => (0.1 * lv) * 0.6 * p * Math.min(lv, GROUP_ENEMIES - 1) * events;
+  const freezeE = (lv: number) => (0.08 * lv) * 0.6 * (2 / 3);
+  const lifestealHps = (lv: number, events: number) => (0.03 * lv) * p * events;
+  return [
+    { id: 'passive_bounce', name: '弹射', group: [bounceDps(1, g), bounceDps(3, g), bounceDps(5, g)], boss: [0, 0, 0], note: '群怪爆发·Boss断链' },
+    { id: 'passive_burn', name: '灼烧', group: [dotDps(1, GROUP_ENEMIES), dotDps(3, GROUP_ENEMIES), dotDps(5, GROUP_ENEMIES)], boss: [dotDps(1, 1), dotDps(3, 1), dotDps(5, 1)], note: '持续DOT·Boss战稳定' },
+    { id: 'passive_chain', name: '闪电链', group: [chainDps(1, g), chainDps(3, g), chainDps(5, g)], boss: [0, 0, 0], note: '群怪爆发·Boss断链' },
+    { id: 'passive_freeze', name: '冰冻', group: [freezeE(1), freezeE(3), freezeE(5)], boss: [freezeE(1), freezeE(3), freezeE(5)], note: '生存·等效减伤%' },
+    { id: 'passive_lifesteal', name: '吸血', group: [lifestealHps(1, g), lifestealHps(3, g), lifestealHps(5, g)], boss: [lifestealHps(1, s), lifestealHps(3, s), lifestealHps(5, s)], note: '生存·每秒回血' },
+  ];
+}
+
+// ============================================================
 // 2. 输出工具
 // ============================================================
 
@@ -179,9 +220,10 @@ function buildHtml(rows: {
   economy: Array<{ wave: number; coins: number; shopMin: number; shopMax: number }>;
   levelCurve: Array<{ level: number; exp: number }>;
   levelCompare: Array<{ wave: number; meadow: number; ruins: number; tundra: number }>;
+  passiveTable: PassiveAuditRow[];
   conclusions: string[];
 }): string {
-  const { waves, enemyCurves, bossCurves, weaponDps, economy, levelCurve, levelCompare, conclusions } = rows;
+  const { waves, enemyCurves, bossCurves, weaponDps, economy, levelCurve, levelCompare, passiveTable, conclusions } = rows;
 
   // SVG 折线图生成器（简单归一化）
   const lineChart = (series: Array<{ label: string; values: number[]; color?: string }>, w = 620, h = 220) => {
@@ -229,6 +271,13 @@ ${lineChart(bossCurves.map((b, i) => ({ ...b, color: ['#e05252', '#e8a33d', '#7b
 
 <h2 style="font-size:15px;color:#4aa3df;border-bottom:1px solid #223;padding-bottom:4px;">武器 DPS 排行（含命中/暴击均值假设）</h2>
 ${barChart(weaponDps)}
+
+<h2 style="font-size:15px;color:#4aa3df;border-bottom:1px solid #223;padding-bottom:4px;">被动收益分析（成型 build：基础枪Lv8 / 攻击24.9 / 攻速1.75 / 暴击55%·506%）</h2>
+<p style="font-size:11px;color:#888;margin:6px 0;">伤害类=dps 期望；冰冻=等效敌人输出降低%；吸血=每秒回血。群战按 5 只邻近敌人、Boss 战 1 只（弹射/闪电链断链）。公式与 Enemy.applyPlayerEffects 一致。</p>
+<table style="width:100%;border-collapse:collapse;font-size:12px;">
+<tr style="color:#888;"><th style="text-align:left;padding:4px;">被动</th><th>群战1级</th><th>群战3级</th><th>群战5级</th><th>Boss1级</th><th>Boss5级</th><th>定位</th></tr>
+${passiveTable.map((r) => '<tr style="border-top:1px solid #223;"><td style="padding:4px;color:#eee;">' + r.name + '</td><td style="text-align:right;">' + fmt(r.group[0]) + '</td><td style="text-align:right;">' + fmt(r.group[1]) + '</td><td style="text-align:right;color:#e8a33d;">' + fmt(r.group[2]) + '</td><td style="text-align:right;">' + fmt(r.boss[0]) + '</td><td style="text-align:right;color:#e8a33d;">' + fmt(r.boss[2]) + '</td><td style="color:#888;">' + r.note + '</td></tr>').join('')}
+</table>
 
 <h2 style="font-size:15px;color:#4aa3df;border-bottom:1px solid #223;padding-bottom:4px;">升级经验曲线（expToNext = 20×L^1.25）</h2>
 ${lineChart([{ label: '每级所需经验', values: levelCurve.map((l) => l.exp) }])}
@@ -292,6 +341,8 @@ function main(): void {
 
   const levelCurve = Array.from({ length: 30 }, (_, i) => ({ level: i + 1, exp: expToNext(i + 1) }));
 
+  const passiveRows = calcPassiveRows();
+
   // 经济：每波击杀数（假设清怪效率足以清完生成量 → 用生成数 × 击杀率0.9）
   const economy = WAVES.map((w) => {
     const kills = waveSpawnCount(w) * 0.9;
@@ -334,6 +385,14 @@ function main(): void {
   // 5) 无尽高波
   const boss50 = bossHp(0, 50);
   conclusions.push(`ℹ️ 无尽 50 波草原 Boss 血量 ${fmt(boss50)}（2.2^9），需 50w+ 级别 DPS——验证后期 build 是否跟得上`);
+  // 6) 被动定位（成型 build）
+  const b5 = passiveRows.find((r) => r.id === 'passive_bounce')!;
+  const bn5 = passiveRows.find((r) => r.id === 'passive_burn')!;
+  const ch5 = passiveRows.find((r) => r.id === 'passive_chain')!;
+  const fr5 = passiveRows.find((r) => r.id === 'passive_freeze')!;
+  const ls5 = passiveRows.find((r) => r.id === 'passive_lifesteal')!;
+  conclusions.push(`ℹ️ 被动定位（成型build）：群战伤害 弹射≈${fmt(b5.group[2])} > 灼烧≈${fmt(bn5.group[2])} > 闪电链≈${fmt(ch5.group[2])} dps；Boss 战弹射/闪电链断链归零，灼烧≈${fmt(bn5.boss[2])}dps、吸血≈${fmt(ls5.boss[2])}hp/s 仍有效——印证'弹射吃怪群密度、灼烧吃目标血量'`);
+  conclusions.push(`ℹ️ 冰冻满级等效降低敌人输出约 ${Math.round(fr5.group[2] * 100)}%，吸血满级群战每秒回血约 ${fmt(ls5.group[2])}——生存向被动价值主要在高压波`);
 
   // ===== 控制台输出 =====
   console.log('════════════════════════════════════════════════════════');
@@ -358,6 +417,12 @@ function main(): void {
     console.log(`${w.name.padEnd(8)}\t${fmt(w.lv1, 1)}\t${fmt(w.lv3, 1)}\t${fmt(w.max, 1)}`);
   });
 
+  console.log('\n【3b】被动收益（成型 build：群战5敌 / Boss单敌）');
+  console.log('被动\t群1级\t群3级\t群5级\tBoss1级\tBoss5级\t定位');
+  passiveRows.forEach((r) => {
+    console.log(`${r.name.padEnd(5)}\t${fmt(r.group[0], 1).padEnd(6)}\t${fmt(r.group[1], 1).padEnd(6)}\t${fmt(r.group[2], 1).padEnd(6)}\t${fmt(r.boss[0], 1).padEnd(7)}\t${fmt(r.boss[2], 1).padEnd(7)}\t${r.note}`);
+  });
+
   console.log('\n【4】升级经验需求');
   console.log('等级\t1\t2\t3\t5\t8\t12\t16\t20\t25\t30');
   console.log('经验\t' + [1, 2, 3, 5, 8, 12, 16, 20, 25, 30].map((l) => fmt(expToNext(l))).join('\t'));
@@ -378,6 +443,7 @@ function main(): void {
     economy,
     levelCurve,
     levelCompare,
+    passiveTable: passiveRows,
     conclusions,
   });
   const fs = require('fs') as typeof import('fs');

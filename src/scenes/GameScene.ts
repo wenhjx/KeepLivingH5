@@ -104,6 +104,10 @@ export class GameScene extends Phaser.Scene {
 
   init(): void {
     const gm = GameManager.getInstance();
+    // 试玩场地：不恢复任何存档（复用主场景全部战斗逻辑，仅收益侧短路）
+    if (gm.testMode) {
+      this.resumeMode = false;
+    }
     // 启动分流：
     //  1) 内存 pendingRun（跨关继承，advanceToNextLevel 设置）→ 恢复模式
     //  2) 本地进行中存档（继续游戏）→ 恢复模式
