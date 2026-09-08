@@ -24,6 +24,8 @@ export class WaveManager {
   private spawnTimer: number = 0;
   private waveActive: boolean = false;
   private bossActive: boolean = false;
+  /** 训练场模式：屏蔽 Boss 波/战前商店/武器强化/通关结算，波次纯净推进（试玩场地使用） */
+  trainingMode = false;
 
   // 当前波次的生成表
   private currentSpawnTable: { type: EnemyType; weight: number }[] = [];
@@ -52,14 +54,14 @@ export class WaveManager {
     // 演出事件：波次开始（GameFeedback 订阅播横幅；纯表现，不影响玩法）
     EventBus.emit('wave:start', {
       wave,
-      isBoss: wave % GameConfig.WAVE.bossWaveInterval === 0,
+      isBoss: !this.trainingMode && wave % GameConfig.WAVE.bossWaveInterval === 0,
     });
 
     // 构建生成表
     this.buildSpawnTable(wave);
 
-    // Boss 波
-    if (wave % GameConfig.WAVE.bossWaveInterval === 0) {
+    // Boss 波（训练场屏蔽 Boss）
+    if (!this.trainingMode && wave % GameConfig.WAVE.bossWaveInterval === 0) {
       this.spawnBoss();
     }
   }
@@ -241,7 +243,7 @@ export class WaveManager {
 
     // 通关判定：打完第 victoryWave 波且未进入无尽 → 弹通关结算（继续征战/结束征程）
     // 无尽模式下不拦截，波次继续无限增长，Boss 每 bossWaveInterval 波继续增强
-    if (this.currentWave >= GameConfig.WAVE.victoryWave && !(this.scene as any).isEndlessMode?.()) {
+    if (!this.trainingMode && this.currentWave >= GameConfig.WAVE.victoryWave && !(this.scene as any).isEndlessMode?.()) {
       // 通关清敌：波次为计时制（waveDuration 到即通关），清完 boss 后小怪仍会残留/继续生成。
       // 若不清空，弹窗前的 2s 空档里低血量玩家会被残留敌人打死 → 直接 GameOver 且清存档，
       // "继续征战"窗口永远弹不出来。先清敌再弹窗，玩家安全进入通关结算。
@@ -264,7 +266,10 @@ export class WaveManager {
 
     // 短暂间隔后：Boss 波后→武器强化；前期武器奖励波→武器强化；Boss 波前→战前商店；普通→直接下一波
     this.scene.time.delayedCall(2000, () => {
-      if (justBeatBoss) {
+      // 训练场：跳过商店/武器强化，波次直接推进
+      if (this.trainingMode) {
+        this.startWave(next);
+      } else if (justBeatBoss) {
         (this.scene as any).openWeaponSelectAfterBoss?.(next);
       } else if (justWeaponReward) {
         (this.scene as any).openWeaponSelectAfterBoss?.(next);

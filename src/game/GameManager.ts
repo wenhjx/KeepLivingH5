@@ -6,6 +6,7 @@ import { AudioManager } from '../systems/AudioManager';
 import type { AchievementSaveData, GameSaveData, SaveStats, SavedRun } from '../types';
 import type { Player } from '../entities/Player';
 import { LEVELS, type QuickStartConfig } from '../data/levels';
+import { CHARACTERS, type CharacterConfig } from '../data/characters';
 
 /**
  * 游戏全局管理器（单例）
@@ -48,6 +49,8 @@ export class GameManager {
   private _initialized = false;
   /** 试玩场地：复用主场景全部战斗逻辑，但不产生任何收益（不存档/不计统计/不解锁/不触发成就） */
   private _testMode = false;
+  /** 当前激活角色 id（默认拓荒者；未来主角选择界面切换此值） */
+  private _activeCharacterId = 'default';
 
   private constructor() {}
 
@@ -143,6 +146,25 @@ export class GameManager {
   /** 试玩场地开关（供 GameScene/AchievementManager/DebugAPI 判断收益短路） */
   get testMode(): boolean {
     return this._testMode;
+  }
+
+  /** 当前激活角色 id（预留：主角选择界面写入） */
+  getActiveCharacterId(): string {
+    return this._activeCharacterId;
+  }
+
+  /** 切换激活角色；未知 id 拒绝并返回 false */
+  setActiveCharacterId(id: string): boolean {
+    if (CHARACTERS[id]) {
+      this._activeCharacterId = id;
+      return true;
+    }
+    return false;
+  }
+
+  /** 当前激活角色的完整配置（不存在时回退默认角色） */
+  getActiveCharacter(): CharacterConfig {
+    return CHARACTERS[this._activeCharacterId] ?? CHARACTERS['default'];
   }
 
   endRun(): void {

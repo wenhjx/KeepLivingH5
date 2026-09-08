@@ -90,14 +90,15 @@ export class MainMenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // 菜单按钮
-    const buttonY = height * 0.5;
-    const buttonSpacing = 60;
+    // 菜单按钮（5 个：开始/继续/设置/成就/试玩场地，整体上移防止底部信息被遮挡）
+    const buttonY = height * 0.44;
+    const buttonSpacing = 56;
 
     this.createMenuButton(centerX, buttonY, '开始游戏', () => this.openLevelSelect());
     this.createMenuButton(centerX, buttonY + buttonSpacing, '继续游戏', () => this.continueGame());
     this.createMenuButton(centerX, buttonY + buttonSpacing * 2, '设置', () => this.openSettings());
     this.createMenuButton(centerX, buttonY + buttonSpacing * 3, '🏅 成就', () => this.openAchievements());
+    this.createMenuButton(centerX, buttonY + buttonSpacing * 4, '🧪 试玩场地', () => this.enterTestField());
 
     // 底部信息
     const stats = gm.stats;
@@ -230,6 +231,16 @@ export class MainMenuScene extends Phaser.Scene {
     // 刷新面板内各关卡按钮的可点击/文案状态
     this.refreshLevelSelect();
     this.levelSelectOverlay.setVisible(true);
+  }
+
+  /** 进入试玩场地：复用主场景全部战斗逻辑 + 稳定态（无敌+锁升级），不存档/不计统计/不触发成就 */
+  private enterTestField(): void {
+    const api = (window as any).__debug;
+    if (api && typeof api.enterTestField === 'function') {
+      api.enterTestField();
+    } else {
+      console.warn('[debug] __debug.enterTestField 不可用');
+    }
   }
 
   private continueGame(): void {

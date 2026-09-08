@@ -149,6 +149,7 @@ export function initDebugAPI(game: Phaser.Game): void {
       if (!sc) return;
       sc.stop('UIScene');
       sc.stop('GameOverScene');
+      sc.stop('MainMenuScene'); // 主菜单入口进入时关闭主菜单，避免场景叠层
       sc.start('GameScene');
       sc.launch('UIScene');
       // 试玩默认稳定态：无敌+锁升级（专注测试特效/伤害，不被怪打死、升级弹窗不干扰）

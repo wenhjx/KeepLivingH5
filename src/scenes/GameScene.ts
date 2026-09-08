@@ -143,6 +143,10 @@ export class GameScene extends Phaser.Scene {
     this.activeBoss = null;
 
     this.initSystems();
+    // 训练场（试玩场地）：屏蔽 Boss/商店/武器强化/通关结算，波次纯净推进
+    if (GameManager.getInstance().testMode) {
+      this.waveManager.trainingMode = true;
+    }
     this.createMap();
     this.createEntities();
     this.setupCollisions();
@@ -384,6 +388,27 @@ export class GameScene extends Phaser.Scene {
 
     // 创建玩家
     this.player = new Player(this, centerX, centerY);
+
+    // 角色配置预留：默认角色与 Player 默认行为一致；未来切换 activeCharacterId 后自动生效
+    const charCfg = GameManager.getInstance().getActiveCharacter();
+    if (charCfg) {
+      if (charCfg.starterWeapon && charCfg.starterWeapon !== 'default_gun') {
+        const wpn = WEAPONS[charCfg.starterWeapon];
+        if (wpn) this.player.addWeapon(wpn);
+      }
+      const sb = charCfg.statBonus;
+      if (sb) {
+        const st = this.player.getStats() as any;
+        if (sb.maxHealth) {
+          st.maxHealth += sb.maxHealth;
+          st.health += sb.maxHealth;
+        }
+        if (sb.attackPower) st.attackPower += sb.attackPower;
+        if (sb.moveSpeed) st.moveSpeed += sb.moveSpeed;
+        if (sb.critRate) st.critRate += sb.critRate;
+        if (sb.critDamage) st.critDamage += sb.critDamage;
+      }
+    }
 
     // 创建实体组
     this.enemies = this.physics.add.group();
@@ -767,6 +792,13 @@ export class GameScene extends Phaser.Scene {
     if (this.victoryTriggered) return;
     this.victoryTriggered = true;
     const gm = GameManager.getInstance();
+    // 训练场：死亡不结束游戏，播消散动画后原地满血刷新（清近处敌人防堵复活点）
+    if (gm.testMode) {
+      const p = this.player;
+      this.fxManager.playerDeath(p.x, p.y);
+      this.time.delayedCall(1200, () => this.reviveInTraining());
+      return;
+    }
     gm.endRun();
     this.pendingShop = false;
     this.pendingBossWave = 0;
@@ -794,6 +826,28 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1500, () => {
       this.scene.stop('UIScene');
       this.scene.start('GameOverScene');
+    });
+  }
+
+  /** 训练场原地复活：满血 + 短无敌 + 复位到地图中心 + 清空半径 300 内敌人 */
+  private reviveInTraining(): void {
+    this.victoryTriggered = false;
+    const p = this.player;
+    if (p.getStats) {
+      const st = p.getStats();
+      st.health = st.maxHealth;
+    }
+    p.grantInvincible(1500, true);
+    p.setVisible(true);
+    p.setAlpha(1);
+    p.setScale(1);
+    p.setPosition(this.mapWidth / 2, this.mapHeight / 2);
+    const px = p.x;
+    const py = p.y;
+    this.enemies.getChildren().forEach((e: any) => {
+      if (e.active && Phaser.Math.Distance.Between(px, py, e.x, e.y) < 300) {
+        e.despawn?.();
+      }
     });
   }
 

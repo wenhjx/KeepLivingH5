@@ -518,6 +518,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // ========== 受伤与治疗 ==========
 
+  /** 授予持续无敌（ms）；stable=true 时同时进入稳定测试态（无敌期间不闪烁，供试玩场地/调试使用） */
+  grantInvincible(ms: number, stable = false): void {
+    this.invincible = true;
+    this.invincibleTimer = ms;
+    if (stable) this.stableMode = true;
+  }
+
   takeDamage(amount: number): void {
     if (this.invincible || this.stats.health <= 0) return;
 
