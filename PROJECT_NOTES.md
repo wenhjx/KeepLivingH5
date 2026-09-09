@@ -4,6 +4,66 @@
 
 ## 📋 开发计划（待办，按优先级）
 
+### 🔥 待修复问题（2026-09-09 用户在 Pages 构建版实测确认，代码已定位未改）
+
+**1. 「再来一局」后整局停摆（无法移动/无法发射/无怪生成/波次不走）— 最高优先**
+- 现象：正常局死亡 → 结算 → 点「再来一局」→ 新局玩家不能移动、武器不发射、无怪生成、波次不推进（HUD 正常但整局逻辑死）
+- 根因：GameOverScene.restart()（src/scenes/GameOverScene.ts:186-189）只 scene.start("GameScene") + launch("UIScene")，**未调 GameManager.startNewRun()** → _runData.isGameOver 残留 true → GameScene.update 开头 if (gm.isPaused || gm.isGameOver) return;（GameScene.ts:712）整帧停摆。主菜单正常路径 startGame() 有 startNewRun（MainMenuScene.ts:214-227）
+- 证据：preview 构建版实测 restart 后 waveTimer 恒 0、敌人数 0、2.5s 采样零推进；dev 上曾误判"能动"——物理 body 位移是 Phaser 核心在 scene.update 之后自动 step，与 update 逻辑停摆无关
+- 修复方向：restart() 先 gm.startNewRun(上局 level) 再切场景（与主菜单一致）；_testMode 也需重置
+- 连带：使「再来一局」的 _runData 残留旧局 score/kills/survivalTime → 结算显示旧数据（见问题 2）
+
+**2. 清除全部后「最高分≠当前分」（结算数据错乱）**
+- 现象：调试面板「清除全部」→ 游玩一局结束后，结算页历史最高分与本局得分不一致
+- 根因：**与问题 1 同根**（restart 缺 startNewRun）——卡死局实际 0 分，但 _runData 残留旧局数据（实测：上局 135 分/13 杀/0:29 全量残留到新局结算），结算显示混乱；「清除全部」本身清 highScore 正确（GameManager.resetAllData:344-360，内存+localStorage 都清），非直接原因
+- 证据：preview 实测第一局 135 分 → 再来一局（卡死）→ 第二局结算仍显示"本局 135/最高 135"+ 旧击杀/存活时间
+- 修复方向：修问题 1 即修复；resetAllData 可考虑同时清 _runData（清除时若有进行中对局）
+- 备注：用户那局 1000+ 分、环境复杂，或叠加其他因素（疑似某种"神秘延时伤害"），待用户截图补充复现
+- **★真实机制（2026-09-09 追加确认）**：死亡后「延时击杀」导致结算分差——
+  - 流程：玩家死亡 → GameManager.endRun() 立即把 highScore 定格（若 score>highScore 则写入）→ GameScene.update 因 isGameOver 停摆 → **但 Arcade 物理仍在 step，已发射的子弹/弹幕继续飞行命中敌人 → 死亡后延时击杀 → addKill() 让 _runData.score 继续增加** → 1.5s 后 GameOverScene 才创建
+  - 取值：GameOverScene.create()（src/scenes/GameOverScene.ts:29-30,68-69）实时读 gm.runData.score（含延时击杀新增）与 stats.highScore（endRun 定格）→ 两者差 N×每杀分数（用户实测差 5 分）
+  - 连带：「新纪录！」判定 runData.score >= stats.highScore（GameOverScene.ts:89）→ 延时击杀可造成假「新纪录」
+  - 修复方向：① addKill 在 isGameOver 时直接 return（阻止死亡后计分）；② 结算页改用 run:end 事件载荷（endRun 定格值）而非实时读——双保险；顺带修假「新纪录」
+
+### ① 神秘商店 + 金币经济（✅ 已完成 2026-08-29）
+
+**3. 暴击伤害爆炸（20 级玩家 6 级暴伤 buff = 1709%）**
+- 现象：属性面板暴伤 1709%（17.09 倍）；同局暴击率仅 15%（无溢出）——纯 stat 累积爆炸
+- 根因：Player.modifyStat（src/entities/Player.ts:1079-1092）isPercent 分支**乘算** cur*(1+value)；breakthroughStat（Player.ts:1024-1035）突破走同一 modifyStat → 致命一击（crit_damage，maxLevel 3 + 突破上限 3）= 6 次 ×1.5 → 1.5^7 ≈ 17.09 与截图完全吻合。升级三选一/商店/突破共用此路径
+- 注意：不是暴转爆伤公式问题（CollisionSystem.ts:61-64 公式正确），是 stat 成长乘算爆炸
+- 修复方向：percent stat 改**基于基础值加算**（base*(1+value*n)），或突破改加算/固定收益；攻击力 ×1.2ⁿ 同理受影响；改后重跑数值审计
+
+**4. 波次/Boss 来袭横幅位置漂移（玩家远离地图中部就看不到）**
+- 现象：横幅固定在世界坐标，玩家离开地图中部区域（如去角落）后横幅不出现在屏幕内
+- 根因：GameFeedback.showWaveBanner（src/systems/GameFeedback.ts:49-62）x=cam.width/2、y=132 为**世界坐标**；GameScene Boss 来袭横幅（GameScene.ts:1087）x=cam.width/2、y=cam.height*0.16 同理；相机跟随玩家 → 横幅固定在世界点、不随屏幕
+- 证据：preview 实测玩家 teleport 到 (120,120) 触发「第3波」→ 横幅漂移到屏幕偏右而非居中
+- 修复方向：横幅 setScrollFactor(0)（屏幕固定）+ 屏幕坐标
+
+**5. 固定伤害不随波次成长（3 处，后期乏力/无压力）**
+- 清单：
+  - 炸弹道具 e.takeDamage(500)（src/data/items.ts:50）— 固定 500，后期敌人血量指数成长后几乎无用
+  - 清屏冲击波 e.takeDamage(300)（src/data/upgrades.ts:358）— 固定 300，同上
+  - 敌人接触碰撞 enemy.getConfig()?.attackPower（src/systems/CollisionSystem.ts:33）— **未乘 difficultyMultiplier/atkBoost**，后期怪碰人仍是基础伤害无压力（对比：弹幕 Enemy.ts:899/1073、冲锋 1059、自爆 554 均乘难度倍率）
+- 修复方向：炸弹/清屏 × 波次难度系数（或按敌人 maxHp 百分比）；碰撞伤害补 difficultyMultiplier*atkBoost*affixAtkBoost 与弹幕对齐；自爆/灼烧/闪电链/弹射/荆棘已随玩家/波次成长，无需改
+
+**6. 后期数值曲线失衡（小怪无威胁 vs Boss 上亿血）**
+- 现象：无限波次小怪对玩家毫无威胁（生成即秒），Boss 血量上亿（用户实测 85/90 波附近），压力全集中在 Boss 战，小怪形同虚设
+- 根因（已核对代码）：**成长曲线错配**——
+  - 小怪：difficultyMultiplier = 1 + (wave-1)*0.1（src/systems/WaveManager.ts:189/308，**线性每波 +10%**），血量/攻击线性爬升
+  - Boss：difficultyMultiplier = Math.pow(2.2, bossTier-1)（WaveManager.ts:231，**指数 2.2^tier**，每 5 波 tier+1）——85 波 tier17 ≈ 2.2^16 ≈ 4.2e7 倍基础血量，上亿由此而来
+  - 玩家侧：buff 乘算成长（问题 3 同源）指数输出 → 小怪线性血量被碾压，Boss 指数血量又变成血牛
+- 修复方向：小怪成长改为指数档位（如 1.15^(wave-1) 或按 bossTier 跳档）并补偿数量/攻速；Boss 曲线（2.2^tier 的 base 或 tier 步长）与玩家峰值输出对齐校准；修完问题 3（乘算爆炸）后用数值审计工具（scripts/balance-report）整体重校
+- 备注：属整体数值平衡，与问题 3 联动，建议一起处理
+
+
+**7. 摘除「后台游玩」，改为进后台自动暂停（2026-09-09 用户决定）**
+- 背景：此前为实现后台挂机做了两个改动，但实测**切后台击杀数不涨**（浏览器对后台 tab 的 setTimeout 限流 + 低频主循环下碰撞/击杀结算不可靠），且易过度依赖自动游玩。用户拍板：拿掉后台游玩，回归浏览器默认——进后台自动暂停
+- 现状代码（两处，均在 src/main.ts）：
+  - main.ts:71-84：fps.forceSetTimeOut=true（setTimeout 驱动主循环）+ fps.smoothStep=false（不禁 delta 平滑）——让后台低频继续跑
+  - main.ts:115-128：READY 后 game.events.off(HIDDEN/VISIBLE/BLUR/FOCUS)——移除 Phaser 的页面不可见/失焦自动暂停监听
+- 修复方向：恢复 Phaser 默认——forceSetTimeOut 移除或 false、smoothStep 恢复 true（默认平滑）、删除 115-128 的 off 块 → 页面不可见/失焦自动暂停、切回恢复；游戏内暂停（esc / GameManager.setPaused）不受影响
+- 备注：未来若真要后台挂机，应改用独立于浏览器 tab 主循环的方案（服务端模拟 / Web Worker 决策），不靠前台主循环
+
 ### ① 神秘商店 + 金币经济（✅ 已完成 2026-08-29）
 **设计目标**：杜绝"货品没价值 + 不能刷新"的失落感（参考明日方舟集成战略的商店体验）
 
