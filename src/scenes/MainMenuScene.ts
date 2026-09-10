@@ -6,7 +6,23 @@ import { createUIText } from '../utils/UIText';
 
 
 
+
+
+
+
+
+
+
+
 import Phaser from 'phaser';
+
+
+
+
+
+
+
+
 
 
 
@@ -22,7 +38,23 @@ import { GameManager } from '../game/GameManager';
 
 
 
+
+
+
+
+
+
+
+
 import { GameConfig } from '../game/GameConfig';
+
+
+
+
+
+
+
+
 
 
 
@@ -38,7 +70,23 @@ import { AudioManager } from '../systems/AudioManager';
 
 
 
+
+
+
+
+
+
+
+
 import { SOUND_KEYS } from '../data/sounds';
+
+
+
+
+
+
+
+
 
 
 
@@ -54,6 +102,14 @@ import { setupUICamera } from '../utils/CameraHelper';
 
 
 
+
+
+
+
+
+
+
+
 import type { QualityLevel } from '../game/GameConfig';
 
 
@@ -62,9 +118,35 @@ import type { QualityLevel } from '../game/GameConfig';
 
 
 
+
+
+
+
+
+
+
+
 import { LEVELS } from '../data/levels';
+
 import type { LevelConfig } from '../data/levels';
+
 import { ENEMY_CONFIGS } from '../data/enemies';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -88,7 +170,23 @@ import { ENEMY_CONFIGS } from '../data/enemies';
 
 
 
+
+
+
+
+
+
+
+
  * 主菜单场景
+
+
+
+
+
+
+
+
 
 
 
@@ -104,7 +202,23 @@ import { ENEMY_CONFIGS } from '../data/enemies';
 
 
 
+
+
+
+
+
+
+
+
  */
+
+
+
+
+
+
+
+
 
 
 
@@ -120,7 +234,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   // 设置面板状态
+
+
+
+
+
+
+
+
 
 
 
@@ -136,7 +266,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private musicVolume = 1;
+
+
+
+
+
+
+
+
 
 
 
@@ -152,7 +298,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private quality: QualityLevel = 'medium';
+
+
+
+
+
+
+
+
 
 
 
@@ -168,7 +330,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   // 设置面板文本引用
+
+
+
+
+
+
+
+
 
 
 
@@ -184,7 +362,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private sfxVolText!: Phaser.GameObjects.Text;
+
+
+
+
+
+
+
+
 
 
 
@@ -200,6 +394,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private muteText!: Phaser.GameObjects.Text;
 
 
@@ -208,7 +410,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   // 关卡选择面板
+
+
+
+
+
+
+
+
 
 
 
@@ -232,7 +450,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   constructor() {
+
+
+
+
+
+
+
+
 
 
 
@@ -248,7 +490,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -272,7 +538,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
+
+
+
+
+
+
+
+
 
 
 
@@ -288,7 +570,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     // 调试场景常驻保障：主菜单阶段也确保 DebugScene 可用（异常停掉后自动恢复）
+
+
+
+
+
+
+
+
 
 
 
@@ -304,6 +602,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       this.scene.launch('DebugScene');
 
 
@@ -312,7 +618,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -336,6 +666,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const { width, height } = setupUICamera(this);
 
 
@@ -344,7 +682,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const gm = GameManager.getInstance();
+
+
+
+
+
+
+
+
 
 
 
@@ -368,7 +722,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 读取当前设置
+
+
+
+
+
+
+
+
 
 
 
@@ -384,7 +762,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.musicVolume = Math.round(audio.getMusicVolume() * 100);
+
+
+
+
+
+
+
+
 
 
 
@@ -400,7 +794,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.quality = gm.qualityLevel;
+
+
+
+
+
+
+
+
 
 
 
@@ -424,7 +834,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 背景：垂直渐变夜空（上深下微蓝紫）+ 星点 + 漂移光点装饰
+
+
+
+
+
+
+
+
 
 
 
@@ -440,7 +874,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     bg.fillGradientStyle(0x0a0a12, 0x0a0a12, 0x151a30, 0x151a30, 1);
+
+
+
+
+
+
+
+
 
 
 
@@ -456,7 +906,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.createBackgroundStars(width, height);
+
+
+
+
+
+
+
+
 
 
 
@@ -480,7 +946,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 标题
+
+
+
+
+
+
+
+
 
 
 
@@ -496,7 +986,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         fontSize: '56px',
+
+
+
+
+
+
+
+
 
 
 
@@ -512,7 +1018,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         color: '#ff6b35',
+
+
+
+
+
+
+
+
 
 
 
@@ -528,7 +1050,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         stroke: '#000000',
+
+
+
+
+
+
+
+
 
 
 
@@ -544,6 +1082,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       })
 
 
@@ -552,7 +1098,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .setOrigin(0.5);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -576,7 +1146,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     title.setShadow(0, 0, '#ff6b35', 14, true, true);
+
+
+
+
+
+
+
+
 
 
 
@@ -592,7 +1178,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       targets: title,
+
+
+
+
+
+
+
+
 
 
 
@@ -608,7 +1210,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       duration: 1500,
+
+
+
+
+
+
+
+
 
 
 
@@ -624,7 +1242,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       repeat: -1,
+
+
+
+
+
+
+
+
 
 
 
@@ -640,7 +1274,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -664,6 +1322,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const halo1 = this.add.circle(centerX, height * 0.25, 120, 0xff6b35, 0.07).setDepth(-1);
 
 
@@ -672,7 +1338,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const halo2 = this.add.circle(centerX, height * 0.25, 78, 0xff8844, 0.1).setDepth(-1);
+
+
+
+
+
+
+
+
 
 
 
@@ -696,7 +1378,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 副标题
+
+
+
+
+
+
+
+
 
 
 
@@ -712,7 +1418,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         fontSize: '20px',
+
+
+
+
+
+
+
+
 
 
 
@@ -728,6 +1450,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       })
 
 
@@ -736,7 +1466,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .setOrigin(0.5);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -760,7 +1514,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const buttonY = height * 0.44;
+
+
+
+
+
+
+
+
 
 
 
@@ -784,7 +1554,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     this.createMenuButton(centerX, buttonY, '开始游戏', () => this.openLevelSelect());
+
+
+
+
+
+
+
+
 
 
 
@@ -800,6 +1594,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.createMenuButton(centerX, buttonY + buttonSpacing * 2, '设置', () => this.openSettings());
 
 
@@ -808,7 +1610,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.createMenuButton(centerX, buttonY + buttonSpacing * 3, '🏅 成就', () => this.openAchievements());
+
+
+
+
+
+
+
+
 
 
 
@@ -832,7 +1650,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 底部信息
+
+
+
+
+
+
+
+
 
 
 
@@ -848,7 +1690,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     createUIText(this, centerX, height - 60, `最高分: ${stats.highScore}  |  总击杀: ${stats.totalKills}  |  游戏次数: ${stats.gamesPlayed}`, {
+
+
+
+
+
+
+
+
 
 
 
@@ -864,6 +1722,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         color: '#555555',
 
 
@@ -872,7 +1738,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       })
+
+
+
+
+
+
+
+
 
 
 
@@ -896,7 +1778,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 版本号
+
+
+
+
+
+
+
+
 
 
 
@@ -912,7 +1818,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         fontSize: '12px',
+
+
+
+
+
+
+
+
 
 
 
@@ -928,7 +1850,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       })
+
+
+
+
+
+
+
+
 
 
 
@@ -952,7 +1890,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 设备标识
+
+
+
+
+
+
+
+
 
 
 
@@ -968,7 +1930,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       createUIText(this, 10, height - 10, `移动端 · ${gm.qualityLevel}`, {
+
+
+
+
+
+
+
+
 
 
 
@@ -984,7 +1962,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
           color: '#333333',
+
+
+
+
+
+
+
+
 
 
 
@@ -1000,6 +1994,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         .setOrigin(0, 1);
 
 
@@ -1008,7 +2010,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1032,7 +2058,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.createSettingsOverlay();
+
+
+
+
+
+
+
+
 
 
 
@@ -1048,7 +2090,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1072,7 +2138,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private createDriftingOrbs(width: number, height: number): void {
+
+
+
+
+
+
+
+
 
 
 
@@ -1088,7 +2170,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       const r = 14 + Math.random() * 26;
+
+
+
+
+
+
+
+
 
 
 
@@ -1104,7 +2202,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         Math.random() * width,
+
+
+
+
+
+
+
+
 
 
 
@@ -1120,7 +2234,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         r,
+
+
+
+
+
+
+
+
 
 
 
@@ -1136,7 +2266,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         0.05 + Math.random() * 0.04
+
+
+
+
+
+
+
+
 
 
 
@@ -1152,7 +2298,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       const speed = 12 + Math.random() * 18;
+
+
+
+
+
+
+
+
 
 
 
@@ -1168,7 +2330,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       const startX = orb.x;
+
+
+
+
+
+
+
+
 
 
 
@@ -1184,7 +2362,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         targets: orb,
+
+
+
+
+
+
+
+
 
 
 
@@ -1200,7 +2394,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         duration: 2600 + Math.random() * 2200,
+
+
+
+
+
+
+
+
 
 
 
@@ -1216,7 +2426,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         repeat: -1,
+
+
+
+
+
+
+
+
 
 
 
@@ -1232,7 +2458,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       });
+
+
+
+
+
+
+
+
 
 
 
@@ -1248,7 +2490,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         targets: orb,
+
+
+
+
+
+
+
+
 
 
 
@@ -1264,7 +2522,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         duration: 1500 + Math.random() * 1200,
+
+
+
+
+
+
+
+
 
 
 
@@ -1280,7 +2554,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         repeat: -1,
+
+
+
+
+
+
+
+
 
 
 
@@ -1296,7 +2586,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       });
+
+
+
+
+
+
+
+
 
 
 
@@ -1312,7 +2618,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1336,7 +2666,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private createBackgroundStars(width: number, height: number): void {
+
+
+
+
+
+
+
+
 
 
 
@@ -1352,7 +2698,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       const star = this.add.circle(
+
+
+
+
+
+
+
+
 
 
 
@@ -1368,7 +2730,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         Math.random() * height,
+
+
+
+
+
+
+
+
 
 
 
@@ -1384,7 +2762,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         0xffffff,
+
+
+
+
+
+
+
+
 
 
 
@@ -1400,7 +2794,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       );
+
+
+
+
+
+
+
+
 
 
 
@@ -1416,7 +2826,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         targets: star,
+
+
+
+
+
+
+
+
 
 
 
@@ -1432,7 +2858,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         duration: 900 + Math.random() * 1400,
+
+
+
+
+
+
+
+
 
 
 
@@ -1448,7 +2890,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         yoyo: true,
+
+
+
+
+
+
+
+
 
 
 
@@ -1464,7 +2922,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         ease: 'Sine.InOut',
+
+
+
+
+
+
+
+
 
 
 
@@ -1480,6 +2954,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     }
 
 
@@ -1488,7 +2970,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1512,7 +3018,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const btn = createUIText(this, x, y, text, {
+
+
+
+
+
+
+
+
 
 
 
@@ -1528,7 +3050,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         color: '#e0e0e0',
+
+
+
+
+
+
+
+
 
 
 
@@ -1544,7 +3082,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         padding: { left: 40, right: 40, top: 12, bottom: 12 },
+
+
+
+
+
+
+
+
 
 
 
@@ -1560,7 +3114,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .setOrigin(0.5)
+
+
+
+
+
+
+
+
 
 
 
@@ -1584,7 +3154,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     btn.on('pointerdown', () => {
+
+
+
+
+
+
+
+
 
 
 
@@ -1600,7 +3194,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1624,6 +3242,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       btn.setStyle({ color: '#ff6b35', backgroundColor: '#2a2a35' });
 
 
@@ -1632,7 +3258,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -1648,6 +3290,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       btn.setStyle({ color: '#e0e0e0', backgroundColor: '#1a1a25' });
 
 
@@ -1656,7 +3306,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -1672,7 +3338,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
+
+
+
+
+
+
+
+
 
 
 
@@ -1688,6 +3370,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     });
 
 
@@ -1696,7 +3386,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1720,7 +3434,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private startGame(levelIndex = 0): void {
+
+
+
+
+
+
+
+
 
 
 
@@ -1736,7 +3466,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     if (levelIndex === 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -1752,7 +3498,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       gm.startNewRun(0);
+
+
+
+
+
+
+
+
 
 
 
@@ -1768,7 +3530,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       // 直进选关：直接在该关卡开局，应用快速开局包
+
+
+
+
+
+
+
+
 
 
 
@@ -1784,7 +3562,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       gm.startNewRun(levelIndex);
+
+
+
+
+
+
+
+
 
 
 
@@ -1800,7 +3594,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -1816,6 +3626,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.scene.launch('UIScene');
 
 
@@ -1824,7 +3642,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1848,7 +3690,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private openLevelSelect(): void {
+
+
+
+
+
+
+
+
 
 
 
@@ -1864,7 +3722,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.refreshLevelSelect();
+
+
+
+
+
+
+
+
 
 
 
@@ -1880,7 +3754,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1904,7 +3802,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private enterTestField(): void {
+
+
+
+
+
+
+
+
 
 
 
@@ -1920,7 +3834,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     if (api && typeof api.enterTestField === 'function') {
+
+
+
+
+
+
+
+
 
 
 
@@ -1936,7 +3866,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -1952,6 +3898,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     }
 
 
@@ -1960,7 +3914,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1984,7 +3962,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const gm = GameManager.getInstance();
+
+
+
+
+
+
+
+
 
 
 
@@ -2000,7 +3994,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       // 有进行中对局存档，进入恢复模式（GameScene 会自动恢复）
+
+
+
+
+
+
+
+
 
 
 
@@ -2016,7 +4026,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       this.scene.launch('UIScene');
+
+
+
+
+
+
+
+
 
 
 
@@ -2032,7 +4058,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       // 无存档：直接开始新游戏
+
+
+
+
+
+
+
+
 
 
 
@@ -2048,6 +4090,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     }
 
 
@@ -2056,7 +4106,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2080,7 +4154,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private openAchievements(): void {
+
+
+
+
+
+
+
+
 
 
 
@@ -2096,6 +4186,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.scene.start('AchievementScene');
 
 
@@ -2104,7 +4202,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2128,7 +4250,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     // 打开面板前刷新当前值
+
+
+
+
+
+
+
+
 
 
 
@@ -2144,7 +4282,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2176,7 +4338,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   private levelSelectButtons: Phaser.GameObjects.Text[] = [];
+
+  private levelInfoButtons: Phaser.GameObjects.Text[] = [];
+
+  private previewLevelIndex = 0;
+
+
+
+
 
 
 
@@ -2184,7 +4370,27 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
   private levelPreviewRows: Phaser.GameObjects.Text[] = [];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2208,7 +4414,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const width = GameConfig.GAME_WIDTH;
+
+
+
+
+
+
+
+
 
 
 
@@ -2224,7 +4446,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const cx = width / 2;
+
+
+
+
+
+
+
+
 
 
 
@@ -2240,6 +4478,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const panelW = 800;
 
 
@@ -2248,7 +4494,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const panelH = 480;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2280,7 +4550,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 全屏遮罩
+
+
+
+
+
+
+
+
 
 
 
@@ -2296,7 +4590,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .rectangle(width / 2, height / 2, width, height, 0x000000, 0.7)
+
+
+
+
+
+
+
+
 
 
 
@@ -2312,7 +4622,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     mask.on('pointerdown', () => this.levelSelectOverlay.setVisible(false));
+
+
+
+
+
+
+
+
 
 
 
@@ -2336,7 +4662,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 面板背景
+
+
+
+
+
+
+
+
 
 
 
@@ -2352,7 +4702,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     bg.fillStyle(0x16161f, 0.98);
+
+
+
+
+
+
+
+
 
 
 
@@ -2368,6 +4734,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     bg.lineStyle(2, 0xff6b35, 0.4);
 
 
@@ -2376,7 +4750,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     bg.strokeRoundedRect(cx - panelW / 2, cy - panelH / 2, panelW, panelH, 14);
+
+
+
+
+
+
+
+
 
 
 
@@ -2400,7 +4790,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 标题
+
+
+
+
+
+
+
+
 
 
 
@@ -2416,7 +4830,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       createUIText(this, cx, cy - panelH / 2 + 40, '选择区域', { fontSize: '28px', color: '#ff6b35', fontStyle: 'bold' })
+
+
+
+
+
+
+
+
 
 
 
@@ -2432,7 +4862,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2456,7 +4910,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.levelSelectOverlay.add(
+
+
+
+
+
+
+
+
 
 
 
@@ -2472,7 +4942,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         fontSize: '13px',
+
+
+
+
+
+
+
+
 
 
 
@@ -2488,7 +4974,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       })
+
+
+
+
+
+
+
+
 
 
 
@@ -2504,7 +5006,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2528,7 +5054,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const startY = cy - panelH / 2 + 130;
+
+
+
+
+
+
+
+
 
 
 
@@ -2544,7 +5086,25 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+    this.levelInfoButtons = [];
+
+
+
     this.levelSelectButtons = [];
+
+
+
+
+
+
+
+
 
 
 
@@ -2560,7 +5120,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       const y = startY + i * 80;
+
+
+
+
+
+
+
+
 
 
 
@@ -2576,7 +5152,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       const label = `${i === 0 ? '🌿' : i === 1 ? '🏚️' : '❄️'} ${lv.name}  ${unlocked ? '' : '🔒'}`;
+
+
+
+
+
+
+
+
 
 
 
@@ -2592,7 +5184,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
           fontSize: '20px',
+
+
+
+
+
+
+
+
 
 
 
@@ -2608,7 +5216,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
           backgroundColor: unlocked ? '#252530' : '#1a1a22',
+
+
+
+
+
+
+
+
 
 
 
@@ -2624,7 +5248,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         })
+
+
+
+
+
+
+
+
 
 
 
@@ -2640,7 +5280,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       if (unlocked) {
+
+
+
+
+
+
+
+
 
 
 
@@ -2656,7 +5312,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         btn.on('pointerover', () => { btn.setStyle({ color: '#ff6b35', backgroundColor: '#353555' }); this.updateLevelPreview(LEVELS[i]); });
+
+
+
+
+
+
+
+
 
 
 
@@ -2672,7 +5344,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         btn.on('pointerdown', () => {
+
+
+
+
+
+
+
+
 
 
 
@@ -2688,7 +5376,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
           this.startGame(i);
+
+
+
+
+
+
+
+
 
 
 
@@ -2704,7 +5408,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -2720,6 +5440,52 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+    // 感叹号按钮：移动端无 hover，点击查看该关敌人图鉴（桌面端 hover 保留）
+
+    if (unlocked) {
+
+      const infoBtn = createUIText(this, cx - 40, y, '!', {
+
+          fontSize: '16px',
+
+          color: '#88ccff',
+
+          backgroundColor: '#1a1a35',
+
+          padding: { left: 10, right: 10, top: 6, bottom: 6 },
+
+        })
+
+        .setOrigin(0.5)
+
+        .setInteractive({ useHandCursor: true });
+
+      infoBtn.on('pointerdown', () => {
+
+        AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
+
+        this.updateLevelPreview(LEVELS[i]);
+
+      });
+
+      infoBtn.on('pointerover', () => infoBtn.setStyle({ backgroundColor: '#2a2a55' }));
+
+      infoBtn.on('pointerout', () => this.applyLevelInfoHighlight());
+
+      this.levelSelectOverlay.add(infoBtn);
+
+      this.levelInfoButtons.push(infoBtn);
+
+    }
+
+
+
+
+
       this.levelSelectButtons.push(btn);
 
 
@@ -2728,7 +5494,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2752,35 +5542,79 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     // ===== 本关敌人图鉴（数据驱动：LEVELS[i].enemyPreview） =====
+
+
 
     const gx = cx + 190;
 
+
+
     const gy = cy - panelH / 2 + 130;
+
+
 
     this.levelSelectOverlay.add(
 
+
+
       createUIText(this, gx, gy - 26, '本关敌人', { fontSize: '18px', color: '#ff6b35', fontStyle: 'bold' }).setOrigin(0.5)
+
+
 
     );
 
+
+
     this.levelPreviewRows = [];
+
+
 
     for (let r = 0; r < 5; r++) {
 
+
+
       const row = createUIText(this, gx, gy + r * 34, '', { fontSize: '14px', color: '#c8c8c8' }).setOrigin(0, 0.5);
+
+
 
       this.levelSelectOverlay.add(row);
 
+
+
       this.levelPreviewRows.push(row);
 
+
+
     }
+
+
 
     this.updateLevelPreview(LEVELS[0]);
 
 
 
+
+
+
+
     const closeBtn = createUIText(this, cx, cy + panelH / 2 - 32, '关闭', {
+
+
+
+
+
+
+
+
 
 
 
@@ -2796,7 +5630,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         color: '#e0e0e0',
+
+
+
+
+
+
+
+
 
 
 
@@ -2812,7 +5662,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         padding: { left: 36, right: 36, top: 10, bottom: 10 },
+
+
+
+
+
+
+
+
 
 
 
@@ -2828,7 +5694,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .setOrigin(0.5)
+
+
+
+
+
+
+
+
 
 
 
@@ -2844,7 +5726,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     closeBtn.on('pointerover', () => closeBtn.setStyle({ color: '#ff6b35', backgroundColor: '#2a2a35' }));
+
+
+
+
+
+
+
+
 
 
 
@@ -2860,7 +5758,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     closeBtn.on('pointerdown', () => this.levelSelectOverlay.setVisible(false));
+
+
+
+
+
+
+
+
 
 
 
@@ -2876,7 +5790,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2900,43 +5838,124 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   /** 更新选关面板的本关敌人图鉴（数据驱动：enemyPreview + ENEMY_CONFIGS） */
+
+
 
   private updateLevelPreview(level: LevelConfig): void {
 
+
+
     const list = level.enemyPreview ?? [];
+
+
 
     for (let r = 0; r < this.levelPreviewRows.length; r++) {
 
+
+
       const item = list[r];
+
+
 
       if (item) {
 
+
+
         const cfg = ENEMY_CONFIGS[item.type];
+
+
 
         const color = '#' + (cfg.color ?? 0x888888).toString(16).padStart(6, '0');
 
+
+
         this.levelPreviewRows[r]
+
+
 
           .setText('◆ ' + (cfg.name ?? item.type) + '  —  ' + item.note)
 
+
+
           .setColor(color)
+
+
 
           .setVisible(true);
 
+
+
       } else {
+
+
 
         this.levelPreviewRows[r].setVisible(false);
 
+
+
       }
+
+
 
     }
 
+
+
+
+    // 高亮当前图鉴来源关卡（感叹号按钮）
+
+    const idx = LEVELS.findIndex((lv) => lv.id === level.id);
+
+    this.previewLevelIndex = idx;
+
+    this.applyLevelInfoHighlight();
   }
 
 
 
+
+
+
+
+
+  /** 感叹号按钮高亮：高亮当前图鉴来源关卡，其余恢复默认 */
+
+  private applyLevelInfoHighlight(): void {
+
+    this.levelInfoButtons.forEach((b, k) => {
+
+      const active = k === this.previewLevelIndex;
+
+      b.setStyle({
+
+        color: active ? '#ffd700' : '#88ccff',
+
+        backgroundColor: active ? '#35355a' : '#1a1a35',
+
+      });
+
+    });
+
+  }
+
   private refreshLevelSelect(): void {
+
+
+
+
+
+
+
+
 
 
 
@@ -2952,7 +5971,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.levelSelectButtons.forEach((btn, i) => {
+
+
+
+
+
+
+
+
 
 
 
@@ -2968,7 +6003,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       if (!lv) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -2984,7 +6035,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       btn.setText(`${i === 0 ? '🌿' : i === 1 ? '🏚️' : '❄️'} ${lv.name}  ${unlocked ? '' : '🔒'}`);
+
+
+
+
+
+
+
+
 
 
 
@@ -3000,7 +6067,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       if (unlocked && !btn.input?.enabled) {
+
+
+
+
+
+
+
+
 
 
 
@@ -3016,7 +6099,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         btn.on('pointerover', () => btn.setStyle({ color: '#ff6b35', backgroundColor: '#353555' }));
+
+
+
+
+
+
+
+
 
 
 
@@ -3032,7 +6131,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         btn.on('pointerdown', () => {
+
+
+
+
+
+
+
+
 
 
 
@@ -3048,7 +6163,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
           this.startGame(i);
+
+
+
+
+
+
+
+
 
 
 
@@ -3064,7 +6195,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -3080,7 +6227,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3112,7 +6283,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   private createSettingsOverlay(): void {
+
+
+
+
+
+
+
+
 
 
 
@@ -3128,7 +6323,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const height = GameConfig.GAME_HEIGHT;
+
+
+
+
+
+
+
+
 
 
 
@@ -3144,7 +6355,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const cy = height / 2;
+
+
+
+
+
+
+
+
 
 
 
@@ -3160,7 +6387,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const panelH = 380;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3192,7 +6443,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 全屏遮罩（点击遮罩也可关闭）
+
+
+
+
+
+
+
+
 
 
 
@@ -3208,7 +6483,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .rectangle(width / 2, height / 2, width, height, 0x000000, 0.7)
+
+
+
+
+
+
+
+
 
 
 
@@ -3224,7 +6515,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     mask.on('pointerdown', () => this.settingsOverlay.setVisible(false));
+
+
+
+
+
+
+
+
 
 
 
@@ -3248,7 +6555,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 面板背景
+
+
+
+
+
+
+
+
 
 
 
@@ -3264,7 +6595,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     bg.fillStyle(0x16161f, 0.98);
+
+
+
+
+
+
+
+
 
 
 
@@ -3280,6 +6627,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     bg.lineStyle(2, 0x00ffff, 0.4);
 
 
@@ -3288,7 +6643,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     bg.strokeRoundedRect(cx - panelW / 2, cy - panelH / 2, panelW, panelH, 14);
+
+
+
+
+
+
+
+
 
 
 
@@ -3312,7 +6683,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 标题
+
+
+
+
+
+
+
+
 
 
 
@@ -3328,7 +6723,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       createUIText(this, cx, cy - panelH / 2 + 38, '设 置', { fontSize: '28px', color: '#00ffff', fontStyle: 'bold' })
+
+
+
+
+
+
+
+
 
 
 
@@ -3344,7 +6755,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3376,7 +6811,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ---------- 音乐音量 ----------
+
+
+
+
+
+
+
+
 
 
 
@@ -3392,7 +6851,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.settingsOverlay.add(createUIText(this, cx - 170, musicY, '音乐音量', labelStyle).setOrigin(0, 0.5));
+
+
+
+
+
+
+
+
 
 
 
@@ -3408,7 +6883,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .setOrigin(0.5);
+
+
+
+
+
+
+
+
 
 
 
@@ -3424,7 +6915,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.settingsOverlay.add(this.createSmallButton(cx + 40, musicY, '−', () => this.adjustMusic(-10)));
+
+
+
+
+
+
+
+
 
 
 
@@ -3448,7 +6955,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ---------- 音效音量 ----------
+
+
+
+
+
+
+
+
 
 
 
@@ -3464,7 +6995,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.settingsOverlay.add(createUIText(this, cx - 170, sfxY, '音效音量', labelStyle).setOrigin(0, 0.5));
+
+
+
+
+
+
+
+
 
 
 
@@ -3480,7 +7027,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .setOrigin(0.5);
+
+
+
+
+
+
+
+
 
 
 
@@ -3496,7 +7059,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.settingsOverlay.add(this.createSmallButton(cx + 40, sfxY, '−', () => this.adjustSfx(-10)));
+
+
+
+
+
+
+
+
 
 
 
@@ -3520,7 +7099,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ---------- 画质 ----------
+
+
+
+
+
+
+
+
 
 
 
@@ -3536,7 +7139,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.settingsOverlay.add(createUIText(this, cx - 170, qualityY, '画质', labelStyle).setOrigin(0, 0.5));
+
+
+
+
+
+
+
+
 
 
 
@@ -3552,7 +7171,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const qNames: Record<QualityLevel, string> = { low: '低', medium: '中', high: '高' };
+
+
+
+
+
+
+
+
 
 
 
@@ -3568,7 +7203,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       const text = this.createSmallButton(cx - 40 + i * 70, qualityY, qNames[lvl], () => this.setQuality(lvl));
+
+
+
+
+
+
+
+
 
 
 
@@ -3584,7 +7235,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       this.qualityTexts[lvl] = text;
+
+
+
+
+
+
+
+
 
 
 
@@ -3608,7 +7275,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ---------- 静音 ----------
+
+
+
+
+
+
+
+
 
 
 
@@ -3624,7 +7315,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.settingsOverlay.add(createUIText(this, cx - 170, muteY, '静音', labelStyle).setOrigin(0, 0.5));
+
+
+
+
+
+
+
+
 
 
 
@@ -3640,7 +7347,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .setOrigin(0.5)
+
+
+
+
+
+
+
+
 
 
 
@@ -3656,7 +7379,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.muteText.on('pointerdown', () => this.toggleMute());
+
+
+
+
+
+
+
+
 
 
 
@@ -3680,7 +7419,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ---------- 关闭 ----------
+
+
+
+
+
+
+
+
 
 
 
@@ -3696,7 +7459,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         fontSize: '18px',
+
+
+
+
+
+
+
+
 
 
 
@@ -3712,7 +7491,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         backgroundColor: '#1a1a25',
+
+
+
+
+
+
+
+
 
 
 
@@ -3728,7 +7523,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       })
+
+
+
+
+
+
+
+
 
 
 
@@ -3744,7 +7555,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .setInteractive({ useHandCursor: true });
+
+
+
+
+
+
+
+
 
 
 
@@ -3760,6 +7587,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     closeBtn.on('pointerout', () => closeBtn.setStyle({ color: '#e0e0e0', backgroundColor: '#1a1a25' }));
 
 
@@ -3768,7 +7603,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     closeBtn.on('pointerdown', () => this.settingsOverlay.setVisible(false));
+
+
+
+
+
+
+
+
 
 
 
@@ -3792,7 +7643,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 初始化画质按钮高亮
+
+
+
+
+
+
+
+
 
 
 
@@ -3808,7 +7683,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3832,7 +7731,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   private createSmallButton(x: number, y: number, label: string, callback: () => void): Phaser.GameObjects.Text {
+
+
+
+
+
+
+
+
 
 
 
@@ -3848,7 +7763,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         fontSize: '16px',
+
+
+
+
+
+
+
+
 
 
 
@@ -3864,7 +7795,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         backgroundColor: '#252530',
+
+
+
+
+
+
+
+
 
 
 
@@ -3880,7 +7827,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       })
+
+
+
+
+
+
+
+
 
 
 
@@ -3896,7 +7859,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       .setInteractive({ useHandCursor: true });
+
+
+
+
+
+
+
+
 
 
 
@@ -3912,7 +7891,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     btn.on('pointerout', () => btn.setStyle({ color: '#e0e0e0', backgroundColor: '#252530' }));
+
+
+
+
+
+
+
+
 
 
 
@@ -3928,6 +7923,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     return btn;
 
 
@@ -3936,7 +7939,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3968,7 +7995,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   private adjustMusic(delta: number): void {
+
+
+
+
+
+
+
+
 
 
 
@@ -3984,7 +8035,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     AudioManager.getInstance().setMusicVolume(this.musicVolume / 100);
+
+
+
+
+
+
+
+
 
 
 
@@ -4000,6 +8067,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     GameManager.getInstance().saveProgress();
 
 
@@ -4008,7 +8083,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4032,7 +8131,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.sfxVolume = Phaser.Math.Clamp(this.sfxVolume + delta, 0, 100);
+
+
+
+
+
+
+
+
 
 
 
@@ -4048,7 +8163,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.sfxVolText.setText(`${this.sfxVolume}%`);
+
+
+
+
+
+
+
+
 
 
 
@@ -4064,7 +8195,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4088,7 +8243,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.quality = level;
+
+
+
+
+
+
+
+
 
 
 
@@ -4104,6 +8275,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.refreshQualityHighlight();
 
 
@@ -4112,7 +8291,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4136,7 +8339,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     const qLabels: QualityLevel[] = ['low', 'medium', 'high'];
+
+
+
+
+
+
+
+
 
 
 
@@ -4152,7 +8371,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
       const text = this.qualityTexts[lvl];
+
+
+
+
+
+
+
+
 
 
 
@@ -4168,7 +8403,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         text.setStyle({ color: '#000000', backgroundColor: '#00ffff' });
+
+
+
+
+
+
+
+
 
 
 
@@ -4184,7 +8435,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
         text.setStyle({ color: '#e0e0e0', backgroundColor: '#252530' });
+
+
+
+
+
+
+
+
 
 
 
@@ -4200,6 +8467,14 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     });
 
 
@@ -4208,7 +8483,31 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4232,7 +8531,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.muted = !this.muted;
+
+
+
+
+
+
+
+
 
 
 
@@ -4248,7 +8563,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     this.muteText.setText(this.muted ? '开' : '关');
+
+
+
+
+
+
+
+
 
 
 
@@ -4264,7 +8595,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
     GameManager.getInstance().saveProgress();
+
+
+
+
+
+
+
+
 
 
 
@@ -4280,7 +8627,23 @@ export class MainMenuScene extends Phaser.Scene {
 
 
 
+
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
