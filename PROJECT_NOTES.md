@@ -25,6 +25,12 @@
   - 连带：「新纪录！」判定 runData.score >= stats.highScore（GameOverScene.ts:89）→ 延时击杀可造成假「新纪录」
   - 修复方向：① addKill 在 isGameOver 时直接 return（阻止死亡后计分）；② 结算页改用 run:end 事件载荷（endRun 定格值）而非实时读——双保险；顺带修假「新纪录」
 
+## 📌 近期改动速览（2026-09-10，摇杆根因修复 + 8 条数值/逻辑修复，已推 Gitee/GitHub Pages）
+
+### 2026-09-10
+- 移动端虚拟摇杆位置偏移【根因修复】（d8d138c）：UIScene.create 末尾把全部 children 移入 uiRoot（反向缩放容器，pos+scale 补偿 zoom）时，**摇杆 container 也被移入**，被 uiRoot 二次变换（+120,+80 偏移、×0.8 缩放）导致渲染位置永远偏离手指（此前误判为 toScreen×zoom 换算，9725b85 未解决）。修复：移入时排除 joystick.container，其独立挂场景根。验证：zoom=1.25 下 finger(150,650)→setPosition→getWorldPoint 互逆→renderedScreen(150,650) 精确闭环。
+- 8 条待修复落地（4c02fea/a3b2401/cc9f512，详见顶部清单）：再来一局停摆、结算分差、拾取物磁吸失控、横幅漂移、后台游玩摘除、全属性乘算爆炸、固定伤害随波次、Boss 数值曲线。
+
 ## 📌 近期改动速览（2026-09-06 ~ 09-09，均已提交，按 commit 索引）
 
 ### 2026-09-06（Boss/敌人/成就/表现大版本）
