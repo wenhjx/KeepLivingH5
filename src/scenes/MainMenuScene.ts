@@ -348,19 +348,6 @@ export class MainMenuScene extends Phaser.Scene {
         },
       ).setOrigin(0.5),
     );
-    // 左右分组卡片（选择区 / 图鉴区，视觉统一为同一面板）
-    const gL = this.add.graphics();
-    gL.fillStyle(0x2a2a48, 0.92);
-    gL.fillRoundedRect(cx - 390, cy - 150, 360, 260, 12);
-    gL.lineStyle(2, 0x4a4a70, 0.95);
-    gL.strokeRoundedRect(cx - 390, cy - 150, 360, 260, 12);
-    const gR = this.add.graphics();
-    gR.fillStyle(0x2a2a48, 0.92);
-    gR.fillRoundedRect(cx + 30, cy - 150, 360, 260, 12);
-    gR.lineStyle(2, 0x4a4a70, 0.95);
-    gR.strokeRoundedRect(cx + 30, cy - 150, 360, 260, 12);
-    this.levelSelectOverlay.add(gL);
-    this.levelSelectOverlay.add(gR);
     // 各关卡按钮（第 1 关恒解锁）
     const startY = cy - panelH / 2 + 130;
     const gm = GameManager.getInstance();
