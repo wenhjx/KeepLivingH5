@@ -19,6 +19,9 @@ export class VirtualJoystick {
 
   // 摇杆容器（统一挂载底座与旋钮，动态模式移动整体位置）
   private container!: Phaser.GameObjects.Container;
+  getContainer(): Phaser.GameObjects.Container {
+    return this.container;
+  }
   private base!: Phaser.GameObjects.GameObject;
   private knob!: Phaser.GameObjects.GameObject;
 
