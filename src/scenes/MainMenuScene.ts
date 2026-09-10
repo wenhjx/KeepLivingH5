@@ -298,7 +298,10 @@ export class MainMenuScene extends Phaser.Scene {
   private levelInfoButtons: Phaser.GameObjects.Text[] = [];
   private previewLevelIndex = 0;
   private levelPreviewTitle!: Phaser.GameObjects.Text;
-  private levelPreviewRows: Phaser.GameObjects.Text[] = [];
+  private levelPreviewRows: {
+    name: Phaser.GameObjects.Text;
+    note: Phaser.GameObjects.Text;
+  }[] = [];
 
   private createLevelSelectOverlay(): void {
     const width = GameConfig.GAME_WIDTH;
@@ -354,7 +357,7 @@ export class MainMenuScene extends Phaser.Scene {
       const y = startY + i * 80;
       const unlocked = i === 0 || gm.isLevelUnlocked(i);
       const label = `${i === 0 ? "🌿" : i === 1 ? "🏚️" : "❄️"} ${lv.name}  ${unlocked ? "" : "🔒"}`;
-      const btn = createUIText(this, cx - 210, y, label, {
+      const btn = createUIText(this, cx - 250, y, label, {
         fontSize: "20px",
         color: unlocked ? "#e0e0e0" : "#555555",
         backgroundColor: unlocked ? "#252530" : "#1a1a22",
@@ -377,7 +380,7 @@ export class MainMenuScene extends Phaser.Scene {
       this.levelSelectOverlay.add(btn);
       // 感叹号按钮：移动端无 hover，点击查看该关敌人图鉴（桌面端 hover 保留）
       if (unlocked) {
-        const infoBtn = createUIText(this, cx - 40, y, "!", {
+        const infoBtn = createUIText(this, cx - 105, y, "!", {
           fontSize: "16px",
           color: "#88ccff",
           backgroundColor: "#1a1a35",
@@ -400,23 +403,28 @@ export class MainMenuScene extends Phaser.Scene {
     });
     // 关闭
     // ===== 本关敌人图鉴（数据驱动：LEVELS[i].enemyPreview） =====
-    const gx = cx + 190;
+    const gx = cx + 150;
     const gy = cy - panelH / 2 + 130;
     this.levelSelectOverlay.add(
       createUIText(this, gx, gy - 26, "本关敌人", {
         fontSize: "18px",
         color: "#ff6b35",
         fontStyle: "bold",
-      }).setOrigin(0.5),
+      }).setOrigin(0, 0.5),
     );
     this.levelPreviewRows = [];
     for (let r = 0; r < 5; r++) {
-      const row = createUIText(this, gx, gy + r * 34, "", {
+      const nameT = createUIText(this, gx, gy + r * 34, "", {
         fontSize: "14px",
         color: "#c8c8c8",
       }).setOrigin(0, 0.5);
-      this.levelSelectOverlay.add(row);
-      this.levelPreviewRows.push(row);
+      const noteT = createUIText(this, gx + 88, gy + r * 34, "", {
+        fontSize: "13px",
+        color: "#8a8a99",
+      }).setOrigin(0, 0.5);
+      this.levelSelectOverlay.add(nameT);
+      this.levelSelectOverlay.add(noteT);
+      this.levelPreviewRows.push({ name: nameT, note: noteT });
     }
     this.updateLevelPreview(LEVELS[0]);
     const closeBtn = createUIText(this, cx, cy + panelH / 2 - 32, "关闭", {
@@ -443,16 +451,21 @@ export class MainMenuScene extends Phaser.Scene {
     const list = level.enemyPreview ?? [];
     for (let r = 0; r < this.levelPreviewRows.length; r++) {
       const item = list[r];
+      const row = this.levelPreviewRows[r];
       if (item) {
         const cfg = ENEMY_CONFIGS[item.type];
         const color =
           "#" + (cfg.color ?? 0x888888).toString(16).padStart(6, "0");
-        this.levelPreviewRows[r]
-          .setText("◆ " + (cfg.name ?? item.type) + "  —  " + item.note)
+        row.name
+          .setText("◆ " + (cfg.name ?? item.type))
           .setColor(color)
           .setVisible(true);
+        row.note
+          .setText(item.note.length > 12 ? item.note.slice(0, 12) + "…" : item.note)
+          .setVisible(true);
       } else {
-        this.levelPreviewRows[r].setVisible(false);
+        row.name.setVisible(false);
+        row.note.setVisible(false);
       }
     }
     // 高亮当前图鉴来源关卡（感叹号按钮）
