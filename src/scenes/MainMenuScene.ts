@@ -104,14 +104,14 @@ export class MainMenuScene extends Phaser.Scene {
 
     // 底部信息
     const stats = gm.stats;
-    createUIText(this, centerX, GameConfig.anchorY(height - 60, height), `最高分: ${stats.highScore}  |  总击杀: ${stats.totalKills}  |  游戏次数: ${stats.gamesPlayed}`, {
+    createUIText(this, centerX, height - 60, `最高分: ${stats.highScore}  |  总击杀: ${stats.totalKills}  |  游戏次数: ${stats.gamesPlayed}`, {
         fontSize: '14px',
         color: '#555555',
       })
       .setOrigin(0.5);
 
     // 版本号
-    createUIText(this, GameConfig.anchorX(width - 10, width), GameConfig.anchorY(height - 10, height), 'v0.1.0', {
+    createUIText(this, width - 10, height - 10, 'v0.1.0', {
         fontSize: '12px',
         color: '#333333',
       })

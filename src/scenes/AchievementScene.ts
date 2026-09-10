@@ -31,6 +31,8 @@ export class AchievementScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 场景实例被 scene.start 复用时成员状态会残留，进入时重置
+    this.selectedSeries = null;
     // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
     this.cameras.main.setZoom(GameConfig.uiScale);
     const { width, height } = setupUICamera(this);
@@ -150,7 +152,7 @@ export class AchievementScene extends Phaser.Scene {
     });
 
     // ===== 底部：永久加成汇总 =====
-    this.renderBonusSummary(cx, GameConfig.anchorY(height - 26, height));
+    this.renderBonusSummary(cx, height - 26);
   }
 
   /** 切换系列并重绘列表 */

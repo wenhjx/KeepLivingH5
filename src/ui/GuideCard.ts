@@ -1,4 +1,5 @@
 import { createUIText } from '../utils/UIText';
+import { GameConfig } from '../game/GameConfig';
 import Phaser from 'phaser';
 
 /**
@@ -71,27 +72,30 @@ export class GuideCard {
     const position = this.config.position ?? 'top-right';
 
     // 计算位置
+    const k = GameConfig.uiScale;
+    const cw = this.cardWidth * k;
+    const ch = this.cardHeight * k;
     const margin = 16;
     let x: number;
     let y: number;
     switch (position) {
       case 'center':
-        x = width / 2;
-        y = height / 2;
+        x = GameConfig.anchorX(width / 2, width);
+        y = GameConfig.anchorY(height / 2, height);
         break;
       case 'bottom':
-        x = width / 2;
-        y = height - this.cardHeight / 2 - 30;
+        x = GameConfig.anchorX(width / 2, width);
+        y = GameConfig.anchorY(height - ch / 2 - 30 * k, height);
         break;
       case 'top':
-        x = width / 2;
-        y = this.cardHeight / 2 + 20;
+        x = GameConfig.anchorX(width / 2, width);
+        y = GameConfig.anchorY(ch / 2 + 20 * k, height);
         break;
       case 'top-right':
       default:
         // 右上角弹出，不遮挡中央战场
-        x = width - this.cardWidth / 2 - margin;
-        y = this.cardHeight / 2 + margin;
+        x = GameConfig.anchorX(width - margin - cw / 2, width);
+        y = GameConfig.anchorY(margin + ch / 2, height);
         break;
     }
 

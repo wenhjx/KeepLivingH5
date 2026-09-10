@@ -52,9 +52,10 @@ export class InventoryUI {
     // 4 个固定槽位（从右往左排列在右下角，避开 HUD 区域）
     // 注意：加入 uiRoot 的组件须用 scene.scale（渲染尺寸）坐标，逻辑 960 尺寸会偏移到中央
     const { width, height } = this.scene.scale;
-    const totalWidth = INVENTORY_ORDER.length * this.slotSize + (INVENTORY_ORDER.length - 1) * this.slotSpacing;
-    const startX = GameConfig.anchorX(width - 12 - totalWidth + this.slotSize / 2, width);
-    const y = GameConfig.anchorY(height - 12 - this.slotSize / 2, height);
+    const us = GameConfig.uiScale;
+    const totalWidth = (INVENTORY_ORDER.length * this.slotSize + (INVENTORY_ORDER.length - 1) * this.slotSpacing) * us;
+    const startX = GameConfig.anchorX(width - 12 - totalWidth + (this.slotSize * us) / 2, width);
+    const y = GameConfig.anchorY(height - 12 - (this.slotSize * us) / 2, height);
 
     // 点击判定采用手动坐标检测（uiRoot 局部坐标 = pointer.x/y），彻底规避嵌套 Container +
     // 父级 scale 时 setInteractive hitArea 命中偏移（曾导致点击区域整体偏上一个槽位高度）。
