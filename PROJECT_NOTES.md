@@ -324,3 +324,13 @@
 - Boss 难度曲线 2.2^(tier-1)→1.5^(tier-1): wave60 58400倍→86倍
 - 验证: build 通过; 实机确认 ①waveTimer推进 ④横幅居中 ⑧出界清理/磁吸解除 ③⑥数值口径
 - 备注: 已存爆炸数值存档不受新公式影响(读档原样恢复), 建议清档重玩验证; 数值曲线需配合 scripts/balance-report.html 长期跟踪
+### 2026-09-10 晚（地形增强 + 调试刷 Boss，分支 feat-terrain-boss，c55ec23）
+- 加速区风道（BoostZoneConfig，speedFactor>1）：第1关草地 boost_01/02、第2关废墟 r_boost_01/02（移速+35%）
+- TerrainManager: createBoostZones（青绿块+流动线+箭头视觉）+ getSpeedFactorAt（合并减速/加速，重叠减速优先）
+- GameScene 玩家移速改查 getSpeedFactorAt；WaveManager.forceSpawnBoss（复用完整 Boss 流程）
+- DebugAPI/DebugPanel: 🐲 Boss×1 刷怪按钮
+- 验证：tsc 通过；BU 实测 factor=1.35、视觉明显、Boss 生成带顶部血条（2600/2600）
+- 成就排查结论：初战告捷/征服三境不解锁=历史存档脱节（成就胜利计数 4020caf 2026-09-08 11:38 上线，之前通关只解锁关卡不记 wins）；实测通关弹窗+右上角金色提示正常
+
+## 待办
+- 成就解锁提示（GuideCard）层级抬到最高：玩家反馈通关结算时右上角提示层级偏低，需确保浮于所有 UI 之上（当前 depth=500，结算场景有更高层元素时被压）
