@@ -111,8 +111,10 @@ export class UIScene extends Phaser.Scene {
     this.setupEventListeners();
 
     // 将场景已创建的全部 UI 对象移入反向缩放根容器（保持视觉位置/比例不变）
+    // 例外：虚拟摇杆容器独立挂场景根（自身做 zoom 换算 + scrollFactor 0），
+    // 移入 uiRoot 会被其 pos+scale 二次变换，导致摇杆渲染位置偏离手指。
     this.children.list.slice().forEach((child) => {
-      if (child !== this.uiRoot) this.uiRoot.add(child);
+      if (child !== this.uiRoot && child !== this.joystick?.container) this.uiRoot.add(child);
     });
   }
 
