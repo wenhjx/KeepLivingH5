@@ -100,7 +100,9 @@ export class VirtualJoystick {
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (this.active) return;
       // pointer.world 坐标 → 屏幕逻辑坐标（UI 相机 zoom 高清渲染下两空间差 zoom 倍）
-      const sp = this.toScreen(pointer.x, pointer.y);
+      // pointer.x/y 即屏幕逻辑坐标（scale.width/height 空间），直接使用；
+      // 勿再过 toScreen（会把逻辑坐标当 world 再乘 zoom，导致弹出位置偏右下 zoom 倍）
+      const sp = { x: pointer.x, y: pointer.y };
 
       if (this.mode === 'dynamic') {
         // 动态模式：左半屏任意位置触碰，即在按下位置弹出摇杆
@@ -120,7 +122,7 @@ export class VirtualJoystick {
     // 监听指针移动
     this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (!this.active || pointer.id !== this.pointerId) return;
-      const sp = this.toScreen(pointer.x, pointer.y);
+      const sp = { x: pointer.x, y: pointer.y };
       this.updateKnob(sp.x, sp.y);
     });
 
@@ -134,15 +136,6 @@ export class VirtualJoystick {
       if (!this.active || pointer.id !== this.pointerId) return;
       this.deactivate();
     });
-  }
-
-  /** world 坐标 → 屏幕逻辑坐标（Phaser 无 getScreenPoint，手动按相机 scroll/zoom 换算） */
-  private toScreen(worldX: number, worldY: number): { x: number; y: number } {
-    const cam = this.scene.cameras.main;
-    return {
-      x: (worldX - cam.scrollX) * cam.zoom,
-      y: (worldY - cam.scrollY) * cam.zoom,
-    };
   }
 
   private activate(pointer: Phaser.Input.Pointer): void {
