@@ -46,7 +46,11 @@ export class GameManager {
   private _quickStart: QuickStartConfig | null = null;
   private _saveSystem: SaveSystem | null = null;
   private _pendingRun: SavedRun | null = null;
-  private _initialized = false;
+  /** 最近一局结算快照（endRun 定格，供结算场景读，避免延时击杀/实时值污染） */
+  private _lastRunSummary: {
+    wave: number; level: number; kills: number; score: number;
+    survivalTime: number; isVictory: boolean; highScore: number;
+  } | null = null;  private _initialized = false;
   /** 试玩场地：复用主场景全部战斗逻辑，但不产生任何收益（不存档/不计统计/不解锁/不触发成就） */
   private _testMode = false;
   /** 当前激活角色 id（默认拓荒者；未来主角选择界面切换此值） */
@@ -184,6 +188,7 @@ export class GameManager {
     // 对局结束（死亡），清除可继续的存档
     this.clearSavedRun();
     this.saveProgress();
+    this._lastRunSummary = { ...this._runData, highScore: this._stats.highScore };
     EventBus.emit('run:end', { ...this._runData, highScore: this._stats.highScore });
   }
 
@@ -215,9 +220,13 @@ export class GameManager {
     }
     // 注意：不调用 clearSavedRun()，保留进行中对局供"继续游戏"恢复
     this.saveProgress();
+    this._lastRunSummary = { ...this._runData, highScore: this._stats.highScore };
   }
 
   addKill(score: number = 10): void {
+    // 死亡后不计分：Arcade 物理在 update 停摆后仍会 step，已发射子弹可能延时命中敌人，
+    // 若不拦截会把延时击杀计入结算（导致「最高分≠当前分」与假「新纪录」）
+    if (this._runData.isGameOver) return;
     this._runData.kills++;
     this._runData.score += score;
     EventBus.emit('run:kill', { kills: this._runData.kills, score: this._runData.score });
@@ -559,6 +568,11 @@ export class GameManager {
 
   get runData() {
     return { ...this._runData };
+  }
+
+  /** 最近一局结算快照（无快照时返回 null，调用方回退 runData） */
+  get lastRunSummary() {
+    return this._lastRunSummary ? { ...this._lastRunSummary } : null;
   }
 
   get stats() {

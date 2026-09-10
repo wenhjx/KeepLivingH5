@@ -26,7 +26,8 @@ export class GameOverScene extends Phaser.Scene {
     // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
     const { width, height } = setupUICamera(this);
     const gm = GameManager.getInstance();
-    const runData = gm.runData;
+    // 结算优先读 endRun 定格快照（不含延时击杀污染）；快照缺失时回退实时值
+    const runData = gm.lastRunSummary ?? gm.runData;
     const stats = gm.stats;
     const centerX = width / 2;
     const isVictory = this.mode === 'victory';
@@ -184,6 +185,10 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   private restart(): void {
+    // 必须先重置对局数据再切场景，否则 _runData.isGameOver 残留 → GameScene.update 整帧停摆
+    // （与 MainMenuScene.startGame 正常路径一致；保留上局关卡 level，重置局内数据）
+    const gm = GameManager.getInstance();
+    gm.startNewRun(gm.runData.level);
     this.scene.start('GameScene');
     this.scene.launch('UIScene');
   }

@@ -70,17 +70,8 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   fps: {
     target: 60,
-    // 关键：后台运行支持。默认 Phaser 用 requestAnimationFrame 驱动主循环，
-    // 页面切走(不可见)时浏览器会停止 RAF，导致游戏时间/波次不再推进。
-    // forceSetTimeOut 让主循环改用 setTimeout 驱动——后台页面仍会以低频继续
-    // 执行，实现挂机/自动游玩后台持续运行；切回前台恢复满帧。
-    forceSetTimeOut: true,
-    // 关键：禁用 delta 平滑。Phaser 的 smoothDelta 会在页面失焦(!inFocus)或
-    // delta 过大时把每帧 delta 钳制到 ~16.7ms（_target/_min），导致后台虽然
-    // 主循环在跑，但游戏内时间/波次几乎不走（"数据流转但时间不动"）。
-    // smoothStep=false 后 delta 直接用真实原始值——后台 1 秒/帧 → delta=1000ms，
-    // 游戏时间照常推进，实现真正的后台挂机。
-    smoothStep: false,
+    // 后台挂机支持已摘除（2026-09-10）：forceSetTimeOut/smoothStep 的覆盖曾导致
+    // 切后台击杀数不涨且主循环异常，恢复 Phaser 默认——页面不可见时游戏自动暂停。
   },
   physics: {
     default: 'arcade',
@@ -112,17 +103,3 @@ const game = new Phaser.Game(config);
 // 暴露游戏实例到全局，便于调试（Boss 战验证/压力测试等通过控制台驱动）
 (window as any).__game = game;
 
-// 禁用"页面不可见/窗口失焦时自动暂停"：让游戏支持后台运行（切窗不暂停），
-// 方便后台挂机/自动游玩持续进行。Phaser 3.80 已移除 disableVisibilityChange 配置。
-// 关键：Phaser 的 HIDDEN/VISIBLE/BLUR/FOCUS 暂停监听是在 Game.start() 中注册的，
-// 而 start() 由异步纹理加载(texturesReady)触发，所以 new Phaser.Game() 后立刻 off()
-// 时机太早、监听尚未注册，导致失焦仍会暂停。这里改为等 READY 事件后再于下一 tick 移除。
-// 游戏内暂停仍由 GameManager.setPaused 控制，不受影响。
-game.events.once(Phaser.Core.Events.READY, () => {
-  setTimeout(() => {
-    game.events.off(Phaser.Core.Events.HIDDEN);
-    game.events.off(Phaser.Core.Events.VISIBLE);
-    game.events.off(Phaser.Core.Events.BLUR);
-    game.events.off(Phaser.Core.Events.FOCUS);
-  }, 0);
-});

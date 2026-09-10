@@ -57,6 +57,11 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
         this.setVelocity(0, 0);
       }
     });
+
+    // 60s 未拾取自动清理（超限阶段拾取物可能病态滞留，防止场景 children 无限堆积）
+    this.scene.time.delayedCall(60000, () => {
+      if (this.active) this.despawn();
+    });
   }
 
   update(time: number, delta: number, player: Player): void {
@@ -65,16 +70,28 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
     // 上下浮动效果
     this.setY(this.y + Math.sin(time / 300 + this.bobOffset) * 0.3);
 
-    // 检测磁吸范围
-    const dist = MathUtils.distance(this.x, this.y, player.x, player.y);
-    if (dist < player.getPickupRadius()) {
-      this.magnetActive = true;
+    // 出界护栏：超过地图量级（±10 万像素，地图仅 3000×3000）直接销毁，
+    // 防止病态磁吸把拾取物甩到几百万像素外永久滞留拖垮性能
+    if (Math.abs(this.x) > 100000 || Math.abs(this.y) > 100000) {
+      this.despawn();
+      return;
     }
 
-    // 磁吸移动
+    // 检测磁吸范围（带滞回：进入半径激活，超出 1.5 倍半径解除，避免边缘抖动）
+    const radius = player.getPickupRadius();
+    const dist = MathUtils.distance(this.x, this.y, player.x, player.y);
+    if (dist < radius) {
+      this.magnetActive = true;
+    } else if (this.magnetActive && dist > radius * 1.5) {
+      this.magnetActive = false;
+    }
+
+    // 磁吸移动（速度保底 0、封顶 3×magnetSpeed：
+    // 原公式在 dist > radius 时 (1 - dist/radius) 为负 → 负巨大速度 → 反方向超高速正反馈爆炸）
     if (this.magnetActive) {
       const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-      const speed = this.config.magnetSpeed * (1 + (1 - dist / player.getPickupRadius()) * 2);
+      let speed = this.config.magnetSpeed * (1 + (1 - dist / radius) * 2);
+      speed = Math.max(0, Math.min(speed, this.config.magnetSpeed * 3));
       this.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
     }
   }

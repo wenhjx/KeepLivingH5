@@ -48,7 +48,8 @@ export class GameFeedback {
 
     const banner = createUIText(
       scene,
-      scene.cameras.main.width / 2,
+      // scrollFactor(0) 时显示位置 = x × zoom，需除以 zoom 才真正居中
+      scene.cameras.main.width / 2 / scene.cameras.main.zoom,
       132,
       isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${wave} 波`,
       {
@@ -61,6 +62,7 @@ export class GameFeedback {
       }
     )
       .setOrigin(0.5)
+      .setScrollFactor(0) // 屏幕固定：不随相机滚动，玩家任意位置都可见（与 GameScene Boss 横幅一致）
       .setDepth(300)
       .setAlpha(0)
       .setScale(0.7);
