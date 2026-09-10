@@ -351,14 +351,14 @@ export class MainMenuScene extends Phaser.Scene {
     // 左右分组卡片（选择区 / 图鉴区，视觉统一为同一面板）
     const gL = this.add.graphics();
     gL.fillStyle(0x2a2a48, 0.92);
-    gL.fillRoundedRect(cx - 420, cy - 140, 340, 235, 12);
+    gL.fillRoundedRect(cx - 390, cy - 150, 360, 260, 12);
     gL.lineStyle(2, 0x4a4a70, 0.95);
-    gL.strokeRoundedRect(cx - 420, cy - 140, 340, 235, 12);
+    gL.strokeRoundedRect(cx - 390, cy - 150, 360, 260, 12);
     const gR = this.add.graphics();
     gR.fillStyle(0x2a2a48, 0.92);
-    gR.fillRoundedRect(cx + 60, cy - 140, 340, 235, 12);
+    gR.fillRoundedRect(cx + 30, cy - 150, 360, 260, 12);
     gR.lineStyle(2, 0x4a4a70, 0.95);
-    gR.strokeRoundedRect(cx + 60, cy - 140, 340, 235, 12);
+    gR.strokeRoundedRect(cx + 30, cy - 150, 360, 260, 12);
     this.levelSelectOverlay.add(gL);
     this.levelSelectOverlay.add(gR);
     // 各关卡按钮（第 1 关恒解锁）
@@ -370,7 +370,7 @@ export class MainMenuScene extends Phaser.Scene {
       const y = startY + i * 80;
       const unlocked = i === 0 || gm.isLevelUnlocked(i);
       const label = `${i === 0 ? "🌿" : i === 1 ? "🏚️" : "❄️"} ${lv.name}  ${unlocked ? "" : "🔒"}`;
-      const btn = createUIText(this, cx - 220, y, label, {
+      const btn = createUIText(this, cx - 210, y, label, {
         fontSize: "20px",
         color: unlocked ? "#e0e0e0" : "#555555",
         backgroundColor: unlocked ? "#252530" : "#1a1a22",
@@ -393,7 +393,7 @@ export class MainMenuScene extends Phaser.Scene {
       this.levelSelectOverlay.add(btn);
       // 感叹号按钮：移动端无 hover，点击查看该关敌人图鉴（桌面端 hover 保留）
       if (unlocked) {
-        const infoBtn = createUIText(this, cx - 125, y, "!", {
+        const infoBtn = createUIText(this, cx - 110, y, "!", {
           fontSize: "16px",
           color: "#88ccff",
           backgroundColor: "#1a1a35",
@@ -416,7 +416,7 @@ export class MainMenuScene extends Phaser.Scene {
     });
     // 关闭
     // ===== 本关敌人图鉴（数据驱动：LEVELS[i].enemyPreview） =====
-    const gx = cx + 135;
+    const gx = cx + 55;
     const gy = cy - panelH / 2 + 130;
     this.levelSelectOverlay.add(
       createUIText(this, gx, gy - 26, "本关敌人", {
