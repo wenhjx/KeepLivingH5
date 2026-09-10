@@ -23,14 +23,12 @@ export class DebugScene extends Phaser.Scene {
 
   create(): void {
     // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
-    this.cameras.main.setZoom(GameConfig.uiScale);
-    const z = GameConfig.renderScale;
-    // 与 UIScene 一致的高清渲染：camera zoom 提高渲染像素密度，
-    // 反向缩放根容器抵消 zoom，使 UI 的视觉位置与尺寸保持逻辑基准下的效果
+        const z = GameConfig.renderScale;
+    const u = GameConfig.uiScale;
     this.cameras.main.setZoom(z);
     this.uiRoot = this.add
-      .container((this.scale.width / 2) * (1 - 1 / z), (this.scale.height / 2) * (1 - 1 / z))
-      .setScale(1 / z);
+      .container((this.scale.width / 2) * (1 - u / z), (this.scale.height / 2) * (1 - u / z))
+      .setScale(u / z);
 
     // 调试面板（按 ` 键切换）；传入 uiRoot 供滚动遮罩做 world 坐标换算
     this.debugPanel = new DebugPanel(this, this.uiRoot);

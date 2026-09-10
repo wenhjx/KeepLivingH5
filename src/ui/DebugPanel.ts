@@ -74,14 +74,14 @@ export class DebugPanel {
 
   private create(): void {
     const { width, height } = this.scene.scale;
-    this.panelX = width - this.panelWidth - 12;
-    this.panelY = 12;
+    this.panelX = GameConfig.anchorX(width - 12, width) - this.panelWidth; // 右缘贴边（宽度随缩放放大，需按右缘锚定）
+    this.panelY = GameConfig.anchorY(12, height);
 
     // 内容总高度估算（决定是否需要滚动；面板高度上限 = 屏幕 3/4 高）
     const contentHeight = this.computeContentHeight();
     // 界面高度不随内容无限变长：内容少时紧凑，内容多时封顶为屏幕高度 3/4，
     // 超出部分在面板内滚动查看（UILayout 排布 + 几何 mask 裁剪）
-    const panelHeight = Math.min(contentHeight + this.padding, Math.round(height * 0.75));
+    const panelHeight = Math.min(contentHeight + this.padding, Math.round((height * 0.75) / GameConfig.uiScale)); // 渲染高度仍封顶 3/4 屏
     this.viewportH = panelHeight - 40 - this.padding;
 
     // 半透明背景
