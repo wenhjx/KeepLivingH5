@@ -124,6 +124,14 @@ export class WaveManager {
     if (wave >= 6) {
       this.currentSpawnTable.push({ type: 'elite', weight: (5 + wave * 0.5) * mult('elite') });
     }
+
+    // 本关独有怪（第 2 波起出现，恒定权重，关卡特色）
+    const excl = this.levelConfig.exclusiveEnemies;
+    if (excl) {
+      for (const [etype, eweight] of Object.entries(excl)) {
+        if (wave >= 2) this.currentSpawnTable.push({ type: etype as EnemyType, weight: eweight });
+      }
+    }
   }
 
   /** 关卡数值调参：血量/攻击 × 关卡倍率（克隆配置避免污染 ENEMY_CONFIGS） */
