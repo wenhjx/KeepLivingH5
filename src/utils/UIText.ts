@@ -21,7 +21,7 @@ export function createUIText(
   });
   t.setPadding({ top: 3, bottom: 3 });
   // 高清文字：文字内部按渲染倍率绘制（高分屏不糊）
-  t.setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
+  t.setResolution(Math.max(1, Math.ceil(GameConfig.renderScale * GameConfig.uiScale)));
   // 文字纹理用 LINEAR 平滑采样——pixel 主题关闭全局抗锯齿（antialias=false），
   // 若文字也走最近邻会边缘发糊/锯齿；这里让文字独立保持"普通文字"的平滑观感。
   TextSmoothing.apply(t);

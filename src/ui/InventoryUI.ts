@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { EventBus } from '../utils/EventBus';
 import { USABLE_ITEMS, INVENTORY_ORDER } from '../data/items';
 import { GameManager } from '../game/GameManager';
+import { GameConfig } from '../game/GameConfig';
 import type { Player } from '../entities/Player';
 
 /**
@@ -52,8 +53,8 @@ export class InventoryUI {
     // 注意：加入 uiRoot 的组件须用 scene.scale（渲染尺寸）坐标，逻辑 960 尺寸会偏移到中央
     const { width, height } = this.scene.scale;
     const totalWidth = INVENTORY_ORDER.length * this.slotSize + (INVENTORY_ORDER.length - 1) * this.slotSpacing;
-    const startX = width - 12 - totalWidth + this.slotSize / 2;
-    const y = height - 12 - this.slotSize / 2;
+    const startX = GameConfig.anchorX(width - 12 - totalWidth + this.slotSize / 2, width);
+    const y = GameConfig.anchorY(height - 12 - this.slotSize / 2, height);
 
     // 点击判定采用手动坐标检测（uiRoot 局部坐标 = pointer.x/y），彻底规避嵌套 Container +
     // 父级 scale 时 setInteractive hitArea 命中偏移（曾导致点击区域整体偏上一个槽位高度）。

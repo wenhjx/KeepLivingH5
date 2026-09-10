@@ -8,6 +8,7 @@ import { ACHIEVEMENTS, ACHIEVEMENT_SERIES, type AchievementDef, type Achievement
 import { AchievementManager } from '../systems/AchievementManager';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 成就系统面板（独立叠加场景）
@@ -30,6 +31,8 @@ export class AchievementScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
+    this.cameras.main.setZoom(GameConfig.uiScale);
     const { width, height } = setupUICamera(this);
     const cx = width / 2;
     const ach = AchievementManager.getInstance();
@@ -147,7 +150,7 @@ export class AchievementScene extends Phaser.Scene {
     });
 
     // ===== 底部：永久加成汇总 =====
-    this.renderBonusSummary(cx, height - 26);
+    this.renderBonusSummary(cx, GameConfig.anchorY(height - 26, height));
   }
 
   /** 切换系列并重绘列表 */

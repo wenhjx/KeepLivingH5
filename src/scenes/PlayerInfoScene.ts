@@ -8,6 +8,7 @@ import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import type { Player } from '../entities/Player';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 玩家属性面板（二游式：按 C 打开的角色详情）
@@ -27,6 +28,8 @@ export class PlayerInfoScene extends Phaser.Scene {
   }
 
   create(data?: { prevPaused?: boolean }): void {
+    // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
+    this.cameras.main.setZoom(GameConfig.uiScale);
     this.prevPaused = data?.prevPaused ?? GameManager.getInstance().isPaused;
     // UI 相机统一设置
     const { width, height } = setupUICamera(this);

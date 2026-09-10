@@ -10,6 +10,17 @@ export class GameConfig {
   static readonly GAME_HEIGHT = 640;
   /** 当前渲染分辨率倍率（main.ts 启动时计算；渲染分辨率 = 逻辑分辨率 × 倍率） */
   static renderScale = 1;
+  /** 真机 UI 缩放系数（main.ts 启动时计算：仅横屏真机、画布被 FIT 压缩时启用，范围 1.15~1.35） */
+  static uiScale = 1;
+  /** 中心缩放下把"贴边坐标"换算回原坐标（放大后元素仍贴边；uiScale=1 时原样返回） */
+  static anchorX(x: number, w: number): number {
+    const k = GameConfig.uiScale;
+    return x / k + (w / 2) * (1 - 1 / k);
+  }
+  static anchorY(y: number, h: number): number {
+    const k = GameConfig.uiScale;
+    return y / k + (h / 2) * (1 - 1 / k);
+  }
   /** 背景色 */
   static readonly BG_COLOR = '#0a0a0f';
   /** 是否像素风模式（开启后：最近邻采样 + 像素对齐，边缘锐利不模糊） */

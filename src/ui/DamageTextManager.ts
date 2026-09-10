@@ -19,7 +19,7 @@ export class DamageTextManager {
     if (!text) {
       text = this.scene.add.text(0, 0, '', {
         fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
-        fontSize: '16px',
+        fontSize: 16 * GameConfig.uiScale + 'px',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: '#000000',
@@ -69,7 +69,7 @@ export class DamageTextManager {
     if (!t) {
       t = this.scene.add.text(0, 0, '', {
         fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
-        fontSize: '15px',
+        fontSize: 15 * GameConfig.uiScale + 'px',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: '#000000',

@@ -54,6 +54,25 @@ GameConfig.renderScale = computeRenderScale();
 const RENDER_WIDTH = Math.round(GameConfig.GAME_WIDTH * GameConfig.renderScale);
 const RENDER_HEIGHT = Math.round(GameConfig.GAME_HEIGHT * GameConfig.renderScale);
 
+// 真机 UI 缩放：FIT 下画布被压缩到 <0.85 时（横屏手机），整体放大 UI 到可读尺寸。
+// 仅"真机横屏"触发（宽高比≥1.5，?mobile=1 桌面近方窗模拟不受影响）；上限 1.35 由最宽面板（PlayerInfo 700px）约束。
+{
+  const gm = GameManager.getInstance();
+  const iw = window.innerWidth;
+  const ih = window.innerHeight;
+  if (gm.isMobile && iw > ih && iw / ih >= 1.5) {
+    const canvasFit = Math.min(iw / RENDER_WIDTH, ih / RENDER_HEIGHT);
+    if (canvasFit < 0.85) {
+      GameConfig.uiScale = Math.min(Math.max(1 / canvasFit, 1.15), 1.35);
+    }
+  }
+}
+// URL 参数覆盖（真机参数验证用）：?uiscale=1.35 强制指定 UI 缩放，不受触发条件限制
+{
+  const _us = new URLSearchParams(window.location.search).get('uiscale');
+  if (_us) GameConfig.uiScale = Math.min(Math.max(parseFloat(_us) || 1, 1), 1.6);
+}
+
 // Phaser 游戏配置
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,

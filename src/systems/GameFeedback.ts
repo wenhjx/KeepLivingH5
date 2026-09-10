@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { EventBus } from '../utils/EventBus';
 import { createUIText } from '../utils/UIText';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 游戏演出 / 反馈层（纯表现，与玩法解耦）
@@ -53,7 +54,7 @@ export class GameFeedback {
       132,
       isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${wave} 波`,
       {
-        fontSize: isBoss ? '44px' : '34px',
+        fontSize: (isBoss ? 44 : 34) * GameConfig.uiScale + 'px',
         color: isBoss ? '#ff4444' : '#ffffff',
         fontStyle: 'bold',
         stroke: '#000000',

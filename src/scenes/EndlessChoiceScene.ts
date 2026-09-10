@@ -4,6 +4,7 @@ import { EventBus } from '../utils/EventBus';
 import { setupUICamera } from '../utils/CameraHelper';
 import { GameManager } from '../game/GameManager';
 import { LEVELS, hasNextLevel } from '../data/levels';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * 通关结算场景（无尽模式入口 / 关卡推进入口）
@@ -18,6 +19,8 @@ export class EndlessChoiceScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
+    this.cameras.main.setZoom(GameConfig.uiScale);
     const { width, height } = setupUICamera(this);
     // 场景实例会复用：stop 后再 launch 重新走 create，自动选择标记必须重置
     this.autoTriggered = false;

@@ -40,9 +40,10 @@ export class UIScene extends Phaser.Scene {
     // 故创建"反向缩放根容器"（位置 = 中心×(1-1/z)、scale = 1/z）抵消 zoom，
     // 使 UI 的视觉位置与尺寸保持逻辑基准下的效果。
     this.cameras.main.setZoom(z);
+    const u = GameConfig.uiScale;
     this.uiRoot = this.add
-      .container((this.scale.width / 2) * (1 - 1 / z), (this.scale.height / 2) * (1 - 1 / z))
-      .setScale(1 / z);
+      .container((this.scale.width / 2) * (1 - u / z), (this.scale.height / 2) * (1 - u / z))
+      .setScale(u / z);
     const gm = GameManager.getInstance();
 
     // 绑定引导提示管理器到 UI 场景
@@ -54,7 +55,7 @@ export class UIScene extends Phaser.Scene {
     // 小地图（左上角，数据驱动：以后新增区域/更大地图自动适配）
     const gameScene = this.scene.get('GameScene') as any;
     const mapSize = gameScene?.getMapSize?.() || { width: 3000, height: 3000 };
-    this.minimap = new Minimap(this, 10, 10, 160, 120, mapSize.width, mapSize.height);
+    this.minimap = new Minimap(this, GameConfig.anchorX(10, this.scale.width), GameConfig.anchorY(10, this.scale.height), 160, 120, mapSize.width, mapSize.height);
 
     // 物品栏（右下角，点击或按 1-4 使用消耗品）
     this.inventoryUI = new InventoryUI(this);
@@ -70,7 +71,7 @@ export class UIScene extends Phaser.Scene {
     }
 
     // 暂停按钮（右上角，HUD 波次信息下移让位，避免重叠）
-    this.pauseButton = createUIText(this, this.scale.width - 16, 16, '⏸️', {
+    this.pauseButton = createUIText(this, GameConfig.anchorX(this.scale.width - 16, this.scale.width), GameConfig.anchorY(16, this.scale.height), '⏸️', {
         fontSize: '20px',
         backgroundColor: '#1a1a25',
         padding: { left: 10, right: 10, top: 5, bottom: 5 },
@@ -87,7 +88,7 @@ export class UIScene extends Phaser.Scene {
 
     // 移动端调试按钮（暂停按钮左侧）：触屏设备没有 ` 快捷键，床上玩也能唤起调试面板
     if (GameManager.getInstance().isMobile) {
-      this.debugButton = createUIText(this, this.scale.width - 64, 16, '🛠️', {
+      this.debugButton = createUIText(this, GameConfig.anchorX(this.scale.width - 64, this.scale.width), GameConfig.anchorY(16, this.scale.height), '🛠️', {
         fontSize: '20px',
         backgroundColor: '#1a1a25',
         padding: { left: 10, right: 10, top: 5, bottom: 5 },

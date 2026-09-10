@@ -27,6 +27,8 @@ export class WeaponSelectScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
+    this.cameras.main.setZoom(GameConfig.uiScale);
     const { width, height } = setupUICamera(this);
     // 场景实例会复用：stop 后再 launch 重新走 create，自动选择标记必须重置
     this.autoTriggered = false;

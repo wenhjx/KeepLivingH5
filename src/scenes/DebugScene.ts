@@ -22,6 +22,8 @@ export class DebugScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
+    this.cameras.main.setZoom(GameConfig.uiScale);
     const z = GameConfig.renderScale;
     // 与 UIScene 一致的高清渲染：camera zoom 提高渲染像素密度，
     // 反向缩放根容器抵消 zoom，使 UI 的视觉位置与尺寸保持逻辑基准下的效果

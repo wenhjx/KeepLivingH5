@@ -47,8 +47,9 @@ export class VirtualJoystick {
     this.scene = scene;
     this.baseX = x;
     this.baseY = y;
-    this.baseRadius = GameConfig.INPUT.joystickBaseRadius;
-    this.knobRadius = GameConfig.INPUT.joystickKnobRadius;
+    const u = GameConfig.uiScale;
+    this.baseRadius = GameConfig.INPUT.joystickBaseRadius * u;
+    this.knobRadius = GameConfig.INPUT.joystickKnobRadius * u;
     this.mode = mode;
 
     this.create();

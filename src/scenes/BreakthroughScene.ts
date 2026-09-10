@@ -8,6 +8,7 @@ import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import type { UpgradeOption } from '../types';
 import type { Player } from '../entities/Player';
+import { GameConfig } from '../game/GameConfig';
 
 /**
  * Boss 突破奖励场景
@@ -25,6 +26,8 @@ export class BreakthroughScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
+    this.cameras.main.setZoom(GameConfig.uiScale);
     // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
     const { width, height } = setupUICamera(this);
     // 场景实例会复用：stop 后再 launch 重新走 create，自动选择标记必须重置

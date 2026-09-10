@@ -112,11 +112,11 @@ export class HUD {
 
   private create(): void {
     const { width, height } = this.scene.scale;
-    const topY = this.padding; // 顶部基准线（右上角信息、Boss 血条用）
+    const topY = GameConfig.anchorY(this.padding, height); // 顶部基准线（中心缩放后仍贴顶）
 
     // ========== 底部中心：血量和经验（大气版） ==========
     const centerX = width / 2;
-    const bottomY = height - 40; // 血条中心 y
+    const bottomY = GameConfig.anchorY(height - 40, height); // 血条中心 y（中心缩放后仍贴底）
     const barLeft = centerX - this.barWidth / 2;
     const barTop = bottomY - this.barHeight / 2;
 
@@ -169,10 +169,10 @@ export class HUD {
 
     // ========== 左侧（小地图下方）：波次、击杀、分数、金币、Boss 预告 ==========
     // 玩家需时常确认的信息统一放在小地图下方；右上角让位给暂停按钮与提示卡片（GuideCard），避免遮挡
-    const infoLeft = this.padding;
+    const infoLeft = GameConfig.anchorX(this.padding, width);
     // 小地图位于 (10, 10, 160, 120)，底部 y = 130；信息区从地图下方开始排布
     const minimapBottomY = 10 + 120;
-    const infoTop = minimapBottomY + 10;
+    const infoTop = GameConfig.anchorY(minimapBottomY + 120 * (GameConfig.uiScale - 1) + 10, height);
 
     this.waveText = createUIText(this.scene, infoLeft, infoTop, '波次: 1', {
         fontSize: '16px',
