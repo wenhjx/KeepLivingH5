@@ -214,6 +214,13 @@ export class WaveManager {
     return { x, y };
   }
 
+  /** 调试/试玩用：强制生成当前关卡 Boss（复用完整 Boss 流程：tier 难度/血条/演出） */
+  forceSpawnBoss(): boolean {
+    if (this.bossActive) return false;
+    this.spawnBoss();
+    return true;
+  }
+
   /** 生成 Boss（类型由关卡 bossType 决定，可做召唤型/弹幕型差异化） */
   private spawnBoss(): void {
     const baseConfig = ENEMY_CONFIGS[this.levelConfig.bossType ?? 'boss'];

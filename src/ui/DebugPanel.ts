@@ -181,6 +181,7 @@ export class DebugPanel {
       { text: '🧟 精英×2', fn: () => this.callDebug('spawnTestEnemies', 'elite', 2) },
       { text: '💣 自爆×5', fn: () => this.callDebug('spawnTestEnemies', 'suicider', 5) },
     );
+    this.addRow(col, { text: '🐲 Boss×1', fn: () => this.callDebug('spawnBoss') });
     const spawnTip = createUIText(this.scene, 0, col.y, '更多类型/倍率：__debug.spawnTestEnemies(splitter, 3, {hpMult:5, radius:300})', {
         fontSize: '10px',
         color: '#aa8866',

@@ -32,6 +32,8 @@ export interface DebugAPI {
   enterTestField: () => void;
   /** 试玩场地自定义刷怪：按敌人配置类型生成 N 只环绕玩家（数据驱动，新敌人进配置表即可刷） */
   spawnTestEnemies: (type: string, count?: number, opts?: TestSpawnOptions) => string;
+  /** 强制生成当前关卡 Boss（完整血条/演出） */
+  spawnBoss: () => string;
   /** 继续游戏（有存档时） */
   continueGame: () => void;
   /** 返回主菜单 */
@@ -302,6 +304,12 @@ export function initDebugAPI(game: Phaser.Game): void {
       return '已生成 ' + n + ' × ' + cfg.name + '（hp×' + hpMult + ' atk×' + atkMult + ' spd×' + spdMult + '，环绕半径 ' + radius + 'px）';
     },
 
+    spawnBoss: () => {
+      const gs = getGameScene();
+      if (!gs || !gs.waveManager) return '需要先进入游戏（调试面板 → 开始游戏/试玩场地）';
+      const ok = (gs.waveManager as any).forceSpawnBoss?.();
+      return ok ? 'Boss 已生成（当前关卡 Boss 类型，完整血条/演出）' : 'Boss 已在场或生成失败（waveManager.forceSpawnBoss）';
+    },
     setTheme: (theme: 'pixel' | 'classic') => {
       GameConfig.VISUAL_THEME = theme;
       // 渲染器抗锯齿跟随主题：classic 矢量平滑、pixel 像素锐利

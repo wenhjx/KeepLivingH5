@@ -42,10 +42,25 @@ export interface SlowZoneConfig {
   color?: number;
 }
 
+/** 加速区（风道）：玩家进入后移动速度乘以 speedFactor（>1） */
+export interface BoostZoneConfig {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** 加速系数（>1，1.35 = 加速 35%） */
+  speedFactor: number;
+  /** 覆盖默认颜色 */
+  color?: number;
+}
+
 export interface TerrainConfig {
   obstacles: ObstacleConfig[];
   /** 减速区（可选，数据驱动） */
   slowZones?: SlowZoneConfig[];
+  /** 加速区（可选，数据驱动） */
+  boostZones?: BoostZoneConfig[];
 }
 
 /** 障碍物类型默认颜色 */
@@ -90,6 +105,11 @@ export const DEFAULT_TERRAIN: TerrainConfig = {
     { id: 'crate_03', x: 1150, y: 2050, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
     { id: 'crate_04', x: 2050, y: 1950, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
   ],
+  // 加速区（风道）：穿行区域移速+35%，配合走位与弹幕躲避
+  boostZones: [
+    { id: 'boost_01', x: 950, y: 1150, width: 280, height: 64, speedFactor: 1.35, color: 0x44cc88 },
+    { id: 'boost_02', x: 2050, y: 1850, width: 64, height: 280, speedFactor: 1.35, color: 0x44cc88 },
+  ],
 };
 
 /** 废墟地形（第二区域）：墙体多、通道窄，考验走位与 AOE 清场 */
@@ -117,7 +137,12 @@ export const RUINS_TERRAIN: TerrainConfig = {
     { id: 'r_crate_03', x: 1200, y: 1800, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
     { id: 'r_crate_04', x: 1800, y: 1800, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
   ],
-  slowZones: [],
+    slowZones: [],
+  // 加速区（风道）：废墟中部横穿窄通道，快速转场
+  boostZones: [
+    { id: 'r_boost_01', x: 1500, y: 650, width: 320, height: 60, speedFactor: 1.35, color: 0x44cc88 },
+    { id: 'r_boost_02', x: 1500, y: 2350, width: 320, height: 60, speedFactor: 1.35, color: 0x44cc88 },
+  ],
 };
 
 /** 冰原地形（第三区域）：水晶障碍 + 减速区，配合霜蚀规则制造生存压力 */

@@ -726,7 +726,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // 地形减速区：按玩家所在区域设置移动倍率（冰原减速区）
-    this.player.movementMultiplier = this.terrainManager.getSlowFactorAt(this.player.x, this.player.y);
+    this.player.movementMultiplier = this.terrainManager.getSpeedFactorAt(this.player.x, this.player.y);
 
     // 关卡特殊规则（霜蚀持续掉血；内部每帧按秒结算）
     this.modifierSystem.update(d, this.player);

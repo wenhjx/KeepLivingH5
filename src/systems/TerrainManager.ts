@@ -3,6 +3,7 @@ import {
   type TerrainConfig,
   type ObstacleConfig,
   type SlowZoneConfig,
+  type BoostZoneConfig,
 } from '../data/terrain';
 import { GameConfig } from '../game/GameConfig';
 
@@ -24,6 +25,8 @@ export class TerrainManager {
   private obstacleList: ObstacleConfig[] = [];
   private slowZoneList: SlowZoneConfig[] = [];
   private slowZoneLayer!: Phaser.GameObjects.Graphics;
+  private boostZoneList: BoostZoneConfig[] = [];
+  private boostZoneLayer!: Phaser.GameObjects.Graphics;
 
   /** 可破坏物被击碎后的默认恢复随机区间 [min, max]（ms）：20~40 秒，防蹲守且保留偶遇感 */
   private static readonly DEFAULT_RESPAWN_RANGE: [number, number] = [20000, 40000];
@@ -47,6 +50,7 @@ export class TerrainManager {
   create(): void {
     this.obstacleGroup = this.scene.physics.add.staticGroup();
     this.createSlowZones();
+    this.createBoostZones();
 
     for (const obs of this.config.obstacles) {
       this.spawnObstacle(obs);
@@ -91,15 +95,69 @@ export class TerrainManager {
     }
   }
 
-  /** 查询某点所在减速区的减速系数（不在任何减速区返回 1） */
-  getSlowFactorAt(x: number, y: number): number {
+  /** 创建加速区：半透明青色块 + 内部流动线条视觉（不参与物理，逻辑在 GameScene 每帧查询） */
+  private createBoostZones(): void {
+    this.boostZoneList = [...(this.config.boostZones ?? [])];
+    this.boostZoneLayer = this.scene.add.graphics().setDepth(0.5);
+    for (const z of this.boostZoneList) {
+      const c = z.color ?? 0x55e6a0;
+      this.boostZoneLayer.fillStyle(c, 0.28);
+      this.boostZoneLayer.fillRect(z.x - z.width / 2, z.y - z.height / 2, z.width, z.height);
+      this.boostZoneLayer.lineStyle(2, c, 0.7);
+      this.boostZoneLayer.strokeRect(z.x - z.width / 2, z.y - z.height / 2, z.width, z.height);
+      // 内部流动线 + 箭头（沿长边方向，暗示风道方向）
+      this.boostZoneLayer.lineStyle(2, c, 0.55);
+      const drawFlow = (x1: number, y1: number, x2: number, y2: number, horiz: boolean) => {
+        this.boostZoneLayer.lineBetween(x1, y1, x2, y2);
+        // 箭头尖端（向移动方向）
+        const dir = horiz ? 1 : 1;
+        const ax = horiz ? x2 : x2;
+        const ay = horiz ? y2 : y2;
+        if (horiz) {
+          this.boostZoneLayer.fillStyle(c, 0.7);
+          this.boostZoneLayer.fillTriangle(ax + 8, ay, ax, ay - 5, ax, ay + 5);
+          this.boostZoneLayer.lineStyle(2, c, 0.55);
+        } else {
+          this.boostZoneLayer.fillStyle(c, 0.7);
+          this.boostZoneLayer.fillTriangle(ax, ay + 8, ax - 5, ay, ax + 5, ay);
+          this.boostZoneLayer.lineStyle(2, c, 0.55);
+        }
+      };
+      if (z.width >= z.height) {
+        const y1 = z.y - z.height * 0.15, y2 = z.y + z.height * 0.15;
+        drawFlow(z.x - z.width / 2 + 10, y1, z.x + z.width / 2 - 10, y1, true);
+        drawFlow(z.x - z.width / 2 + 10, y2, z.x + z.width / 2 - 10, y2, true);
+      } else {
+        const x1 = z.x - z.width * 0.15, x2 = z.x + z.width * 0.15;
+        drawFlow(x1, z.y - z.height / 2 + 10, x1, z.y + z.height / 2 - 10, false);
+        drawFlow(x2, z.y - z.height / 2 + 10, x2, z.y + z.height / 2 - 10, false);
+      }
+    }
+  }
+  /**
+   * 查询某点所在区域的移速系数（合并减速/加速区，重叠时减速优先：惩罚大于增益）
+   * 不在任何区域返回 1
+   */
+  getSpeedFactorAt(x: number, y: number): number {
     for (const z of this.slowZoneList) {
       if (x > z.x - z.width / 2 && x < z.x + z.width / 2 && y > z.y - z.height / 2 && y < z.y + z.height / 2) {
         return z.slowFactor;
       }
     }
+    for (const z of this.boostZoneList) {
+      if (x > z.x - z.width / 2 && x < z.x + z.width / 2 && y > z.y - z.height / 2 && y < z.y + z.height / 2) {
+        return z.speedFactor;
+      }
+    }
     return 1;
   }
+
+  /** 查询某点所在减速区的减速系数（保留兼容） */
+  getSlowFactorAt(x: number, y: number): number {
+    const f = this.getSpeedFactorAt(x, y);
+    return f < 1 ? f : 1;
+  }
+
 
   /** 减速区列表 */
   getSlowZones(): SlowZoneConfig[] {
@@ -161,6 +219,7 @@ export class TerrainManager {
     // 销毁旧障碍物 + 减速区
     this.obstacleGroup?.clear(true, true);
     this.slowZoneLayer?.destroy();
+    this.boostZoneLayer?.destroy();
     this.obstacleList = [];
     this.config = config;
     this.create();
