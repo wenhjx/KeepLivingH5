@@ -1245,6 +1245,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   // ========== Getters ==========
 
+  /** 当前难度系数（spawn 时由波次决定：小怪 1+(wave-1)*0.1 / Boss 2.2^(tier-1)） */
+  getDifficultyMultiplier(): number {
+    return this.difficultyMultiplier;
+  }
+
   getConfig(): EnemyConfig {
     return this.config;
   }

@@ -45,9 +45,12 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
       const enemies = gameScene?.getEnemies?.();
       if (!enemies) return;
       const list = enemies.getChildren() as any[];
+      // 全屏炸弹伤害随波次成长（× 小怪难度系数），后期不再是挠痒
+      const wave = (gameScene as any)?.waveManager?.getCurrentWave?.() ?? 1;
+      const waveFactor = 1 + (wave - 1) * 0.1;
       list.forEach((e: any) => {
         if (e.active && typeof e.takeDamage === 'function') {
-          e.takeDamage(500, true);
+          e.takeDamage(500 * waveFactor, true);
         }
       });
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_ITEM_BOMB, 1);

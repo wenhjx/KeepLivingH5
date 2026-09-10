@@ -353,9 +353,12 @@ export const FALLBACK_UPGRADES: UpgradeOption[] = [
       const enemies = scene.getEnemies?.();
       if (!enemies) return;
       const list = enemies.getChildren() as any[];
+      // 清屏伤害随波次成长（× 小怪难度系数）
+      const wave = (scene as any)?.waveManager?.getCurrentWave?.() ?? 1;
+      const waveFactor = 1 + (wave - 1) * 0.1;
       list.forEach((e: any) => {
         if (e?.active && e?.takeDamage) {
-          e.takeDamage(300, false);
+          e.takeDamage(300 * waveFactor, false);
         }
       });
     },

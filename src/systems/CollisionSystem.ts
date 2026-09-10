@@ -30,7 +30,9 @@ export class CollisionSystem {
     if (!player.active || !enemy.active) return;
     if (player.isInvincible()) return;
 
-    const damage = enemy.getConfig()?.attackPower || 10;
+    // 接触伤害随波次成长（乘难度系数）：修复后期小怪贴脸无威胁
+    const mult = enemy.getDifficultyMultiplier ? enemy.getDifficultyMultiplier() : 1;
+    const damage = (enemy.getConfig()?.attackPower || 10) * mult;
     player.takeDamage(damage);
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PLAYER_HURT, 1);
 

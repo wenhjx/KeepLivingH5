@@ -33,7 +33,8 @@ export const BREAKTHROUGH_STATS: string[] = [
 export class Player extends Phaser.Physics.Arcade.Sprite {
   // 属性
   private stats: PlayerStats;
-  // 武器列表
+  /** percent stat 的基准值快照（构造/读档时记录，含成就加成）：percent 加算以它为底，杜绝乘算指数爆炸 */
+  private _baseStats: PlayerStats = {} as PlayerStats;  // 武器列表
   private weapons: Map<string, { config: WeaponConfig; level: number; cooldown: number }> = new Map();
   /** 环形冲击波爆发计数：每 5s 周期内快速 3 连发 */
   private novaBurstCount = 0;
@@ -98,7 +99,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       coins: 30,
       overflowCount: 0,
     };
-
+    // percent 加算基准（含成就加成；局内升级/突破不再改它）
+    this._baseStats = { ...this.stats };
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
@@ -873,6 +875,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
       });
       this.stats = merged;
+      // 读档后以存档值作为新的 percent 加算基准
+      this._baseStats = { ...this.stats };
     }
     // 旧存档可能存了旧版本曲线(指数1.5)的 expToNext，按当前曲线重新计算，避免"继续游戏"后升级卡住
     this.stats.expToNext = this.calcExpToNext(this.stats.level);
@@ -1078,9 +1082,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   modifyStat(stat: keyof PlayerStats, value: number, isPercent: boolean = false): void {
     if (isPercent) {
-      // 防御：当前属性非法（NaN）时按 0 处理，避免 *= 永久污染为 NaN
+      // 加算（2026-09-10 修复）：每次在基准值上叠加 value 比例，而非对当前值乘算。
+      // 原 cur*(1+value) 在多级升级+突破下指数爆炸（暴伤 6 次 ×1.5 → 1709%、全属性天文数字）。
+      // 现在 attackPower/attackSpeed/critDamage/pickupRadius/moveSpeed 均线性成长。
       const cur = Number((this.stats as any)[stat]);
-      (this.stats as any)[stat] = (isFinite(cur) ? cur : 0) * (1 + value);
+      const base = Number((this._baseStats as any)[stat]) || 0;
+      (this.stats as any)[stat] = (isFinite(cur) ? cur : 0) + base * value;
     } else {
       const cur = Number((this.stats as any)[stat]);
       (this.stats as any)[stat] = (isFinite(cur) ? cur : 0) + value;
