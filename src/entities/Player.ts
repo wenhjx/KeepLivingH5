@@ -865,6 +865,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     statUpgrades?: Array<{ id: string; name: string; level: number }>;
     breakthroughs?: Array<{ id: string; name: string; level: number }>;
     inventory?: Array<{ id: string; count: number }>;
+    reviveTokens?: number;
   }): void {
     if (saved.stats) {
       // 防御：存档中非法数值（null/NaN 等）不覆盖当前基础属性，
@@ -926,8 +927,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         if (it && it.id && it.count > 0) this.inventory.set(it.id, it.count);
       }
     }
+    // 恢复复活币（旧存档无此字段默认 0；防御非法值）
+    this.reviveTokens = Math.max(0, Math.floor(saved.reviveTokens ?? 0));
     // 同步无人机数量
     this.syncDrones();
+    // 通知 HUD 刷新物品栏与复活币指示器（恢复/快速开局后显示与内存一致）
+    EventBus.emit(EventKeys.PLAYER_INVENTORY_CHANGED);
   }
 
   /** 同步无人机数量和等级（summon 武器升级时调用） */

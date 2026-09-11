@@ -88,6 +88,9 @@ export class InventoryUI {
 
     // 监听物品栏变化（保存退订函数，场景关闭时移除，避免残留监听访问已销毁对象导致 texture null 崩溃）
     this.unsubscribe = EventBus.on(EventKeys.PLAYER_INVENTORY_CHANGED, () => this.refresh());
+    // 创建时同步一次玩家当前状态：继续游戏/跨关继承的恢复发生在 UIScene 创建前，
+    // 那时的 INVENTORY_CHANGED 事件无人接收会丢失，这里兜底保证物品栏与复活币指示器首帧即正确。
+    this.refresh();
 
     // 快捷键 1-6（物品栏槽位数）
     const keys = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];

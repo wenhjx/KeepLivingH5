@@ -219,6 +219,9 @@ export class GameManager {
       this._stats.highScore = this._runData.score;
     }
     // 注意：不调用 clearSavedRun()，保留进行中对局供"继续游戏"恢复
+    // 但内存 pendingRun 必须清空：否则下次"继续游戏"时 GameScene.init 会走进
+    // pendingRun 分支（跳过 restoreRun），isGameOver=true 残留导致 update 永久短路、游戏静止
+    this._pendingRun = null;
     this.saveProgress();
     this._lastRunSummary = { ...this._runData, highScore: this._stats.highScore };
   }
@@ -307,6 +310,7 @@ export class GameManager {
         statUpgrades: player.getStatUpgrades().map((s) => ({ id: s.id, name: s.name, level: s.level })),
         breakthroughs: player.getBreakthroughs().map((b) => ({ id: b.id, name: b.name, level: b.level })),
         inventory: player.getInventory(),
+        reviveTokens: player.getReviveTokens(),
       },
     };
     this._saveSystem.save(data);

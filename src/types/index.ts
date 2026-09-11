@@ -235,5 +235,7 @@ export interface SavedRun {
     breakthroughs?: Array<{ id: string; name: string; level: number }>;
     /** 背包道具（商店购买的鸡腿/护盾/炸弹等，随存档保留） */
     inventory?: Array<{ id: string; count: number }>;
+    /** 复活币数量（被动触发，不占物品栏；旧存档无此字段默认 0） */
+    reviveTokens?: number;
   };
 }
