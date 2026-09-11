@@ -607,7 +607,7 @@ export class DebugPanel {
     this.scene.input.keyboard?.on('keydown-MINUS', () => {
       this.adjustSpeed(-0.25);
     });
-    this.scene.input.keyboard?.on('keydown-EQUALS', () => {
+    this.scene.input.keyboard?.on('keydown-PLUS', () => {
       this.adjustSpeed(0.25);
     });
   }
