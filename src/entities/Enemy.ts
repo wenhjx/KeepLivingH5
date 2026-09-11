@@ -123,6 +123,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setActive(true);
     this.setVisible(true);
     this.setCircle(config.size / 2 || 16);
+    // 非 Boss：恢复纹理原始显示尺寸（防止对象池复用 Boss 实例时残留放大 scale/displaySize → 出现"特别大的敌人"）
+    if (config.type !== 'boss') {
+      this.setScale(1);
+      this.setSizeToFrame();
+    }
     // Boss 视觉尺寸对齐碰撞直径：贴图固定 56px，Boss 改大后必须按 size 放大显示
     if (config.type === 'boss') {
       this.setDisplaySize(config.size * 2, config.size * 2);
@@ -222,6 +227,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setRotation(0);
     if (this.affixText) this.affixText.setVisible(false);
     this.hideHpBar();
+    // 重置显示尺寸与缩放：防止复用 Boss 实例时残留放大（displayWidth/scale）导致"特别大的敌人"
+    this.setScale(1);
+    this.setSizeToFrame();
     this.setActive(false);
     this.setVisible(false);
     if (this.body) {
