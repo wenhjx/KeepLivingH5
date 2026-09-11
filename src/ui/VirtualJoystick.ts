@@ -37,6 +37,7 @@ export class VirtualJoystick {
   // 状态
   private active: boolean = false;
   private pointerId: number = -1;
+  private consumedPointerId: number | null = null;
   private currentAngle: number = 0;
   private currentStrength: number = 0;
 
@@ -103,6 +104,11 @@ export class VirtualJoystick {
     // 监听指针按下
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (this.active) return;
+      // 本次按下已被 UI（如 buff 说明）消费 → 不激活摇杆（吞掉该指针）
+      if (this.consumedPointerId === pointer.id) {
+        this.consumedPointerId = null;
+        return;
+      }
       // pointer.world 坐标 → 屏幕逻辑坐标（UI 相机 zoom 高清渲染下两空间差 zoom 倍）
       // pointer.x/y 即屏幕逻辑坐标（scale.width/height 空间），直接使用；
       // 勿再过 toScreen（会把逻辑坐标当 world 再乘 zoom，导致弹出位置偏右下 zoom 倍）
@@ -140,6 +146,11 @@ export class VirtualJoystick {
       if (!this.active || pointer.id !== this.pointerId) return;
       this.deactivate();
     });
+  }
+
+  /** 消费一次指针按下：本次按下由 UI（如 buff 说明）处理，摇杆不激活 */
+  consumePointer(id: number): void {
+    this.consumedPointerId = id;
   }
 
   private activate(pointer: Phaser.Input.Pointer): void {

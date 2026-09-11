@@ -280,6 +280,8 @@ export class HUD {
           pointer.y <= r.y + this.buffSize + 4
         ) {
           this.showBuffTooltip(r.b, r);
+          // 按下 buff 图标 = UI 消费本次指针，吞掉 dynamic 摇杆激活（避免摇杆在图标处弹出）
+          (this.scene as any).joystick?.consumePointer?.(pointer.id);
           return;
         }
       }
