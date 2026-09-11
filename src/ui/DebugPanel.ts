@@ -65,6 +65,9 @@ export class DebugPanel {
   private scrollDragging = false;
   private dragStartY = 0;
   private dragStartOff = 0;
+  /** 滚动条（仅在内容超出可视区时显示；滑块位置随滚动更新） */
+  private scrollTrack: Phaser.GameObjects.Rectangle | null = null;
+  private scrollThumb: Phaser.GameObjects.Rectangle | null = null;
 
   constructor(scene: Phaser.Scene, uiRoot: Phaser.GameObjects.Container) {
     this.scene = scene;
@@ -93,6 +96,12 @@ export class DebugPanel {
     bg.lineStyle(2, 0xff6b35, 0.5);
     bg.strokeRoundedRect(this.panelX, this.panelY, this.panelWidth, panelHeight, 8);
     this.container.add(bg);
+
+    // 滚动条（右侧轨道+滑块；仅内容溢出时显示，位置由 updateScrollbar 维护）
+    this.scrollTrack = this.scene.add.rectangle(0, 0, 4, this.viewportH, 0x333344, 0.7).setOrigin(0, 0);
+    this.scrollThumb = this.scene.add.rectangle(0, 0, 4, 24, 0xff6b35, 0.95).setOrigin(0, 0);
+    this.container.add([this.scrollTrack, this.scrollThumb]);
+    this.updateScrollbar();
 
     // 标题
     const title = createUIText(this.scene, this.panelX + this.panelWidth / 2, this.panelY + 14, '🔧 调试面板  (按 ` 切换)', {
@@ -515,6 +524,24 @@ export class DebugPanel {
   private setScroll(offset: number): void {
     this.scrollOffset = Phaser.Math.Clamp(offset, -this.maxScroll, 0);
     this.content.setY(this.contentBaseY + this.scrollOffset);
+    this.updateScrollbar();
+  }
+
+  /** 更新滚动条：轨道固定在内容区右缘，滑块位置/尺寸反映滚动进度与可视比例 */
+  private updateScrollbar(): void {
+    if (!this.scrollTrack || !this.scrollThumb) return;
+    const trackX = this.panelX + this.panelWidth - 8;
+    const trackTop = this.panelY + 42;
+    const show = this.maxScroll > 0;
+    this.scrollTrack.setVisible(show).setPosition(trackX, trackTop);
+    if (!show) {
+      this.scrollThumb.setVisible(false);
+      return;
+    }
+    const contentH = this.maxScroll + this.viewportH;
+    const thumbH = Math.max(24, Math.round((this.viewportH * this.viewportH) / contentH));
+    const thumbY = trackTop + (-this.scrollOffset / this.maxScroll) * (this.viewportH - thumbH);
+    this.scrollThumb.setVisible(true).setPosition(trackX, thumbY).setSize(4, thumbH);
   }
 
   /**
@@ -526,18 +553,27 @@ export class DebugPanel {
    * 位移量用 Pointer 屏幕坐标差（uiRoot 局部 1 单位 = 屏幕 1 像素，与 wheel 同基准）。
    */
   private setupTouchInput(): void {
-    // 内容可视区透明交互层（置于 content 最底，不挡按钮；命中由 Phaser 自动处理局部坐标）
-    const scrollRect = this.scene.add
-      .rectangle(0, 0, this.panelWidth - this.padding * 2, this.viewportH, 0xffffff, 0)
-      .setOrigin(0, 0)
-      .setInteractive({ useHandCursor: false });
-    this.content.addAt(scrollRect, 0);
-
     // 关键：场景默认 topOnly=true，重叠时只触发最顶层对象，导致按在按钮上时滚动区收不到
-    // pointerdown。关闭后按钮（记录待结算点击）与滚动区（启动拖动）同时响应，由位移阈值区分行为。
+    // pointerdown。关闭后按钮（记录待结算点击）与面板滚动区（启动拖动）同时响应，由位移阈值区分行为。
     this.scene.input.setTopOnly(false);
 
-    scrollRect.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    // 面板整区透明交互层（container 层、不随内容滚动）：覆盖标题栏/右缘/内容全区域，
+    // 任何位置按下都进入候选滚动——修复"从按钮/标题栏/边缘按下拖不动"的问题。
+    // 位移超阈值才真正滚动，轻点仍由 pendingTap 结算为点击。
+    const panelZone = this.scene.add
+      .rectangle(
+        this.panelX + this.panelWidth / 2,
+        this.panelY + (40 + this.viewportH + this.padding) / 2,
+        this.panelWidth,
+        40 + this.viewportH + this.padding,
+        0xffffff,
+        0
+      )
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: false });
+    this.container.addAt(panelZone, 0);
+
+    panelZone.on('pointerdown', (p: Phaser.Input.Pointer) => {
       if (!this.visible || this.maxScroll <= 0) return;
       this.scrollDragging = true;
       this.dragStartY = p.y;
