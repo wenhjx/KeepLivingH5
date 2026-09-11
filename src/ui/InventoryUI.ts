@@ -27,6 +27,10 @@ export class InventoryUI {
     itemId: string;
   }> = [];
   private unsubscribe: () => void = () => {};
+  // 复活币指示器（被动消耗品，仅展示剩余数量）
+  private reviveGroup: Phaser.GameObjects.Container | null = null;
+  private reviveIcon: Phaser.GameObjects.Text | null = null;
+  private reviveCount: Phaser.GameObjects.Text | null = null;
   // 槽位命中矩形（uiRoot 局部坐标 = pointer.x/y），手动坐标判定用
   private slotHitRects: Array<{ index: number; x: number; y: number }> = [];
   private pointerDownHandler: ((pointer: Phaser.Input.Pointer) => void) | null = null;
@@ -78,6 +82,9 @@ export class InventoryUI {
       const x = startX + index * (this.slotSize + this.slotSpacing);
       this.createSlot(x, y, itemId, index);
     });
+
+    // 复活币指示器（物品栏最右槽上方，0 个时隐藏）
+    this.createReviveIndicator(startX, y);
 
     // 监听物品栏变化（保存退订函数，场景关闭时移除，避免残留监听访问已销毁对象导致 texture null 崩溃）
     this.unsubscribe = EventBus.on(EventKeys.PLAYER_INVENTORY_CHANGED, () => this.refresh());
@@ -133,6 +140,35 @@ export class InventoryUI {
     this.slots.push({ bg, icon, count, key, itemId });
   }
 
+  /** 复活币指示器（🌟 传说消耗品，死亡时原地满血复活；仅展示剩余数量，0 个隐藏） */
+  private createReviveIndicator(anchorX: number, anchorY: number): void {
+    const isM = GameManager.getInstance().isMobile;
+    const barH = isM ? 26 : 22;
+    const iconSize = isM ? '16px' : '15px';
+    const y = anchorY - this.slotSize - 8;
+    const rbg = this.scene.add.graphics();
+    rbg.fillStyle(0x1a1a25, 0.8);
+    rbg.fillRoundedRect(-this.slotSize / 2, -barH / 2, this.slotSize, barH, 6);
+    rbg.lineStyle(1, 0xffd700, 0.9);
+    rbg.strokeRoundedRect(-this.slotSize / 2, -barH / 2, this.slotSize, barH, 6);
+    const icon = createUIText(this.scene, -this.slotSize / 2 + 14, 0, '🌟', { fontSize: iconSize }).setOrigin(0.5);
+    const count = createUIText(this.scene, this.slotSize / 2 - 6, 0, '', {
+        fontSize: this.countSize,
+        color: '#ffd700',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 3,
+      })
+      .setOrigin(1, 0.5);
+    const group = this.scene.add.container(anchorX, y);
+    group.add([rbg, icon, count]);
+    group.setVisible(false);
+    this.container.add(group);
+    this.reviveGroup = group;
+    this.reviveIcon = icon;
+    this.reviveCount = count;
+  }
+
   /** 使用指定槽位的物品 */
   private useSlot(index: number): void {
     const slot = this.slots[index];
@@ -175,6 +211,17 @@ export class InventoryUI {
         slot.bg.strokeRoundedRect(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize, 6);
       }
     });
+
+    // 复活币剩余数量（0 隐藏；复用物品栏刷新事件）
+    if (this.reviveGroup && this.reviveCount && this.reviveGroup.scene && this.reviveGroup.active) {
+      const rt = player?.getReviveTokens() ?? 0;
+      if (rt > 0) {
+        this.reviveGroup.setVisible(true);
+        this.reviveCount.setText('×' + rt);
+      } else {
+        this.reviveGroup.setVisible(false);
+      }
+    }
   }
 
   destroy(): void {

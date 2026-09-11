@@ -591,6 +591,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 复活币：死亡时原地复活一次（满血 + 短暂无敌 + 清空周围敌人）
     if (this.reviveTokens > 0) {
       this.reviveTokens--;
+      EventBus.emit(EventKeys.PLAYER_INVENTORY_CHANGED);
       this.stats.health = this.stats.maxHealth;
       this.invincible = true;
       this.invincibleTimer = 2000;
@@ -641,6 +642,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** 复活币 */
   addReviveToken(): void {
     this.reviveTokens++;
+    EventBus.emit(EventKeys.PLAYER_INVENTORY_CHANGED);
   }
   getReviveTokens(): number {
     return this.reviveTokens;

@@ -238,9 +238,26 @@ export class DebugPanel {
     this.addSectionTitle(col, '✨ 被动技能（点击获取/升级）');
     this.addOptionsRows(col, UPGRADE_OPTIONS.filter((o) => o.type === 'passive'));
 
+    // 道具栏（物品栏六种主动道具，点击加入；与商店即时生效道具分区，避免混淆）
+    this.addSectionTitle(col, '🎒 道具栏（点击加入）');
+    this.addRow(col,
+      { text: '🛡️ 护盾+1', fn: () => this.callDebug('giveItem', 'shield') },
+      { text: '⚡ 狂暴+1', fn: () => this.callDebug('giveItem', 'rage') },
+    );
+    this.addRow(col,
+      { text: '💣 炸弹+1', fn: () => this.callDebug('giveItem', 'bomb') },
+      { text: '❤️ 血包+1', fn: () => this.callDebug('giveItem', 'heal') },
+    );
+    this.addRow(col,
+      { text: '⏳ 减速+1', fn: () => this.callDebug('giveItem', 'slow') },
+      { text: '🧲 磁铁+1', fn: () => this.callDebug('giveItem', 'magnet') },
+    );
+
     // 商店道具（即时生效，方便测试；不叠加属性，不影响玩家状态）
     this.addSectionTitle(col, '🛒 商店道具（即时生效）');
     this.addOptionsRows(col, FALLBACK_UPGRADES);
+    // 复活币（商店消耗品，被动触发，不进入物品栏）
+    this.addRow(col, { text: '🌟 复活币+1', fn: () => this.getPlayer()?.addReviveToken() });
 
     // 怪物增强（调试测试阈值用；只作用于新生成的敌人，不影响场上现有敌人）
     this.addSectionTitle(col, '👹 怪物增强（新生成生效）');
@@ -286,10 +303,9 @@ export class DebugPanel {
     const statRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'stat').length / 2);
     const weaponRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'weapon').length / 2);
     const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
-    // 商店道具（FALLBACK_UPGRADES）2 行
+    // 道具栏（6 主动道具 3 行）+ 商店道具（FALLBACK 2 行 + 复活币 1 行）
     const shopRows = Math.ceil(FALLBACK_UPGRADES.length / 2);
-    // 游戏速度区 = 当前值行 + 2 行按钮 + 提示行（计 4 行）
-    return 28 + sectionH(6) + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
+    return 28 + sectionH(6) + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(3) + sectionH(shopRows + 1) + sectionH(4) + this.padding;
   }
 
   /** 分区标题（content 内；前后留白统一由本函数管理，避免调用处间距不一致） */
