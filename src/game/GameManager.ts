@@ -1,5 +1,5 @@
 import { GameConfig, QualityLevel } from './GameConfig';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { SaveSystem } from '../systems/SaveSystem';
 import { AchievementManager } from '../systems/AchievementManager';
 import { AudioManager } from '../systems/AudioManager';
@@ -78,7 +78,7 @@ export class GameManager {
     // 成就系统：读存档 + 注册事件 + 补解锁（必须在统计恢复之后）
     AchievementManager.getInstance().init();
 
-    EventBus.emit('game:initialized', {
+    EventBus.emit(EventKeys.GAME_INITIALIZED, {
       isMobile: this._isMobile,
       quality: this._qualityLevel,
     });
@@ -135,7 +135,7 @@ export class GameManager {
     };
     this._pendingRun = null;
     this.clearSavedRun();
-    EventBus.emit('run:start', this._runData);
+    EventBus.emit(EventKeys.RUN_START, this._runData);
   }
 
   /**
@@ -175,7 +175,7 @@ export class GameManager {
     // 试玩场地：不累计统计、不写存档，仅同步对局状态与事件（结算场景依赖）
     if (this._testMode) {
       this._runData.isGameOver = true;
-      EventBus.emit('run:end', { ...this._runData, highScore: this._stats.highScore });
+      EventBus.emit(EventKeys.RUN_END, { ...this._runData, highScore: this._stats.highScore });
       return;
     }
     this._runData.isGameOver = true;
@@ -189,7 +189,7 @@ export class GameManager {
     this.clearSavedRun();
     this.saveProgress();
     this._lastRunSummary = { ...this._runData, highScore: this._stats.highScore };
-    EventBus.emit('run:end', { ...this._runData, highScore: this._stats.highScore });
+    EventBus.emit(EventKeys.RUN_END, { ...this._runData, highScore: this._stats.highScore });
   }
 
   /**
@@ -229,7 +229,7 @@ export class GameManager {
     if (this._runData.isGameOver) return;
     this._runData.kills++;
     this._runData.score += score;
-    EventBus.emit('run:kill', { kills: this._runData.kills, score: this._runData.score });
+    EventBus.emit(EventKeys.RUN_KILL, { kills: this._runData.kills, score: this._runData.score });
   }
 
   addSurvivalTime(delta: number): void {
@@ -238,19 +238,19 @@ export class GameManager {
 
   setWave(wave: number): void {
     this._runData.wave = wave;
-    EventBus.emit('run:wave', wave);
+    EventBus.emit(EventKeys.RUN_WAVE, wave);
   }
 
   setPaused(paused: boolean): void {
     this._runData.isPaused = paused;
-    EventBus.emit('run:pause', paused);
+    EventBus.emit(EventKeys.RUN_PAUSE, paused);
   }
 
   /** 手动设置画质等级（设置面板调用） */
   setQualityLevel(level: QualityLevel): void {
     this._qualityLevel = level;
     this.saveProgress();
-    EventBus.emit('quality:changed', level);
+    EventBus.emit(EventKeys.QUALITY_CHANGED, level);
   }
 
   // ========== 进行中对局存档（继续游戏） ==========
@@ -280,7 +280,7 @@ export class GameManager {
       isGameOver: false,
       isVictory: false,
     };
-    EventBus.emit('run:start', this._runData);
+    EventBus.emit(EventKeys.RUN_START, this._runData);
   }
 
   /** 获取待恢复的对局数据 */
@@ -455,7 +455,7 @@ export class GameManager {
     this.mutateStats((s) => {
       s.wins = (s.wins ?? 0) + 1;
     });
-    EventBus.emit('level:clear');
+    EventBus.emit(EventKeys.LEVEL_CLEAR);
   }
 
   /** 成就存档（解锁状态 + 永久加成 + 称号） */
@@ -551,7 +551,7 @@ export class GameManager {
     this._quickStart = null;
     // 旧进行中存档作废（进入新关后旧存档不应再"继续游戏"）
     this.clearSavedRun();
-    EventBus.emit('run:start', this._runData);
+    EventBus.emit(EventKeys.RUN_START, this._runData);
   }
 
   get isMobile(): boolean {

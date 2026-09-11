@@ -38,7 +38,7 @@ import { UPGRADE_OPTIONS } from '../data/upgrades';
 
 import { GameFeedback } from '../systems/GameFeedback';
 
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 
 import { SOUND_KEYS } from '../data/sounds';
 
@@ -525,7 +525,7 @@ export class GameScene extends Phaser.Scene {
         }
         // 不可破坏障碍物：原逻辑
         if (b.explosive) {
-          EventBus.emit('bullet:explode', {
+          EventBus.emit(EventKeys.BULLET_EXPLODE, {
             x: b.x,
             y: b.y,
             damage: b.damage,
@@ -547,21 +547,21 @@ export class GameScene extends Phaser.Scene {
   private setupEventListeners(): void {
     const sub = (fn: () => void) => this.eventUnsubscribers.push(fn);
     // 玩家死亡
-    sub(EventBus.on('player:death', () => this.onPlayerDeath()));
+    sub(EventBus.on(EventKeys.PLAYER_DEATH, () => this.onPlayerDeath()));
     // 复活币生效：清空周围敌人 + 震屏反馈，避免复活瞬间被围死
-    sub(EventBus.on('player:revive', () => {
+    sub(EventBus.on(EventKeys.PLAYER_REVIVE, () => {
       this.handleExplosion(this.player.x, this.player.y, 9999, 400);
       this.cameras.main.shake(200, 0.006);
     }));
     // 玩家升级：跨多级时排队逐个弹出三选一（避免一次性升级丢失选择机会）
-    sub(EventBus.on('player:levelup', (level: number) => {
+    sub(EventBus.on(EventKeys.PLAYER_LEVELUP, (level: number) => {
       this.audioManager.playSfx('sfx_levelup');
       this.fxManager.levelUp(this.player.x, this.player.y);
       this.pendingLevelUps++;
       this.showNextUpgrade();
     }));
     // 一次升级选择完成，继续弹出剩余待选升级；全部选完后若 Boss 战前商店待开则弹出
-    sub(EventBus.on('upgrade:chosen', () => {
+    sub(EventBus.on(EventKeys.UPGRADE_CHOSEN, () => {
       this.upgradeQueued = false;
       this.pendingLevelUps = Math.max(0, this.pendingLevelUps - 1);
       if (this.pendingLevelUps > 0) {
@@ -577,7 +577,7 @@ export class GameScene extends Phaser.Scene {
     }));
     // 商店关闭：若还有武器强化排队则优先补开（防御并发），否则若之前是为 Boss 波
     // 开的（战前补给），则开始该 Boss 波
-    sub(EventBus.on('shop:closed', () => {
+    sub(EventBus.on(EventKeys.SHOP_CLOSED, () => {
       if (this.pendingWeaponSelect) {
         this.tryOpenWeaponSelect();
         return;
@@ -589,7 +589,7 @@ export class GameScene extends Phaser.Scene {
       }
     }));
     // 武器强化选择完成：开始之前排队的下一波
-    sub(EventBus.on('weaponselect:closed', () => {
+    sub(EventBus.on(EventKeys.WEAPONSELECT_CLOSED, () => {
       if (this.pendingWeaponWave > 0) {
         const wave = this.pendingWeaponWave;
         this.pendingWeaponWave = 0;
@@ -597,7 +597,7 @@ export class GameScene extends Phaser.Scene {
       }
     }));
     // 通关结算：继续征战 → 进入无尽模式，波次继续增长
-    sub(EventBus.on('endlesschoice:continue', () => {
+    sub(EventBus.on(EventKeys.ENDLESSCHOICE_CONTINUE, () => {
       const gm = GameManager.getInstance();
       gm.setPaused(false);
       this.scene.stop('EndlessChoiceScene');
@@ -605,13 +605,13 @@ export class GameScene extends Phaser.Scene {
       this.waveManager.startWave(this.waveManager.getCurrentWave() + 1);
     }));
     // 通关结算：结束征程 → 结算胜利
-    sub(EventBus.on('endlesschoice:end', () => {
+    sub(EventBus.on(EventKeys.ENDLESSCHOICE_END, () => {
       GameManager.getInstance().setPaused(false);
       this.scene.stop('EndlessChoiceScene');
       this.triggerVictory();
     }));
     // 关卡化：进入下一关 → 跨关继承 build 并重启（地形/波次/规则全部按新关配置重建）
-    sub(EventBus.on('endlesschoice:nextlevel', () => {
+    sub(EventBus.on(EventKeys.ENDLESSCHOICE_NEXTLEVEL, () => {
       const gm = GameManager.getInstance();
       gm.setPaused(false);
       this.scene.stop('EndlessChoiceScene');
@@ -621,17 +621,17 @@ export class GameScene extends Phaser.Scene {
       this.scene.start('GameScene');
     }));
     // 子弹爆炸（火箭筒等）：范围伤害 + 视觉效果
-    sub(EventBus.on('bullet:explode', (data: { x: number; y: number; damage: number; radius: number }) => {
+    sub(EventBus.on(EventKeys.BULLET_EXPLODE, (data: { x: number; y: number; damage: number; radius: number }) => {
       this.handleExplosion(data.x, data.y, data.damage, data.radius);
     }));
     // Boss 唯一引用（供 HUD 顶部大血条使用）
-    sub(EventBus.on('enemy:spawn', (enemy: Enemy) => {
+    sub(EventBus.on(EventKeys.ENEMY_SPAWN, (enemy: Enemy) => {
       if (enemy?.isBoss?.()) {
         this.activeBoss = enemy;
         this.playBossEntrance(enemy);
       }
     }));
-    sub(EventBus.on('enemy:death', (config: EnemyConfig) => {
+    sub(EventBus.on(EventKeys.ENEMY_DEATH, (config: EnemyConfig) => {
       // 关卡规则：嗜血（击杀回血）
       this.modifierSystem.onEnemyKilled(this.player);
       if (config?.type === 'boss') {
@@ -642,7 +642,7 @@ export class GameScene extends Phaser.Scene {
     }));
     // 暂停/恢复：同步暂停物理引擎和补间动画
     // （仅 update return 不够，Arcade 物理世界会独立继续运行）
-    sub(EventBus.on('run:pause', (paused: boolean) => {
+    sub(EventBus.on(EventKeys.RUN_PAUSE, (paused: boolean) => {
       if (paused) {
         this.physics.pause();
         this.tweens.pauseAll();
@@ -846,7 +846,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
     this.tweens.timeScale = this.gameSpeed;
-    EventBus.emit('game:speed', this.gameSpeed);
+    EventBus.emit(EventKeys.GAME_SPEED, this.gameSpeed);
   }
   /** 每帧在实体 update 之后调用：body 速度统一缩放回 gameSpeed 倍（实体每帧 setVelocity 原始值会覆盖，需逐帧乘以维持倍速） */
 

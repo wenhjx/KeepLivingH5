@@ -70,3 +70,41 @@ class EventBusClass {
 }
 
 export const EventBus = new EventBusClass();
+
+/** 事件键常量（集中管理，防止魔法字符串改名断链） */
+export const EventKeys = {
+  BOSS_SPAWN: 'boss:spawn',
+  BULLET_EXPLODE: 'bullet:explode',
+  COIN_EARNED: 'coin:earned',
+  COMBAT_CRIT: 'combat:crit',
+  ENDLESSCHOICE_CONTINUE: 'endlesschoice:continue',
+  ENDLESSCHOICE_END: 'endlesschoice:end',
+  ENDLESSCHOICE_NEXTLEVEL: 'endlesschoice:nextlevel',
+  ENEMY_DEATH: 'enemy:death',
+  ENEMY_SPAWN: 'enemy:spawn',
+  GAME_INITIALIZED: 'game:initialized',
+  GAME_SPEED: 'game:speed',
+  LEVEL_CLEAR: 'level:clear',
+  PLAYER_COINS: 'player:coins',
+  PLAYER_DAMAGE: 'player:damage',
+  PLAYER_DEATH: 'player:death',
+  PLAYER_HEAL: 'player:heal',
+  PLAYER_HIT: 'player:hit',
+  PLAYER_INVENTORY_CHANGED: 'player:inventoryChanged',
+  PLAYER_LEVELUP: 'player:levelup',
+  PLAYER_OVERFLOW: 'player:overflow',
+  PLAYER_REVIVE: 'player:revive',
+  QUALITY_CHANGED: 'quality:changed',
+  RUN_END: 'run:end',
+  RUN_KILL: 'run:kill',
+  RUN_PAUSE: 'run:pause',
+  RUN_START: 'run:start',
+  RUN_WAVE: 'run:wave',
+  SAVE_COMPLETE: 'save:complete',
+  SAVE_ERROR: 'save:error',
+  SHOP_CLOSED: 'shop:closed',
+  SHOP_PURCHASE: 'shop:purchase',
+  UPGRADE_CHOSEN: 'upgrade:chosen',
+  WAVE_START: 'wave:start',
+  WEAPONSELECT_CLOSED: 'weaponselect:closed',
+} as const;

@@ -7,7 +7,7 @@ import { GuideManager } from '../systems/GuideManager';
 import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED, FALLBACK_UPGRADES } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { setupUICamera } from '../utils/CameraHelper';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
@@ -236,7 +236,7 @@ export class UpgradeScene extends Phaser.Scene {
     GameManager.getInstance().setPaused(false);
     this.scene.stop('UpgradeScene');
     // 通知 GameScene：本次选择完成，若有剩余升级（跨多级）则继续弹出下一个三选一
-    EventBus.emit('upgrade:chosen');
+    EventBus.emit(EventKeys.UPGRADE_CHOSEN);
   }
 
   /**
@@ -265,6 +265,6 @@ export class UpgradeScene extends Phaser.Scene {
     GameManager.getInstance().setPaused(false);
     this.scene.stop('UpgradeScene');
     // 与正常选择一致：若有剩余升级（跨多级）继续弹下一个三选一
-    EventBus.emit('upgrade:chosen');
+    EventBus.emit(EventKeys.UPGRADE_CHOSEN);
   }
 }

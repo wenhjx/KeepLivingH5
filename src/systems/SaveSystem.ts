@@ -1,5 +1,5 @@
 import { GameConfig } from '../game/GameConfig';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { Logger } from '../utils/Logger';
 import type { GameSaveData } from '../types';
 
@@ -37,7 +37,7 @@ export class SaveSystem {
       this.syncToCloud(data);
     }
 
-    EventBus.emit('save:complete');
+    EventBus.emit(EventKeys.SAVE_COMPLETE);
     Logger.info('[SaveSystem] 存档保存成功', data);
   }
 
@@ -70,7 +70,7 @@ export class SaveSystem {
       localStorage.setItem(this.localStorageKey, json);
     } catch (e) {
       Logger.error('[SaveSystem] 本地存档失败', e);
-      EventBus.emit('save:error', '本地存储失败');
+      EventBus.emit(EventKeys.SAVE_ERROR, '本地存储失败');
     }
   }
 

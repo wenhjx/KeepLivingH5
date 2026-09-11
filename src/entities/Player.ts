@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameConfig } from '../game/GameConfig';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { MathUtils } from '../utils/MathUtils';
 import { Drone } from './Drone';
 import { WEAPONS } from '../data/weapons';
@@ -533,7 +533,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // （后期 Boss 单次伤害可达数十万，695 血会瞬间被扣成 -999999305 级并显示在血条上）
     if (this.stats.health < 0) this.stats.health = 0;
     // 成就：本局受击标记（无伤通关判定，run:start 时由 AchievementManager 重置）
-    EventBus.emit('player:hit');
+    EventBus.emit(EventKeys.PLAYER_HIT);
     this.invincible = true;
     this.invincibleTimer = GameConfig.PLAYER.invincibleTime;
     this.setTint(0xff4444);
@@ -548,7 +548,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    EventBus.emit('player:damage', actualDamage);
+    EventBus.emit(EventKeys.PLAYER_DAMAGE, actualDamage);
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PLAYER_HURT, 1);
 
     if (this.stats.health <= 0) {
@@ -559,7 +559,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   heal(amount: number): void {
     this.stats.health = Math.min(this.stats.maxHealth, this.stats.health + amount);
-    EventBus.emit('player:heal', amount);
+    EventBus.emit(EventKeys.PLAYER_HEAL, amount);
   }
 
   /**
@@ -570,7 +570,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.stats.health <= 0) return;
     this.stats.health -= amount;
     if (this.stats.health < 0) this.stats.health = 0;
-    EventBus.emit('player:damage', amount);
+    EventBus.emit(EventKeys.PLAYER_DAMAGE, amount);
     if (this.stats.health <= 0) {
       this.stats.health = 0;
       this.die();
@@ -597,7 +597,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.setActive(true);
       this.setVisible(true);
       this.setAlpha(1);
-      EventBus.emit('player:revive');
+      EventBus.emit(EventKeys.PLAYER_REVIVE);
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PLAYER_REVIVE, 1);
       return;
     }
@@ -606,7 +606,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setVisible(false);
     this.shieldRing?.destroy();
     this.shieldRing = null;
-    EventBus.emit('player:death');
+    EventBus.emit(EventKeys.PLAYER_DEATH);
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PLAYER_DIE, 1);
   }
 
@@ -619,9 +619,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       amount *= 1 + 0.5 + goldBoostLevel * 0.1;
     }
     this.stats.coins += Math.floor(amount);
-    EventBus.emit('player:coins', this.stats.coins);
+    EventBus.emit(EventKeys.PLAYER_COINS, this.stats.coins);
     // 成就统计：累计获得金币（含被动加成的最终值）
-    EventBus.emit('coin:earned', amount);
+    EventBus.emit(EventKeys.COIN_EARNED, amount);
   }
 
   getCoins(): number {
@@ -632,7 +632,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   spendCoins(amount: number): boolean {
     if (this.stats.coins < amount) return false;
     this.stats.coins -= amount;
-    EventBus.emit('player:coins', this.stats.coins);
+    EventBus.emit(EventKeys.PLAYER_COINS, this.stats.coins);
     return true;
   }
 
@@ -669,7 +669,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** 添加物品到物品栏 */
   addItem(id: string, count: number = 1): void {
     this.inventory.set(id, (this.inventory.get(id) || 0) + count);
-    EventBus.emit('player:inventoryChanged');
+    EventBus.emit(EventKeys.PLAYER_INVENTORY_CHANGED);
   }
 
   /** 获取物品数量 */
@@ -685,7 +685,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!item) return false;
     item.use(this, gameScene);
     this.inventory.set(id, count - 1);
-    EventBus.emit('player:inventoryChanged');
+    EventBus.emit(EventKeys.PLAYER_INVENTORY_CHANGED);
     return true;
   }
 
@@ -777,7 +777,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     this.stats.overflowCount++;
-    EventBus.emit('player:overflow', this.stats.overflowCount);
+    EventBus.emit(EventKeys.PLAYER_OVERFLOW, this.stats.overflowCount);
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_LEVEL_UP, 0.6);
   }
 
@@ -814,7 +814,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.stats.health = this.stats.maxHealth;
     this.stats.attackPower += 2;
 
-    EventBus.emit('player:levelup', this.stats.level);
+    EventBus.emit(EventKeys.PLAYER_LEVELUP, this.stats.level);
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_LEVEL_UP, 0.9);
   }
 

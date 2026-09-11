@@ -1,6 +1,6 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { USABLE_ITEMS, INVENTORY_ORDER } from '../data/items';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -80,7 +80,7 @@ export class InventoryUI {
     });
 
     // 监听物品栏变化（保存退订函数，场景关闭时移除，避免残留监听访问已销毁对象导致 texture null 崩溃）
-    this.unsubscribe = EventBus.on('player:inventoryChanged', () => this.refresh());
+    this.unsubscribe = EventBus.on(EventKeys.PLAYER_INVENTORY_CHANGED, () => this.refresh());
 
     // 快捷键 1-6（物品栏槽位数）
     const keys = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];

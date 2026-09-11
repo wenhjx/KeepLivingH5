@@ -4,7 +4,7 @@ import { GameManager } from '../game/GameManager';
 import { MathUtils } from '../utils/MathUtils';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import type { ObjectPool } from './ObjectPool';
 import type { EnemyConfig, EnemyType, WaveConfig } from '../types';
 import { ENEMY_CONFIGS } from '../data/enemies';
@@ -52,7 +52,7 @@ export class WaveManager {
     GameManager.getInstance().setWave(wave);
 
     // 演出事件：波次开始（GameFeedback 订阅播横幅；纯表现，不影响玩法）
-    EventBus.emit('wave:start', {
+    EventBus.emit(EventKeys.WAVE_START, {
       wave,
       isBoss: !this.trainingMode && wave % GameConfig.WAVE.bossWaveInterval === 0,
     });
@@ -249,7 +249,7 @@ export class WaveManager {
     this.objectPool.spawnEnemy(config, spawnPos.x, spawnPos.y, difficultyMultiplier);
     this.bossActive = true;
     // 演出事件：Boss 实际生成（GameFeedback 订阅播警报演出；纯表现）
-    EventBus.emit('boss:spawn', { x: spawnPos.x, y: spawnPos.y, wave: this.currentWave });
+    EventBus.emit(EventKeys.BOSS_SPAWN, { x: spawnPos.x, y: spawnPos.y, wave: this.currentWave });
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_BOSS_ALERT, 1);
   }
 

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { createUIText } from '../utils/UIText';
 import { GameConfig } from '../game/GameConfig';
 
@@ -25,9 +25,9 @@ export class GameFeedback {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.unsubs.push(EventBus.on('wave:start', (d: any) => this.onWaveStart(d)));
-    this.unsubs.push(EventBus.on('boss:spawn', (d: any) => this.onBossSpawn(d)));
-    this.unsubs.push(EventBus.on('combat:crit', (d: any) => this.onCrit(d)));
+    this.unsubs.push(EventBus.on(EventKeys.WAVE_START, (d: any) => this.onWaveStart(d)));
+    this.unsubs.push(EventBus.on(EventKeys.BOSS_SPAWN, (d: any) => this.onBossSpawn(d)));
+    this.unsubs.push(EventBus.on(EventKeys.COMBAT_CRIT, (d: any) => this.onCrit(d)));
   }
 
   /** 销毁：取消全部订阅并清理横幅（场景 SHUTDOWN 时调用） */

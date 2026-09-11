@@ -2,7 +2,7 @@ import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { setupUICamera } from '../utils/CameraHelper';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
@@ -237,7 +237,7 @@ export class ShopScene extends Phaser.Scene {
     this.updateCoin();
 
     // 成就统计：商店累计消费（财迷系列）
-    EventBus.emit('shop:purchase', { price: item.price });
+    EventBus.emit(EventKeys.SHOP_PURCHASE, { price: item.price });
 
     // 该格标记已售
     card.setData('sold', true);
@@ -344,6 +344,6 @@ export class ShopScene extends Phaser.Scene {
     GameManager.getInstance().setPaused(false);
     this.scene.stop('ShopScene');
     // 通知 GameScene：商店关闭，若有 Boss 战前补给待开则开始该波次
-    EventBus.emit('shop:closed');
+    EventBus.emit(EventKeys.SHOP_CLOSED);
   }
 }

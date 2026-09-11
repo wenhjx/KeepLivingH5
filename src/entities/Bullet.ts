@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { GameConfig } from '../game/GameConfig';
 
 /**
@@ -241,7 +241,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     if (this.traveled >= this.range && !this.boomerang) {
       // 爆炸子弹到达射程尽头自动爆炸，而非静默消失（火箭筒手感）
       if (this.explosive) {
-        EventBus.emit('bullet:explode', {
+        EventBus.emit(EventKeys.BULLET_EXPLODE, {
           x: this.x,
           y: this.y,
           damage: this.damage,
@@ -261,7 +261,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
 
     // 爆炸子弹：命中时触发爆炸事件
     if (this.explosive) {
-      EventBus.emit('bullet:explode', {
+      EventBus.emit(EventKeys.BULLET_EXPLODE, {
         x: this.x,
         y: this.y,
         damage: this.damage,

@@ -8,7 +8,7 @@ import { VirtualJoystick } from '../ui/VirtualJoystick';
 import { Minimap } from '../ui/Minimap';
 import { InventoryUI } from '../ui/InventoryUI';
 import { GuideManager } from '../systems/GuideManager';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 
@@ -204,7 +204,7 @@ export class UIScene extends Phaser.Scene {
   private setupEventListeners(): void {
     const sub = (fn: () => void) => this.eventUnsubscribers.push(fn);
 
-    sub(EventBus.on('run:pause', (paused: boolean) => {
+    sub(EventBus.on(EventKeys.RUN_PAUSE, (paused: boolean) => {
       // 模态场景打开时（商店/武器强化/通关结算/突破奖励），暂停覆盖层不显示——
       // 这些场景自带半透明背景，否则会与"游戏暂停/继续游戏"文字重叠
       const modalOpen =
@@ -216,27 +216,27 @@ export class UIScene extends Phaser.Scene {
       this.pauseButton.setVisible(!paused);
     }));
 
-    sub(EventBus.on('run:kill', () => {
+    sub(EventBus.on(EventKeys.RUN_KILL, () => {
       this.hud.update();
     }));
 
-    sub(EventBus.on('run:wave', () => {
+    sub(EventBus.on(EventKeys.RUN_WAVE, () => {
       this.hud.update();
     }));
 
-    sub(EventBus.on('player:damage', () => {
+    sub(EventBus.on(EventKeys.PLAYER_DAMAGE, () => {
       this.hud.updateHealth();
     }));
 
-    sub(EventBus.on('player:heal', () => {
+    sub(EventBus.on(EventKeys.PLAYER_HEAL, () => {
       this.hud.updateHealth();
     }));
 
-    sub(EventBus.on('player:levelup', () => {
+    sub(EventBus.on(EventKeys.PLAYER_LEVELUP, () => {
       this.hud.updateLevel();
     }));
 
-    sub(EventBus.on('player:overflow', () => {
+    sub(EventBus.on(EventKeys.PLAYER_OVERFLOW, () => {
       this.hud.updateLevel();
     }));
 

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 import { MathUtils } from '../utils/MathUtils';
 
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 
 import { SOUND_KEYS } from '../data/sounds';
 
@@ -192,7 +192,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.affixText.setText(affixIcon)
       .setPosition(this.x, this.y - (config.size || 32) / 2 - 22)
       .setVisible(!!affixIcon);
-    EventBus.emit('enemy:spawn', this);
+    EventBus.emit(EventKeys.ENEMY_SPAWN, this);
   }
   /** 回收对象池 */
   despawn(): void {
@@ -557,7 +557,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     scene?.getFXManager?.()?.explosion(this.x, this.y, radius);
     // 自身死亡（不掉落，自爆无收益）
     this.isDead = true;
-    EventBus.emit('enemy:death', this.config);
+    EventBus.emit(EventKeys.ENEMY_DEATH, this.config);
     this.despawn();
   }
   /** 护盾怪：缓慢接近，正面减伤，侧面/背面正常受伤 */
@@ -1179,7 +1179,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.config.type === 'boss' ? SOUND_KEYS.SFX_BOSS_DIE : SOUND_KEYS.SFX_ENEMY_DIE,
       this.config.type === 'boss' ? 1 : 0.5
     );
-    EventBus.emit('enemy:death', this.config);
+    EventBus.emit(EventKeys.ENEMY_DEATH, this.config);
     this.despawn();
   }
   // ========== Getters ==========

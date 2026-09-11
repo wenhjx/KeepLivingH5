@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import type { Player } from '../entities/Player';
@@ -69,7 +69,7 @@ export class CollisionSystem {
 
     // 演出事件：玩家暴击命中（GameFeedback 订阅播震屏/顿帧；纯表现）
     if (isCrit) {
-      EventBus.emit('combat:crit', { x: bullet.x, y: bullet.y, damage: finalDamage });
+      EventBus.emit(EventKeys.COMBAT_CRIT, { x: bullet.x, y: bullet.y, damage: finalDamage });
     }
 
     enemy.takeDamage(finalDamage, isCrit, bullet.x, bullet.y);

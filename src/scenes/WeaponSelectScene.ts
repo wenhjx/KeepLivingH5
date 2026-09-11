@@ -7,7 +7,7 @@ import { GuideManager } from '../systems/GuideManager';
 import { WEAPONS } from '../data/weapons';
 import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
-import { EventBus } from '../utils/EventBus';
+import { EventBus, EventKeys } from '../utils/EventBus';
 import { setupUICamera } from '../utils/CameraHelper';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
@@ -162,6 +162,6 @@ export class WeaponSelectScene extends Phaser.Scene {
     // 恢复游戏并通知 GameScene 开始下一波
     GameManager.getInstance().setPaused(false);
     this.scene.stop('WeaponSelectScene');
-    EventBus.emit('weaponselect:closed');
+    EventBus.emit(EventKeys.WEAPONSELECT_CLOSED);
   }
 }
