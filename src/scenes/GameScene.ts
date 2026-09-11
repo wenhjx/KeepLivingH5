@@ -659,13 +659,13 @@ export class GameScene extends Phaser.Scene {
       }
     });
     // 暂停切换
-    this.input.keyboard?.on('keydown-ESC', () => {
+    this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => {
       const gm = GameManager.getInstance();
       gm.setPaused(!gm.isPaused);
     });
     // 按 C 打开/关闭玩家属性面板（二游式角色详情）
     // 注意：UIScene/PlayerInfoScene 的键盘监听不生效，统一放在 GameScene（与 ESC 一致）
-    this.input.keyboard?.on('keydown-C', () => {
+    this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.C).on('down', () => {
       const gm = GameManager.getInstance();
       if (gm.isGameOver) return;
       if (this.scene.isActive('PlayerInfoScene')) {

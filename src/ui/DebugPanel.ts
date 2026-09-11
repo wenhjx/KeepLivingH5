@@ -600,14 +600,14 @@ export class DebugPanel {
   }
 
   private setupHotkey(): void {
-    this.scene.input.keyboard?.on('keydown-BACKTICK', () => {
+    this.scene.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.BACKTICK).on('down', () => {
       this.toggle();
     });
     // 游戏速度快捷键：- 减速 / = 加速（步进 0.25，范围 0.25~4）
-    this.scene.input.keyboard?.on('keydown-MINUS', () => {
+    this.scene.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.MINUS).on('down', () => {
       this.adjustSpeed(-0.25);
     });
-    this.scene.input.keyboard?.on('keydown-PLUS', () => {
+    this.scene.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.PLUS).on('down', () => {
       this.adjustSpeed(0.25);
     });
   }
