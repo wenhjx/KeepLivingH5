@@ -43,6 +43,8 @@ export class DebugPanel {
   private readonly btnHeight = 30;
   private readonly btnSpacing = 6;
   private readonly sectionSpacing = 10;
+  /** 分区内说明文本行（副标题）到下方元素的步进，比按钮行距(36)紧凑 */
+  private readonly tipSpacing = 24;
   private readonly padding = 12;
 
   // ===== 滚动相关 =====
@@ -184,7 +186,7 @@ export class DebugPanel {
       })
       .setOrigin(0, 0);
     this.content.add(spawnTip);
-    col.step(this.btnHeight + this.btnSpacing);
+    col.step(this.tipSpacing);
 
     // 游戏速度调节（0.25~4 倍速，模拟明日方舟 2 倍速 / 慢速观察细节；快捷键 - / =）
     this.addSectionTitle(col, '⏱ 游戏速度（快捷键 -/=）');
@@ -194,7 +196,7 @@ export class DebugPanel {
       })
       .setOrigin(0, 0);
     this.content.add(this.speedText);
-    col.step(this.btnHeight + this.btnSpacing);
+    col.step(this.tipSpacing);
     this.addRow3(col,
       { text: '🐢 0.5×', fn: () => this.setGameSpeed(0.5) },
       { text: '▶ 1×', fn: () => this.setGameSpeed(1) },
@@ -208,7 +210,7 @@ export class DebugPanel {
       })
       .setOrigin(0, 0);
     this.content.add(tip);
-    col.step(this.btnHeight + this.btnSpacing);
+    col.step(this.tipSpacing);
 
     // 属性调整
     this.addSectionTitle(col, '📊 属性调整');
@@ -242,7 +244,7 @@ export class DebugPanel {
       })
       .setOrigin(0, 0);
     this.content.add(this.enemyBoostText);
-    col.step(this.btnHeight + this.btnSpacing);
+    col.step(this.tipSpacing);
     this.addRow(col, { text: '🩸 血量×2', fn: () => this.setEnemyBoost(2, -1) }, { text: '⚔️ 攻击×2', fn: () => this.setEnemyBoost(-1, 2) });
     this.addRow(col, { text: '🩸 血量×4', fn: () => this.setEnemyBoost(4, -1) }, { text: '⚔️ 攻击×4', fn: () => this.setEnemyBoost(-1, 4) });
     this.addRow(col, { text: '🩸 血量×1', fn: () => this.setEnemyBoost(1, -1) }, { text: '⚔️ 攻击×1', fn: () => this.setEnemyBoost(-1, 1) });
@@ -270,7 +272,7 @@ export class DebugPanel {
   /** 估算内容总高（按 UPGRADE_OPTIONS 实际行数动态计算，新增选项自动拓展） */
   private computeContentHeight(): number {
     const rowH = this.btnHeight + this.btnSpacing;
-    const sectionH = (rows: number) => 42 + rows * rowH; // 分区前留白10 + 标题18 + 后留白14
+    const sectionH = (rows: number) => 46 + rows * rowH; // 分区前留白10 + 标题18 + 后留白18
     // 快捷操作 4 行（含 AI/主题全宽）、属性 2 行
     const statRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'stat').length / 2);
     const weaponRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'weapon').length / 2);
@@ -292,7 +294,7 @@ export class DebugPanel {
       })
       .setOrigin(0, 0);
     this.content.add(title);
-    col.step(14);
+    col.step(18);
   }
 
   /** 排一行两个按钮（可缺省一侧），按钮定位到当前游标后推进 */
