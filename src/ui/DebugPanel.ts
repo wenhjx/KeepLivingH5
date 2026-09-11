@@ -185,8 +185,6 @@ export class DebugPanel {
       .setOrigin(0, 0);
     this.content.add(spawnTip);
     col.step(this.btnHeight + this.btnSpacing);
-    col.step(this.sectionSpacing);
-    col.step(this.sectionSpacing);
 
     // 游戏速度调节（0.25~4 倍速，模拟明日方舟 2 倍速 / 慢速观察细节；快捷键 - / =）
     this.addSectionTitle(col, '⏱ 游戏速度（快捷键 -/=）');
@@ -211,33 +209,27 @@ export class DebugPanel {
       .setOrigin(0, 0);
     this.content.add(tip);
     col.step(this.btnHeight + this.btnSpacing);
-    col.step(this.sectionSpacing);
 
     // 属性调整
     this.addSectionTitle(col, '📊 属性调整');
     this.addRow(col, { text: '🧲 拾取+50', fn: () => this.addPickupRadius(50) }, { text: '🧲 拾取+200', fn: () => this.addPickupRadius(200) });
     this.addRow(col, { text: '🧲 全屏拾取', fn: () => this.setPickupRadius(9999) }, { text: '📈 +1000 经验', fn: () => this.addExp(1000) });
-    col.step(this.sectionSpacing);
 
     // 属性升级（与 UPGRADE_OPTIONS.stat 对齐）
     this.addSectionTitle(col, '📈 属性升级（点击应用）');
     this.addOptionsRows(col, UPGRADE_OPTIONS.filter((o) => o.type === 'stat'));
-    col.step(this.sectionSpacing);
 
     // 武器（与 UPGRADE_OPTIONS.weapon 对齐）
     this.addSectionTitle(col, '🔫 武器（点击获取/升级）');
     this.addOptionsRows(col, UPGRADE_OPTIONS.filter((o) => o.type === 'weapon'));
-    col.step(this.sectionSpacing);
 
     // 被动（与 UPGRADE_OPTIONS.passive 对齐）
     this.addSectionTitle(col, '✨ 被动技能（点击获取/升级）');
     this.addOptionsRows(col, UPGRADE_OPTIONS.filter((o) => o.type === 'passive'));
-    col.step(this.sectionSpacing);
 
     // 商店道具（即时生效，方便测试；不叠加属性，不影响玩家状态）
     this.addSectionTitle(col, '🛒 商店道具（即时生效）');
     this.addOptionsRows(col, FALLBACK_UPGRADES);
-    col.step(this.sectionSpacing);
 
     // 怪物增强（调试测试阈值用；只作用于新生成的敌人，不影响场上现有敌人）
     this.addSectionTitle(col, '👹 怪物增强（新生成生效）');
@@ -278,7 +270,7 @@ export class DebugPanel {
   /** 估算内容总高（按 UPGRADE_OPTIONS 实际行数动态计算，新增选项自动拓展） */
   private computeContentHeight(): number {
     const rowH = this.btnHeight + this.btnSpacing;
-    const sectionH = (rows: number) => 20 + rows * rowH + this.sectionSpacing;
+    const sectionH = (rows: number) => 42 + rows * rowH; // 分区前留白10 + 标题18 + 后留白14
     // 快捷操作 4 行（含 AI/主题全宽）、属性 2 行
     const statRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'stat').length / 2);
     const weaponRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'weapon').length / 2);
@@ -289,8 +281,9 @@ export class DebugPanel {
     return 28 + sectionH(6) + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(shopRows) + sectionH(4) + this.padding;
   }
 
-  /** 分区标题（content 内） */
+  /** 分区标题（content 内；前后留白统一由本函数管理，避免调用处间距不一致） */
   private addSectionTitle(col: UILayout, text: string): void {
+    col.step(this.sectionSpacing);
     const y = col.y;
     const title = createUIText(this.scene, 0, y, text, {
         fontSize: '11px',
@@ -299,7 +292,7 @@ export class DebugPanel {
       })
       .setOrigin(0, 0);
     this.content.add(title);
-    col.step(18);
+    col.step(14);
   }
 
   /** 排一行两个按钮（可缺省一侧），按钮定位到当前游标后推进 */
