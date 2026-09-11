@@ -1,5 +1,7 @@
 # Keep Living H5 - 项目笔记
 
+> **协作约定（2026-09-11）**：GitHub Pages 推送时机由用户决定（担心 github 打包次数过多产生奇怪影响）。日常改动只推 gitee（`git push origin main`）；用户明确说"同步/推送 Pages"时，才执行 `git push github main:main`。
+
 
 
 > 开发备忘 / 待办记录。已完成的改动均有 git 检查点，可随时回滚。
