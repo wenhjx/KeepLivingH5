@@ -202,7 +202,7 @@ export class AchievementScene extends Phaser.Scene {
       fontStyle: unlocked ? 'bold' : 'normal',
     }).setOrigin(0, 0);
 
-    const desc = createUIText(this, 55, 34, isHidden ? '达成条件保密，继续探索吧' : def.description, {
+    const desc = createUIText(this, 55, 34, isHidden ? (def.hint ?? '达成条件保密，继续探索吧') : def.description, {
       fontSize: '13px',
       color: '#8888aa',
     }).setOrigin(0, 0);

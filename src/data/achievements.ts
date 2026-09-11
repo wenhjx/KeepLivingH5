@@ -43,6 +43,8 @@ export interface AchievementDef {
   icon: string;
   /** 隐藏成就：未解锁时显示"？？？" */
   hidden?: boolean;
+  /** 隐藏成就未解锁时的方向性提示（替代"达成条件保密"） */
+  hint?: string;
   /** 累计型目标值 */
   target?: number;
   /** 累计型进度读取（从全局统计） */
@@ -178,6 +180,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     description: '仅用初始武器通关一关',
     icon: '🔫',
     hidden: true,
+    hint: '与武器选择有关——试试最朴素的配置',
     check: (p) => !!p?.victory && (p?.weaponIds ?? []).every((id: string) => id === 'default_gun') && (p?.weaponIds ?? []).length > 0,
     reward: { bonuses: { critRate: 0.02 }, title: '初心者' },
   },
@@ -231,6 +234,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     description: '存活至第 90 波',
     icon: '🌀',
     hidden: true,
+    hint: '与波次深度有关——深渊比想象中更深',
     target: 90,
     progress: (s) => s.maxWaveReached ?? 0,
     reward: { bonuses: { maxHealth: 8 } },
@@ -242,6 +246,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     description: '未受任何伤害通关一关',
     icon: '🛡️',
     hidden: true,
+    hint: '与受伤与否有关——追求一场无暇的胜利',
     check: (p) => !!p?.victory && !p?.hitThisRun,
     reward: { bonuses: { critDamage: 0.1 }, title: '无伤主义者' },
   },
@@ -252,6 +257,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     description: '被 Boss 击败',
     icon: '☠️',
     hidden: true,
+    hint: '与 Boss 的结局有关——有时败北也值得纪念',
     check: (p) => !p?.victory && !!p?.bossAlive,
     reward: { title: '陨落者' },
   },
