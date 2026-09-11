@@ -423,7 +423,8 @@ export class MainMenuScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     codexBtn.on("pointerdown", () => {
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
-      this.scene.start("EnemyCodexScene", {
+      // launch 叠加而非 start：返回时只关情报页，保留选关面板
+      this.scene.launch("EnemyCodexScene", {
         levelId: LEVELS[this.previewLevelIndex ?? 0].id,
       });
     });

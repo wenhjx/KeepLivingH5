@@ -62,7 +62,10 @@ export class EnemyCodexScene extends Phaser.Scene {
     const cx = width / 2;
 
     // 背景 + 顶部渐变带
-    this.add.rectangle(0, 0, width, height, 0x0a0a14, 0.97).setOrigin(0);
+    this.add
+      .rectangle(0, 0, width, height, 0x0a0a14, 0.97)
+      .setOrigin(0)
+      .setInteractive();
     const topBar = this.add.graphics();
     topBar.fillGradientStyle(0x14142a, 0x14142a, 0x1a1a35, 0x1a1a35, 1);
     topBar.fillRect(0, 0, width, 110);
@@ -87,7 +90,8 @@ export class EnemyCodexScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     backBtn.on('pointerdown', () => {
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
-      this.scene.start('MainMenuScene');
+      // 叠加场景：只关闭情报页，保留下层选关面板
+      this.scene.stop();
     });
 
     // ===== 左侧敌人网格列表（2 列） =====
