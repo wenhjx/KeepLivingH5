@@ -412,6 +412,24 @@ export class MainMenuScene extends Phaser.Scene {
         fontStyle: "bold",
       }).setOrigin(0, 0.5),
     );
+    // 敌方情报入口（打开独立图鉴页，明日方舟式左列表右详情）
+    const codexBtn = createUIText(this, gx + 212, gy - 26, "📖 敌方情报", {
+      fontSize: "15px",
+      color: "#88ccff",
+      backgroundColor: "#1a1a35",
+      padding: { left: 12, right: 12, top: 5, bottom: 5 },
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    codexBtn.on("pointerdown", () => {
+      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
+      this.scene.start("EnemyCodexScene", {
+        levelId: LEVELS[this.previewLevelIndex ?? 0].id,
+      });
+    });
+    codexBtn.on("pointerover", () => codexBtn.setStyle({ backgroundColor: "#2a2a55" }));
+    codexBtn.on("pointerout", () => codexBtn.setStyle({ backgroundColor: "#1a1a35" }));
+    this.levelSelectOverlay.add(codexBtn);
     this.levelPreviewRows = [];
     for (let r = 0; r < 5; r++) {
       const nameT = createUIText(this, gx, gy + r * 34, "", {

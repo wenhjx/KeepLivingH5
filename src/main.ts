@@ -14,6 +14,7 @@ import { WeaponSelectScene } from './scenes/WeaponSelectScene';
 import { EndlessChoiceScene } from './scenes/EndlessChoiceScene';
 import { DebugScene } from './scenes/DebugScene';
 import { AchievementScene } from './scenes/AchievementScene';
+import { EnemyCodexScene } from './scenes/EnemyCodexScene';
 import { GameManager } from './game/GameManager';
 import { initDebugAPI } from './utils/DebugAPI';
 
@@ -107,7 +108,7 @@ const config: Phaser.Types.Core.GameConfig = {
   input: {
     activePointers: 3,
   },
-  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene, WeaponSelectScene, EndlessChoiceScene, ShopScene, BreakthroughScene, PlayerInfoScene, DebugScene, AchievementScene],
+  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene, WeaponSelectScene, EndlessChoiceScene, ShopScene, BreakthroughScene, PlayerInfoScene, DebugScene, AchievementScene, EnemyCodexScene],
   callbacks: {
     postBoot: (game) => {
       hideLoading();
