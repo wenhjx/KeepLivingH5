@@ -130,10 +130,25 @@ export class MainMenuScene extends Phaser.Scene {
       },
     ).setOrigin(0.5);
     // 版本号
-    createUIText(this, width - 10, height - 10, "v0.1.0", {
+    createUIText(this, width - 10, height - 10, "v0.2.0", {
       fontSize: "12px",
       color: "#333333",
     }).setOrigin(1, 1);
+
+    // 版本更新检测：与上次游玩版本对比，变化时提示（识别缓存旧版/确认已加载新版）
+    try {
+      const UI_VERSION = "v0.2.0";
+      const lastVer = localStorage.getItem("keep_living_ui_version");
+      if (lastVer && lastVer !== UI_VERSION) {
+        createUIText(this, width - 10, height - 38, "⚡ 已更新至 " + UI_VERSION, {
+          fontSize: "13px",
+          color: "#88ccff",
+          backgroundColor: "rgba(20,20,40,0.7)",
+          padding: { left: 8, right: 8, top: 3, bottom: 3 },
+        }).setOrigin(1, 1);
+      }
+      localStorage.setItem("keep_living_ui_version", UI_VERSION);
+    } catch { /* 隐私模式等场景忽略 */ }
     // 设备标识
     if (gm.isMobile) {
       createUIText(this, 10, height - 10, `移动端 · ${gm.qualityLevel}`, {
