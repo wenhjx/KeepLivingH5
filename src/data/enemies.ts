@@ -196,7 +196,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   },
   boss: {
     type: 'boss',
-    name: 'BOSS',
+    name: '守门巨兽',
     texture: 'enemy_boss',
     maxHealth: 2000,
     moveSpeed: 45,

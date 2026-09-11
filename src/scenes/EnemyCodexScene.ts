@@ -27,25 +27,7 @@ const TYPE_LABEL: Record<string, string> = {
   boss_summoner: 'Boss·召唤',
   boss_barrage: 'Boss·弹幕',
 };
-/** 敌人类型 → 图标 */
-const TYPE_ICON: Record<string, string> = {
-  normal: '🧟',
-  fast: '🐺',
-  tank: '🛡️',
-  ranged: '🏹',
-  suicider: '💣',
-  splitter: '🫧',
-  shielded: '🔱',
-  summoner: '🧙',
-  charger: '🐗',
-  healer: '💉',
-  elite: '👹',
-  boss: '🐲',
-  frost_zombie: '🧊',
-  corrupt_zombie: '☠️',
-  boss_summoner: '🗿',
-  boss_barrage: '🤖',
-};
+
 
 /** Boss 机制一句话说明 */
 function describeBossMechanic(type: EnemyType): string {
@@ -132,9 +114,16 @@ export class EnemyCodexScene extends Phaser.Scene {
         bg.setFillStyle(this.selectedType === item.type ? 0x2a2a45 : 0x1a1a28),
       );
       const color = '#' + (cfg.color ?? 0x888888).toString(16).padStart(6, '0');
-      createUIText(this, x + 14, y + cellH / 2, TYPE_ICON[item.type] ?? '👾', {
-        fontSize: '28px',
-      }).setOrigin(0.5);
+      // 图标：复用游戏内敌人贴图（与关卡实际怪物一致），按主题着色
+      const spr = this.add.sprite(x + 26, y + cellH / 2, GameConfig.themeKey(cfg.texture || 'enemy_normal'));
+      spr.setDisplaySize(34, 34);
+      if (
+        GameConfig.VISUAL_THEME === 'pixel' ||
+        item.type === 'frost_zombie' ||
+        item.type === 'corrupt_zombie'
+      ) {
+        spr.setTint(cfg.color ?? 0x888888);
+      }
       createUIText(this, x + 52, y + cellH / 2 - 10, cfg.name ?? item.type, {
         fontSize: '15px',
         color,
@@ -177,12 +166,18 @@ export class EnemyCodexScene extends Phaser.Scene {
     panel.strokeRoundedRect(dx, dy, dw, dh, 14);
     this.detail.add(panel);
 
-    // 大图标
+    // 大图标：复用游戏内敌人贴图，与关卡实际怪物一致
     this.detail.add(this.add.circle(dx + 70, dy + 90, 42, cfg.color ?? 0x888888, 0.35));
-    const icon = createUIText(this, dx + 70, dy + 90, TYPE_ICON[type] ?? '👾', {
-      fontSize: '46px',
-    }).setOrigin(0.5);
-    this.detail.add(icon);
+    const bigSpr = this.add.sprite(dx + 70, dy + 90, GameConfig.themeKey(cfg.texture || 'enemy_normal'));
+    bigSpr.setDisplaySize(72, 72);
+    if (
+      GameConfig.VISUAL_THEME === 'pixel' ||
+      type === 'frost_zombie' ||
+      type === 'corrupt_zombie'
+    ) {
+      bigSpr.setTint(cfg.color ?? 0x888888);
+    }
+    this.detail.add(bigSpr);
 
     // 名字 + 类型标签
     const name = createUIText(this, dx + 130, dy + 66, cfg.name ?? type, {
