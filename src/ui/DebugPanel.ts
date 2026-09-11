@@ -166,10 +166,6 @@ export class DebugPanel {
     this.addRow(col, { text: '♾ 超限+10', fn: () => this.callDebug('addOverflow', 10) }, { text: '♾ 超限+50', fn: () => this.callDebug('addOverflow', 50) });
     this.addAutoPlayRow(col);
     this.addThemeRow(col);
-    this.addRow(col,
-      { text: '🎯 试玩场地', fn: () => this.callDebug('enterTestField') },
-      { text: '🚪 回主菜单', fn: () => this.callDebug('backToMenu') },
-    );
     this.addSectionTitle(col, '🧪 试玩刷怪（环绕玩家，测特效/伤害）');
     this.addRow3(col,
       { text: '🦠 普通×5', fn: () => this.callDebug('spawnTestEnemies', 'normal', 5) },
