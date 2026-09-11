@@ -284,6 +284,11 @@ export class HUD {
         }
       }
       // 点击空白：立即关闭并取消延迟消失
+      // 例外：移动端左半屏按下 = 虚拟摇杆激活（dynamic 模式在按下处弹出摇杆），
+      // 此时不关闭 tooltip，避免"按下摇杆移动顶掉 buff 说明窗口"
+      if (pointer.wasTouch && pointer.x < this.scene.scale.width / 2) {
+        return;
+      }
       this.hideTooltip();
     });
 
