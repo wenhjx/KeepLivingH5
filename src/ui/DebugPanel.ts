@@ -675,6 +675,8 @@ export class DebugPanel {
       }
       return true;
     });
+    // 清空敌人同时重置 Boss 在场标记，避免清场后无法重新召唤 Boss
+    (gameScene?.waveManager as any)?.resetBossState?.();
   }
 
   setVisible(visible: boolean): void {

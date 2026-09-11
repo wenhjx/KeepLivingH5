@@ -319,6 +319,11 @@ export class WaveManager {
     return this.bossActive;
   }
 
+  /** 重置 Boss 在场标记（清空敌人/异常残留后允许重新召唤；调试用） */
+  resetBossState(): void {
+    this.bossActive = false;
+  }
+
   /** 直接生成敌人（供外部调用） */
   spawnEnemy(config: EnemyConfig, x: number, y: number): void {
     const difficultyMultiplier = 1 + (this.currentWave - 1) * 0.1;

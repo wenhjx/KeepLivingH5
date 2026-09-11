@@ -307,6 +307,14 @@ export function initDebugAPI(game: Phaser.Game): void {
     spawnBoss: () => {
       const gs = getGameScene();
       if (!gs || !gs.waveManager) return '需要先进入游戏（调试面板 → 开始游戏/试玩场地）';
+      // 场上残留 Boss（清空敌人/Boss 死亡后标记未重置）先清除，保证调试召唤永远生效
+      const enemies = gs.getEnemies?.();
+      if (enemies) {
+        enemies.children.each((e: any) => {
+          if (e?.active && e.config?.type?.startsWith?.('boss')) e.takeDamage?.(999999, false);
+        });
+      }
+      (gs.waveManager as any).resetBossState?.();
       const ok = (gs.waveManager as any).forceSpawnBoss?.();
       return ok ? 'Boss 已生成（当前关卡 Boss 类型，完整血条/演出）' : 'Boss 已在场或生成失败（waveManager.forceSpawnBoss）';
     },
