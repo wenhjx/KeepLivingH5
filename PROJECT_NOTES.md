@@ -56,6 +56,54 @@
 
 
 
+## 📌 近期改动速览（2026-09-11 ~ 09-12，玩家状态可见性 + 标准化 + 死代码清理，已推 Gitee）
+
+
+
+### 玩家状态可见性（c253273）
+
+- 时间类状态统一进 HUD buff 栏：护盾（🛡 免疫伤害）/狂暴（⚡ 攻速攻伤 +50%）与剧毒同款卡片 + 剩余秒数角标 + 到期前 3s 闪烁（statusFlashBefore=3000），点击出说明
+
+- 位置类状态用环境提示、不进 buff 栏（无剩余时间语义，避免列表抖动）：冰面减速 ❄ / 风道加速 💨 显示在 buff 栏上方（GameScene.getSpeedFactorAt → TerrainManager，slowZone 优先于 boostZone）
+
+- 调试面板新增「🗺 解锁全地图」（GameManager.unlockAllLevels + DebugAPI 注册），便于未解锁关卡实测
+
+- 波次/Boss 横幅可见性根治：UIScene uiRoot 反向缩放容器 + 物理像素坐标，超宽屏比例不再裁出屏幕
+
+- 成就提示层级提升（Layers.GUIDE=10000 常量表）；词缀系统第一层（affixes.ts）落地：词缀怪有数值乘区 + 机制标记 + 视觉 tint
+
+- 调试面板实测细节：召唤 Boss 掉落后按钮恢复正常；召唤怪随波次成长（调试功能不养闲怪）
+
+
+
+### 标准格式化（3efb7dd）
+
+- 项目原本无 formatter；引入 prettier（.prettierrc.json：singleQuote / printWidth 120 / tabWidth 2 / trailingComma es5），`npm run format` 全项目 46 文件
+
+- prettier 故意保留 import 间空行（视为作者分组意图、无配置可关）；脚本压缩 5 文件 import 空行（GameScene / Enemy / levels / GuideCard / ModifierSystem）
+
+
+
+### 死代码清理（a837f5e）
+
+- 用 `tsc --noUnusedLocals --noUnusedParameters` 扫描，删除：
+
+  - 文件：`PlayerStatusIcons.ts`（已被 buff 栏方案取代）
+
+  - 死方法：`TerrainManager.getSlowFactorAt`（getSpeedFactorAt 已替代）
+
+  - 未用导入 8 处：AchievementScene(GameManager / ACHIEVEMENT_SERIES)、BootScene / PreloadScene(GameManager)、GameScene(createUIText / Layers)、AchievementManager(getAchievementById)、InputManager(GameConfig)、WaveManager(WaveConfig)
+
+  - 未用字段：GameScene(lastWaveBanner / aiCurrentDir)、DebugPanel(autoPlayBg / themeBg)、HUD(barCenterY / statVisuals)、InventoryUI(reviveIcon)、ObjectPool(particleGroup)、Minimap(scene)、UIScrollBar(viewH)、Enemy(affixHpMult)、MainMenuScene(levelPreviewTitle)、PlayerInfoScene(player)
+
+  - 未用局部：AchievementScene(rowH)、BootScene(gm)、TextureGenerator(cx×2)、HUD(viewH)
+
+  - 保留：Phaser 回调 / 接口签名参数（time / delta / player / sourceX 等，删了无收益）
+
+- 教训：启发式"删行脚本"对对象字面量不安全（statVisuals 声明行被误删导致语法崩），且其内部 tsc 快照只过滤 TS6133/6196、吞掉语法错误造成误报 clean；改用精确锚点 / 行号删除，并始终跑全量 `tsc --noEmit` 验证
+
+
+
 ## 📌 近期改动速览（2026-09-10，摇杆根因修复 + 8 条数值/逻辑修复，已推 Gitee/GitHub Pages）
 
 
