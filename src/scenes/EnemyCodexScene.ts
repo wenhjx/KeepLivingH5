@@ -187,7 +187,8 @@ export class EnemyCodexScene extends Phaser.Scene {
       bg.on('pointerover', () => bg.setFillStyle(0x23233a));
       bg.on('pointerout', () => bg.setFillStyle(this.selectedAffix === id ? 0x2a2a45 : 0x1a1a28));
       const iconT = createUIText(this, x + 28, y + cellH / 2, def.icon, {
-        fontSize: '30px',
+        fontSize: '28px',
+        padding: { left: 6, right: 6, top: 8, bottom: 8 },
       }).setOrigin(0.5);
       const nameT = createUIText(this, x + 52, y + cellH / 2 - 10, def.name, {
         fontSize: '15px',
@@ -384,10 +385,11 @@ export class EnemyCodexScene extends Phaser.Scene {
     panel.strokeRoundedRect(dx, dy, dw, dh, 14);
     this.detail.add(panel);
 
-    // 大图标 + 稀有度底色圆
+    // 大图标 + 稀有度底色圆（emoji 加 padding 撑开画布，避免字形被 Phaser 文本裁切）
     this.detail.add(this.add.circle(dx + 70, dy + 90, 46, RARITY_BG[def.rarity], 1));
     const icon = createUIText(this, dx + 70, dy + 90, def.icon, {
-      fontSize: '52px',
+      fontSize: '40px',
+      padding: { left: 12, right: 12, top: 16, bottom: 16 },
     }).setOrigin(0.5);
     this.detail.add(icon);
 
