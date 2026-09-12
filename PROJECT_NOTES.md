@@ -722,6 +722,12 @@
 
 - ✅ 成就解锁提示层级（已完成 2026-09-12，237d14c）：显示层级收编为 Layers 常量表（Layers.GUIDE=10000），GuideCard 改 setDepth(Layers.GUIDE)，浮于一切 UI 之上
 
+- 🔍 词缀爆炸风险备忘（2026-09-12 分析，未改代码，待实测验证）：
+  - 已排除：多词缀叠加（单一 affix 字段）、自爆怪+爆炸叠加（suicider.explode() 走独立死亡流程不经 die()，不触发 explodeOnDeath）、Boss 挂词缀（L156-158 显式排除）、爆炸对敌人连锁（explodeOnDeath 只伤玩家）
+  - 唯一风险点：爆炸词缀 130px 内**全额伤害无距离衰减**（自爆怪反而有 50% 边缘衰减），后期范围武器一次清掉 3-4 只爆炸怪时 N×15×波次倍率叠加（波次20 ≈ 90-120 伤害）——不会秒但会疼，且"击杀必然贴脸→必然吃满"
+  - 缓解预案（需要时最小改动）：爆炸伤害加距离衰减（近身全额、边缘 50%，与自爆怪 falloff 一致）
+  - 数值参照：普通怪爆炸 = attackPower(25)×difficultyMultiplier×0.6 = 15×倍率；精英 20→12×、重装 15→9×；自爆怪自爆 = 30×倍率×atkBoost（独立，不走词缀）
+
 ### 2026-09-11 关卡差异化主线（独特怪 + 选关图鉴 + 变体视觉，分支 feat-terrain-boss）
 
 - 新增两种关卡专属变体怪：frost_zombie 霜冻僵尸（38hp/78速/10攻，0x88ccff 冰蓝）、corrupt_zombie 腐化僵尸（52hp/52速/13攻，0xcc4455 暗红），复用 enemy_normal 纹理，classic/pixel 双主题均 setTint 染色（Enemy.spawn 变体特判，避免 classic 下与普通僵尸无法区分）
