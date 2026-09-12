@@ -45,6 +45,7 @@ export class HUD {
   private buffContainer!: Phaser.GameObjects.Container;
   private buffIcons: Map<string, Phaser.GameObjects.Container> = new Map();
   private lastBuffPersistKey: string = '';
+  private lastBuffTimedKey: string = '';
   /** 环境状态提示文本（冰面减速 / 风道加速；位置状态不进 buff 栏，独立显示） */
   private envStateText!: Phaser.GameObjects.Text;
 
@@ -460,15 +461,22 @@ export class HUD {
       });
     }
 
-    // 持久条目（被动/武器）数量或等级变化时重建列表：等级提升需刷新 tooltip desc 与图标角标；
-    // 限时状态（剧毒/护盾/狂暴/减速）排除在键外——秒数角标实时更新（下方），tooltip 秒数为进入快照可接受
+    // 持久条目（被动/武器）数量或等级变化 → 重建（等级提升需刷新 tooltip desc 与图标角标）。
+    // 限时状态（剧毒/护盾/狂暴/减速）：出现/消失（存在性键变化）→ 重建；
+    // 秒数变化不重建——角标实时更新（下方），tooltip 秒数为进入快照可接受。
     const persistKey = allBuffs
       .filter((b) => b.id !== 'poison' && b.id !== 'shield' && b.id !== 'rage' && b.id !== 'slow')
       .map((b) => `${b.id}:${b.level}`)
       .join('|');
-    if (persistKey !== this.lastBuffPersistKey) {
+    const timedKey = allBuffs
+      .filter((b) => b.id === 'poison' || b.id === 'shield' || b.id === 'rage' || b.id === 'slow')
+      .map((b) => b.id)
+      .sort()
+      .join('|');
+    if (persistKey !== this.lastBuffPersistKey || timedKey !== this.lastBuffTimedKey) {
       this.rebuildBuffList(allBuffs);
       this.lastBuffPersistKey = persistKey;
+      this.lastBuffTimedKey = timedKey;
     }
 
     // 更新等级文字
