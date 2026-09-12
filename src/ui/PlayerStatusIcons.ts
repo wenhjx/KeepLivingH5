@@ -11,7 +11,7 @@ interface PlayerStatusItem {
 
 /**
  * 玩家限时状态图标（通用组件，未来限时增益沿用同一套）：
- * - 当前支持减益（剧毒 ☠️，红色圆底 = 减益语义色）
+ * - 当前支持减益（剧毒 ☠️，圆角方块与 HUD buff 栏同款视觉语言，红色 = 减益语义色）
  * - 图标跟随玩家头顶，位置/剩余时间由宿主（Player）每帧驱动
  * - 剩余时间 <= flashBefore 时以 150ms 周期闪烁，警示状态即将结束
  * - 剩余时间驱动而非 wall-clock：游戏暂停时图标与状态一起冻结，天然一致
@@ -28,12 +28,17 @@ export class PlayerStatusIcons {
   show(key: string, emoji: string, color: number, flashBefore = 0): void {
     if (this.items.some((i) => i.key === key)) return;
     const container = this.scene.add.container(0, 0).setDepth(this.depth);
-    const circle = this.scene.add.circle(0, 0, 13, color, 0.92).setStrokeStyle(1.5, 0xffffff, 0.85);
+    // 与 HUD buff 图标同款视觉语言：圆角方块卡片（减益红底 0.8 + 白描边 0.3）
+    const g = this.scene.add.graphics();
+    g.fillStyle(color, 0.8);
+    g.fillRoundedRect(-13, -13, 26, 26, 4);
+    g.lineStyle(1, 0xffffff, 0.3);
+    g.strokeRoundedRect(-13, -13, 26, 26, 4);
     const text = this.scene.add
       .text(0, 0, emoji, { fontSize: '13px' })
       .setOrigin(0.5);
     TextSmoothing.apply(text);
-    container.add([circle, text]);
+    container.add([g, text]);
     this.items.push({ key, emoji, flashBefore, container, text });
   }
 

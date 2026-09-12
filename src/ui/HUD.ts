@@ -5,7 +5,6 @@ import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { UILayout } from '../utils/UILayout';
 import { GameConfig } from '../game/GameConfig';
 import { Layers } from '../constants/Layers';
-import { PlayerStatusIcons } from './PlayerStatusIcons';
 
 /**
  * HUD 抬头显示
@@ -45,8 +44,6 @@ export class HUD {
 
   // 增益列表（被动）
   private buffContainer!: Phaser.GameObjects.Container;
-  // 玩家限时状态图标（剧毒☠️减益，与 buff 栏同排；未来限时增益复用）
-  private playerStatusIcons!: PlayerStatusIcons;
   private buffIcons: Map<string, Phaser.GameObjects.Container> = new Map();
   private lastBuffCount: number = -1;
 
@@ -106,13 +103,14 @@ export class HUD {
   private readonly padding = 16;
   private readonly buffSize = 32;
   private readonly buffSpacing = 6;
+  /** 限时状态到期前开始闪烁的剩余时长阈值(ms)，buff 栏伪条目通用（含未来限时增益） */
+  private readonly statusFlashBefore = 3000;
   private readonly bossBarWidth = 420;
   private readonly bossBarHeight = 18;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.create();
-    this.playerStatusIcons = new PlayerStatusIcons(scene, Layers.HUD_BUFF_ICON);
   }
 
   private create(): void {
@@ -343,7 +341,6 @@ export class HUD {
         this.updateLevel();
         this.coinText.setText(`💰 ${player.getCoins?.() ?? 0}`);
         this.updateBuffs(player);
-        this.updatePlayerStatus(player);
       }
       // 唯一 Boss 顶部大血条
       this.updateBossBar(gameScene.getActiveBoss?.());
@@ -359,21 +356,6 @@ export class HUD {
     } else {
       this.bossWarnText.setText(`⚑ 距 Boss ${interval - rem} 波`).setColor('#ff6b6b');
     }
-  }
-
-  /** 更新玩家限时状态图标：与 buff 栏同排（buff 流末尾右侧），毒消自动移除 */
-  private updatePlayerStatus(player: any): void {
-    const rem = player.getPoisonRemaining?.() ?? 0;
-    if (rem > 0) {
-      this.playerStatusIcons.show('poison', '☠️', 0xe74c3c, 500);
-    }
-    // 位置 = buff 流末尾右侧（buff 栏居中布局，状态图标跟随联动）
-    const n = this.lastBuffCount > 0 ? this.lastBuffCount : 0;
-    const totalW = n > 0 ? n * (this.buffSize + this.buffSpacing) - this.buffSpacing : 0;
-    const startX = Math.max(this.padding, (this.scene.scale.width - totalW) / 2);
-    const x = startX + totalW + this.buffSpacing + this.buffSize / 2;
-    const y = this.barTopY - this.buffSize - 12 + this.buffSize / 2;
-    this.playerStatusIcons.update('poison', rem, x, y);
   }
 
   /** 更新血条上方增益列表（被动 + 武器统一展示；stat 属性在 C 键面板） */
@@ -412,6 +394,19 @@ export class HUD {
       });
     });
 
+    // 剧毒减益并入 buff 栏统一渲染：红色卡片 + 剩余秒数（等级位）+ 到期前闪烁
+    const poisonRem = player.getPoisonRemaining?.() ?? 0;
+    if (poisonRem > 0) {
+      allBuffs.push({
+        id: 'poison',
+        name: '剧毒',
+        level: Math.max(1, Math.ceil(poisonRem / 1000)),
+        desc: '持续中毒：每秒受到剧毒攻击力 8% 的伤害，无视无敌帧',
+        icon: '☠️',
+        color: 0xe74c3c,
+      });
+    }
+
     // 数量变化时重建列表
     if (allBuffs.length !== this.lastBuffCount) {
       this.rebuildBuffList(allBuffs);
@@ -428,6 +423,12 @@ export class HUD {
         }
       }
     });
+
+    // 剧毒到期前闪烁（剩余 <=3s 时 150ms 周期闪烁，警示状态即将结束；未来限时 buff 同标准）
+    if (poisonRem > 0 && poisonRem <= this.statusFlashBefore) {
+      const icon = this.buffIcons.get('poison');
+      if (icon) icon.setVisible(Math.floor(this.scene.time.now / 150) % 2 === 0);
+    }
   }
 
   /** 重建增益列表（整体居中于血条上方，buff 多时均匀向两侧铺开） */
