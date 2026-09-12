@@ -187,7 +187,7 @@ export class EnemyCodexScene extends Phaser.Scene {
       bg.on('pointerover', () => bg.setFillStyle(0x23233a));
       bg.on('pointerout', () => bg.setFillStyle(this.selectedAffix === id ? 0x2a2a45 : 0x1a1a28));
       const iconSpr = this.add.sprite(x + 28, y + cellH / 2, this.ensureEmojiTexture(id, def.icon));
-      iconSpr.setDisplaySize(32, 32);
+      iconSpr.setDisplaySize(26, 26);
       const nameT = createUIText(this, x + 52, y + cellH / 2 - 10, def.name, {
         fontSize: '15px',
         color: RARITY_COLOR[def.rarity],
@@ -358,6 +358,9 @@ export class EnemyCodexScene extends Phaser.Scene {
     }
   }
 
+  /** 个别 emoji 字形在 em-box 中偏位（如 ❄️ 雪花偏上偏小），按 emoji 补偿垂直偏移（正=下移） */
+  private static readonly EMOJI_VOFFSET: Record<string, number> = { '❄️': 0.1, '💣': 0.06, '🌀': 0.04 };
+
   /** 用 Canvas 把 emoji 绘制成独立纹理（Phaser Text 渲染 emoji 会被字形超出部分裁切；Canvas 可完整显示且任意缩放） */
   private ensureEmojiTexture(id: EnemyAffixId, emoji: string): string {
     const key = `affix_icon_${id}`;
@@ -368,10 +371,11 @@ export class EnemyCodexScene extends Phaser.Scene {
     canvas.height = size;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      ctx.font = `${Math.floor(size * 0.72)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
+      ctx.font = `${Math.floor(size * 0.74)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(emoji, size / 2, size / 2 + size * 0.04);
+      const vy = (EnemyCodexScene.EMOJI_VOFFSET[emoji] ?? 0) * size;
+      ctx.fillText(emoji, size / 2, size / 2 + size * 0.03 + vy);
     }
     this.textures.addCanvas(key, canvas);
     return key;
@@ -405,7 +409,7 @@ export class EnemyCodexScene extends Phaser.Scene {
     // 大图标（Canvas 纹理精灵，完整显示 emoji 且不裁切）+ 稀有度底色圆
     this.detail.add(this.add.circle(dx + 70, dy + 90, 52, RARITY_BG[def.rarity], 1));
     const bigIcon = this.add.sprite(dx + 70, dy + 90, this.ensureEmojiTexture(id, def.icon));
-    bigIcon.setDisplaySize(92, 92);
+    bigIcon.setDisplaySize(74, 74);
     this.detail.add(bigIcon);
 
     // 名字 + 稀有度徽章
