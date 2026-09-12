@@ -1,6 +1,6 @@
 # Keep Living - 2D 割草生存游戏 (H5)
 
-一款基于 Phaser 3 + TypeScript + Vite 构建的 2D 割草类生存游戏，支持 PC 和移动端多端游玩。
+一款基于 Phaser 3 + TypeScript + Vite 构建的 2D 割草类生存游戏，支持 PC 和移动端多端游玩。包含多关卡、词缀系统、成就、神秘商店、试玩场地等完整玩法闭环。
 
 ## 技术栈
 
@@ -8,163 +8,132 @@
 - **语言**: TypeScript 5.4+
 - **构建工具**: Vite 5.2+
 - **物理引擎**: Arcade Physics (Phaser 内置)
+- **渲染**: 全部纹理程序化生成（无外部图片素材）
 
 ## 项目结构
 
 ```
 Keep Living H5/
-├── public/                    # 静态资源
-│   └── assets/
-│       └── data/              # 配置数据（仅作参考，实际数据源在 src/data）
+├── public/                    # 静态资源（可选音频）
 ├── src/
-│   ├── main.ts                # 游戏入口
+│   ├── main.ts                # 游戏入口（场景注册）
 │   ├── game/                  # 游戏核心
-│   │   ├── GameConfig.ts      # 全局配置（画质分级/对象池/波次等）
-│   │   └── GameManager.ts     # 全局管理器(单例，含对局存档)
+│   │   ├── GameConfig.ts      # 全局配置（画质分级/对象池/波次/玩家数值）
+│   │   └── GameManager.ts     # 全局管理器(单例，对局存档/成就进度/存档)
 │   ├── scenes/                # 场景
-│   │   ├── BootScene.ts       # 启动场景
-│   │   ├── PreloadScene.ts    # 预加载场景（程序化生成纹理）
-│   │   ├── MainMenuScene.ts   # 主菜单（含设置面板）
-│   │   ├── GameScene.ts       # 游戏主场景
-│   │   ├── UIScene.ts         # UI叠加场景
+│   │   ├── BootScene.ts / PreloadScene.ts   # 启动与预加载（程序化纹理）
+│   │   ├── MainMenuScene.ts   # 主菜单（开始/继续/成就/试玩/设置 + 选关面板）
+│   │   ├── GameScene.ts       # 游戏主场景（三地图 + 无尽模式）
+│   │   ├── UIScene.ts         # UI叠加场景（HUD/暂停/调试入口）
 │   │   ├── GameOverScene.ts   # 结算场景
-│   │   └── UpgradeScene.ts    # 升级选择场景
+│   │   ├── UpgradeScene.ts    # 升级选择（三选一/突破）
+│   │   ├── ShopScene.ts       # 神秘商店
+│   │   ├── WeaponSelectScene.ts  # 开局武器选择
+│   │   ├── EndlessChoiceScene.ts # 无尽模式选择
+│   │   ├── BreakthroughScene.ts  # 满级突破奖励
+│   │   ├── PlayerInfoScene.ts # 玩家属性面板（C 键）
+│   │   ├── AchievementScene.ts   # 成就页
+│   │   ├── EnemyCodexScene.ts   # 敌方情报图鉴（敌人/词缀双标签）
+│   │   └── DebugScene.ts      # 调试菜单（暂停时 ` 键）
 │   ├── entities/              # 实体
-│   │   ├── Player.ts          # 玩家
-│   │   ├── Enemy.ts           # 敌人(含AI)
-│   │   ├── Bullet.ts          # 子弹
-│   │   ├── Drone.ts           # 无人机（召唤武器）
-│   │   └── Pickup.ts          # 拾取物
+│   │   ├── Player.ts          # 玩家（被动/升级/存档恢复）
+│   │   ├── Enemy.ts           # 敌人（13 种 AI + 词缀系统）
+│   │   ├── Bullet.ts / Drone.ts / Pickup.ts
 │   ├── systems/               # 系统
-│   │   ├── InputManager.ts    # 输入管理(PC+触屏)
-│   │   ├── ObjectPool.ts      # 对象池
-│   │   ├── WaveManager.ts     # 波次管理
-│   │   ├── CollisionSystem.ts # 碰撞系统
-│   │   ├── SaveSystem.ts      # 存档系统
-│   │   ├── AudioManager.ts    # 音频管理
-│   │   └── GuideManager.ts    # 新手引导队列
+│   │   ├── WaveManager.ts     # 波次管理（难度成长/Boss 波）
+│   │   ├── AchievementManager.ts  # 成就系统（含隐藏成就）
+│   │   ├── TerrainManager.ts  # 地形系统（冰面/加速带等）
+│   │   ├── ModifierSystem.ts  # 词缀/修改器系统
+│   │   ├── FXManager.ts / GameFeedback.ts  # 特效与反馈
+│   │   ├── InputManager.ts / ObjectPool.ts / CollisionSystem.ts
+│   │   ├── SaveSystem.ts / AudioManager.ts / GuideManager.ts
 │   ├── ui/                    # UI组件
-│   │   ├── HUD.ts             # 抬头显示
-│   │   ├── VirtualJoystick.ts # 虚拟摇杆
-│   │   ├── HealthBar.ts       # 血条
-│   │   ├── UpgradePanel.ts    # 升级面板
-│   │   ├── DebugPanel.ts      # 调试面板（反引号切换）
-│   │   └── GuideCard.ts       # 引导提示卡片
+│   │   ├── HUD.ts             # 抬头显示（buff 栏：等级化提示 + 下一级预览）
+│   │   ├── VirtualJoystick.ts / HealthBar.ts / Minimap.ts
+│   │   ├── UpgradePanel.ts / OptionCard.ts / InventoryUI.ts
+│   │   ├── DebugPanel.ts      # 调试面板（刷怪/召唤Boss/调数值）
+│   │   └── GuideCard.ts / DamageTextManager.ts / UIScrollBar.ts
 │   ├── data/                  # 数据配置（实际数据源）
-│   │   ├── weapons.ts         # 武器配置
-│   │   ├── enemies.ts         # 敌人配置
-│   │   ├── waves.ts           # 波次配置
-│   │   └── upgrades.ts        # 升级配置
-│   ├── utils/                 # 工具类
-│   │   ├── EventBus.ts        # 事件总线
-│   │   ├── MathUtils.ts       # 数学工具
-│   │   ├── Logger.ts          # 日志
-│   │   └── TextureGenerator.ts# 程序化纹理生成（霓虹主题）
-│   └── types/                 # 类型定义
-│       └── index.ts
+│   │   ├── weapons.ts / enemies.ts / waves.ts / upgrades.ts
+│   │   ├── levels.ts          # 三地图关卡配置（草原/废墟/冰原）
+│   │   ├── affixes.ts         # 词缀表（10 词缀，稀有度分层）
+│   │   ├── achievements.ts    # 成就定义
+│   │   ├── shop.ts            # 神秘商店商品池
+│   │   ├── items.ts / terrain.ts / characters.ts / backgrounds.ts / sounds.ts
+│   ├── constants/Layers.ts    # 显示层级常量表
+│   ├── utils/                 # 工具类（UIText/CameraHelper/UILayout/DebugAPI 等）
+│   └── types/index.ts
 ├── index.html
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
+├── package.json / tsconfig.json / vite.config.ts
 └── README.md
 ```
 
 ## 快速开始
 
-### 安装依赖
-
 ```bash
-npm install
-```
-
-### 开发模式
-
-```bash
-npm run dev
-```
-
-访问 `http://localhost:5173`
-
-### 构建生产版本
-
-```bash
-npm run build
-```
-
-产物输出到 `dist/` 目录
-
-### 预览生产版本
-
-```bash
-npm run preview
+npm install     # 安装依赖
+npm run dev     # 开发模式 → http://localhost:5173
+npm run build   # 构建生产版本 → dist/
+npm run preview # 预览生产版本
 ```
 
 ## 核心特性
 
 ### 多端适配
 - **PC端**: WASD/方向键移动，鼠标瞄准
-- **移动端**: 虚拟摇杆触屏操作，自适应UI
+- **移动端**: 虚拟摇杆 + 自适应 UI（`?mobile=1` 模拟，支持 `uiscale` 参数），触控目标 ≥44px
 - **画质分级**: 自动检测设备性能，低/中/高三档，可在设置面板手动调整
-- **玩家朝向**: 角色箭头实时指向移动方向
 
-### 游戏系统
-- **割草核心**: 大量同屏怪物，对象池优化性能
-- **武器系统**: 多种武器类型（远程/近战/AOE/召唤）
-- **升级系统**: Roguelike 升级选择，每级随机3选项
-- **波次系统**: 递增难度，每5波Boss
-- **存档系统**: 本地存档 + 设置持久化（音量/画质/静音）
-- **继续游戏**: 自动保存进行中对局，可从中途继续
-- **设置面板**: 主菜单可调节音乐/音效音量、画质等级、静音开关
+### 玩法系统
+- **多地图关卡**: 草原 / 废墟 / 冰原 三关，通关解锁，每关有专属敌人变体（腐化僵尸/霜冻僵尸）与差异化 Boss（召唤魔像 / 弹幕机械）
+- **割草核心**: 大量同屏怪物 + 对象池优化
+- **武器系统**: 9 种武器（远程/近战/AOE/召唤），开局选择 + 商店补充
+- **升级系统**: Roguelike 三选一（含跳过拿金币），满级突破奖励，被动可多级成长
+- **词缀系统**: 敌人随机携带 10 种词缀（迅捷/厚皮/吸血/剧毒/爆炸/冰冻/增援…），普通/稀有/史诗稀有度分层，精英必挂
+- **敌方图鉴**: 选关面板「📖 敌方情报」——明日方舟式左列表右详情，敌人/词缀双标签页，含出没范围与应对提示
+- **成就系统**: 多条件成就 + 隐藏成就（含提示），永久加成随浏览器存档
+- **神秘商店**: 局内金币购买武器/被动/属性/消耗品（复活币/狂暴药水等）
+- **无尽模式**: 通关三关后解锁，无限波次 + 成长曲线
+- **试玩场地**: 主菜单独立入口，自由刷怪测试技能与词缀，死亡原地刷新，不触发成就
+- **存档系统**: 本地存档 + 设置持久化 + 对局中途继续（完整恢复玩家状态）
 
-### 性能优化
-- **对象池**: 敌人/子弹/拾取物/粒子全部池化
-- **画质分级**: 同屏怪数、粒子数、分辨率动态调整
-- **物理优化**: Arcade 物理，圆形碰撞体
+### 战斗细节
+- **Buff 栏**: 被动/武器/限时增益统一卡片式展示，点击弹出详情——当前级效果 + 金色下一级预览，到期前闪烁
+- **玩家状态**: 剧毒/减速等减益并入 buff 栏统一渲染，减少学习成本
+- **Boss 战**: 顶部大血条 + 入场演出 + 差异化阶段机制
 
 ## 操作说明
 
 ### PC端
-- `W/A/S/D` 或 `方向键`: 移动
-- `鼠标`: 瞄准（自动攻击最近敌人）
-- `ESC`: 暂停
-- `空格`: 攻击（备用）
-- `` ` ``: 切换调试面板
+- `W/A/S/D` 或 `方向键`: 移动　`鼠标`: 瞄准（自动攻击）
+- `ESC`: 暂停　`空格`: 攻击（备用）　`C`: 玩家属性面板
+- `` ` ``: 调试菜单　`= / -`: 加速 / 减速
 
 ### 移动端
-- 左侧虚拟摇杆: 移动
-- 自动攻击最近敌人
+- 左侧虚拟摇杆: 移动　自动攻击最近敌人
+- 点击 buff 图标查看详情（按下显示，松开延迟消失）
 
 ## 开发指南
 
-### 添加新武器
-1. 在 `src/data/weapons.ts` 中添加武器配置
-2. 在 `src/data/upgrades.ts` 中添加对应的升级选项
-3. （可选）在 `src/entities/Player.ts` 的 `getWeaponVisual` 中配置子弹视觉
-
-### 添加新敌人
-1. 在 `src/data/enemies.ts` 中添加敌人配置
-2. 在 `src/entities/Enemy.ts` 中添加对应的 AI 行为（如需要）
-3. 在 `src/systems/WaveManager.ts` 的 `buildSpawnTable` 中配置出现波次
-
-### 添加新场景
-1. 在 `src/scenes/` 下创建场景类，继承 `Phaser.Scene`
-2. 在 `src/main.ts` 的 `scene` 数组中注册
+- **加武器**: `src/data/weapons.ts` 配置 → `upgrades.ts` 加升级项 → 需要时 Player 配子弹视觉
+- **加敌人**: `src/data/enemies.ts` 配置 → `Enemy.ts` 加 AI（如需）→ `waves.ts`/`levels.ts` 配置出现波次
+- **加词缀**: `src/data/affixes.ts` 定义（稀有度/图标/效果/应对）→ `Enemy` 词缀分支接入
+- **加场景**: `src/scenes/` 建类 → `main.ts` 注册
+- **调试**: 暂停菜单 → 调试面板（刷怪/召唤 Boss/调整等级数值/测试道具），或主菜单 → 试玩场地
 
 ## 素材说明
 
-本项目的**全部游戏纹理均由代码程序化生成**（`src/utils/TextureGenerator.ts`，霓虹深渊主题），无需外部图片素材。
-游戏配置数据（武器/敌人/波次/升级）位于 `src/data/*.ts`，音频素材可放入 `public/assets/audio/`（可选，缺失不影响运行）。
+全部游戏纹理由代码程序化生成（`src/utils/TextureGenerator.ts`），无需外部图片素材。音频素材可放入 `public/assets/audio/`（可选）。
 
-## 后续扩展建议
+## 后续扩展方向
 
-- [ ] 账号登录系统（后端 API）
-- [ ] 云端存档同步
-- [ ] 更多武器和敌人类型
-- [ ] 成就系统
-- [ ] 每日挑战模式
-- [ ] 排行榜
-- [ ] 粒子特效优化
-- [ ] 新手教程完善
+- [x] 成就系统
+- [x] 词缀系统（第 1/2 层已上线，第 3 层待做）
+- [ ] 多人同步对战（WebSocket + 账号系统 + 世界级 Boss）
+- [ ] 后台管理页（数据统计 / 参数热更）
+- [ ] 随机地图 / 更复杂关卡结构
+- [ ] 主动技能（闪避等）
+- [ ] 账号登录与云端存档
 
 ## License
 
