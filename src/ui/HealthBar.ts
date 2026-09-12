@@ -46,11 +46,10 @@ export class HealthBar {
     // 文字
     if (showText) {
       this.textObj = createUIText(scene, 0, 0, '', {
-          fontSize: '10px',
-          color: '#ffffff',
-          fontStyle: 'bold',
-        })
-        .setOrigin(0.5);
+        fontSize: '10px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      }).setOrigin(0.5);
       this.container.add(this.textObj);
     }
 
@@ -78,13 +77,7 @@ export class HealthBar {
     else if (percent < 0.6) color = 0xffaa00;
 
     this.fillBar.fillStyle(color, 1);
-    this.fillBar.fillRoundedRect(
-      -this.width / 2,
-      -this.height / 2,
-      this.width * percent,
-      this.height,
-      2
-    );
+    this.fillBar.fillRoundedRect(-this.width / 2, -this.height / 2, this.width * percent, this.height, 2);
 
     if (this.textObj && this.showText) {
       this.textObj.setText(`${Math.ceil(this.currentHealth)}/${this.maxHealth}`);

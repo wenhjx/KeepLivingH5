@@ -19,9 +19,6 @@ export function setupUICamera(scene: Phaser.Scene): { width: number; height: num
   const zoom = GameConfig.renderScale;
   const cam = scene.cameras.main;
   cam.setZoom(zoom);
-  cam.setScroll(
-    -(cam.width - cam.width / zoom) / 2,
-    -(cam.height - cam.height / zoom) / 2
-  );
+  cam.setScroll(-(cam.width - cam.width / zoom) / 2, -(cam.height - cam.height / zoom) / 2);
   return { width: GameConfig.GAME_WIDTH, height: GameConfig.GAME_HEIGHT };
 }

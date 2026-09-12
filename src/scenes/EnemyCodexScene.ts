@@ -28,7 +28,6 @@ const TYPE_LABEL: Record<string, string> = {
   boss_barrage: 'Boss·弹幕',
 };
 
-
 /** Boss 机制一句话说明 */
 function describeBossMechanic(type: EnemyType): string {
   if (type === 'boss_summoner') return '机制：持续召唤魔像群增援，先清召唤物再集火本体';
@@ -62,10 +61,7 @@ export class EnemyCodexScene extends Phaser.Scene {
     const cx = width / 2;
 
     // 背景 + 顶部渐变带
-    this.add
-      .rectangle(0, 0, width, height, 0x0a0a14, 0.97)
-      .setOrigin(0)
-      .setInteractive();
+    this.add.rectangle(0, 0, width, height, 0x0a0a14, 0.97).setOrigin(0).setInteractive();
     const topBar = this.add.graphics();
     topBar.fillGradientStyle(0x14142a, 0x14142a, 0x1a1a35, 0x1a1a35, 1);
     topBar.fillRect(0, 0, width, 110);
@@ -114,18 +110,12 @@ export class EnemyCodexScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       bg.on('pointerdown', () => this.select(item.type));
       bg.on('pointerover', () => bg.setFillStyle(0x23233a));
-      bg.on('pointerout', () =>
-        bg.setFillStyle(this.selectedType === item.type ? 0x2a2a45 : 0x1a1a28),
-      );
+      bg.on('pointerout', () => bg.setFillStyle(this.selectedType === item.type ? 0x2a2a45 : 0x1a1a28));
       const color = '#' + (cfg.color ?? 0x888888).toString(16).padStart(6, '0');
       // 图标：复用游戏内敌人贴图（与关卡实际怪物一致），按主题着色
       const spr = this.add.sprite(x + 26, y + cellH / 2, GameConfig.themeKey(cfg.texture || 'enemy_normal'));
       spr.setDisplaySize(34, 34);
-      if (
-        GameConfig.VISUAL_THEME === 'pixel' ||
-        item.type === 'frost_zombie' ||
-        item.type === 'corrupt_zombie'
-      ) {
+      if (GameConfig.VISUAL_THEME === 'pixel' || item.type === 'frost_zombie' || item.type === 'corrupt_zombie') {
         spr.setTint(cfg.color ?? 0x888888);
       }
       createUIText(this, x + 52, y + cellH / 2 - 10, cfg.name ?? item.type, {
@@ -174,11 +164,7 @@ export class EnemyCodexScene extends Phaser.Scene {
     this.detail.add(this.add.circle(dx + 70, dy + 90, 42, cfg.color ?? 0x888888, 0.35));
     const bigSpr = this.add.sprite(dx + 70, dy + 90, GameConfig.themeKey(cfg.texture || 'enemy_normal'));
     bigSpr.setDisplaySize(72, 72);
-    if (
-      GameConfig.VISUAL_THEME === 'pixel' ||
-      type === 'frost_zombie' ||
-      type === 'corrupt_zombie'
-    ) {
+    if (GameConfig.VISUAL_THEME === 'pixel' || type === 'frost_zombie' || type === 'corrupt_zombie') {
       bigSpr.setTint(cfg.color ?? 0x888888);
     }
     this.detail.add(bigSpr);
@@ -195,7 +181,7 @@ export class EnemyCodexScene extends Phaser.Scene {
       dx + 130,
       dy + 104,
       `${TYPE_LABEL[type] ?? ''}${cfg.type === 'boss' ? ' · 关底 Boss' : ''}`,
-      { fontSize: '15px', color: '#ffd700' },
+      { fontSize: '15px', color: '#ffd700' }
     ).setOrigin(0, 0.5);
     this.detail.add(tag);
 
@@ -217,7 +203,7 @@ export class EnemyCodexScene extends Phaser.Scene {
       this.detail.add(this.add.rectangle(dx + 110, sy, 200, 10, 0x2a2a38, 1).setOrigin(0, 0.5));
       if (ratio > 0) {
         this.detail.add(
-          this.add.rectangle(dx + 110, sy, 200 * ratio, 10, cfg.color ?? 0x888888, 0.9).setOrigin(0, 0.5),
+          this.add.rectangle(dx + 110, sy, 200 * ratio, 10, cfg.color ?? 0x888888, 0.9).setOrigin(0, 0.5)
         );
       }
       const val = createUIText(this, dx + 330, sy, `${st.value}`, {

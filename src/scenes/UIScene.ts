@@ -57,7 +57,15 @@ export class UIScene extends Phaser.Scene {
     // 小地图（左上角，数据驱动：以后新增区域/更大地图自动适配）
     const gameScene = this.scene.get('GameScene') as any;
     const mapSize = gameScene?.getMapSize?.() || { width: 3000, height: 3000 };
-    this.minimap = new Minimap(this, GameConfig.anchorX(10, this.scale.width), GameConfig.anchorY(10, this.scale.height), 160, 120, mapSize.width, mapSize.height);
+    this.minimap = new Minimap(
+      this,
+      GameConfig.anchorX(10, this.scale.width),
+      GameConfig.anchorY(10, this.scale.height),
+      160,
+      120,
+      mapSize.width,
+      mapSize.height
+    );
 
     // 物品栏（右下角，点击或按 1-4 使用消耗品）
     this.inventoryUI = new InventoryUI(this);
@@ -73,11 +81,17 @@ export class UIScene extends Phaser.Scene {
     }
 
     // 暂停按钮（右上角，HUD 波次信息下移让位，避免重叠）
-    this.pauseButton = createUIText(this, GameConfig.anchorX(this.scale.width - 16, this.scale.width), GameConfig.anchorY(16, this.scale.height), '⏸️', {
+    this.pauseButton = createUIText(
+      this,
+      GameConfig.anchorX(this.scale.width - 16, this.scale.width),
+      GameConfig.anchorY(16, this.scale.height),
+      '⏸️',
+      {
         fontSize: '20px',
         backgroundColor: '#1a1a25',
         padding: { left: 10, right: 10, top: 5, bottom: 5 },
-      })
+      }
+    )
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true });
 
@@ -90,11 +104,17 @@ export class UIScene extends Phaser.Scene {
 
     // 移动端调试按钮（暂停按钮左侧）：触屏设备没有 ` 快捷键，床上玩也能唤起调试面板
     if (GameManager.getInstance().isMobile) {
-      this.debugButton = createUIText(this, GameConfig.anchorX(this.scale.width - 64, this.scale.width), GameConfig.anchorY(16, this.scale.height), '🛠️', {
-        fontSize: '20px',
-        backgroundColor: '#1a1a25',
-        padding: { left: 10, right: 10, top: 5, bottom: 5 },
-      })
+      this.debugButton = createUIText(
+        this,
+        GameConfig.anchorX(this.scale.width - 64, this.scale.width),
+        GameConfig.anchorY(16, this.scale.height),
+        '🛠️',
+        {
+          fontSize: '20px',
+          backgroundColor: '#1a1a25',
+          padding: { left: 10, right: 10, top: 5, bottom: 5 },
+        }
+      )
         .setOrigin(1, 0)
         .setInteractive({ useHandCursor: true });
 
@@ -142,20 +162,19 @@ export class UIScene extends Phaser.Scene {
 
     // 暂停文字
     const title = createUIText(this, width / 2, height / 2 - 60, '游戏暂停', {
-        fontSize: '48px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      fontSize: '48px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
     this.pauseOverlay.add(title);
 
     // 继续按钮
     const resumeBtn = createUIText(this, width / 2, height / 2, '继续游戏', {
-        fontSize: '24px',
-        color: '#e0e0e0',
-        backgroundColor: '#1a1a25',
-        padding: { left: 40, right: 40, top: 12, bottom: 12 },
-      })
+      fontSize: '24px',
+      color: '#e0e0e0',
+      backgroundColor: '#1a1a25',
+      padding: { left: 40, right: 40, top: 12, bottom: 12 },
+    })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     resumeBtn.on('pointerdown', () => {
@@ -168,11 +187,11 @@ export class UIScene extends Phaser.Scene {
     // 与"返回主菜单"同级风格保持一致：纯文字、无 emoji、同字号同色
     // 间距由 UILayout 统一管理（60px 中心距，按钮间 20px 留白），新增按钮自动拓展
     const infoBtn = createUIText(this, width / 2, height / 2 + 60, '玩家属性', {
-        fontSize: '20px',
-        color: '#aaaaaa',
-        backgroundColor: '#1a1a25',
-        padding: { left: 30, right: 30, top: 10, bottom: 10 },
-      })
+      fontSize: '20px',
+      color: '#aaaaaa',
+      backgroundColor: '#1a1a25',
+      padding: { left: 30, right: 30, top: 10, bottom: 10 },
+    })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     infoBtn.on('pointerdown', () => {
@@ -185,11 +204,11 @@ export class UIScene extends Phaser.Scene {
 
     // 返回主菜单按钮
     const menuBtn = createUIText(this, width / 2, height / 2 + 120, '返回主菜单', {
-        fontSize: '20px',
-        color: '#aaaaaa',
-        backgroundColor: '#1a1a25',
-        padding: { left: 30, right: 30, top: 10, bottom: 10 },
-      })
+      fontSize: '20px',
+      color: '#aaaaaa',
+      backgroundColor: '#1a1a25',
+      padding: { left: 30, right: 30, top: 10, bottom: 10 },
+    })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     menuBtn.on('pointerdown', () => {
@@ -257,45 +276,61 @@ export class UIScene extends Phaser.Scene {
   private setupEventListeners(): void {
     const sub = (fn: () => void) => this.eventUnsubscribers.push(fn);
 
-    sub(EventBus.on(EventKeys.WAVE_START, (d: { wave: number; isBoss: boolean }) => {
-      this.showBanner(d.isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${d.wave} 波`, d.isBoss);
-    }));
+    sub(
+      EventBus.on(EventKeys.WAVE_START, (d: { wave: number; isBoss: boolean }) => {
+        this.showBanner(d.isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${d.wave} 波`, d.isBoss);
+      })
+    );
 
-    sub(EventBus.on(EventKeys.RUN_PAUSE, (paused: boolean) => {
-      // 模态场景打开时（商店/武器强化/通关结算/突破奖励），暂停覆盖层不显示——
-      // 这些场景自带半透明背景，否则会与"游戏暂停/继续游戏"文字重叠
-      const modalOpen =
-        this.scene.isActive('ShopScene') ||
-        this.scene.isActive('WeaponSelectScene') ||
-        this.scene.isActive('EndlessChoiceScene') ||
-        this.scene.isActive('BreakthroughScene');
-      this.pauseOverlay.setVisible(paused && !modalOpen);
-      this.pauseButton.setVisible(!paused);
-    }));
+    sub(
+      EventBus.on(EventKeys.RUN_PAUSE, (paused: boolean) => {
+        // 模态场景打开时（商店/武器强化/通关结算/突破奖励），暂停覆盖层不显示——
+        // 这些场景自带半透明背景，否则会与"游戏暂停/继续游戏"文字重叠
+        const modalOpen =
+          this.scene.isActive('ShopScene') ||
+          this.scene.isActive('WeaponSelectScene') ||
+          this.scene.isActive('EndlessChoiceScene') ||
+          this.scene.isActive('BreakthroughScene');
+        this.pauseOverlay.setVisible(paused && !modalOpen);
+        this.pauseButton.setVisible(!paused);
+      })
+    );
 
-    sub(EventBus.on(EventKeys.RUN_KILL, () => {
-      this.hud.update();
-    }));
+    sub(
+      EventBus.on(EventKeys.RUN_KILL, () => {
+        this.hud.update();
+      })
+    );
 
-    sub(EventBus.on(EventKeys.RUN_WAVE, () => {
-      this.hud.update();
-    }));
+    sub(
+      EventBus.on(EventKeys.RUN_WAVE, () => {
+        this.hud.update();
+      })
+    );
 
-    sub(EventBus.on(EventKeys.PLAYER_DAMAGE, () => {
-      this.hud.updateHealth();
-    }));
+    sub(
+      EventBus.on(EventKeys.PLAYER_DAMAGE, () => {
+        this.hud.updateHealth();
+      })
+    );
 
-    sub(EventBus.on(EventKeys.PLAYER_HEAL, () => {
-      this.hud.updateHealth();
-    }));
+    sub(
+      EventBus.on(EventKeys.PLAYER_HEAL, () => {
+        this.hud.updateHealth();
+      })
+    );
 
-    sub(EventBus.on(EventKeys.PLAYER_LEVELUP, () => {
-      this.hud.updateLevel();
-    }));
+    sub(
+      EventBus.on(EventKeys.PLAYER_LEVELUP, () => {
+        this.hud.updateLevel();
+      })
+    );
 
-    sub(EventBus.on(EventKeys.PLAYER_OVERFLOW, () => {
-      this.hud.updateLevel();
-    }));
+    sub(
+      EventBus.on(EventKeys.PLAYER_OVERFLOW, () => {
+        this.hud.updateLevel();
+      })
+    );
 
     // 场景关闭时清理所有 EventBus 监听器 + 销毁物品栏（其内部监听/Text 一并释放）
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {

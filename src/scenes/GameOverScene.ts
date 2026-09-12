@@ -35,29 +35,24 @@ export class GameOverScene extends Phaser.Scene {
     const isVictory = this.mode === 'victory';
 
     // 音效：胜利/失败分开（胜利音效资源缺失时 playSfx 静默失败，不阻塞流程）
-    AudioManager.getInstance().playSfx(
-      isVictory ? SOUND_KEYS.SFX_VICTORY : SOUND_KEYS.SFX_GAME_OVER,
-      1
-    );
+    AudioManager.getInstance().playSfx(isVictory ? SOUND_KEYS.SFX_VICTORY : SOUND_KEYS.SFX_GAME_OVER, 1);
 
     // 背景：胜利用金色暗调，失败用冷黑
     this.add.rectangle(0, 0, width, height, isVictory ? 0x120d04 : 0x0a0a0f).setOrigin(0);
 
     // 标题
     createUIText(this, centerX, height * 0.18, isVictory ? '通关成功！' : '游戏结束', {
-        fontSize: '52px',
-        color: isVictory ? '#ffd700' : '#ff4444',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      fontSize: '52px',
+      color: isVictory ? '#ffd700' : '#ff4444',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
 
     // 胜利副标题（失败不显示）
     if (isVictory) {
       createUIText(this, centerX, height * 0.18 + 48, '完成第 ' + runData.wave + ' 波，成功存活！', {
-          fontSize: '20px',
-          color: '#ffb347',
-        })
-        .setOrigin(0.5);
+        fontSize: '20px',
+        color: '#ffb347',
+      }).setOrigin(0.5);
     }
 
     // 本局数据
@@ -75,17 +70,15 @@ export class GameOverScene extends Phaser.Scene {
     statsData.forEach((item, i) => {
       const y = dataY + i * lineHeight;
       createUIText(this, centerX - 100, y, item.label, {
-          fontSize: '20px',
-          color: '#888888',
-        })
-        .setOrigin(0, 0.5);
+        fontSize: '20px',
+        color: '#888888',
+      }).setOrigin(0, 0.5);
 
       createUIText(this, centerX + 100, y, item.value, {
-          fontSize: '20px',
-          color: '#ffffff',
-          fontStyle: 'bold',
-        })
-        .setOrigin(1, 0.5);
+        fontSize: '20px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      }).setOrigin(1, 0.5);
     });
 
     // 新纪录徽章（右下角，仪式感动画）：金色辉光标题 + 副标题 + 光晕呼吸 + 星点闪烁 + 弹跳入场
@@ -102,21 +95,19 @@ export class GameOverScene extends Phaser.Scene {
 
       // 主标题：大号金色 + 橙色辉光阴影
       const title = createUIText(this, 0, -6, '新纪录！', {
-          fontSize: '36px',
-          color: '#ffd700',
-          fontStyle: 'bold',
-          shadow: { color: '#ff8c00', blur: 14, offsetX: 0, offsetY: 0 },
-        })
-        .setOrigin(0.5);
+        fontSize: '36px',
+        color: '#ffd700',
+        fontStyle: 'bold',
+        shadow: { color: '#ff8c00', blur: 14, offsetX: 0, offsetY: 0 },
+      }).setOrigin(0.5);
       badge.add(title);
 
       // 副标题
       const sub = createUIText(this, 0, 32, '历史最高分已刷新', {
-          fontSize: '14px',
-          color: '#ffb347',
-          shadow: { color: '#000000', blur: 0, offsetX: 0, offsetY: 0 },
-        })
-        .setOrigin(0.5);
+        fontSize: '14px',
+        color: '#ffb347',
+        shadow: { color: '#000000', blur: 0, offsetX: 0, offsetY: 0 },
+      }).setOrigin(0.5);
       badge.add(sub);
 
       // 环绕星点（错峰闪烁）
@@ -169,11 +160,11 @@ export class GameOverScene extends Phaser.Scene {
 
   private createButton(x: number, y: number, text: string, callback: () => void): void {
     const btn = createUIText(this, x, y, text, {
-        fontSize: '22px',
-        color: '#e0e0e0',
-        backgroundColor: '#1a1a25',
-        padding: { left: 30, right: 30, top: 12, bottom: 12 },
-      })
+      fontSize: '22px',
+      color: '#e0e0e0',
+      backgroundColor: '#1a1a25',
+      padding: { left: 30, right: 30, top: 12, bottom: 12 },
+    })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
 

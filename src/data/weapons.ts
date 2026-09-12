@@ -146,5 +146,4 @@ export const WEAPONS: Record<string, WeaponConfig> = {
 export const getAllWeapons = (): WeaponConfig[] => Object.values(WEAPONS);
 
 /** 根据类型筛选武器 */
-export const getWeaponsByType = (type: string): WeaponConfig[] =>
-  getAllWeapons().filter((w) => w.type === type);
+export const getWeaponsByType = (type: string): WeaponConfig[] => getAllWeapons().filter((w) => w.type === type);

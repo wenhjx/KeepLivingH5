@@ -57,10 +57,7 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
     const targetY = this.player.y + Math.sin(this.orbitAngle) * this.orbitRadius;
 
     // 平滑移动到目标位置
-    this.setPosition(
-      this.x + (targetX - this.x) * 0.3,
-      this.y + (targetY - this.y) * 0.3
-    );
+    this.setPosition(this.x + (targetX - this.x) * 0.3, this.y + (targetY - this.y) * 0.3);
 
     // 旋转视觉效果
     this.setRotation(this.orbitAngle * 2);
@@ -130,22 +127,13 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
 
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_DRONE, 0.4);
 
-    scene.getObjectPool().spawnBullet(
-      this.x,
-      this.y,
-      angle,
-      460,
-      damage,
-      340,
-      this.config.texture || 'bullet',
-      {
-        color: 0x66ffff,
-        scaleX: 0.65,
-        scaleY: 0.65,
-        trailColor: 0x66ffff,
-        trailEvery: 3,
-      }
-    );
+    scene.getObjectPool().spawnBullet(this.x, this.y, angle, 460, damage, 340, this.config.texture || 'bullet', {
+      color: 0x66ffff,
+      scaleX: 0.65,
+      scaleY: 0.65,
+      trailColor: 0x66ffff,
+      trailEvery: 3,
+    });
   }
 
   /** 查找最近敌人 */
@@ -194,7 +182,7 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
   private calcDroneDamage(): number {
     const atk = Number(this.player.getStats().attackPower);
     const attackPower = isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
-    const raw = this.config.damage * (1 + this.level * 0.2) * attackPower / 10;
+    const raw = (this.config.damage * (1 + this.level * 0.2) * attackPower) / 10;
     return isFinite(raw) && raw > 0 ? raw : this.config.damage;
   }
 

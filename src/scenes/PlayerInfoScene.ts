@@ -71,11 +71,11 @@ export class PlayerInfoScene extends Phaser.Scene {
 
     // 关闭按钮（右上角 ×）
     const closeBtn = createUIText(this, cx + panelW / 2 - 20, cy - panelH / 2 + 28, '✕', {
-        fontSize: '22px',
-        color: '#aaaaaa',
-        backgroundColor: '#222233',
-        padding: { left: 8, right: 8, top: 2, bottom: 2 },
-      })
+      fontSize: '22px',
+      color: '#aaaaaa',
+      backgroundColor: '#222233',
+      padding: { left: 8, right: 8, top: 2, bottom: 2 },
+    })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => {
@@ -181,7 +181,7 @@ export class PlayerInfoScene extends Phaser.Scene {
       .filter((w: any) => w && w.name);
     const passives = (player.getPassives?.() || [])
       .map((p: any) => ({
-        icon: (UPGRADE_OPTIONS.find((u) => u.id === p.id)?.icon) || '✨',
+        icon: UPGRADE_OPTIONS.find((u) => u.id === p.id)?.icon || '✨',
         name: p.name,
         lv: p.level,
       }))
@@ -278,17 +278,29 @@ export class PlayerInfoScene extends Phaser.Scene {
     });
 
     // 底部提示
-    createUIText(this, cx, cy + panelH / 2 - 20, maxScroll > 0 ? '滚轮 / 拖动滚动 · 按 C 或点击 ✕ 关闭' : '按 C 或点击 ✕ 关闭', {
-      fontSize: '13px',
-      color: '#666688',
-    }).setOrigin(0.5);
+    createUIText(
+      this,
+      cx,
+      cy + panelH / 2 - 20,
+      maxScroll > 0 ? '滚轮 / 拖动滚动 · 按 C 或点击 ✕ 关闭' : '按 C 或点击 ✕ 关闭',
+      {
+        fontSize: '13px',
+        color: '#666688',
+      }
+    ).setOrigin(0.5);
   }
 
   private getWeaponIcon(id: string): string {
     // 与 HUD weaponVisuals 保持一致
     const map: Record<string, string> = {
-      default_gun: '🔫', machine_gun: '🔫', shotgun: '🔫', laser: '🔆',
-      rocket: '🚀', boomerang: '🪃', lightsaber: '🗡️', drone: '🤖',
+      default_gun: '🔫',
+      machine_gun: '🔫',
+      shotgun: '🔫',
+      laser: '🔆',
+      rocket: '🚀',
+      boomerang: '🪃',
+      lightsaber: '🗡️',
+      drone: '🤖',
     };
     return map[id] || '🔫';
   }

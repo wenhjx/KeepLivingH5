@@ -28,7 +28,6 @@ export function createUIText(
   return t;
 }
 
-
 /** 文字纹理平滑工具：让 UI 文字在像素主题下仍使用 LINEAR 采样（普通文字观感） */
 export class TextSmoothing {
   static apply(t: Phaser.GameObjects.Text): void {

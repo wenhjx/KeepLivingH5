@@ -243,7 +243,10 @@ export class WaveManager {
     // Boss 按层级指数增长：第5波=×1.0, 第10波=×1.5, 第15波=×2.25...（Boss 波数值保持旧版一致）
     // 档内平滑：1.5^((wave-5)/5) 连续成长，非 Boss 波召唤不再原地踏步；
     // wave1-4 钳制下限 ×1.0（2026-09-10 调平，原 2.2 指数后期天文数字）
-    const difficultyMultiplier = Math.max(1, Math.pow(1.5, (this.currentWave - GameConfig.WAVE.bossWaveInterval) / GameConfig.WAVE.bossWaveInterval));
+    const difficultyMultiplier = Math.max(
+      1,
+      Math.pow(1.5, (this.currentWave - GameConfig.WAVE.bossWaveInterval) / GameConfig.WAVE.bossWaveInterval)
+    );
 
     this.objectPool.spawnEnemy(config, spawnPos.x, spawnPos.y, difficultyMultiplier);
     this.bossActive = true;
@@ -258,7 +261,11 @@ export class WaveManager {
 
     // 通关判定：打完第 victoryWave 波且未进入无尽 → 弹通关结算（继续征战/结束征程）
     // 无尽模式下不拦截，波次继续无限增长，Boss 每 bossWaveInterval 波继续增强
-    if (!this.trainingMode && this.currentWave >= GameConfig.WAVE.victoryWave && !(this.scene as any).isEndlessMode?.()) {
+    if (
+      !this.trainingMode &&
+      this.currentWave >= GameConfig.WAVE.victoryWave &&
+      !(this.scene as any).isEndlessMode?.()
+    ) {
       // 通关清敌：波次为计时制（waveDuration 到即通关），清完 boss 后小怪仍会残留/继续生成。
       // 若不清空，弹窗前的 2s 空档里低血量玩家会被残留敌人打死 → 直接 GameOver 且清存档，
       // "继续征战"窗口永远弹不出来。先清敌再弹窗，玩家安全进入通关结算。

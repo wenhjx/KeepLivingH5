@@ -169,5 +169,4 @@ export const BACKGROUNDS: Record<string, BackgroundConfig> = {
 };
 
 /** 按关卡 id 取背景配置（缺失回退草原，保证新区域不白屏） */
-export const getBackgroundByLevelId = (levelId: string): BackgroundConfig =>
-  BACKGROUNDS[levelId] ?? BACKGROUNDS.meadow;
+export const getBackgroundByLevelId = (levelId: string): BackgroundConfig => BACKGROUNDS[levelId] ?? BACKGROUNDS.meadow;

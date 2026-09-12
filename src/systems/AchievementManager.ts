@@ -54,19 +54,48 @@ export class AchievementManager {
 
     // 注意：EventBus.on 不支持 thisArg，统一用箭头包装保持 this
     // 试玩场地（GameManager.testMode）下事件照常派发，但成就/统计处理全部短路——试玩不产生任何收益
-    const guard = (fn: (...args: any[]) => void) => (...args: any[]): void => {
-      if (GameManager.getInstance().testMode) return;
-      fn(...args);
-    };
-    EventBus.on(EventKeys.ENEMY_DEATH, guard((c) => this.handleEnemyDeath(c)));
-    EventBus.on(EventKeys.COIN_EARNED, guard((a) => this.handleCoinEarned(a)));
-    EventBus.on(EventKeys.SHOP_PURCHASE, guard((p) => this.handleShopPurchase(p)));
-    EventBus.on(EventKeys.RUN_WAVE, guard((w) => this.handleWave(w)));
-    EventBus.on(EventKeys.PLAYER_COINS, guard((c) => this.handleCoins(c)));
-    EventBus.on(EventKeys.PLAYER_HIT, guard(() => this.handlePlayerHit()));
-    EventBus.on(EventKeys.RUN_END, guard((r) => this.handleRunEnd(r)));
-    EventBus.on(EventKeys.RUN_START, guard(() => this.handleRunStart()));
-    EventBus.on(EventKeys.LEVEL_CLEAR, guard(() => this.checkAll()));
+    const guard =
+      (fn: (...args: any[]) => void) =>
+      (...args: any[]): void => {
+        if (GameManager.getInstance().testMode) return;
+        fn(...args);
+      };
+    EventBus.on(
+      EventKeys.ENEMY_DEATH,
+      guard((c) => this.handleEnemyDeath(c))
+    );
+    EventBus.on(
+      EventKeys.COIN_EARNED,
+      guard((a) => this.handleCoinEarned(a))
+    );
+    EventBus.on(
+      EventKeys.SHOP_PURCHASE,
+      guard((p) => this.handleShopPurchase(p))
+    );
+    EventBus.on(
+      EventKeys.RUN_WAVE,
+      guard((w) => this.handleWave(w))
+    );
+    EventBus.on(
+      EventKeys.PLAYER_COINS,
+      guard((c) => this.handleCoins(c))
+    );
+    EventBus.on(
+      EventKeys.PLAYER_HIT,
+      guard(() => this.handlePlayerHit())
+    );
+    EventBus.on(
+      EventKeys.RUN_END,
+      guard((r) => this.handleRunEnd(r))
+    );
+    EventBus.on(
+      EventKeys.RUN_START,
+      guard(() => this.handleRunStart())
+    );
+    EventBus.on(
+      EventKeys.LEVEL_CLEAR,
+      guard(() => this.checkAll())
+    );
 
     // 旧存档/历史统计达标 → 立即补解锁（如已 1000 杀的存档）
     this.checkAll();

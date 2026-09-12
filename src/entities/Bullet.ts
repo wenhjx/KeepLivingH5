@@ -61,12 +61,12 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
       explosive?: boolean;
       boomerang?: boolean;
       aoeRadius?: number;
-      knockback?: number;   // 命中击退力（霰弹枪）
-      color?: number;       // 子弹颜色（tint）
-      scaleX?: number;      // 水平缩放
-      scaleY?: number;      // 垂直缩放
-      trailColor?: number;  // 弹道拖尾颜色（不传则不生成拖尾）
-      trailEvery?: number;  // 每 N 帧生成一段拖尾（默认 3）
+      knockback?: number; // 命中击退力（霰弹枪）
+      color?: number; // 子弹颜色（tint）
+      scaleX?: number; // 水平缩放
+      scaleY?: number; // 垂直缩放
+      trailColor?: number; // 弹道拖尾颜色（不传则不生成拖尾）
+      trailEvery?: number; // 每 N 帧生成一段拖尾（默认 3）
     }
   ): void {
     this.isEnemyBullet = false;
@@ -218,12 +218,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
       if (this.trailTimer >= this.trailEvery) {
         this.trailTimer = 0;
         const scene = this.scene as any;
-        scene?.getFXManager?.()?.bulletTrail(
-          this.x,
-          this.y,
-          Math.atan2(this.vy, this.vx),
-          this.trailColor
-        );
+        scene?.getFXManager?.()?.bulletTrail(this.x, this.y, Math.atan2(this.vy, this.vx), this.trailColor);
       }
     }
 

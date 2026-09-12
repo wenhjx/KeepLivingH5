@@ -41,10 +41,7 @@ function computeRenderScale(): number {
   const cap = GameConfig.QUALITY[quality].resolutionScale;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   // Phaser Scale.FIT 下 canvas 的显示放大倍数（相对逻辑分辨率）
-  const fit = Math.min(
-    window.innerWidth / GameConfig.GAME_WIDTH,
-    window.innerHeight / GameConfig.GAME_HEIGHT
-  );
+  const fit = Math.min(window.innerWidth / GameConfig.GAME_WIDTH, window.innerHeight / GameConfig.GAME_HEIGHT);
   return Math.min(Math.max(fit, 1) * dpr, Math.max(1, cap));
 }
 
@@ -108,7 +105,23 @@ const config: Phaser.Types.Core.GameConfig = {
   input: {
     activePointers: 3,
   },
-  scene: [BootScene, PreloadScene, MainMenuScene, GameScene, UIScene, GameOverScene, UpgradeScene, WeaponSelectScene, EndlessChoiceScene, ShopScene, BreakthroughScene, PlayerInfoScene, DebugScene, AchievementScene, EnemyCodexScene],
+  scene: [
+    BootScene,
+    PreloadScene,
+    MainMenuScene,
+    GameScene,
+    UIScene,
+    GameOverScene,
+    UpgradeScene,
+    WeaponSelectScene,
+    EndlessChoiceScene,
+    ShopScene,
+    BreakthroughScene,
+    PlayerInfoScene,
+    DebugScene,
+    AchievementScene,
+    EnemyCodexScene,
+  ],
   callbacks: {
     postBoot: (game) => {
       hideLoading();
@@ -122,4 +135,3 @@ const game = new Phaser.Game(config);
 
 // 暴露游戏实例到全局，便于调试（Boss 战验证/压力测试等通过控制台驱动）
 (window as any).__game = game;
-

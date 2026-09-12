@@ -8,13 +8,15 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "audit": "node node_modules/esbuild/bin/esbuild scripts/balance-audit.ts --bundle --platform=node --format=cjs --outfile=scripts/.audit.cjs && node scripts/.audit.cjs && del scripts\\.audit.cjs"
+    "audit": "node node_modules/esbuild/bin/esbuild scripts/balance-audit.ts --bundle --platform=node --format=cjs --outfile=scripts/.audit.cjs && node scripts/.audit.cjs && del scripts\\.audit.cjs",
+    "format": "prettier --write \"*.ts\" \"src/**/*.ts\" \"scripts/**/*.ts\" \"index.html\""
   },
   "dependencies": {
     "phaser": "^3.80.1"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
+    "prettier": "^3.9.6",
     "typescript": "^5.4.0",
     "vite": "^5.2.0"
   }

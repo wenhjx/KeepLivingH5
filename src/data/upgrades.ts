@@ -291,8 +291,7 @@ export const getUpgradesByRarity = (rarity: string): UpgradeOption[] =>
   UPGRADE_OPTIONS.filter((u) => u.rarity === rarity);
 
 /** 根据类型筛选 */
-export const getUpgradesByType = (type: string): UpgradeOption[] =>
-  UPGRADE_OPTIONS.filter((u) => u.type === type);
+export const getUpgradesByType = (type: string): UpgradeOption[] => UPGRADE_OPTIONS.filter((u) => u.type === type);
 
 /**
  * 兜底升级项（所有可成长项——武器/被动/stat——全部满级后的补充）

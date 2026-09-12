@@ -80,21 +80,13 @@ export class Minimap {
       if (!enemy.active) continue;
       if (enemy.isBoss?.()) continue; // Boss 单独绘制
       g.fillStyle(0xff5555, 0.85);
-      g.fillCircle(
-        this.x + enemy.x * scaleX,
-        this.y + enemy.y * scaleY,
-        1.5
-      );
+      g.fillCircle(this.x + enemy.x * scaleX, this.y + enemy.y * scaleY, 1.5);
     }
 
     // Boss（大红点 + 脉冲感）
     if (boss && boss.active) {
       g.fillStyle(0xff2222, 1);
-      g.fillCircle(
-        this.x + boss.x * scaleX,
-        this.y + boss.y * scaleY,
-        4
-      );
+      g.fillCircle(this.x + boss.x * scaleX, this.y + boss.y * scaleY, 4);
     }
 
     // 玩家（青色三角，指向移动方向可选，先用固定三角）

@@ -21,7 +21,7 @@ export class PlayerStatusIcons {
 
   constructor(
     private scene: Phaser.Scene,
-    private depth: number = Layers.ENTITY_STATUS,
+    private depth: number = Layers.ENTITY_STATUS
   ) {}
 
   /** 注册/复用状态图标：已存在同 key 直接复用（时长由外部驱动，无需在此延长） */
@@ -34,9 +34,7 @@ export class PlayerStatusIcons {
     g.fillRoundedRect(-13, -13, 26, 26, 4);
     g.lineStyle(1, 0xffffff, 0.3);
     g.strokeRoundedRect(-13, -13, 26, 26, 4);
-    const text = this.scene.add
-      .text(0, 0, emoji, { fontSize: '13px' })
-      .setOrigin(0.5);
+    const text = this.scene.add.text(0, 0, emoji, { fontSize: '13px' }).setOrigin(0.5);
     TextSmoothing.apply(text);
     container.add([g, text]);
     this.items.push({ key, emoji, flashBefore, container, text });

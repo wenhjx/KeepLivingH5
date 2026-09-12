@@ -37,37 +37,32 @@ export class EndlessChoiceScene extends Phaser.Scene {
 
     // 标题
     createUIText(this, centerX, height * 0.22, '🎉 通关成功！', {
-        fontSize: '46px',
-        color: '#ffd700',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5);
+      fontSize: '46px',
+      color: '#ffd700',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
 
     // 副标题
-    const subtitle = hasNext
-      ? `你已打通「${level.name}」，可前往下一区域「${nextName}」`
-      : '你已打通所有区域！';
+    const subtitle = hasNext ? `你已打通「${level.name}」，可前往下一区域「${nextName}」` : '你已打通所有区域！';
     createUIText(this, centerX, height * 0.22 + 54, subtitle, {
-        fontSize: '18px',
-        color: '#cccccc',
-      })
-      .setOrigin(0.5);
+      fontSize: '18px',
+      color: '#cccccc',
+    }).setOrigin(0.5);
 
     // 说明
     const note = hasNext
       ? '进入下一关将保留全部成长，怪物会更强并出现全新规则'
       : '无尽模式下怪物将无限增强，考验你的极限';
     createUIText(this, centerX, height * 0.22 + 92, note, {
-        fontSize: '14px',
-        color: '#888888',
-      })
-      .setOrigin(0.5);
+      fontSize: '14px',
+      color: '#888888',
+    }).setOrigin(0.5);
 
     // 选项按钮（有下一关时多一个"进入下一关"）
     if (hasNext) {
-      this.createChoiceButton(centerX, height * 0.50, '➡ 进入「' + nextName + '」', 0x44cc88, 'endlesschoice:nextlevel');
+      this.createChoiceButton(centerX, height * 0.5, '➡ 进入「' + nextName + '」', 0x44cc88, 'endlesschoice:nextlevel');
       this.createChoiceButton(centerX, height * 0.62, '⚔ 继续征战', 0xffb347, 'endlesschoice:continue');
       this.createChoiceButton(centerX, height * 0.74, '🏁 结束征程', 0x556677, 'endlesschoice:end');
     } else {
@@ -108,17 +103,14 @@ export class EndlessChoiceScene extends Phaser.Scene {
     btn.strokeRoundedRect(x - 130, y - 22, 260, 44, 8);
 
     createUIText(this, x, y, label, {
-        fontSize: '20px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 3,
-      })
-      .setOrigin(0.5);
+      fontSize: '20px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    }).setOrigin(0.5);
 
-    const hitArea = this.add
-      .rectangle(x, y, 260, 44, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true });
+    const hitArea = this.add.rectangle(x, y, 260, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 只发事件：暂停/恢复与后续流程由 GameScene 统一处理
     hitArea.on('pointerdown', () => EventBus.emit(event));
   }

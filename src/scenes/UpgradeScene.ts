@@ -39,13 +39,12 @@ export class UpgradeScene extends Phaser.Scene {
 
     // 标题
     createUIText(this, width / 2, 70, 'LEVEL UP!', {
-        fontSize: '42px',
-        color: '#ffb347',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5);
+      fontSize: '42px',
+      color: '#ffb347',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
 
     // 过滤掉玩家已满级的选项，不足时用兜底项补位
     const availableOptions = this.getAvailableOptions();
@@ -54,10 +53,9 @@ export class UpgradeScene extends Phaser.Scene {
     // 提示文字：全部成长项满级时升级项由兜底补给（消耗品）补位 → 文案区分，
     // 避免"提示选择升级、弹出的却是消耗品"的违和感
     createUIText(this, width / 2, 115, availableOptions.length === 0 ? '选择一项补给' : '选择一项升级', {
-        fontSize: '16px',
-        color: '#aaaaaa',
-      })
-      .setOrigin(0.5);
+      fontSize: '16px',
+      color: '#aaaaaa',
+    }).setOrigin(0.5);
 
     // 升级面板
     this.upgradePanel = new UpgradePanel(this);
@@ -165,9 +163,7 @@ export class UpgradeScene extends Phaser.Scene {
     const choices = this.shuffleUpgrades([...availableOptions]).slice(0, 3);
     // 用兜底项补齐不足的空位（兜底项无等级、不膨胀）
     if (choices.length < 3) {
-      const fillers = this.shuffleUpgrades([...FALLBACK_UPGRADES]).filter(
-        (f) => !choices.some((c) => c.id === f.id)
-      );
+      const fillers = this.shuffleUpgrades([...FALLBACK_UPGRADES]).filter((f) => !choices.some((c) => c.id === f.id));
       for (const f of fillers) {
         if (choices.length >= 3) break;
         choices.push(f);
@@ -193,12 +189,9 @@ export class UpgradeScene extends Phaser.Scene {
     const player = gameScene?.getPlayer() as Player | undefined;
 
     // 记录选择前是否已有该武器/被动（用于判断是新获取还是升级）
-    const isNewWeapon = option.type === 'weapon' && option.effect.weaponId
-      ? !player?.hasWeapon(option.effect.weaponId)
-      : false;
-    const isNewPassive = option.type === 'passive'
-      ? !player?.hasPassive(option.id)
-      : false;
+    const isNewWeapon =
+      option.type === 'weapon' && option.effect.weaponId ? !player?.hasWeapon(option.effect.weaponId) : false;
+    const isNewPassive = option.type === 'passive' ? !player?.hasPassive(option.id) : false;
 
     if (player) {
       applyUpgradeToPlayer(player, option, gameScene);

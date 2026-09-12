@@ -137,7 +137,7 @@ export const RUINS_TERRAIN: TerrainConfig = {
     { id: 'r_crate_03', x: 1200, y: 1800, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
     { id: 'r_crate_04', x: 1800, y: 1800, width: 70, height: 70, type: 'crate', destructible: true, health: 30 },
   ],
-    slowZones: [],
+  slowZones: [],
   // 加速区（风道）：废墟中部横穿窄通道，快速转场
   boostZones: [
     { id: 'r_boost_01', x: 1500, y: 650, width: 320, height: 60, speedFactor: 1.35, color: 0x44cc88 },

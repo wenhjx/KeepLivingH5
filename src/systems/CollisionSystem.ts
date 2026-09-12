@@ -85,10 +85,7 @@ export class CollisionSystem {
     if (player) enemy.applyPlayerEffects?.(finalDamage, player, bullet.x, bullet.y);
 
     // 命中音效（暴击更响）
-    AudioManager.getInstance().playSfx(
-      isCrit ? SOUND_KEYS.SFX_HIT_CRIT : SOUND_KEYS.SFX_HIT,
-      isCrit ? 1 : 0.5
-    );
+    AudioManager.getInstance().playSfx(isCrit ? SOUND_KEYS.SFX_HIT_CRIT : SOUND_KEYS.SFX_HIT, isCrit ? 1 : 0.5);
 
     // 浮动伤害数字（暴击金色大字，普通白色）
     gameScene?.spawnDamageText?.(bullet.x, bullet.y, finalDamage, isCrit);
@@ -133,5 +130,4 @@ export class CollisionSystem {
     const gameScene = this.scene as any;
     gameScene.getFXManager?.()?.pickup(pickup.x, pickup.y, pickup.getType());
   }
-
 }

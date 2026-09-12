@@ -49,27 +49,24 @@ export class ShopScene extends Phaser.Scene {
 
     // 标题
     createUIText(this, width / 2, 60, '🛒 神秘商店', {
-        fontSize: '40px',
-        color: '#ffcc00',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5);
+      fontSize: '40px',
+      color: '#ffcc00',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
 
     createUIText(this, width / 2, 108, 'Boss 将至，用金币强化自己！', {
-        fontSize: '14px',
-        color: '#aaaaaa',
-      })
-      .setOrigin(0.5);
+      fontSize: '14px',
+      color: '#aaaaaa',
+    }).setOrigin(0.5);
 
     // 金币余额
     this.coinText = createUIText(this, width / 2, 148, '💰 0', {
-        fontSize: '22px',
-        color: '#ffcc00',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      fontSize: '22px',
+      color: '#ffcc00',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
 
     // 生成货架并渲染
     this.stock = generateShopStock(this.getPlayer() as Player);
@@ -84,10 +81,9 @@ export class ShopScene extends Phaser.Scene {
 
     // 提示
     createUIText(this, width / 2, height - 34, '点击商品购买 · Boss 战前补给', {
-        fontSize: '12px',
-        color: '#666666',
-      })
-      .setOrigin(0.5);
+      fontSize: '12px',
+      color: '#666666',
+    }).setOrigin(0.5);
 
     // AI 自动玩：进入商店后自动购物（按稀有度购买 → 刷新 → 直到金币耗尽）
     const gameScene = this.scene.get('GameScene') as any;
@@ -172,9 +168,7 @@ export class ShopScene extends Phaser.Scene {
 
   private renderStock(): void {
     // 清除旧卡片
-    this.children.list
-      .filter((obj) => obj.getData('isShopCard'))
-      .forEach((obj) => obj.destroy());
+    this.children.list.filter((obj) => obj.getData('isShopCard')).forEach((obj) => obj.destroy());
 
     // 重置卡片引用（刷新后重建，供 AI 购物使用）
     this.cardRefs = [];
@@ -245,11 +239,10 @@ export class ShopScene extends Phaser.Scene {
       (obj as any).setAlpha?.(0.35);
     });
     const soldText = createUIText(this, 0, 0, '已购 ✓', {
-        fontSize: '22px',
-        color: '#44ff88',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      fontSize: '22px',
+      color: '#44ff88',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
     card.add(soldText);
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_SHOP_BUY, 1);
   }
@@ -280,15 +273,12 @@ export class ShopScene extends Phaser.Scene {
     btn.fillRoundedRect(x, y, 170, 44, 8);
 
     this.refreshText = createUIText(this, x + 85, y + 22, this.getRefreshLabel(), {
-        fontSize: '16px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
 
-    const hitArea = this.add
-      .rectangle(x + 85, y + 22, 170, 44, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true });
+    const hitArea = this.add.rectangle(x + 85, y + 22, 170, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hitArea.on('pointerdown', () => this.tryRefresh());
   }
 
@@ -328,15 +318,12 @@ export class ShopScene extends Phaser.Scene {
     btn.fillRoundedRect(x - 140, y, 140, 44, 8);
 
     createUIText(this, x - 70, y + 22, '离开 ➜', {
-        fontSize: '16px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
 
-    const hitArea = this.add
-      .rectangle(x - 70, y + 22, 140, 44, 0xffffff, 0)
-      .setInteractive({ useHandCursor: true });
+    const hitArea = this.add.rectangle(x - 70, y + 22, 140, 44, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hitArea.on('pointerdown', () => this.leave());
   }
 

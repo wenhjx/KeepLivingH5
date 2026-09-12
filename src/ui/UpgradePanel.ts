@@ -21,8 +21,16 @@ export class UpgradePanel {
   private onSelectCallback: ((option: UpgradeOption) => void) | null = null;
   private onSkipCallback: (() => void) | null = null;
   private selectedIndex = -1;
-  private confirmBtn: { bg: Phaser.GameObjects.Graphics; txt: Phaser.GameObjects.Text; hit: Phaser.GameObjects.Rectangle } | null = null;
-  private skipBtn: { bg: Phaser.GameObjects.Graphics; txt: Phaser.GameObjects.Text; hit: Phaser.GameObjects.Rectangle } | null = null;
+  private confirmBtn: {
+    bg: Phaser.GameObjects.Graphics;
+    txt: Phaser.GameObjects.Text;
+    hit: Phaser.GameObjects.Rectangle;
+  } | null = null;
+  private skipBtn: {
+    bg: Phaser.GameObjects.Graphics;
+    txt: Phaser.GameObjects.Text;
+    hit: Phaser.GameObjects.Rectangle;
+  } | null = null;
 
   private readonly cardWidth = 200;
   private readonly cardHeight = 280;
@@ -46,11 +54,7 @@ export class UpgradePanel {
    * @param availableOptions 可选升级列表（默认从全部中随机）
    * @param onSkip 跳过回调（提供时渲染"跳过拿金币"按钮；突破/武器强化场景不传则不显示）
    */
-  show(
-    onSelect: (option: UpgradeOption) => void,
-    availableOptions?: UpgradeOption[],
-    onSkip?: () => void
-  ): void {
+  show(onSelect: (option: UpgradeOption) => void, availableOptions?: UpgradeOption[], onSkip?: () => void): void {
     this.onSelectCallback = onSelect;
     this.onSkipCallback = onSkip ?? null;
     this.selectedIndex = -1;
@@ -108,11 +112,10 @@ export class UpgradePanel {
       if (existing) existing.destroy();
       if (i === index && auto) {
         const label = createUIText(this.scene, 0, this.cardHeight / 2 - 20, '即将选择...', {
-            fontSize: '13px',
-            color: '#66ff99',
-            fontStyle: 'bold',
-          })
-          .setOrigin(0.5);
+          fontSize: '13px',
+          color: '#66ff99',
+          fontStyle: 'bold',
+        }).setOrigin(0.5);
         card.add(label);
         card.setData('autoLabel', label);
       }
@@ -132,9 +135,7 @@ export class UpgradePanel {
   /** 渲染选项卡片 */
   private renderOptions(): void {
     // 清除旧卡片
-    this.container.list
-      .filter((obj) => obj.getData('isUpgradeCard'))
-      .forEach((obj) => obj.destroy());
+    this.container.list.filter((obj) => obj.getData('isUpgradeCard')).forEach((obj) => obj.destroy());
     this.cardContainers = [];
 
     const width = GameConfig.GAME_WIDTH;
@@ -171,7 +172,13 @@ export class UpgradePanel {
         // 选中：加一个绿色高亮外框 + 轻微放大
         const hl = this.scene.add.graphics();
         hl.lineStyle(4, 0x66ff99, 1);
-        hl.strokeRoundedRect(-this.cardWidth / 2 - 3, -this.cardHeight / 2 - 3, this.cardWidth + 6, this.cardHeight + 6, 14);
+        hl.strokeRoundedRect(
+          -this.cardWidth / 2 - 3,
+          -this.cardHeight / 2 - 3,
+          this.cardWidth + 6,
+          this.cardHeight + 6,
+          14
+        );
         card.add(hl);
         card.setData('highlight', hl);
         card.setScale(1.05);
@@ -199,15 +206,12 @@ export class UpgradePanel {
 
     const bg = this.scene.add.graphics();
     const txt = createUIText(this.scene, x, y, `跳过 +${reward} 金币`, {
-        fontSize: '16px',
-        color: '#ffd77a',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      fontSize: '16px',
+      color: '#ffd77a',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
 
-    const hit = this.scene.add
-      .rectangle(x, y, btnWidth, btnHeight, 0xffffff, 0)
-      .setOrigin(0.5);
+    const hit = this.scene.add.rectangle(x, y, btnWidth, btnHeight, 0xffffff, 0).setOrigin(0.5);
 
     const draw = (hover: boolean) => {
       bg.clear();
@@ -243,15 +247,12 @@ export class UpgradePanel {
 
     const bg = this.scene.add.graphics();
     const txt = createUIText(this.scene, x, y, '请先选择一项升级', {
-        fontSize: '18px',
-        color: '#666666',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      fontSize: '18px',
+      color: '#666666',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
 
-    const hit = this.scene.add
-      .rectangle(x, y, btnWidth, btnHeight, 0xffffff, 0)
-      .setOrigin(0.5);
+    const hit = this.scene.add.rectangle(x, y, btnWidth, btnHeight, 0xffffff, 0).setOrigin(0.5);
 
     const drawBtn = (enabled: boolean) => {
       bg.clear();

@@ -73,7 +73,15 @@ export class FXManager {
   }
 
   /** 一次性圆环（缩放 + 淡出），用于爆炸冲击波 / 升级光环 */
-  private ring(x: number, y: number, radius: number, color: number, duration: number, scaleFrom: number, scaleTo: number): void {
+  private ring(
+    x: number,
+    y: number,
+    radius: number,
+    color: number,
+    duration: number,
+    scaleFrom: number,
+    scaleTo: number
+  ): void {
     const circle = this.scene.add.circle(x, y, radius, color, 0.5).setDepth(Layers.FX);
     this.scene.tweens.add({
       targets: circle,
@@ -85,7 +93,15 @@ export class FXManager {
   }
 
   /** 空心圆环（描边扩散 + 淡出），冲击波用，避免实心圆盘的厚重感 */
-  private ringStroke(x: number, y: number, radius: number, color: number, duration: number, scaleFrom: number, scaleTo: number): void {
+  private ringStroke(
+    x: number,
+    y: number,
+    radius: number,
+    color: number,
+    duration: number,
+    scaleFrom: number,
+    scaleTo: number
+  ): void {
     const g = this.scene.add.graphics();
     g.lineStyle(4, color, 1);
     g.strokeCircleShape(new Phaser.Geom.Circle(0, 0, radius));
@@ -214,7 +230,15 @@ export class FXManager {
   }
 
   /** 一次性连线：加粗淡出销毁（弹射/闪电链轨迹） */
-  private ray(x1: number, y1: number, x2: number, y2: number, color: number, width: number = 2, duration: number = 160): void {
+  private ray(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    color: number,
+    width: number = 2,
+    duration: number = 160
+  ): void {
     const g = this.scene.add.graphics();
     g.lineStyle(width, color, 0.9);
     g.lineBetween(x1, y1, x2, y2);

@@ -274,7 +274,11 @@ export function generateShopStock(player: Player): ShopItem[] {
   }
 
   // 常规位不足时用可购商品补齐
-  const filler = shuffle(SHOP_POOL.filter((it) => isPurchasable(it, player) && !regulars.some((r) => r.id === it.id) && it.id !== premium?.id));
+  const filler = shuffle(
+    SHOP_POOL.filter(
+      (it) => isPurchasable(it, player) && !regulars.some((r) => r.id === it.id) && it.id !== premium?.id
+    )
+  );
   for (const item of filler) {
     if (regulars.length >= 3) break;
     regulars.push(item);
@@ -301,8 +305,7 @@ export function applyShopItem(player: Player, item: ShopItem, gameScene: any): v
     return;
   }
   const opt =
-    UPGRADE_OPTIONS.find((u) => u.id === item.upgradeId) ||
-    FALLBACK_UPGRADES.find((f) => f.id === item.upgradeId);
+    UPGRADE_OPTIONS.find((u) => u.id === item.upgradeId) || FALLBACK_UPGRADES.find((f) => f.id === item.upgradeId);
   if (opt) {
     applyUpgradeToPlayer(player, opt, gameScene);
   }

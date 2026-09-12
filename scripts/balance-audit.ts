@@ -57,14 +57,14 @@ const BOSS_WAVES = [5, 10, 15, 20, 25, 30, 40, 50];
 /** 各武器平均命中目标数（穿透/AOE/多弹丸的均值假设，按武器特性估算） */
 const WEAPON_HIT_TARGETS: Record<string, number> = {
   default_gun: 1.5, // 穿透，弹道线上平均 1.5 只
-  shotgun: 3.5,     // 5 弹丸散射，近距离平均 3.5 弹丸命中
+  shotgun: 3.5, // 5 弹丸散射，近距离平均 3.5 弹丸命中
   machine_gun: 1.2, // 单发，略受穿透影响
-  boomerang: 2.0,   // 往返各命中 1 只
-  drone: 3.0,       // 双轨机制：接触伤害（260ms 判定）+ 自动射击（800ms），等效 3 目标命中
-  lightsaber: 2.0,  // 近战 120 范围：需贴脸输出、实战兑现率低（玩家不会贴着敌群站桩），保守取 2 只；纸面满输出可到 3+
-  rocket: 3.0,      // 爆炸半径 100，平均炸中 3 只
-  laser: 2.5,       // 超高速穿透，弹道上平均 2.5 只
-  nova: 5.0,        // 环形 180 范围，被围时平均 5 只
+  boomerang: 2.0, // 往返各命中 1 只
+  drone: 3.0, // 双轨机制：接触伤害（260ms 判定）+ 自动射击（800ms），等效 3 目标命中
+  lightsaber: 2.0, // 近战 120 范围：需贴脸输出、实战兑现率低（玩家不会贴着敌群站桩），保守取 2 只；纸面满输出可到 3+
+  rocket: 3.0, // 爆炸半径 100，平均炸中 3 只
+  laser: 2.5, // 超高速穿透，弹道上平均 2.5 只
+  nova: 5.0, // 环形 180 范围，被围时平均 5 只
 };
 
 /** 典型 build 场景（坎检测用）：
@@ -73,15 +73,39 @@ interface BuildSpec {
   name: string;
   weaponId: string;
   weaponLevel: number;
-  attackPower: number;    // 攻击力（默认 10，力量强化 5 级 → 10×1.2^5≈24.9）
+  attackPower: number; // 攻击力（默认 10，力量强化 5 级 → 10×1.2^5≈24.9）
   attackSpeedMult: number; // 攻速倍率（急速 5 级 → 1.75）
   critRate: number;
   critDamage: number;
 }
 const BUILDS: BuildSpec[] = [
-  { name: '基础枪·初期', weaponId: 'default_gun', weaponLevel: 2, attackPower: 10, attackSpeedMult: 1.0, critRate: 0.05, critDamage: 1.5 },
-  { name: '基础枪·成型', weaponId: 'default_gun', weaponLevel: 8, attackPower: 24.9, attackSpeedMult: 1.75, critRate: 0.55, critDamage: 5.06 },
-  { name: '激光·成型', weaponId: 'laser', weaponLevel: 6, attackPower: 24.9, attackSpeedMult: 1.75, critRate: 0.55, critDamage: 5.06 },
+  {
+    name: '基础枪·初期',
+    weaponId: 'default_gun',
+    weaponLevel: 2,
+    attackPower: 10,
+    attackSpeedMult: 1.0,
+    critRate: 0.05,
+    critDamage: 1.5,
+  },
+  {
+    name: '基础枪·成型',
+    weaponId: 'default_gun',
+    weaponLevel: 8,
+    attackPower: 24.9,
+    attackSpeedMult: 1.75,
+    critRate: 0.55,
+    critDamage: 5.06,
+  },
+  {
+    name: '激光·成型',
+    weaponId: 'laser',
+    weaponLevel: 6,
+    attackPower: 24.9,
+    attackSpeedMult: 1.75,
+    critRate: 0.55,
+    critDamage: 5.06,
+  },
 ];
 
 // ============================================================
@@ -142,7 +166,7 @@ const avgExpPerKill = (wave: number) => 6 * diffFor(wave);
 function avgCoinsPerKill(wave: number): number {
   // 前期(≤5波)以 normal/fast 为主；中期混入 tank/ranged；后期混入 elite
   const table: Array<[number, number, number]> = [
-    [0.45, 4.5, 1],  // normal chance/minmax均值
+    [0.45, 4.5, 1], // normal chance/minmax均值
     [0.4, 4, 1],
     [0.5, 5.5, 1],
     [0.35, 4, 1],
@@ -154,13 +178,7 @@ function avgCoinsPerKill(wave: number): number {
   const rangedW = wave >= 4 ? 0.12 : 0;
   const fastW = wave >= 2 ? 0.15 : 0;
   const normalW = Math.max(0.2, 1 - eliteW - tankW - rangedW - fastW);
-  return (
-    normalW * 0.45 * 4.5 +
-    fastW * 0.4 * 4 +
-    tankW * 0.5 * 5.5 +
-    rangedW * 0.35 * 4 +
-    eliteW * 1 * 20
-  );
+  return normalW * 0.45 * 4.5 + fastW * 0.4 * 4 + tankW * 0.5 * 5.5 + rangedW * 0.35 * 4 + eliteW * 1 * 20;
 }
 
 // ============================================================
@@ -169,7 +187,10 @@ function avgCoinsPerKill(wave: number): number {
 /** 成型 build：基础枪 Lv8、力量5级(攻击24.9)、急速5级(攻速1.75)、双爆成型(55%/506%) */
 const PASSIVE_BUILD = { attackPower: 24.9, attackSpeedMult: 1.75, critRate: 0.55, critDamage: 5.06 };
 /** 单发伤害（含攻击力/10 与暴击期望） */
-const passivePerHit = weaponBaseDmg('default_gun', 8) * (PASSIVE_BUILD.attackPower / 10) * (1 + PASSIVE_BUILD.critRate * (PASSIVE_BUILD.critDamage - 1));
+const passivePerHit =
+  weaponBaseDmg('default_gun', 8) *
+  (PASSIVE_BUILD.attackPower / 10) *
+  (1 + PASSIVE_BUILD.critRate * (PASSIVE_BUILD.critDamage - 1));
 /** 每秒命中事件（群战命中 1.5 目标 / Boss 单目标） */
 const passiveEventsGroup = WEAPONS.default_gun.attackSpeed * PASSIVE_BUILD.attackSpeedMult * HIT_RATE * 1.5;
 const passiveEventsSingle = WEAPONS.default_gun.attackSpeed * PASSIVE_BUILD.attackSpeedMult * HIT_RATE;
@@ -190,17 +211,47 @@ function calcPassiveRows(): PassiveAuditRow[] {
   const p = passivePerHit;
   const g = passiveEventsGroup;
   const s = passiveEventsSingle;
-  const dotDps = (lv: number, targets: number) => (0.15 * lv) * (0.15 * lv) * p * (7 / 3) * targets;
+  const dotDps = (lv: number, targets: number) => 0.15 * lv * (0.15 * lv) * p * (7 / 3) * targets;
   const bounceDps = (lv: number, events: number) => 0.7 * p * Math.min(lv, GROUP_ENEMIES - 1) * events;
-  const chainDps = (lv: number, events: number) => (0.1 * lv) * 0.6 * p * Math.min(lv, GROUP_ENEMIES - 1) * events;
-  const freezeE = (lv: number) => (0.08 * lv) * 0.6 * (2 / 3);
-  const lifestealHps = (lv: number, events: number) => (0.03 * lv) * p * events;
+  const chainDps = (lv: number, events: number) => 0.1 * lv * 0.6 * p * Math.min(lv, GROUP_ENEMIES - 1) * events;
+  const freezeE = (lv: number) => 0.08 * lv * 0.6 * (2 / 3);
+  const lifestealHps = (lv: number, events: number) => 0.03 * lv * p * events;
   return [
-    { id: 'passive_bounce', name: '弹射', group: [bounceDps(1, g), bounceDps(3, g), bounceDps(5, g)], boss: [0, 0, 0], note: '群怪爆发·Boss断链' },
-    { id: 'passive_burn', name: '灼烧', group: [dotDps(1, GROUP_ENEMIES), dotDps(3, GROUP_ENEMIES), dotDps(5, GROUP_ENEMIES)], boss: [dotDps(1, 1), dotDps(3, 1), dotDps(5, 1)], note: '持续DOT·Boss战稳定' },
-    { id: 'passive_chain', name: '闪电链', group: [chainDps(1, g), chainDps(3, g), chainDps(5, g)], boss: [0, 0, 0], note: '群怪爆发·Boss断链' },
-    { id: 'passive_freeze', name: '冰冻', group: [freezeE(1), freezeE(3), freezeE(5)], boss: [freezeE(1), freezeE(3), freezeE(5)], note: '生存·等效减伤%' },
-    { id: 'passive_lifesteal', name: '吸血', group: [lifestealHps(1, g), lifestealHps(3, g), lifestealHps(5, g)], boss: [lifestealHps(1, s), lifestealHps(3, s), lifestealHps(5, s)], note: '生存·每秒回血' },
+    {
+      id: 'passive_bounce',
+      name: '弹射',
+      group: [bounceDps(1, g), bounceDps(3, g), bounceDps(5, g)],
+      boss: [0, 0, 0],
+      note: '群怪爆发·Boss断链',
+    },
+    {
+      id: 'passive_burn',
+      name: '灼烧',
+      group: [dotDps(1, GROUP_ENEMIES), dotDps(3, GROUP_ENEMIES), dotDps(5, GROUP_ENEMIES)],
+      boss: [dotDps(1, 1), dotDps(3, 1), dotDps(5, 1)],
+      note: '持续DOT·Boss战稳定',
+    },
+    {
+      id: 'passive_chain',
+      name: '闪电链',
+      group: [chainDps(1, g), chainDps(3, g), chainDps(5, g)],
+      boss: [0, 0, 0],
+      note: '群怪爆发·Boss断链',
+    },
+    {
+      id: 'passive_freeze',
+      name: '冰冻',
+      group: [freezeE(1), freezeE(3), freezeE(5)],
+      boss: [freezeE(1), freezeE(3), freezeE(5)],
+      note: '生存·等效减伤%',
+    },
+    {
+      id: 'passive_lifesteal',
+      name: '吸血',
+      group: [lifestealHps(1, g), lifestealHps(3, g), lifestealHps(5, g)],
+      boss: [lifestealHps(1, s), lifestealHps(3, s), lifestealHps(5, s)],
+      note: '生存·每秒回血',
+    },
   ];
 }
 
@@ -223,7 +274,8 @@ function buildHtml(rows: {
   passiveTable: PassiveAuditRow[];
   conclusions: string[];
 }): string {
-  const { waves, enemyCurves, bossCurves, weaponDps, economy, levelCurve, levelCompare, passiveTable, conclusions } = rows;
+  const { waves, enemyCurves, bossCurves, weaponDps, economy, levelCurve, levelCompare, passiveTable, conclusions } =
+    rows;
 
   // SVG 折线图生成器（简单归一化）
   const lineChart = (series: Array<{ label: string; values: number[]; color?: string }>, w = 620, h = 220) => {
@@ -236,8 +288,18 @@ function buildHtml(rows: {
         return `<path d="${d}" fill="none" stroke="${s.color ?? '#4aa3df'}" stroke-width="2"/>`;
       })
       .join('\n');
-    const labels = waves.map((wv, i) => `<text x="${px(i).toFixed(1)}" y="${h - 10}" font-size="9" text-anchor="middle" fill="#888">${wv}</text>`).join('');
-    const legend = series.map((s) => `<span style="margin-right:12px;font-size:11px;color:#ccc;"><i style="display:inline-block;width:10px;height:3px;background:${s.color ?? '#4aa3df'};margin-right:4px;vertical-align:middle;"></i>${s.label}</span>`).join('');
+    const labels = waves
+      .map(
+        (wv, i) =>
+          `<text x="${px(i).toFixed(1)}" y="${h - 10}" font-size="9" text-anchor="middle" fill="#888">${wv}</text>`
+      )
+      .join('');
+    const legend = series
+      .map(
+        (s) =>
+          `<span style="margin-right:12px;font-size:11px;color:#ccc;"><i style="display:inline-block;width:10px;height:3px;background:${s.color ?? '#4aa3df'};margin-right:4px;vertical-align:middle;"></i>${s.label}</span>`
+      )
+      .join('');
     return `<div style="margin:8px 0;"><div style="font-size:11px;color:#888;">${legend}</div><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="#10131a" rx="6"/>${paths}${labels}</svg></div>`;
   };
 
@@ -361,27 +423,43 @@ function main(): void {
   const conclusions: string[] = [];
   // 1) Boss 击杀时间（跨波机制：Boss 波结束不清怪，可带 Boss 打多波；按"需扛几波"评估）
   BUILDS.forEach((b) => {
-    const dps = calcWeaponDps(b.weaponId, b.weaponLevel, b.attackPower, b.attackSpeedMult) * (1 + b.critRate * (b.critDamage - 1)) / CRIT_EXPECT;
+    const dps =
+      (calcWeaponDps(b.weaponId, b.weaponLevel, b.attackPower, b.attackSpeedMult) *
+        (1 + b.critRate * (b.critDamage - 1))) /
+      CRIT_EXPECT;
     BOSS_WAVES.forEach((w) => {
       const hp = bossHp(0, w); // 草原 Boss
       const secs = hp / dps;
       const wavesNeeded = Math.ceil(secs / (WAVE_DURATION / 1000));
-      if (wavesNeeded >= 3) conclusions.push(`⚠️ 草原 ${w} 波 Boss（${fmt(hp)} 血）用「${b.name}」需 ${fmt(secs, 0)}s ≈ ${wavesNeeded} 波才能击杀——要长时间承受 Boss 火力，配合召唤/弹幕压力大`);
-      else if (wavesNeeded >= 2) conclusions.push(`ℹ️ 草原 ${w} 波 Boss 用「${b.name}」约 ${wavesNeeded} 波击杀，需边躲边输出（可接受）`);
+      if (wavesNeeded >= 3)
+        conclusions.push(
+          `⚠️ 草原 ${w} 波 Boss（${fmt(hp)} 血）用「${b.name}」需 ${fmt(secs, 0)}s ≈ ${wavesNeeded} 波才能击杀——要长时间承受 Boss 火力，配合召唤/弹幕压力大`
+        );
+      else if (wavesNeeded >= 2)
+        conclusions.push(`ℹ️ 草原 ${w} 波 Boss 用「${b.name}」约 ${wavesNeeded} 波击杀，需边躲边输出（可接受）`);
     });
   });
   // 1b) Boss 单次攻击力（接触伤害，未乘关卡）——评估"挨一下掉多少"
   const bossAtkInfo = BOSS_WAVES.map((w) => `wave${w}:${fmt(ENEMY_CONFIGS.boss.attackPower * diffFor(w))}`).join(' ');
   conclusions.push(`ℹ️ 草原 Boss 接触伤害（随波次）：${bossAtkInfo}——玩家 100 血时约 2-3 下倒，需走位/护盾`);
   // 2) 敌人 HP 增长速度 vs 武器成长
-  const g1 = enemyHp('normal', 1), g15 = enemyHp('normal', 15);
-  const w1 = calcWeaponDps('default_gun', 1), w15 = calcWeaponDps('default_gun', 8, 24.9, 1.75);
-  if (g15 / g1 > w15 / w1 * 1.5) conclusions.push(`⚠️ 普通敌人血量 1→15 波增长 ${fmt(g15 / g1, 1)}×，超过基础枪成长 ${fmt(w15 / w1, 1)}×，中后期清怪会越来越吃力`);
+  const g1 = enemyHp('normal', 1),
+    g15 = enemyHp('normal', 15);
+  const w1 = calcWeaponDps('default_gun', 1),
+    w15 = calcWeaponDps('default_gun', 8, 24.9, 1.75);
+  if (g15 / g1 > (w15 / w1) * 1.5)
+    conclusions.push(
+      `⚠️ 普通敌人血量 1→15 波增长 ${fmt(g15 / g1, 1)}×，超过基础枪成长 ${fmt(w15 / w1, 1)}×，中后期清怪会越来越吃力`
+    );
   // 3) 冰原霜蚀压力：每秒 1% 最大生命 → 若最大生命 200，每波掉 30s×2=60 血，需击杀回血/血包对冲
-  conclusions.push(`ℹ️ 冰原「霜蚀」：200 血时每波流失约 ${fmt(200 * 0.01 * 30)} 血（30s），三关合计 45 波流失 ${fmt(200 * 0.01 * 45 * 3)} 血——需要吸血/嗜血/血包支撑`);
+  conclusions.push(
+    `ℹ️ 冰原「霜蚀」：200 血时每波流失约 ${fmt(200 * 0.01 * 30)} 血（30s），三关合计 45 波流失 ${fmt(200 * 0.01 * 45 * 3)} 血——需要吸血/嗜血/血包支撑`
+  );
   // 4) 经济：第 5 波商店可负担
   const eco5 = economy.find((e) => e.wave === 5)?.coins ?? 0;
-  conclusions.push(`ℹ️ 第 5 波商店前累计金币约 ${fmt(eco5)}（仅本波），加上前几波累积；武器最低价 45——${eco5 * 3 >= 45 ? '大概率买得起 1 件武器' : '可能买不起武器（风险）'}`);
+  conclusions.push(
+    `ℹ️ 第 5 波商店前累计金币约 ${fmt(eco5)}（仅本波），加上前几波累积；武器最低价 45——${eco5 * 3 >= 45 ? '大概率买得起 1 件武器' : '可能买不起武器（风险）'}`
+  );
   // 5) 无尽高波
   const boss50 = bossHp(0, 50);
   conclusions.push(`ℹ️ 无尽 50 波草原 Boss 血量 ${fmt(boss50)}（2.2^9），需 50w+ 级别 DPS——验证后期 build 是否跟得上`);
@@ -391,8 +469,12 @@ function main(): void {
   const ch5 = passiveRows.find((r) => r.id === 'passive_chain')!;
   const fr5 = passiveRows.find((r) => r.id === 'passive_freeze')!;
   const ls5 = passiveRows.find((r) => r.id === 'passive_lifesteal')!;
-  conclusions.push(`ℹ️ 被动定位（成型build）：群战伤害 弹射≈${fmt(b5.group[2])} > 灼烧≈${fmt(bn5.group[2])} > 闪电链≈${fmt(ch5.group[2])} dps；Boss 战弹射/闪电链断链归零，灼烧≈${fmt(bn5.boss[2])}dps、吸血≈${fmt(ls5.boss[2])}hp/s 仍有效——印证'弹射吃怪群密度、灼烧吃目标血量'`);
-  conclusions.push(`ℹ️ 冰冻满级等效降低敌人输出约 ${Math.round(fr5.group[2] * 100)}%，吸血满级群战每秒回血约 ${fmt(ls5.group[2])}——生存向被动价值主要在高压波`);
+  conclusions.push(
+    `ℹ️ 被动定位（成型build）：群战伤害 弹射≈${fmt(b5.group[2])} > 灼烧≈${fmt(bn5.group[2])} > 闪电链≈${fmt(ch5.group[2])} dps；Boss 战弹射/闪电链断链归零，灼烧≈${fmt(bn5.boss[2])}dps、吸血≈${fmt(ls5.boss[2])}hp/s 仍有效——印证'弹射吃怪群密度、灼烧吃目标血量'`
+  );
+  conclusions.push(
+    `ℹ️ 冰冻满级等效降低敌人输出约 ${Math.round(fr5.group[2] * 100)}%，吸血满级群战每秒回血约 ${fmt(ls5.group[2])}——生存向被动价值主要在高压波`
+  );
 
   // ===== 控制台输出 =====
   console.log('════════════════════════════════════════════════════════');
@@ -413,14 +495,18 @@ function main(): void {
 
   console.log('\n【3】武器 DPS（含命中/暴击均值）');
   console.log('武器\tLv1\tLv3\t满级');
-  weaponDpsTable.sort((a, b) => b.max - a.max).forEach((w) => {
-    console.log(`${w.name.padEnd(8)}\t${fmt(w.lv1, 1)}\t${fmt(w.lv3, 1)}\t${fmt(w.max, 1)}`);
-  });
+  weaponDpsTable
+    .sort((a, b) => b.max - a.max)
+    .forEach((w) => {
+      console.log(`${w.name.padEnd(8)}\t${fmt(w.lv1, 1)}\t${fmt(w.lv3, 1)}\t${fmt(w.max, 1)}`);
+    });
 
   console.log('\n【3b】被动收益（成型 build：群战5敌 / Boss单敌）');
   console.log('被动\t群1级\t群3级\t群5级\tBoss1级\tBoss5级\t定位');
   passiveRows.forEach((r) => {
-    console.log(`${r.name.padEnd(5)}\t${fmt(r.group[0], 1).padEnd(6)}\t${fmt(r.group[1], 1).padEnd(6)}\t${fmt(r.group[2], 1).padEnd(6)}\t${fmt(r.boss[0], 1).padEnd(7)}\t${fmt(r.boss[2], 1).padEnd(7)}\t${r.note}`);
+    console.log(
+      `${r.name.padEnd(5)}\t${fmt(r.group[0], 1).padEnd(6)}\t${fmt(r.group[1], 1).padEnd(6)}\t${fmt(r.group[2], 1).padEnd(6)}\t${fmt(r.boss[0], 1).padEnd(7)}\t${fmt(r.boss[2], 1).padEnd(7)}\t${r.note}`
+    );
   });
 
   console.log('\n【4】升级经验需求');

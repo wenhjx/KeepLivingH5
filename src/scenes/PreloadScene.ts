@@ -47,22 +47,20 @@ export class PreloadScene extends Phaser.Scene {
 
     // 标题
     createUIText(this, centerX, centerY - 80, 'KEEP LIVING', {
-        fontSize: '42px',
-        fontFamily: 'Arial',
-        color: '#00ffff',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5);
+      fontSize: '42px',
+      fontFamily: 'Arial',
+      color: '#00ffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
 
     // 副标题
     createUIText(this, centerX, centerY - 45, 'NEON ABYSS', {
-        fontSize: '14px',
-        color: '#ff00ff',
-        letterSpacing: 6,
-      })
-      .setOrigin(0.5);
+      fontSize: '14px',
+      color: '#ff00ff',
+      letterSpacing: 6,
+    }).setOrigin(0.5);
 
     // 进度条背景
     this.progressBox = this.add.graphics();
@@ -76,17 +74,15 @@ export class PreloadScene extends Phaser.Scene {
 
     // 文字
     this.loadingText = createUIText(this, centerX, centerY + 40, '正在生成霓虹纹理...', {
-        fontSize: '14px',
-        color: '#888888',
-      })
-      .setOrigin(0.5);
+      fontSize: '14px',
+      color: '#888888',
+    }).setOrigin(0.5);
 
     this.percentText = createUIText(this, centerX, centerY + 10, '0%', {
-        fontSize: '12px',
-        color: '#00ffff',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      fontSize: '12px',
+      color: '#00ffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
   }
 
   private setupLoadEvents(): void {

@@ -64,11 +64,11 @@ export class AchievementScene extends Phaser.Scene {
 
     // 返回按钮
     const backBtn = createUIText(this, 60, 44, '← 返回', {
-        fontSize: '18px',
-        color: '#e0e0e0',
-        backgroundColor: '#1a1a25',
-        padding: { left: 16, right: 16, top: 8, bottom: 8 },
-      })
+      fontSize: '18px',
+      color: '#e0e0e0',
+      backgroundColor: '#1a1a25',
+      padding: { left: 16, right: 16, top: 8, bottom: 8 },
+    })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     backBtn.on('pointerdown', () => {
@@ -78,7 +78,15 @@ export class AchievementScene extends Phaser.Scene {
 
     // Tab 行（7 个 Tab 总宽 7×128+6×6=932 < 960，居中不溢出）
     const tabLayout = new UILayout({ x: cx - 466, y: 128, direction: 'row', spacing: 6, itemSize: 128 });
-    const seriesKeys: Array<AchievementSeries | 'all'> = ['all', 'survival', 'hunt', 'weapon', 'wealth', 'hidden', 'meta'];
+    const seriesKeys: Array<AchievementSeries | 'all'> = [
+      'all',
+      'survival',
+      'hunt',
+      'weapon',
+      'wealth',
+      'hidden',
+      'meta',
+    ];
     const seriesLabel: Record<string, string> = {
       all: '全部',
       survival: '生存',
@@ -273,9 +281,7 @@ export class AchievementScene extends Phaser.Scene {
     };
     for (const [stat, v] of Object.entries(ach.getBonusSummary())) {
       const label = labels[stat] ?? stat;
-      const fmt = stat === 'critRate' || stat === 'critDamage'
-        ? `${(v * 100).toFixed(0)}%`
-        : `${v}`;
+      const fmt = stat === 'critRate' || stat === 'critDamage' ? `${(v * 100).toFixed(0)}%` : `${v}`;
       parts.push(`${label}+${fmt}`);
     }
     const titles = ach.titles;

@@ -181,7 +181,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     icon: '🔫',
     hidden: true,
     hint: '与武器选择有关——试试最朴素的配置',
-    check: (p) => !!p?.victory && (p?.weaponIds ?? []).every((id: string) => id === 'default_gun') && (p?.weaponIds ?? []).length > 0,
+    check: (p) =>
+      !!p?.victory &&
+      (p?.weaponIds ?? []).every((id: string) => id === 'default_gun') &&
+      (p?.weaponIds ?? []).length > 0,
     reward: { bonuses: { critRate: 0.02 }, title: '初心者' },
   },
 

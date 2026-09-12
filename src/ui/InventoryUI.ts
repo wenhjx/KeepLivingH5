@@ -112,26 +112,22 @@ export class InventoryUI {
     bg.strokeRoundedRect(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize, 6);
 
     // 图标（空时灰色）
-    const icon = createUIText(this.scene, 0, 0, item.icon, { fontSize: this.iconSize })
-      .setOrigin(0.5)
-      .setAlpha(0.3);
+    const icon = createUIText(this.scene, 0, 0, item.icon, { fontSize: this.iconSize }).setOrigin(0.5).setAlpha(0.3);
 
     // 数量角标
     const count = createUIText(this.scene, this.slotSize / 2 - 4, -this.slotSize / 2 + 4, '', {
-        fontSize: this.countSize,
-        color: '#ffffff',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 3,
-      })
-      .setOrigin(1, 0);
+      fontSize: this.countSize,
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    }).setOrigin(1, 0);
 
     // 快捷键提示
     const key = createUIText(this.scene, -this.slotSize / 2 + 4, -this.slotSize / 2 + 2, `${index + 1}`, {
-        fontSize: this.keySize,
-        color: '#888888',
-      })
-      .setOrigin(0, 0);
+      fontSize: this.keySize,
+      color: '#888888',
+    }).setOrigin(0, 0);
 
     const slotContainer = this.scene.add.container(x, y);
     slotContainer.add([bg, icon, count, key]);
@@ -157,13 +153,12 @@ export class InventoryUI {
     rbg.strokeRoundedRect(-this.slotSize / 2, -barH / 2, this.slotSize, barH, 6);
     const icon = createUIText(this.scene, -this.slotSize / 2 + 14, 0, '🌟', { fontSize: iconSize }).setOrigin(0.5);
     const count = createUIText(this.scene, this.slotSize / 2 - 6, 0, '', {
-        fontSize: this.countSize,
-        color: '#ffd700',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 3,
-      })
-      .setOrigin(1, 0.5);
+      fontSize: this.countSize,
+      color: '#ffd700',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    }).setOrigin(1, 0.5);
     const group = this.scene.add.container(anchorX, y);
     group.add([rbg, icon, count]);
     group.setVisible(false);

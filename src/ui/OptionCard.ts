@@ -75,13 +75,11 @@ export function createOptionCard(
   card.add(bg);
 
   // 稀有度标签
-  const rarityLabel = createUIText(
-    scene,
-    0,
-    -cardHeight / 2 + 20,
-    config.rarity.toUpperCase(),
-    { fontSize: '11px', color: borderColorHex, fontStyle: 'bold' }
-  ).setOrigin(0.5);
+  const rarityLabel = createUIText(scene, 0, -cardHeight / 2 + 20, config.rarity.toUpperCase(), {
+    fontSize: '11px',
+    color: borderColorHex,
+    fontStyle: 'bold',
+  }).setOrigin(0.5);
   card.add(rarityLabel);
 
   // 图标圆底
@@ -135,13 +133,11 @@ export function createOptionCard(
 
   // 底部附加文字（价格等）
   if (config.footerText) {
-    const footerText = createUIText(
-      scene,
-      0,
-      cardHeight / 2 - 34,
-      config.footerText,
-      { fontSize: '20px', color: config.footerColor ?? '#ffcc00', fontStyle: 'bold' }
-    ).setOrigin(0.5);
+    const footerText = createUIText(scene, 0, cardHeight / 2 - 34, config.footerText, {
+      fontSize: '20px',
+      color: config.footerColor ?? '#ffcc00',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
     card.add(footerText);
   }
 

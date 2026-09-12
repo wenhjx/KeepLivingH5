@@ -38,20 +38,18 @@ export class WeaponSelectScene extends Phaser.Scene {
 
     // 标题（与升级场景区分）
     createUIText(this, width / 2, 70, '⚔ 武器强化', {
-        fontSize: '40px',
-        color: '#ffb347',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5);
+      fontSize: '40px',
+      color: '#ffb347',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
 
     // 提示（通用：Boss 后/前期武器奖励节点均会弹出，不特指"击败强敌"）
     createUIText(this, width / 2, 118, '选择一把武器强化', {
-        fontSize: '16px',
-        color: '#aaaaaa',
-      })
-      .setOrigin(0.5);
+      fontSize: '16px',
+      color: '#aaaaaa',
+    }).setOrigin(0.5);
 
     const choices = this.getWeaponChoices();
     this.upgradePanel = new UpgradePanel(this);
@@ -96,14 +94,10 @@ export class WeaponSelectScene extends Phaser.Scene {
     const gameScene = this.scene.get('GameScene') as any;
     const player = gameScene?.getPlayer() as Player | undefined;
 
-    const weaponOptions = UPGRADE_OPTIONS.filter(
-      (o) => o.type === 'weapon' && !UPGRADE_POOL_EXCLUDED.includes(o.id)
-    );
+    const weaponOptions = UPGRADE_OPTIONS.filter((o) => o.type === 'weapon' && !UPGRADE_POOL_EXCLUDED.includes(o.id));
     if (!player) return weaponOptions.slice(0, 3);
 
-    const available = weaponOptions.filter(
-      (o) => o.effect.weaponId && !player.isWeaponMaxLevel(o.effect.weaponId)
-    );
+    const available = weaponOptions.filter((o) => o.effect.weaponId && !player.isWeaponMaxLevel(o.effect.weaponId));
     return available.slice(0, 3);
   }
 
@@ -134,9 +128,8 @@ export class WeaponSelectScene extends Phaser.Scene {
     const gameScene = this.scene.get('GameScene') as any;
     const player = gameScene?.getPlayer() as Player | undefined;
 
-    const isNewWeapon = option.type === 'weapon' && option.effect.weaponId
-      ? !player?.hasWeapon(option.effect.weaponId)
-      : false;
+    const isNewWeapon =
+      option.type === 'weapon' && option.effect.weaponId ? !player?.hasWeapon(option.effect.weaponId) : false;
 
     if (player) {
       applyUpgradeToPlayer(player, option, gameScene);

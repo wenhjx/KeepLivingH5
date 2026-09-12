@@ -23,7 +23,7 @@ export class DebugScene extends Phaser.Scene {
 
   create(): void {
     // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
-        const z = GameConfig.renderScale;
+    const z = GameConfig.renderScale;
     const u = GameConfig.uiScale;
     this.cameras.main.setZoom(z);
     this.uiRoot = this.add

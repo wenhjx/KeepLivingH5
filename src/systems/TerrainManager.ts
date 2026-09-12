@@ -1,10 +1,5 @@
 import Phaser from 'phaser';
-import {
-  type TerrainConfig,
-  type ObstacleConfig,
-  type SlowZoneConfig,
-  type BoostZoneConfig,
-} from '../data/terrain';
+import { type TerrainConfig, type ObstacleConfig, type SlowZoneConfig, type BoostZoneConfig } from '../data/terrain';
 import { GameConfig } from '../game/GameConfig';
 import { Layers } from '../constants/Layers';
 
@@ -125,11 +120,13 @@ export class TerrainManager {
         }
       };
       if (z.width >= z.height) {
-        const y1 = z.y - z.height * 0.15, y2 = z.y + z.height * 0.15;
+        const y1 = z.y - z.height * 0.15,
+          y2 = z.y + z.height * 0.15;
         drawFlow(z.x - z.width / 2 + 10, y1, z.x + z.width / 2 - 10, y1, true);
         drawFlow(z.x - z.width / 2 + 10, y2, z.x + z.width / 2 - 10, y2, true);
       } else {
-        const x1 = z.x - z.width * 0.15, x2 = z.x + z.width * 0.15;
+        const x1 = z.x - z.width * 0.15,
+          x2 = z.x + z.width * 0.15;
         drawFlow(x1, z.y - z.height / 2 + 10, x1, z.y + z.height / 2 - 10, false);
         drawFlow(x2, z.y - z.height / 2 + 10, x2, z.y + z.height / 2 - 10, false);
       }
@@ -158,7 +155,6 @@ export class TerrainManager {
     const f = this.getSpeedFactorAt(x, y);
     return f < 1 ? f : 1;
   }
-
 
   /** 减速区列表 */
   getSlowZones(): SlowZoneConfig[] {
