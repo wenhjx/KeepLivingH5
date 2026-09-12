@@ -45,6 +45,7 @@ import { SOUND_KEYS } from '../data/sounds';
 import { createUIText } from '../utils/UIText';
 
 import type { EnemyConfig, PickupConfig } from '../types';
+import { Layers } from '../constants/Layers';
 
 /**
 
@@ -1037,7 +1038,7 @@ export class GameScene extends Phaser.Scene {
     })
       .setOrigin(0.5)
       .setScrollFactor(0)
-      .setDepth(300)
+      .setDepth(Layers.BANNER)
       .setAlpha(0);
     this.bossEntranceBanner = banner;
     this.tweens.add({

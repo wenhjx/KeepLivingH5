@@ -9,6 +9,7 @@ import type { QualityLevel } from "../game/GameConfig";
 import { LEVELS } from "../data/levels";
 import type { LevelConfig } from "../data/levels";
 import { ENEMY_CONFIGS } from "../data/enemies";
+import { Layers } from '../constants/Layers';
 
 /**
  * 主菜单场景
@@ -79,10 +80,10 @@ export class MainMenuScene extends Phaser.Scene {
     // 标题背后双层光晕（收敛半径，与徽章金色星点风格区分：橙色呼吸晕）
     const halo1 = this.add
       .circle(centerX, height * 0.25, 120, 0xff6b35, 0.07)
-      .setDepth(-1);
+      .setDepth(Layers.BACKGROUND);
     const halo2 = this.add
       .circle(centerX, height * 0.25, 78, 0xff8844, 0.1)
-      .setDepth(-1);
+      .setDepth(Layers.BACKGROUND);
     this.tweens.add({
       targets: [halo1, halo2],
       alpha: 0.035,
@@ -173,7 +174,7 @@ export class MainMenuScene extends Phaser.Scene {
           i % 2 === 0 ? 0x3355aa : 0xff8844,
           0.05 + Math.random() * 0.04,
         )
-        .setDepth(-1);
+        .setDepth(Layers.BACKGROUND);
       const speed = 12 + Math.random() * 18;
       const dir = Math.random() > 0.5 ? 1 : -1;
       const startX = orb.x;
@@ -327,7 +328,7 @@ export class MainMenuScene extends Phaser.Scene {
     const panelH = 480;
     this.levelSelectOverlay = this.add
       .container(0, 0)
-      .setDepth(200)
+      .setDepth(Layers.MENU_OVERLAY)
       .setVisible(false);
     // 全屏遮罩
     const mask = this.add
@@ -558,7 +559,7 @@ export class MainMenuScene extends Phaser.Scene {
     const panelH = 380;
     this.settingsOverlay = this.add
       .container(0, 0)
-      .setDepth(200)
+      .setDepth(Layers.MENU_OVERLAY)
       .setVisible(false);
     // 全屏遮罩（点击遮罩也可关闭）
     const mask = this.add

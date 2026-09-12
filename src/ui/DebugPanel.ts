@@ -6,6 +6,7 @@ import { GameConfig } from '../game/GameConfig';
 import { UILayout } from '../utils/UILayout';
 import type { UpgradeOption } from '../types';
 import type { Player } from '../entities/Player';
+import { Layers } from '../constants/Layers';
 
 /** 单个按钮的规格 */
 interface BtnSpec {
@@ -72,7 +73,7 @@ export class DebugPanel {
   constructor(scene: Phaser.Scene, uiRoot: Phaser.GameObjects.Container) {
     this.scene = scene;
     this.uiRoot = uiRoot;
-    this.container = scene.add.container(0, 0).setDepth(1000).setVisible(false);
+    this.container = scene.add.container(0, 0).setDepth(Layers.DEBUG).setVisible(false);
     this.create();
     this.setupHotkey();
   }

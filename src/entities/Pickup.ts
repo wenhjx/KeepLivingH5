@@ -7,6 +7,7 @@ import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
 import type { PickupConfig, PickupType } from '../types';
 import type { Player } from './Player';
+import { Layers } from '../constants/Layers';
 
 /**
  * 拾取物实体
@@ -40,7 +41,7 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
     this.setPosition(x, y);
     this.setActive(true);
     this.setVisible(true);
-    this.setDepth(6);
+    this.setDepth(Layers.PICKUP);
     this.setCircle(12);
     // 碰撞圆以贴图显示中心为圆心（拾取物纹理 26~30px，body 24px，避免偏左上）
     this.body!.setOffset((this.displayWidth - 24) / 2, (this.displayHeight - 24) / 2);

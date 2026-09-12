@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { TextSmoothing } from '../utils/UIText';
 import { GameConfig } from '../game/GameConfig';
+import { Layers } from '../constants/Layers';
 
 /**
  * 浮动伤害数字管理器（池化）
@@ -26,7 +27,7 @@ export class DamageTextManager {
         strokeThickness: 3,
       });
       text.setOrigin(0.5);
-      text.setDepth(20);
+      text.setDepth(Layers.DAMAGE_TEXT);
       text.setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
       TextSmoothing.apply(text);
     }
@@ -76,7 +77,7 @@ export class DamageTextManager {
         strokeThickness: 3,
       });
       t.setOrigin(0.5);
-      t.setDepth(20);
+      t.setDepth(Layers.DAMAGE_TEXT);
       t.setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
       TextSmoothing.apply(t);
     }

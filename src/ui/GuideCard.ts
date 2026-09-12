@@ -3,6 +3,7 @@ import { createUIText } from '../utils/UIText';
 import { GameConfig } from '../game/GameConfig';
 
 import Phaser from 'phaser';
+import { Layers } from '../constants/Layers';
 
 
 
@@ -106,7 +107,7 @@ export class GuideCard {
 
     const parent = (scene as any).uiRoot || scene;
 
-    this.container = scene.add.container(0, 0).setDepth(10000).setAlpha(0); // 最高层级：成就/引导提示必须浮于结算遮罩之上
+    this.container = scene.add.container(0, 0).setDepth(Layers.GUIDE).setAlpha(0); // 最高层级：成就/引导提示必须浮于结算遮罩之上
 
     parent.add(this.container);
 

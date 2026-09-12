@@ -6,6 +6,7 @@ import {
   type BoostZoneConfig,
 } from '../data/terrain';
 import { GameConfig } from '../game/GameConfig';
+import { Layers } from '../constants/Layers';
 
 /**
  * 地形管理器
@@ -63,7 +64,7 @@ export class TerrainManager {
     const img = this.scene.add
       .image(obs.x, obs.y, textureKey)
       .setDisplaySize(obs.width, obs.height)
-      .setDepth(1);
+      .setDepth(Layers.TERRAIN_BASE);
 
     // 可破坏物标记（木箱）
     if (obs.destructible) {
@@ -86,7 +87,7 @@ export class TerrainManager {
   /** 创建减速区：半透明色块视觉 + 数据存储（不参与物理，逻辑在 GameScene 每帧查询） */
   private createSlowZones(): void {
     this.slowZoneList = [...(this.config.slowZones ?? [])];
-    this.slowZoneLayer = this.scene.add.graphics().setDepth(0.5);
+    this.slowZoneLayer = this.scene.add.graphics().setDepth(Layers.TERRAIN_ZONE);
     for (const z of this.slowZoneList) {
       this.slowZoneLayer.fillStyle(z.color ?? 0x3aa6dd, 0.18);
       this.slowZoneLayer.fillRect(z.x - z.width / 2, z.y - z.height / 2, z.width, z.height);
@@ -98,7 +99,7 @@ export class TerrainManager {
   /** 创建加速区：半透明青色块 + 内部流动线条视觉（不参与物理，逻辑在 GameScene 每帧查询） */
   private createBoostZones(): void {
     this.boostZoneList = [...(this.config.boostZones ?? [])];
-    this.boostZoneLayer = this.scene.add.graphics().setDepth(0.5);
+    this.boostZoneLayer = this.scene.add.graphics().setDepth(Layers.TERRAIN_ZONE);
     for (const z of this.boostZoneList) {
       const c = z.color ?? 0x55e6a0;
       this.boostZoneLayer.fillStyle(c, 0.28);

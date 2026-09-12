@@ -9,6 +9,7 @@ import { AchievementManager } from '../systems/AchievementManager';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import { GameConfig } from '../game/GameConfig';
+import { Layers } from '../constants/Layers';
 
 /**
  * 成就系统面板（独立叠加场景）
@@ -112,7 +113,7 @@ export class AchievementScene extends Phaser.Scene {
     maskG.fillRect(scrollX, scrollY, listW, listH);
     const mask = maskG.createGeometryMask();
 
-    this.scrollContent = this.add.container(scrollX, scrollY).setDepth(10);
+    this.scrollContent = this.add.container(scrollX, scrollY).setDepth(Layers.SCROLL_CONTENT);
     this.scrollContent.setMask(mask);
 
     // 滚动条（统一组件：轨道+滑块一体，无可滚动内容时不显示）

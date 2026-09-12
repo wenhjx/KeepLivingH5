@@ -4,6 +4,7 @@ import type { UpgradeOption } from '../types';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { GameConfig } from '../game/GameConfig';
 import { createOptionCard } from './OptionCard';
+import { Layers } from '../constants/Layers';
 
 /**
  * 升级选择面板
@@ -29,7 +30,7 @@ export class UpgradePanel {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.container = scene.add.container(0, 0).setDepth(300).setVisible(false);
+    this.container = scene.add.container(0, 0).setDepth(Layers.OVERLAY).setVisible(false);
 
     // 半透明遮罩
     this.overlay = scene.add

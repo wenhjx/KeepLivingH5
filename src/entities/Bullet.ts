@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { EventBus, EventKeys } from '../utils/EventBus';
 import { GameConfig } from '../game/GameConfig';
+import { Layers } from '../constants/Layers';
 
 /**
  * 子弹实体
@@ -94,7 +95,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.setPosition(x, y);
     this.setActive(true);
     this.setVisible(true);
-    this.setDepth(8);
+    this.setDepth(Layers.PROJECTILE_CORE);
     this.setCircle(6);
     this.setRotation(angle);
     this.clearTint();
@@ -153,7 +154,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.setPosition(x, y);
     this.setActive(true);
     this.setVisible(true);
-    this.setDepth(7);
+    this.setDepth(Layers.PROJECTILE);
     this.setCircle(6);
     this.setTint(options?.color ?? 0xff4444);
     this.setRotation(angle);

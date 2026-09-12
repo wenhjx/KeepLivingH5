@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { Player } from '../entities/Player';
 import type { Enemy } from '../entities/Enemy';
 import type { TerrainManager } from '../systems/TerrainManager';
+import { Layers } from '../constants/Layers';
 
 /**
  * 小地图 UI 组件
@@ -39,7 +40,7 @@ export class Minimap {
     this.height = height;
     this.mapWidth = mapWidth;
     this.mapHeight = mapHeight;
-    this.graphics = scene.add.graphics().setDepth(100);
+    this.graphics = scene.add.graphics().setDepth(Layers.MINIMAP);
   }
 
   /** 每帧更新小地图 */

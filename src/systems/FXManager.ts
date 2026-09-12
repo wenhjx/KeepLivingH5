@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { Layers } from '../constants/Layers';
 
 /**
  * FXManager - 视觉特效统一入口
@@ -73,7 +74,7 @@ export class FXManager {
 
   /** 一次性圆环（缩放 + 淡出），用于爆炸冲击波 / 升级光环 */
   private ring(x: number, y: number, radius: number, color: number, duration: number, scaleFrom: number, scaleTo: number): void {
-    const circle = this.scene.add.circle(x, y, radius, color, 0.5).setDepth(50);
+    const circle = this.scene.add.circle(x, y, radius, color, 0.5).setDepth(Layers.FX);
     this.scene.tweens.add({
       targets: circle,
       scale: { from: scaleFrom, to: scaleTo },
@@ -90,7 +91,7 @@ export class FXManager {
     g.strokeCircleShape(new Phaser.Geom.Circle(0, 0, radius));
     const c = this.scene.add.container(x, y);
     c.add(g);
-    c.setDepth(50);
+    c.setDepth(Layers.FX);
     this.scene.tweens.add({
       targets: c,
       scale: { from: scaleFrom, to: scaleTo },
@@ -105,7 +106,7 @@ export class FXManager {
    * 返回圆环对象，由调用方随敌人销毁；位置需调用方每帧同步到敌人坐标。
    */
   bossAura(x: number, y: number, size: number, color: number): Phaser.GameObjects.Arc {
-    const ring = this.scene.add.circle(x, y, Math.max(18, size * 0.62), color, 0).setDepth(4);
+    const ring = this.scene.add.circle(x, y, Math.max(18, size * 0.62), color, 0).setDepth(Layers.FX_GROUND);
     ring.setStrokeStyle(4, color, 0.9);
     this.scene.tweens.add({
       targets: ring,
@@ -123,7 +124,7 @@ export class FXManager {
    * 轻量短命对象（tween 后自毁），供各武器弹道按节流频率调用
    */
   bulletTrail(x: number, y: number, angle: number, color: number = 0xffffff, width: number = 4): void {
-    const r = this.scene.add.rectangle(x, y, 22, width, color, 0.75).setDepth(7);
+    const r = this.scene.add.rectangle(x, y, 22, width, color, 0.75).setDepth(Layers.PROJECTILE);
     r.setRotation(angle);
     this.scene.tweens.add({
       targets: r,
@@ -152,7 +153,7 @@ export class FXManager {
    * 用于"蓄力后爆炸"类技能，给玩家走位反应时间。
    */
   telegraph(x: number, y: number, radius: number, duration: number = 800, color: number = 0xff4444): void {
-    const g = this.scene.add.graphics().setDepth(60);
+    const g = this.scene.add.graphics().setDepth(Layers.FX_TELEGRAPH);
     g.fillStyle(color, 0.16);
     g.fillCircle(x, y, radius);
     g.lineStyle(3, color, 0.9);
@@ -217,7 +218,7 @@ export class FXManager {
     const g = this.scene.add.graphics();
     g.lineStyle(width, color, 0.9);
     g.lineBetween(x1, y1, x2, y2);
-    g.setDepth(50);
+    g.setDepth(Layers.FX);
     this.scene.tweens.add({
       targets: g,
       alpha: 0,
@@ -316,7 +317,7 @@ export class FXManager {
 
   /** 枪口闪光：极短小圆闪光（颜色随武器） */
   muzzleFlash(x: number, y: number, angle: number, color: number = 0xffffff): void {
-    const flash = this.scene.add.circle(x, y, 8, color, 0.8).setDepth(50);
+    const flash = this.scene.add.circle(x, y, 8, color, 0.8).setDepth(Layers.FX);
     this.scene.tweens.add({
       targets: flash,
       alpha: { from: 0.8, to: 0 },

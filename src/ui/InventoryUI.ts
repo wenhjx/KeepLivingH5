@@ -5,6 +5,7 @@ import { USABLE_ITEMS, INVENTORY_ORDER } from '../data/items';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
 import type { Player } from '../entities/Player';
+import { Layers } from '../constants/Layers';
 
 /**
  * 物品栏 UI
@@ -50,7 +51,7 @@ export class InventoryUI {
     // 加入 UIScene 的反向缩放根容器（uiRoot），保证 960x640 逻辑坐标下视觉位置正确，
     // 否则相机 zoom 后定位会偏移（曾导致物品栏跑到屏幕中央）
     const parent = (scene as any).uiRoot || scene;
-    this.container = scene.add.container(0, 0).setDepth(150);
+    this.container = scene.add.container(0, 0).setDepth(Layers.INVENTORY);
     parent.add(this.container);
 
     // 4 个固定槽位（从右往左排列在右下角，避开 HUD 区域）

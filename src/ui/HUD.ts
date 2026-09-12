@@ -4,6 +4,7 @@ import { GameManager } from '../game/GameManager';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { UILayout } from '../utils/UILayout';
 import { GameConfig } from '../game/GameConfig';
+import { Layers } from '../constants/Layers';
 
 /**
  * HUD 抬头显示
@@ -217,7 +218,7 @@ export class HUD {
       .setOrigin(0.5, 0);
 
     // ========== Boss 血条（唯一 Boss 出现时显示） ==========
-    this.bossContainer = this.scene.add.container(width / 2, topY + 40).setDepth(60);
+    this.bossContainer = this.scene.add.container(width / 2, topY + 40).setDepth(Layers.HUD_BOSS);
     this.bossContainer.setVisible(false);
 
     // Boss 名称
@@ -255,7 +256,7 @@ export class HUD {
     this.bossContainer.add(this.bossValueText);
 
     // ========== 左下角：增益列表（武器/被动） ==========
-    this.buffContainer = this.scene.add.container(0, 0).setDepth(50);
+    this.buffContainer = this.scene.add.container(0, 0).setDepth(Layers.HUD_BUFF);
 
     // buff 点击提示
     this.initTooltip();
@@ -263,7 +264,7 @@ export class HUD {
 
   /** 初始化 buff 点击提示（按下增益图标显示详情，松开延迟消失，无需再点一次关闭） */
   private initTooltip(): void {
-    this.tooltipContainer = this.scene.add.container(0, 0).setDepth(210).setVisible(false);
+    this.tooltipContainer = this.scene.add.container(0, 0).setDepth(Layers.TOOLTIP).setVisible(false);
 
     // 采用手动坐标判定（uiRoot 局部坐标 = pointer.x/y），彻底规避 Phaser Container
     // 嵌套 + 父级 scale 时 setInteractive hitArea 命中偏移的问题。
@@ -436,7 +437,7 @@ export class HUD {
       // 记录命中区（uiRoot 局部坐标：buffContainer 位于 (0,0)，图标在 (x,buffTop)）
       this.buffHitRects.push({ b, x: buffRow.x, y: buffTop });
 
-      const container = this.scene.add.container(buffRow.x, buffTop).setDepth(51);
+      const container = this.scene.add.container(buffRow.x, buffTop).setDepth(Layers.HUD_BUFF_ICON);
       buffRow.place(container, this.buffContainer);
       // 注：container 保持默认 origin(0,0)，左上角贴齐游标，hitRect 左上角语义不变
 

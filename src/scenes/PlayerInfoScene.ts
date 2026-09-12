@@ -9,6 +9,7 @@ import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import type { Player } from '../entities/Player';
 import { GameConfig } from '../game/GameConfig';
+import { Layers } from '../constants/Layers';
 
 /**
  * 玩家属性面板（二游式：按 C 打开的角色详情）
@@ -215,7 +216,7 @@ export class PlayerInfoScene extends Phaser.Scene {
     const mask = maskG.createGeometryMask();
 
     // 内容容器（遮罩内滚动）
-    const scrollContent = this.add.container(scrollX, scrollY).setDepth(10);
+    const scrollContent = this.add.container(scrollX, scrollY).setDepth(Layers.SCROLL_CONTENT);
     scrollContent.setMask(mask);
 
     holdings.forEach((h, i) => {

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { EventBus, EventKeys } from '../utils/EventBus';
 import { createUIText } from '../utils/UIText';
 import { GameConfig } from '../game/GameConfig';
+import { Layers } from '../constants/Layers';
 
 /**
  * 游戏演出 / 反馈层（纯表现，与玩法解耦）
@@ -64,7 +65,7 @@ export class GameFeedback {
     )
       .setOrigin(0.5)
       .setScrollFactor(0) // 屏幕固定：不随相机滚动，玩家任意位置都可见（与 GameScene Boss 横幅一致）
-      .setDepth(300)
+      .setDepth(Layers.BANNER)
       .setAlpha(0)
       .setScale(0.7);
 

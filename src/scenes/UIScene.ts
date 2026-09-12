@@ -11,6 +11,7 @@ import { GuideManager } from '../systems/GuideManager';
 import { EventBus, EventKeys } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
+import { Layers } from '../constants/Layers';
 
 /**
  * UI 叠加场景
@@ -124,7 +125,7 @@ export class UIScene extends Phaser.Scene {
 
     this.pauseOverlay = this.add.container(0, 0);
     this.pauseOverlay.setVisible(false);
-    this.pauseOverlay.setDepth(100);
+    this.pauseOverlay.setDepth(Layers.HUD);
 
     // 半透明背景
     const bg = this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0).setInteractive();

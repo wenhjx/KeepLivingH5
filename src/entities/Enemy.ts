@@ -19,6 +19,7 @@ import type { EnemyConfig, EnemyType } from '../types';
 import type { Player } from './Player';
 
 import { TextSmoothing } from '../utils/UIText';
+import { Layers } from '../constants/Layers';
 
 /**
 
@@ -108,8 +109,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.avoidSide = Math.random() > 0.5 ? 1 : -1;
     // 头顶小血条（Boss 用顶部大血条，不显示小血条）
     if (!this.hpBarBg && config.type !== 'boss') {
-      this.hpBarBg = this.scene.add.graphics().setDepth(8);
-      this.hpBar = this.scene.add.graphics().setDepth(9);
+      this.hpBarBg = this.scene.add.graphics().setDepth(Layers.HP_BAR_BG);
+      this.hpBar = this.scene.add.graphics().setDepth(Layers.HP_BAR_FILL);
       this.hpBarBg.setVisible(false);
       this.hpBar.setVisible(false);
     }
@@ -132,7 +133,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (config.type === 'boss') {
       this.setDisplaySize(config.size * 2, config.size * 2);
     }
-    this.setDepth(5);
+    this.setDepth(Layers.ENEMY);
     this.clearTint();
     this.setAlpha(1);
     // 根据类型设置颜色：像素主题（白色像素主体）需 tint 上色；
@@ -189,7 +190,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 词缀图标（跟随头顶）
     const affixIcons: Record<string, string> = { enrage: '🔥', shield: '🛡️', split: '💥' };
     if (!this.affixText) {
-      this.affixText = this.scene.add.text(0, 0, '', { fontSize: '12px', fontFamily: 'Arial' }).setDepth(6).setOrigin(0.5)
+      this.affixText = this.scene.add.text(0, 0, '', { fontSize: '12px', fontFamily: 'Arial' }).setDepth(Layers.ENTITY_TAG).setOrigin(0.5)
         .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
       TextSmoothing.apply(this.affixText);
     }
@@ -276,7 +277,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       fontSize: '14px',
       stroke: '#000000',
       strokeThickness: 3,
-    }).setOrigin(0.5).setDepth(10);
+    }).setOrigin(0.5).setDepth(Layers.ENTITY_STATUS);
     this.statusIcons.push({ icon: text, until: this.scene.time.now + duration });
   }
   /** 清空状态图标（对象池回收 / 敌人销毁时调用） */

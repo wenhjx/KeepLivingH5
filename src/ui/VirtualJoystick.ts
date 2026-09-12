@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GameConfig } from '../game/GameConfig';
 import type { InputManager } from '../systems/InputManager';
+import { Layers } from '../constants/Layers';
 
 /**
  * 虚拟摇杆
@@ -59,7 +60,7 @@ export class VirtualJoystick {
 
   private create(): void {
     // 容器：统一控制深度、滚动因子、可见性、位置
-    this.container = this.scene.add.container(0, 0).setDepth(200).setScrollFactor(0);
+    this.container = this.scene.add.container(0, 0).setDepth(Layers.JOYSTICK).setScrollFactor(0);
 
     // 摇杆底座（相对容器中心 0,0 绘制，整体跟随容器移动）
     const baseImg = this.scene.add.image(0, 0, 'ui_joystick_base').setAlpha(0.5).setScrollFactor(0);

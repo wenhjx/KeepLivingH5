@@ -5,6 +5,7 @@ import { MathUtils } from '../utils/MathUtils';
 import { GameConfig } from '../game/GameConfig';
 import type { Player } from './Player';
 import type { WeaponConfig } from '../types';
+import { Layers } from '../constants/Layers';
 
 /**
  * 无人机实体（接触伤害型）
@@ -37,7 +38,7 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this, false);
 
-    this.setDepth(7);
+    this.setDepth(Layers.PROJECTILE);
     this.setCircle(10);
     this.setTint(0x66ffff);
     this.setScale(0.9);

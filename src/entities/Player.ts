@@ -11,6 +11,7 @@ import { AudioManager } from '../systems/AudioManager';
 import { AchievementManager } from '../systems/AchievementManager';
 import type { PlayerStats, WeaponConfig, UpgradeOption } from '../types';
 import type { InputManager } from '../systems/InputManager';
+import { Layers } from '../constants/Layers';
 
 /**
  * 可突破的 stat 属性（Boss 突破奖励候选）。
@@ -109,7 +110,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCircle(16);
     // 确保碰撞圆以贴图显示中心为圆心（某些情况下 setCircle 的 offset 会落到 0,0）
     this.body!.setOffset((this.displayWidth - 32) / 2, (this.displayHeight - 32) / 2);
-    this.setDepth(10);
+    this.setDepth(Layers.PLAYER);
 
     // 初始武器（默认武器，配置来自统一数据源 src/data/weapons.ts）
     this.addWeapon(WEAPONS['default_gun']);
@@ -487,7 +488,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     gfx.fillStyle(0x00ffff, 0.3);
     gfx.slice(this.x, this.y, range, angle - halfArc, angle + halfArc, false);
     gfx.fillPath();
-    gfx.setDepth(9);
+    gfx.setDepth(Layers.PLAYER_FX);
     this.scene.tweens.add({
       targets: gfx,
       alpha: 0,
@@ -707,7 +708,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.shieldRing) this.shieldRing.destroy();
     this.shieldRing = this.scene.add.circle(this.x, this.y, 26, 0x33ccff, 0.25);
     this.shieldRing.setStrokeStyle(2, 0x66ddff, 0.9);
-    this.shieldRing.setDepth(11);
+    this.shieldRing.setDepth(Layers.PLAYER_RING);
   }
 
   /** 狂暴药水：短时间攻速/攻击力 +50% + 红色光晕视觉 */
@@ -718,7 +719,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.rageRing) this.rageRing.destroy();
     this.rageRing = this.scene.add.circle(this.x, this.y, 24, 0xff4444, 0.2);
     this.rageRing.setStrokeStyle(2, 0xff6666, 0.8);
-    this.rageRing.setDepth(11);
+    this.rageRing.setDepth(Layers.PLAYER_RING);
   }
 
   // ========== 经验与升级 ==========
