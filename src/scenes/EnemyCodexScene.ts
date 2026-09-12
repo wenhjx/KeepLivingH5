@@ -186,10 +186,8 @@ export class EnemyCodexScene extends Phaser.Scene {
       bg.on('pointerdown', () => this.selectAffix(id));
       bg.on('pointerover', () => bg.setFillStyle(0x23233a));
       bg.on('pointerout', () => bg.setFillStyle(this.selectedAffix === id ? 0x2a2a45 : 0x1a1a28));
-      const iconT = createUIText(this, x + 28, y + cellH / 2, def.icon, {
-        fontSize: '28px',
-        padding: { left: 6, right: 6, top: 8, bottom: 8 },
-      }).setOrigin(0.5);
+      const iconSpr = this.add.sprite(x + 28, y + cellH / 2, this.ensureEmojiTexture(id, def.icon));
+      iconSpr.setDisplaySize(32, 32);
       const nameT = createUIText(this, x + 52, y + cellH / 2 - 10, def.name, {
         fontSize: '15px',
         color: RARITY_COLOR[def.rarity],
@@ -199,7 +197,7 @@ export class EnemyCodexScene extends Phaser.Scene {
         fontSize: '12px',
         color: '#8888aa',
       }).setOrigin(0, 0.5);
-      this.affixCells.push({ bg, icon: iconT, name: nameT, rarity: rarityT });
+      this.affixCells.push({ bg, icon: iconSpr, name: nameT, rarity: rarityT });
     });
 
     // 词缀列表默认隐藏（默认展示敌人页）
@@ -360,6 +358,25 @@ export class EnemyCodexScene extends Phaser.Scene {
     }
   }
 
+  /** 用 Canvas 把 emoji 绘制成独立纹理（Phaser Text 渲染 emoji 会被字形超出部分裁切；Canvas 可完整显示且任意缩放） */
+  private ensureEmojiTexture(id: EnemyAffixId, emoji: string): string {
+    const key = `affix_icon_${id}`;
+    if (this.textures.exists(key)) return key;
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.font = `${Math.floor(size * 0.72)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emoji, size / 2, size / 2 + size * 0.04);
+    }
+    this.textures.addCanvas(key, canvas);
+    return key;
+  }
+
   /** 选中词缀 → 高亮列表 + 重绘详情 */
   private selectAffix(id: EnemyAffixId): void {
     this.selectedAffix = id;
@@ -385,13 +402,11 @@ export class EnemyCodexScene extends Phaser.Scene {
     panel.strokeRoundedRect(dx, dy, dw, dh, 14);
     this.detail.add(panel);
 
-    // 大图标 + 稀有度底色圆（emoji 加 padding 撑开画布，避免字形被 Phaser 文本裁切）
-    this.detail.add(this.add.circle(dx + 70, dy + 90, 46, RARITY_BG[def.rarity], 1));
-    const icon = createUIText(this, dx + 70, dy + 90, def.icon, {
-      fontSize: '40px',
-      padding: { left: 12, right: 12, top: 16, bottom: 16 },
-    }).setOrigin(0.5);
-    this.detail.add(icon);
+    // 大图标（Canvas 纹理精灵，完整显示 emoji 且不裁切）+ 稀有度底色圆
+    this.detail.add(this.add.circle(dx + 70, dy + 90, 52, RARITY_BG[def.rarity], 1));
+    const bigIcon = this.add.sprite(dx + 70, dy + 90, this.ensureEmojiTexture(id, def.icon));
+    bigIcon.setDisplaySize(92, 92);
+    this.detail.add(bigIcon);
 
     // 名字 + 稀有度徽章
     const name = createUIText(this, dx + 130, dy + 62, def.name, {
