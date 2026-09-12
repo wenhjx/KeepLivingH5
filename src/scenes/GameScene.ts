@@ -71,8 +71,9 @@ export class GameScene extends Phaser.Scene {
   private modifierSystem!: ModifierSystem;
   private fxManager!: FXManager;
   private gameFeedback!: GameFeedback;
+  /** 最近一次波次横幅信息（供 UIScene 后启动时补显示开局波次） */
+  private lastWaveBanner: { wave: number; isBoss: boolean } | null = null;
   private activeBoss: Enemy | null = null;
-  private bossEntranceBanner: Phaser.GameObjects.Text | null = null; // Boss 入场横幅
   private pendingLevelUps = 0;
   private upgradeQueued = false;
   // 调试：怪物增强倍率（血量/攻击），作用于新生成敌人，方便测试阈值
@@ -185,6 +186,11 @@ export class GameScene extends Phaser.Scene {
     // 演出/反馈层必须先于 startWave 创建：wave:start 事件在 startWave 内发出，
     // 若 GameFeedback 尚未订阅，第 1 波（及继续游戏的恢复波）横幅会静默丢失
     this.gameFeedback = new GameFeedback(this);
+    // 记录最近一次波次横幅信息：UIScene 晚于本场景启动，开局波次的 wave:start 事件
+    // 会早于其订阅发出，届时由 UIScene 从该字段补显示，避免第 1 波横幅静默丢失
+    this.eventUnsubscribers.push(EventBus.on(EventKeys.WAVE_START, (d: any) => {
+      this.lastWaveBanner = { wave: d.wave, isBoss: !!d.isBoss };
+    }));
     // 启动波次（继续游戏时恢复到存档波次，否则第 1 波）
     const startWave = this.resumeMode ? (GameManager.getInstance().pendingRun?.wave ?? 1) : 1;
     this.waveManager.startWave(startWave);
@@ -1025,37 +1031,10 @@ export class GameScene extends Phaser.Scene {
 
   private playBossEntrance(boss: Enemy): void {
     this.cameras.main.shake(300, 0.008);
-    // 清理上一个横幅（多 Boss 同帧出现时只保留最新）
-    this.bossEntranceBanner?.destroy();
-    const cam = this.cameras.main;
+    // Boss 来袭横幅交由 UIScene 显示（UIScene 场景根，任何窗口比例下稳定；GameScene 滚动相机下横幅渲染不可靠）
     const cfg = (boss as any).config as EnemyConfig | undefined;
     const name = cfg?.name ?? 'BOSS';
-    const banner = createUIText(this, this.scale.width * 0.5 / (cam.zoom || 1), this.scale.height * 0.16 / (cam.zoom || 1), `⚠ ${name} 来袭`, {
-      fontSize: '30px',
-      color: '#ff5555',
-      fontStyle: 'bold',
-      backgroundColor: 'rgba(10,0,0,0.6)',
-      padding: { left: 28, right: 28, top: 10, bottom: 10 },
-    })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(Layers.BANNER)
-      .setAlpha(0);
-    this.bossEntranceBanner = banner;
-    this.tweens.add({
-      targets: banner,
-      alpha: 1,
-      duration: 250,
-      onComplete: () => {
-        this.tweens.add({
-          targets: banner,
-          alpha: 0,
-          duration: 600,
-          delay: 1500,
-          onComplete: () => banner.destroy(),
-        });
-      },
-    });
+    (this.scene.get('UIScene') as any)?.showBanner?.(`⚠ ${name} 来袭`, true);
   }
   /** 当前唯一的 Boss（无则 null，供 HUD 顶部血条使用） */
   getActiveBoss(): Enemy | null {

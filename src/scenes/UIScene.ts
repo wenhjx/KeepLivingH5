@@ -27,6 +27,7 @@ export class UIScene extends Phaser.Scene {
   private debugButton!: Phaser.GameObjects.Text; // 移动端调试面板开关
   private pauseOverlay!: Phaser.GameObjects.Container;
   private uiRoot!: Phaser.GameObjects.Container;
+  private banner: Phaser.GameObjects.Text | null = null;
   // EventBus 监听器取消函数（场景关闭时统一清理）
   private eventUnsubscribers: Array<() => void> = [];
 
@@ -118,6 +119,14 @@ export class UIScene extends Phaser.Scene {
     this.children.list.slice().forEach((child) => {
       if (child !== this.uiRoot && child !== this.joystick?.getContainer()) this.uiRoot.add(child);
     });
+
+    // 本场景晚于 GameScene 启动：开局波次的 wave:start 事件可能在订阅前已发出，
+    // 从 GameScene 补取最近一次波次横幅信息显示，保证第 1 波 / 恢复波横幅不丢失
+    const gs = this.scene.get('GameScene') as any;
+    if (gs?.lastWaveBanner) {
+      const b = gs.lastWaveBanner as { wave: number; isBoss: boolean };
+      this.showBanner(b.isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${b.wave} 波`, b.isBoss);
+    }
   }
 
   private createPauseOverlay(): void {
@@ -202,8 +211,55 @@ export class UIScene extends Phaser.Scene {
     menuLayout.placeCentered(menuBtn);
   }
 
+  /**
+   * 波次 / Boss 来袭横幅。
+   *
+   * 挂入 uiRoot（反向缩放根容器，与 HUD/小地图同路径）：容器局部坐标 = 画布物理像素，
+   * 容器 scale 1/z 与相机 zoom z 抵消，任何窗口比例、FIT"高度受限"下都稳定可见。
+   * （GameScene 滚动相机 + scrollFactor(0)+zoom 在高度受限窗口下存在渲染丢失，横幅统一归 UIScene 管理）
+   */
+  showBanner(text: string, isBoss: boolean): void {
+    this.banner?.destroy();
+    const banner = createUIText(this, this.scale.width * 0.5, this.scale.height * 0.18, text, {
+      fontSize: (isBoss ? 44 : 34) * GameConfig.uiScale + 'px',
+      color: isBoss ? '#ff4444' : '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+      shadow: { color: isBoss ? '#ff0000' : '#000000', blur: 8, offsetX: 0, offsetY: 2 },
+    })
+      .setOrigin(0.5)
+      .setAlpha(0)
+      .setScale(0.7);
+    this.uiRoot.add(banner);
+    this.banner = banner;
+    this.tweens.add({
+      targets: banner,
+      alpha: 1,
+      scale: 1,
+      duration: 260,
+      ease: 'Back.Out',
+      onComplete: () => {
+        this.tweens.add({
+          targets: banner,
+          alpha: 0,
+          delay: isBoss ? 1000 : 700,
+          duration: 350,
+          onComplete: () => {
+            banner.destroy();
+            if (this.banner === banner) this.banner = null;
+          },
+        });
+      },
+    });
+  }
+
   private setupEventListeners(): void {
     const sub = (fn: () => void) => this.eventUnsubscribers.push(fn);
+
+    sub(EventBus.on(EventKeys.WAVE_START, (d: { wave: number; isBoss: boolean }) => {
+      this.showBanner(d.isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${d.wave} 波`, d.isBoss);
+    }));
 
     sub(EventBus.on(EventKeys.RUN_PAUSE, (paused: boolean) => {
       // 模态场景打开时（商店/武器强化/通关结算/突破奖励），暂停覆盖层不显示——
