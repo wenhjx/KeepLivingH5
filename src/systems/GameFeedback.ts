@@ -52,7 +52,8 @@ export class GameFeedback {
       scene,
       // scrollFactor(0) 时显示位置 = x × zoom，需除以 zoom 才真正居中
       scene.cameras.main.width / 2 / scene.cameras.main.zoom,
-      132,
+      // y 按屏幕高度 18% 定位（相对比例，分辨率/缩放变化时位置不跑偏；与 Boss 入场横幅 16% 错开避免叠字）
+      scene.cameras.main.height * 0.18 / scene.cameras.main.zoom,
       isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${wave} 波`,
       {
         fontSize: (isBoss ? 44 : 34) * GameConfig.uiScale + 'px',
