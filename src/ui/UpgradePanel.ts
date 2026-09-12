@@ -1,7 +1,7 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import type { UpgradeOption } from '../types';
-import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { UPGRADE_OPTIONS, passiveDescForLevel } from '../data/upgrades';
 import { GameConfig } from '../game/GameConfig';
 import { createOptionCard } from './OptionCard';
 import { Layers } from '../constants/Layers';
@@ -149,7 +149,11 @@ export class UpgradePanel {
         name: option.name,
         icon: option.icon,
         iconTexture: option.iconTexture,
-        desc: option.description,
+        desc: passiveDescForLevel(
+          option.id,
+          ((this.scene as any).player?.getPassiveLevel?.(option.id) ?? 0) + 1,
+          option.description
+        ),
         rarity: option.rarity as 'common' | 'rare' | 'epic' | 'legendary',
         cardWidth: this.cardWidth,
         cardHeight: this.cardHeight,

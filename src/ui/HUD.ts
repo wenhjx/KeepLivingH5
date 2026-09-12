@@ -1,7 +1,7 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
-import { UPGRADE_OPTIONS } from '../data/upgrades';
+import { UPGRADE_OPTIONS, passiveDescForLevel } from '../data/upgrades';
 import { UILayout } from '../utils/UILayout';
 import { GameConfig } from '../game/GameConfig';
 import { Layers } from '../constants/Layers';
@@ -389,7 +389,7 @@ export class HUD {
         name: p.name,
         level: p.level,
         maxLevel: p.maxLevel,
-        desc: opt?.description || '',
+        desc: passiveDescForLevel(p.id, p.level, opt?.description || ''),
         icon: vis.icon,
         color: vis.color,
       });

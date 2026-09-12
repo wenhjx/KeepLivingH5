@@ -5,7 +5,7 @@ import { GameConfig } from '../game/GameConfig';
 import { UpgradePanel } from '../ui/UpgradePanel';
 import { GuideManager } from '../systems/GuideManager';
 import { WEAPONS } from '../data/weapons';
-import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED, FALLBACK_UPGRADES } from '../data/upgrades';
+import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED, FALLBACK_UPGRADES, passiveDescForLevel } from '../data/upgrades';
 import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
 import { EventBus, EventKeys } from '../utils/EventBus';
 import { setupUICamera } from '../utils/CameraHelper';
@@ -216,7 +216,7 @@ export class UpgradeScene extends Phaser.Scene {
       // 新被动解锁提示（已有被动升级不提示）
       GuideManager.getInstance().show({
         title: `新技能: ${option.name}`,
-        description: option.description,
+        description: passiveDescForLevel(option.id, 1, option.description),
         icon: option.icon || '✨',
         color: 0xaa44ff,
         position: 'top-right',

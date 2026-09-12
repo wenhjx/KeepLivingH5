@@ -215,7 +215,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     id: 'passive_exp_boost',
     name: '经验加成',
     type: 'passive',
-    description: '获得经验值 +25%',
+    description: '获得经验，加成随等级提升',
     icon: '📈',
     rarity: 'rare',
     effect: {},
@@ -224,7 +224,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     id: 'passive_gold_boost',
     name: '金币加成',
     type: 'passive',
-    description: '获得金币 +50%',
+    description: '获得金币，加成随等级提升',
     icon: '💰',
     rarity: 'common',
     effect: {},
@@ -363,3 +363,19 @@ export const FALLBACK_UPGRADES: UpgradeOption[] = [
     },
   },
 ];
+
+/**
+ * 按等级生成被动描述：金币/经验等数值随等级线性增长的被动，返回含当前等级的精确文案；
+ * 其余升级项返回原文案（HUD 提示、升级三选一、商店卡片共用，避免静态描述与实际数值不符）。
+ * 实际公式见 Player.addGold / Player.addExp：金币 = 50% + level×10%，经验 = 25% + level×10%。
+ */
+export function passiveDescForLevel(id: string, level: number, fallback: string): string {
+  switch (id) {
+    case 'passive_gold_boost':
+      return `获得金币 +${50 + level * 10}%（Lv.${level}）`;
+    case 'passive_exp_boost':
+      return `获得经验 +${25 + level * 10}%（Lv.${level}）`;
+    default:
+      return fallback;
+  }
+}
