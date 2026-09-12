@@ -21,6 +21,8 @@ import type { Player } from './Player';
 import { TextSmoothing } from '../utils/UIText';
 import { Layers } from '../constants/Layers';
 
+import { AFFIXES, COMMON_AFFIX_POOL, ELITE_AFFIX_POOL, type EnemyAffixId } from '../data/affixes';
+
 /**
 
  * 敌人实体基类
@@ -55,15 +57,20 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private hpBarBg!: Phaser.GameObjects.Graphics;
   private hpBar!: Phaser.GameObjects.Graphics;
   private hpBarTimer = 0;
-  /** 精英词缀：enrage(狂暴)/shield(护盾)/split(分裂)，仅精英怪随机附加 */
-  private affix = '';
+  /** 词缀 id：普通怪低概率 / 精英必挂 / 可按配置固定（查 AFFIXES 表） */
+  private affix: EnemyAffixId | '' = '';
   /** Boss 类型标识色（区分 基础/召唤魔像/弹幕机械），阶段色在其上加深 */
   private bossTypeColor = 0xff2222;
   /** Boss 脚下呼吸光环（跟随敌人，despawn 时销毁） */
   private bossAuraRing: Phaser.GameObjects.Arc | undefined = undefined;
+  /** 词缀数值乘区（查表应用，despawn 全量重置） */
   private shieldPool = 0;
   private affixAtkBoost = 1;
   private affixSpeedMult = 1;
+  private affixHpMult = 1;
+  private affixDmgReduction = 0;
+  /** 剧毒词缀：命中玩家施加的毒（每秒伤害倍率 + 时长），null 表示无 */
+  private affixPoison: { dpsMult: number; duration: number } | null = null;
   private affixText!: Phaser.GameObjects.Text;
   // ===== Boss 专属：阶段系统 + 技能状态 =====
   private bossPhase = 1;                              // 1/2/3（血量阈值 66%/33%）
@@ -143,28 +150,46 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (config.color && (GameConfig.VISUAL_THEME === 'pixel' || isVariant)) {
       this.setTint(config.color);
     }
-    // ===== 精英词缀：狂暴/护盾/分裂（仅精英怪随机附加，可按配置固定） =====
-    if (config.type === 'elite') {
-      const affixes = ['enrage', 'shield', 'split'];
-      this.affix = config.affix || affixes[Math.floor(Math.random() * affixes.length)];
+    // ===== 词缀系统：普通怪低概率 / 精英必挂（可按配置固定，查 AFFIXES 表） =====
+    if (config.type === 'boss') {
+      // Boss 不挂词缀（已有阶段机制，避免叠加过载）
+      this.affix = '';
+    } else if (config.affix) {
+      this.affix = config.affix as EnemyAffixId;
+    } else if (config.type === 'elite') {
+      // 精英必挂 1 个词缀（全池，含 epic）
+      this.affix = ELITE_AFFIX_POOL[Math.floor(Math.random() * ELITE_AFFIX_POOL.length)];
+    } else if (Math.random() < 0.06) {
+      // 普通怪 6% 概率挂词缀（仅 common/rare 池，保持稀有度节奏）
+      this.affix = COMMON_AFFIX_POOL[Math.floor(Math.random() * COMMON_AFFIX_POOL.length)];
     } else {
-      this.affix = config.affix || '';
+      this.affix = '';
     }
+    // 词缀效果：查表应用（数值乘区 + 机制标记 + 视觉 tint）
     this.shieldPool = 0;
     this.affixAtkBoost = 1;
     this.affixSpeedMult = 1;
-    if (this.affix === 'enrage') {
-      // 狂暴：攻击×1.2、移速×1.3、橙红视觉
-      this.affixAtkBoost = 1.2;
-      this.affixSpeedMult = 1.3;
-      this.setTint(0xff8844);
-    } else if (this.affix === 'shield') {
-      // 护盾：额外护盾值 60% 血量、亮蓝视觉
-      this.shieldPool = Math.floor(this.maxHealth * 0.6);
-      this.setTint(0x44aaff);
-    } else if (this.affix === 'split') {
-      // 分裂：死亡分裂 2 只小怪、紫色视觉
-      this.setTint(0xcc88ff);
+    this.affixHpMult = 1;
+    this.affixDmgReduction = 0;
+    this.affixPoison = null;
+    const affixDef = this.affix ? AFFIXES[this.affix] : undefined;
+    if (affixDef) {
+      this.affixAtkBoost = affixDef.atkMult ?? 1;
+      this.affixSpeedMult = affixDef.speedMult ?? 1;
+      this.affixHpMult = affixDef.hpMult ?? 1;
+      this.affixDmgReduction = affixDef.dmgReduction ?? 0;
+      if (affixDef.hpMult) {
+        // 厚皮：生命×1.5 并回满（在基础血量计算之后应用）
+        this.maxHealth = Math.max(1, Math.floor(this.maxHealth * affixDef.hpMult));
+        this.health = this.maxHealth;
+      }
+      if (affixDef.shieldPercent) {
+        this.shieldPool = Math.floor(this.maxHealth * affixDef.shieldPercent);
+      }
+      if (affixDef.poison) {
+        this.affixPoison = affixDef.poison;
+      }
+      this.setTint(affixDef.color);
     }
     // Boss 专属状态重置（对象池复用，必须重置以免残留上一只的状态）
     if (config.type === 'boss') {
@@ -187,14 +212,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.chargerAngle = 0;
     this.summonerLast = 0;
     this.healerLast = 0;
-    // 词缀图标（跟随头顶）
-    const affixIcons: Record<string, string> = { enrage: '🔥', shield: '🛡️', split: '💥' };
+    // 词缀图标（跟随头顶，查 AFFIXES 表）
     if (!this.affixText) {
       this.affixText = this.scene.add.text(0, 0, '', { fontSize: '12px', fontFamily: 'Arial' }).setDepth(Layers.ENTITY_TAG).setOrigin(0.5)
         .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
       TextSmoothing.apply(this.affixText);
     }
-    const affixIcon = affixIcons[this.affix] || '';
+    const affixIcon = this.affix ? AFFIXES[this.affix].icon : '';
     this.affixText.setText(affixIcon)
       .setPosition(this.x, this.y - (config.size || 32) / 2 - 22)
       .setVisible(!!affixIcon);
@@ -216,6 +240,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.shieldPool = 0;
     this.affixAtkBoost = 1;
     this.affixSpeedMult = 1;
+    this.affixHpMult = 1;
+    this.affixDmgReduction = 0;
+    this.affixPoison = null;
     this.bossPhase = 1;
     this.bossSkillLast = {};
     this.bossChargeState = 0;
@@ -1025,6 +1052,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const bossMult = this.config.type === 'boss' ? 1.3 : 1;
     const chargeMult = this.chargerState === 2 ? 1.6 : 1;
     player.takeDamage(this.config.attackPower * bossMult * chargeMult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost);
+    // 剧毒词缀：命中玩家附加持续中毒（每秒 = 攻击力 × dpsMult，绕过无敌帧；applyPoison 内部有存活检查）
+    if (this.affixPoison && player) {
+      player.applyPoison(
+        Math.max(1, this.config.attackPower * this.difficultyMultiplier * this.affixPoison.dpsMult),
+        this.affixPoison.duration
+      );
+    }
     this.attackCooldown = this.config.attackCooldown;
   }
   /** 冲锋怪冲刺色调（冲刺时用类型色） */
@@ -1083,6 +1117,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
       }
     }
+    // 厚皮词缀：全局伤害减免（与盾牌怪正面减伤独立叠加）
+    if (this.affixDmgReduction > 0) {
+      finalAmount = Math.max(1, finalAmount * (1 - this.affixDmgReduction));
+    }
     this.health -= finalAmount;
     this.hitFlashTimer = 100;
     this.setTint(0xffffff);
@@ -1112,11 +1150,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
       }
     }
-    // 精英分裂词缀：死亡分裂 2 只普通小怪（词缀版，与分裂怪机制一致）
-    if (this.affix === 'split') {
+    // 分裂词缀：死亡分裂 2 只普通小怪（查 AFFIXES 表，与分裂怪机制一致）
+    const splitDef = this.affix ? AFFIXES[this.affix] : undefined;
+    if (splitDef?.splitOnDeath) {
       const productConfig = ENEMY_CONFIGS.normal;
       if (productConfig && scene?.getObjectPool?.()) {
-        for (let i = 0; i < 2; i++) {
+        const splitCount = splitDef.splitOnDeath.count;
+        for (let i = 0; i < splitCount; i++) {
           const offsetX = (i % 2 === 0 ? -1 : 1) * 20;
           scene.getObjectPool().spawnEnemy(
             productConfig,
@@ -1133,7 +1173,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         {
           type: 'exp',
           texture: 'pickup_exp',
-          value: Math.max(1, Math.floor(this.config.expReward * this.difficultyMultiplier)),
+          value: Math.max(1, Math.floor(this.config.expReward * this.difficultyMultiplier * this.getAffixBonus())),
           magnetSpeed: 300,
         },
         this.x,
@@ -1160,7 +1200,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         {
           type: 'coin',
           texture: 'pickup_coin',
-          value: MathUtils.randomInt(coinDrop.min, coinDrop.max),
+          value: Math.max(1, Math.round(MathUtils.randomInt(coinDrop.min, coinDrop.max) * this.getAffixBonus())),
           magnetSpeed: 300,
         },
         this.x - 20,
@@ -1211,8 +1251,14 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   getExpReward(): number {
     return this.config?.expReward || 0;
   }
+  /** 词缀掉落加成：词缀怪更"肥"（期待遇见的情绪事件），common×1.2 / rare×1.5 / epic×2 */
+  getAffixBonus(): number {
+    if (!this.affix) return 1;
+    const r = AFFIXES[this.affix]?.rarity;
+    return r === 'epic' ? 2 : r === 'rare' ? 1.5 : 1.2;
+  }
   getScoreReward(): number {
-    return this.config?.scoreReward || 10;
+    return Math.round((this.config?.scoreReward || 10) * this.getAffixBonus());
   }
   /** 金币掉落配置（chance 0-1，min/max 金币数）；不掉的类型返回 null */
 

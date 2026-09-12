@@ -64,6 +64,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private shieldRing: Phaser.GameObjects.Arc | null = null;
   // 狂暴药水临时增益
   private rageTimer = 0;
+  /** 中毒（剧毒词缀怪攻击施加）：剩余时长(ms) + 每秒伤害 + 跳间计时（500ms/跳，绕过无敌帧） */
+  private poisonTimer = 0;
+  private poisonDamage = 0;
+  private poisonTick = 0;
   private rageActive = false;
   private rageRing: Phaser.GameObjects.Arc | null = null;
   // 复活币（商店购买，死亡时原地复活）
@@ -156,6 +160,21 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         const pulse = 1 + Math.sin(time / 150) * 0.08;
         this.rageRing.setPosition(this.x, this.y);
         this.rageRing.setScale(pulse);
+      }
+    }
+
+    // 中毒（剧毒词缀怪攻击施加）：持续伤害，绕过无敌帧（每 500ms 一跳）
+    if (this.poisonTimer > 0) {
+      this.poisonTimer -= delta;
+      this.poisonTick -= delta;
+      if (this.poisonTick <= 0) {
+        this.poisonTick = 500;
+        this.damageFromHazard(Math.max(1, Math.round(this.poisonDamage * 0.5)));
+        this.setTint(0x66ff66);
+      }
+      if (this.poisonTimer <= 0) {
+        this.poisonDamage = 0;
+        if (!this.invincible) this.clearTint();
       }
     }
 
@@ -563,6 +582,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     EventBus.emit(EventKeys.PLAYER_HEAL, amount);
   }
 
+  /** 中毒（剧毒词缀怪攻击施加）：持续伤害，绕过无敌帧（复用环境伤害路径） */
+  applyPoison(dps: number, duration: number): void {
+    if (this.stats.health <= 0) return;
+    this.poisonDamage = Math.max(this.poisonDamage, dps);
+    this.poisonTimer = Math.max(this.poisonTimer, duration);
+    this.poisonTick = 500;
+    this.setTint(0x66ff66);
+  }
+
   /**
    * 环境/规则伤害（如冰原"霜蚀"持续掉血）：绕过无敌帧，按最大生命百分比流失；
    * 归零时正常触发死亡。不触发受击闪烁/荆棘反弹/受击音效。
@@ -589,6 +617,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private die(): void {
+    // 死亡即清毒（复活币/训练场原地复活都不带中毒状态）
+    this.poisonTimer = 0;
+    this.poisonDamage = 0;
     // 复活币：死亡时原地复活一次（满血 + 短暂无敌 + 清空周围敌人）
     if (this.reviveTokens > 0) {
       this.reviveTokens--;
