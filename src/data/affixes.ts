@@ -131,7 +131,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     icon: '💣',
     color: 0xffaa44,
     rarity: 'rare',
-    description: '死亡时爆炸：对 130px 内玩家造成攻击力 60% 的伤害',
+    description: '死亡时爆炸，对约 5 个身位内的玩家造成攻击力 60% 的伤害',
     counter: '死亡会爆炸，保持距离再击杀',
     explodeOnDeath: { radius: 130, dmgMult: 0.6 },
   },

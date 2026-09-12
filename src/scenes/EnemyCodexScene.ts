@@ -358,9 +358,6 @@ export class EnemyCodexScene extends Phaser.Scene {
     }
   }
 
-  /** 个别 emoji 字形在 em-box 中偏位（如 ❄️ 雪花偏上偏小），按 emoji 补偿垂直偏移（正=下移） */
-  private static readonly EMOJI_VOFFSET: Record<string, number> = { '❄️': 0.1, '💣': 0.06, '🌀': 0.04 };
-
   /** 用 Canvas 把 emoji 绘制成独立纹理（Phaser Text 渲染 emoji 会被字形超出部分裁切；Canvas 可完整显示且任意缩放） */
   private ensureEmojiTexture(id: EnemyAffixId, emoji: string): string {
     const key = `affix_icon_${id}`;
@@ -374,8 +371,7 @@ export class EnemyCodexScene extends Phaser.Scene {
       ctx.font = `${Math.floor(size * 0.74)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const vy = (EnemyCodexScene.EMOJI_VOFFSET[emoji] ?? 0) * size;
-      ctx.fillText(emoji, size / 2, size / 2 + size * 0.03 + vy);
+      ctx.fillText(emoji, size / 2, size / 2 + size * 0.03);
     }
     this.textures.addCanvas(key, canvas);
     return key;
