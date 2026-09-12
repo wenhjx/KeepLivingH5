@@ -30,7 +30,6 @@ export class InventoryUI {
   private unsubscribe: () => void = () => {};
   // 复活币指示器（被动消耗品，仅展示剩余数量）
   private reviveGroup: Phaser.GameObjects.Container | null = null;
-  private reviveIcon: Phaser.GameObjects.Text | null = null;
   private reviveCount: Phaser.GameObjects.Text | null = null;
   // 槽位命中矩形（uiRoot 局部坐标 = pointer.x/y），手动坐标判定用
   private slotHitRects: Array<{ index: number; x: number; y: number }> = [];
@@ -164,7 +163,6 @@ export class InventoryUI {
     group.setVisible(false);
     this.container.add(group);
     this.reviveGroup = group;
-    this.reviveIcon = icon;
     this.reviveCount = count;
   }
 

@@ -150,12 +150,6 @@ export class TerrainManager {
     return 1;
   }
 
-  /** 查询某点所在减速区的减速系数（保留兼容） */
-  getSlowFactorAt(x: number, y: number): number {
-    const f = this.getSpeedFactorAt(x, y);
-    return f < 1 ? f : 1;
-  }
-
   /** 减速区列表 */
   getSlowZones(): SlowZoneConfig[] {
     return this.slowZoneList;

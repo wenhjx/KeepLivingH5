@@ -1830,7 +1830,6 @@ export class TextureGenerator {
   private generateWall(key: string, color: number, w: number, h: number): void {
     const pad = 6;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
-    const cx = (w + pad * 2) / 2;
     const cy = (h + pad * 2) / 2;
 
     // 外发光
@@ -1908,7 +1907,6 @@ export class TextureGenerator {
   private generateCrate(key: string, color: number, w: number, h: number): void {
     const pad = 6;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
-    const cx = (w + pad * 2) / 2;
     const cy = (h + pad * 2) / 2;
 
     // 外发光

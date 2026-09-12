@@ -1,7 +1,7 @@
 import { EventBus, EventKeys } from '../utils/EventBus';
 import { GameManager } from '../game/GameManager';
 import { GuideManager } from './GuideManager';
-import { ACHIEVEMENTS, getAchievementById, type AchievementDef } from '../data/achievements';
+import { ACHIEVEMENTS, type AchievementDef } from '../data/achievements';
 import { WEAPONS } from '../data/weapons';
 import type { AchievementSaveData, SaveStats } from '../types';
 

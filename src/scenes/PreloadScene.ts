@@ -1,6 +1,5 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
 import { TextureGenerator } from '../utils/TextureGenerator';
 import { setupUICamera } from '../utils/CameraHelper';

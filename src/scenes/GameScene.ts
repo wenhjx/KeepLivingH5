@@ -20,9 +20,7 @@ import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { GameFeedback } from '../systems/GameFeedback';
 import { EventBus, EventKeys } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
-import { createUIText } from '../utils/UIText';
 import type { EnemyConfig, PickupConfig } from '../types';
-import { Layers } from '../constants/Layers';
 
 /**
 
@@ -49,7 +47,6 @@ export class GameScene extends Phaser.Scene {
   private fxManager!: FXManager;
   private gameFeedback!: GameFeedback;
   /** 最近一次波次横幅信息（供 UIScene 后启动时补显示开局波次） */
-  private lastWaveBanner: { wave: number; isBoss: boolean } | null = null;
   private activeBoss: Enemy | null = null;
   private pendingLevelUps = 0;
   private upgradeQueued = false;
@@ -96,7 +93,6 @@ export class GameScene extends Phaser.Scene {
   private autoPlayEnabled = false;
   // AI 人类化：决策间隔（不每帧重新计算方向）
   private aiDecisionTimer = 0;
-  private aiCurrentDir = { x: 0, y: 0 };
   private aiHesitateTimer = 0;
   // AI 使用物品的冷却计时（不每帧判断）
   private aiItemUseTimer = 0;
@@ -163,13 +159,6 @@ export class GameScene extends Phaser.Scene {
     // 演出/反馈层必须先于 startWave 创建：wave:start 事件在 startWave 内发出，
     // 若 GameFeedback 尚未订阅，第 1 波（及继续游戏的恢复波）横幅会静默丢失
     this.gameFeedback = new GameFeedback(this);
-    // 记录最近一次波次横幅信息：UIScene 晚于本场景启动，开局波次的 wave:start 事件
-    // 会早于其订阅发出，届时由 UIScene 从该字段补显示，避免第 1 波横幅静默丢失
-    this.eventUnsubscribers.push(
-      EventBus.on(EventKeys.WAVE_START, (d: any) => {
-        this.lastWaveBanner = { wave: d.wave, isBoss: !!d.isBoss };
-      })
-    );
     // 启动波次（继续游戏时恢复到存档波次，否则第 1 波）
     const startWave = this.resumeMode ? (GameManager.getInstance().pendingRun?.wave ?? 1) : 1;
     this.waveManager.startWave(startWave);
@@ -1101,7 +1090,6 @@ export class GameScene extends Phaser.Scene {
     this.autoPlayEnabled = enabled;
     this.aiDecisionTimer = 0;
     this.aiHesitateTimer = 0;
-    this.aiCurrentDir = { x: 0, y: 0 };
     if (!enabled) {
       this.inputManager.clearAIDirection();
     } else {
@@ -1239,10 +1227,8 @@ export class GameScene extends Phaser.Scene {
       const steered = this.avoidWall(this.player.x, this.player.y, nx, ny);
       nx = steered.x;
       ny = steered.y;
-      this.aiCurrentDir = { x: nx, y: ny };
       this.inputManager.setAIDirection(nx, ny);
     } else {
-      this.aiCurrentDir = { x: 0, y: 0 };
       this.inputManager.clearAIDirection();
     }
   }

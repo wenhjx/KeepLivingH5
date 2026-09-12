@@ -22,7 +22,6 @@ export class UIScrollBar {
   private barH: number;
   private trackInset = 3;
   private contentH = 0;
-  private viewH = 0;
   private maxScroll = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, _width: number, height: number) {
@@ -36,7 +35,6 @@ export class UIScrollBar {
   /** 设置内容总高与可视高（决定是否可滚动与滑块比例） */
   setRange(contentH: number, viewH: number): void {
     this.contentH = contentH;
-    this.viewH = viewH;
     this.maxScroll = Math.max(0, contentH - viewH);
     this.update(0);
   }

@@ -20,7 +20,6 @@ import { Layers } from '../constants/Layers';
  * 关闭后恢复打开前的暂停状态（打开前在游玩中则继续游玩，在暂停菜单则回到暂停）。
  */
 export class PlayerInfoScene extends Phaser.Scene {
-  private player!: Player;
   // 打开前的暂停状态，由调用方（GameScene C 键 / 暂停菜单按钮）显式传入
   private prevPaused = false;
 
@@ -41,7 +40,6 @@ export class PlayerInfoScene extends Phaser.Scene {
       this.closePanel();
       return;
     }
-    this.player = player;
 
     // 半透明背景（盖住暂停遮罩与游戏画面）
     this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0).setInteractive();

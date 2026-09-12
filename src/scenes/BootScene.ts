@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
 
 /**
  * 启动场景
@@ -11,8 +10,6 @@ export class BootScene extends Phaser.Scene {
   }
 
   init(): void {
-    const gm = GameManager.getInstance();
-
     // 注：渲染分辨率倍率已由 main.ts 统一配置（GameConfig.renderScale），
     // 并在各场景 create 中通过 camera.setZoom 补偿视觉比例，无需在此处理
 

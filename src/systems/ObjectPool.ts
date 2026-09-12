@@ -18,13 +18,11 @@ export class ObjectPool {
   private bulletPool: Bullet[] = [];
   private enemyBulletPool: Bullet[] = [];
   private pickupPool: Pickup[] = [];
-  private particlePool: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
 
   // 场景中的组（用于碰撞检测）
   private enemyGroup!: Phaser.Physics.Arcade.Group;
   private bulletGroup!: Phaser.Physics.Arcade.Group;
   private pickupGroup!: Phaser.Physics.Arcade.Group;
-  private particleGroup!: Phaser.GameObjects.Group;
 
   // 统计
   private stats = {
@@ -48,7 +46,6 @@ export class ObjectPool {
     this.enemyGroup = enemies;
     this.bulletGroup = bullets;
     this.pickupGroup = pickups;
-    this.particleGroup = particles;
   }
 
   /** 初始化对象池，预创建一定数量的对象 */

@@ -56,7 +56,6 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private shieldPool = 0;
   private affixAtkBoost = 1;
   private affixSpeedMult = 1;
-  private affixHpMult = 1;
   private affixDmgReduction = 0;
   /** 剧毒词缀：命中玩家施加的毒（每秒伤害倍率 + 时长），null 表示无 */
   private affixPoison: { dpsMult: number; duration: number } | null = null;
@@ -168,14 +167,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.shieldPool = 0;
     this.affixAtkBoost = 1;
     this.affixSpeedMult = 1;
-    this.affixHpMult = 1;
     this.affixDmgReduction = 0;
     this.affixPoison = null;
     const affixDef = this.affix ? AFFIXES[this.affix] : undefined;
     if (affixDef) {
       this.affixAtkBoost = affixDef.atkMult ?? 1;
       this.affixSpeedMult = affixDef.speedMult ?? 1;
-      this.affixHpMult = affixDef.hpMult ?? 1;
       this.affixDmgReduction = affixDef.dmgReduction ?? 0;
       if (affixDef.hpMult) {
         // 厚皮：生命×1.5 并回满（在基础血量计算之后应用）
@@ -243,7 +240,6 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.shieldPool = 0;
     this.affixAtkBoost = 1;
     this.affixSpeedMult = 1;
-    this.affixHpMult = 1;
     this.affixDmgReduction = 0;
     this.affixPoison = null;
     this.bossPhase = 1;

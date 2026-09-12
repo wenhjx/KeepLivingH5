@@ -162,7 +162,6 @@ export class MainMenuScene extends Phaser.Scene {
           0.05 + Math.random() * 0.04
         )
         .setDepth(Layers.BACKGROUND);
-      const speed = 12 + Math.random() * 18;
       const dir = Math.random() > 0.5 ? 1 : -1;
       const startX = orb.x;
       this.tweens.add({
@@ -295,7 +294,6 @@ export class MainMenuScene extends Phaser.Scene {
   private levelSelectButtons: Phaser.GameObjects.Text[] = [];
   private levelInfoButtons: Phaser.GameObjects.Text[] = [];
   private previewLevelIndex = 0;
-  private levelPreviewTitle!: Phaser.GameObjects.Text;
   private levelPreviewRows: {
     name: Phaser.GameObjects.Text;
     note: Phaser.GameObjects.Text;

@@ -15,7 +15,6 @@ import { Layers } from '../constants/Layers';
  * 显示内容：障碍物轮廓（灰）、敌人（红点）、Boss（大红点）、玩家（青色三角）
  */
 export class Minimap {
-  private scene: Phaser.Scene;
   private graphics: Phaser.GameObjects.Graphics;
   private x: number;
   private y: number;
@@ -33,7 +32,6 @@ export class Minimap {
     mapWidth: number,
     mapHeight: number
   ) {
-    this.scene = scene;
     this.x = x;
     this.y = y;
     this.width = width;

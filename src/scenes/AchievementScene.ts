@@ -1,10 +1,9 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
 import { setupUICamera } from '../utils/CameraHelper';
 import { UILayout } from '../utils/UILayout';
 import { UIScrollBar } from '../utils/UIScrollBar';
-import { ACHIEVEMENTS, ACHIEVEMENT_SERIES, type AchievementDef, type AchievementSeries } from '../data/achievements';
+import { ACHIEVEMENTS, type AchievementDef, type AchievementSeries } from '../data/achievements';
 import { AchievementManager } from '../systems/AchievementManager';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
@@ -115,7 +114,6 @@ export class AchievementScene extends Phaser.Scene {
     const scrollY = 168;
     const listW = width - 120;
     const listH = 380;
-    const rowH = 64;
     const maskG = this.make.graphics(undefined, false);
     maskG.fillStyle(0xffffff, 1);
     maskG.fillRect(scrollX, scrollY, listW, listH);

@@ -999,7 +999,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // 更新所有无人机的等级和总数
-    this.drones.forEach((drone, i) => {
+    this.drones.forEach((drone) => {
       drone.upgrade(droneWeapon.level, this.drones.length);
     });
 

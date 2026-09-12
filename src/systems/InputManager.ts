@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { GameConfig } from '../game/GameConfig';
 import { GameManager } from '../game/GameManager';
 import type { Vector2 } from '../types';
 

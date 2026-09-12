@@ -6,7 +6,7 @@ import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import { EventBus, EventKeys } from '../utils/EventBus';
 import type { ObjectPool } from './ObjectPool';
-import type { EnemyConfig, EnemyType, WaveConfig } from '../types';
+import type { EnemyConfig, EnemyType } from '../types';
 import { ENEMY_CONFIGS } from '../data/enemies';
 import type { LevelConfig } from '../data/levels';
 

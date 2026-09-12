@@ -32,7 +32,6 @@ export class HUD {
   // 底部玩家状态条坐标（create 时计算，update 时复用）
   private barLeftX = 0;
   private barTopY = 0;
-  private barCenterY = 0;
   private expBarY = 0;
 
   // Boss 血条（唯一 Boss 出现时显示）
@@ -85,20 +84,6 @@ export class HUD {
     passive_chain: { icon: '⚡', color: 0x886600 },
   };
 
-  // stat 属性升级视觉映射（图标 + 背景色；图标与 UPGRADE_OPTIONS 保持一致）
-  // 显示等级进度，让玩家能看到"力量强化 3/5"之类的上限
-  private readonly statVisuals: Record<string, { icon: string; color: number }> = {
-    max_hp: { icon: '❤️', color: 0x662222 },
-    move_speed: { icon: '👟', color: 0x445566 },
-    attack_power: { icon: '⚔️', color: 0x664422 },
-    attack_speed: { icon: '⚡', color: 0x886622 },
-    crit_rate: { icon: '🎯', color: 0x664466 },
-    crit_damage: { icon: '💥', color: 0x882222 },
-    pickup_radius: { icon: '🧲', color: 0x446666 },
-    defense: { icon: '🛡️', color: 0x446688 },
-    luck: { icon: '🍀', color: 0x226644 },
-  };
-
   // 尺寸常量
   private readonly barWidth = 380;
   private readonly barHeight = 22;
@@ -128,7 +113,6 @@ export class HUD {
     // 缓存坐标供 update 方法使用
     this.barLeftX = barLeft;
     this.barTopY = barTop;
-    this.barCenterY = bottomY;
     this.expBarY = bottomY + this.barHeight / 2 + 6;
 
     // 环境状态提示（冰面减速 / 风道加速）：位于 buff 栏上方居中
@@ -597,7 +581,6 @@ export class HUD {
     // 注意：不能用 pointer.worldX/worldY —— 那是相机 scroll+zoom 公式的世界坐标，z>1 时
     // 与 uiRoot 局部坐标存在偏移（左上角点击会向右下偏），正是此前 tooltip 在系统浏览器偏位的原因。
     const viewW = this.scene.scale.width;
-    const viewH = this.scene.scale.height;
     const boxW = 250;
     const boxH = 88;
     const title = b.name || b.id;

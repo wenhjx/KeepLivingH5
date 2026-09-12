@@ -33,9 +33,7 @@ export class DebugPanel {
   private uiRoot: Phaser.GameObjects.Container;
   private visible: boolean = false;
   private autoPlayText: Phaser.GameObjects.Text | null = null;
-  private autoPlayBg: Phaser.GameObjects.Graphics | null = null;
   private themeText: Phaser.GameObjects.Text | null = null;
-  private themeBg: Phaser.GameObjects.Graphics | null = null;
   private enemyBoostText: Phaser.GameObjects.Text | null = null;
   private speedText: Phaser.GameObjects.Text | null = null;
 
@@ -526,7 +524,6 @@ export class DebugPanel {
       fontSize: '11px',
       color: '#cccccc',
     }).setOrigin(0.5);
-    this.autoPlayBg = bg;
 
     const hit = this.scene.add
       .rectangle(fullW / 2, this.btnHeight / 2, fullW, this.btnHeight, 0xffffff, 0)
@@ -587,7 +584,6 @@ export class DebugPanel {
       fontSize: '11px',
       color: '#cccccc',
     }).setOrigin(0.5);
-    this.themeBg = bg;
 
     const hit = this.scene.add
       .rectangle(fullW / 2, this.btnHeight / 2, fullW, this.btnHeight, 0xffffff, 0)
