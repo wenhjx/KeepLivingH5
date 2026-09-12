@@ -182,6 +182,9 @@ export class GameScene extends Phaser.Scene {
       }
     };
     window.addEventListener('beforeunload', this.beforeUnloadHandler);
+    // 演出/反馈层必须先于 startWave 创建：wave:start 事件在 startWave 内发出，
+    // 若 GameFeedback 尚未订阅，第 1 波（及继续游戏的恢复波）横幅会静默丢失
+    this.gameFeedback = new GameFeedback(this);
     // 启动波次（继续游戏时恢复到存档波次，否则第 1 波）
     const startWave = this.resumeMode ? (GameManager.getInstance().pendingRun?.wave ?? 1) : 1;
     this.waveManager.startWave(startWave);
@@ -292,8 +295,6 @@ export class GameScene extends Phaser.Scene {
     this.audioManager.init(this);
     // 视觉特效统一入口（所有命中/死亡/爆炸/升级/拾取/枪口闪光走这里）
     this.fxManager = new FXManager(this);
-    // 演出/反馈层（波次横幅/Boss演出/暴击震屏顿帧，纯表现，通过事件总线与玩法解耦）
-    this.gameFeedback = new GameFeedback(this);
   }
 
   private createMap(): void {
