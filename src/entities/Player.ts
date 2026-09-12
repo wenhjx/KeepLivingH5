@@ -12,7 +12,6 @@ import { AchievementManager } from '../systems/AchievementManager';
 import type { PlayerStats, WeaponConfig, UpgradeOption } from '../types';
 import type { InputManager } from '../systems/InputManager';
 import { Layers } from '../constants/Layers';
-import { PlayerStatusIcons } from '../ui/PlayerStatusIcons';
 
 /**
  * 可突破的 stat 属性（Boss 突破奖励候选）。
@@ -67,10 +66,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private rageTimer = 0;
   /** 中毒（剧毒词缀怪攻击施加）：剩余时长(ms) + 每秒伤害 + 跳间计时（500ms/跳，绕过无敌帧） */
   private poisonTimer = 0;
+  /** 毒剩余时长（HUD 状态图标驱动用；HUD 持有，玩家不再维护图标） */
+  getPoisonRemaining(): number {
+    return this.poisonTimer;
+  }
   private poisonDamage = 0;
   private poisonTick = 0;
-  /** 玩家限时状态图标（通用组件：剧毒☠️红色减益，结束前闪烁；未来限时增益复用） */
-  private statusIcons: PlayerStatusIcons = new PlayerStatusIcons(this.scene);
   private rageActive = false;
   private rageRing: Phaser.GameObjects.Arc | null = null;
   // 复活币（商店购买，死亡时原地复活）
@@ -180,9 +181,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         if (!this.invincible) this.clearTint();
       }
     }
-
-    // 限时状态图标同步（位置跟随玩家头顶；毒消时 remaining=0 自动移除）
-    this.statusIcons.update('poison', this.poisonTimer, this.x, this.y - this.displayHeight / 2 - 24);
 
     // 移动
     const moveDir = input.getMoveDirection();
@@ -594,9 +592,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.poisonDamage = Math.max(this.poisonDamage, dps);
     this.poisonTimer = Math.max(this.poisonTimer, duration);
     this.poisonTick = 500;
-    this.setTint(0x66ff66);
-    // 红色圆底 ☠️ 减益图标（结束前 500ms 闪烁警示）
-    this.statusIcons.show('poison', '☠️', 0xe74c3c, 500);
+
   }
 
   /**
@@ -626,9 +622,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   private die(): void {
     // 死亡即清毒（复活币/训练场原地复活都不带中毒状态）
-    this.poisonTimer = 0;
-    this.poisonDamage = 0;
-    this.statusIcons.clear();
+
     // 复活币：死亡时原地复活一次（满血 + 短暂无敌 + 清空周围敌人）
     if (this.reviveTokens > 0) {
       this.reviveTokens--;

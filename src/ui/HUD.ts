@@ -5,6 +5,7 @@ import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { UILayout } from '../utils/UILayout';
 import { GameConfig } from '../game/GameConfig';
 import { Layers } from '../constants/Layers';
+import { PlayerStatusIcons } from './PlayerStatusIcons';
 
 /**
  * HUD 抬头显示
@@ -44,6 +45,8 @@ export class HUD {
 
   // 增益列表（被动）
   private buffContainer!: Phaser.GameObjects.Container;
+  // 玩家限时状态图标（剧毒☠️减益，与 buff 栏同排；未来限时增益复用）
+  private playerStatusIcons!: PlayerStatusIcons;
   private buffIcons: Map<string, Phaser.GameObjects.Container> = new Map();
   private lastBuffCount: number = -1;
 
@@ -109,6 +112,7 @@ export class HUD {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.create();
+    this.playerStatusIcons = new PlayerStatusIcons(scene, Layers.HUD_BUFF_ICON);
   }
 
   private create(): void {
@@ -339,6 +343,7 @@ export class HUD {
         this.updateLevel();
         this.coinText.setText(`💰 ${player.getCoins?.() ?? 0}`);
         this.updateBuffs(player);
+        this.updatePlayerStatus(player);
       }
       // 唯一 Boss 顶部大血条
       this.updateBossBar(gameScene.getActiveBoss?.());
@@ -354,6 +359,21 @@ export class HUD {
     } else {
       this.bossWarnText.setText(`⚑ 距 Boss ${interval - rem} 波`).setColor('#ff6b6b');
     }
+  }
+
+  /** 更新玩家限时状态图标：与 buff 栏同排（buff 流末尾右侧），毒消自动移除 */
+  private updatePlayerStatus(player: any): void {
+    const rem = player.getPoisonRemaining?.() ?? 0;
+    if (rem > 0) {
+      this.playerStatusIcons.show('poison', '☠️', 0xe74c3c, 500);
+    }
+    // 位置 = buff 流末尾右侧（buff 栏居中布局，状态图标跟随联动）
+    const n = this.lastBuffCount > 0 ? this.lastBuffCount : 0;
+    const totalW = n > 0 ? n * (this.buffSize + this.buffSpacing) - this.buffSpacing : 0;
+    const startX = Math.max(this.padding, (this.scene.scale.width - totalW) / 2);
+    const x = startX + totalW + this.buffSpacing + this.buffSize / 2;
+    const y = this.barTopY - this.buffSize - 12 + this.buffSize / 2;
+    this.playerStatusIcons.update('poison', rem, x, y);
   }
 
   /** 更新血条上方增益列表（被动 + 武器统一展示；stat 属性在 C 键面板） */

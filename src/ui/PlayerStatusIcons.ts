@@ -19,12 +19,15 @@ interface PlayerStatusItem {
 export class PlayerStatusIcons {
   private items: PlayerStatusItem[] = [];
 
-  constructor(private scene: Phaser.Scene) {}
+  constructor(
+    private scene: Phaser.Scene,
+    private depth: number = Layers.ENTITY_STATUS,
+  ) {}
 
   /** 注册/复用状态图标：已存在同 key 直接复用（时长由外部驱动，无需在此延长） */
   show(key: string, emoji: string, color: number, flashBefore = 0): void {
     if (this.items.some((i) => i.key === key)) return;
-    const container = this.scene.add.container(0, 0).setDepth(Layers.ENTITY_STATUS);
+    const container = this.scene.add.container(0, 0).setDepth(this.depth);
     const circle = this.scene.add.circle(0, 0, 13, color, 0.92).setStrokeStyle(1.5, 0xffffff, 0.85);
     const text = this.scene.add
       .text(0, 0, emoji, { fontSize: '13px' })
