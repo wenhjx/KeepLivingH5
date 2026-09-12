@@ -1,7 +1,7 @@
 import { createUIText } from '../utils/UIText';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
-import { UPGRADE_OPTIONS, passiveDescForLevel } from '../data/upgrades';
+import { UPGRADE_OPTIONS, passiveDescForLevel, passiveLevelTexts } from '../data/upgrades';
 import { UILayout } from '../utils/UILayout';
 import { GameConfig } from '../game/GameConfig';
 import { Layers } from '../constants/Layers';
@@ -605,13 +605,19 @@ export class HUD {
     const title = b.name || b.id;
     const lvText = b.bt && b.bt > 0 ? `Lv.${b.level}+${b.bt}` : `Lv.${b.level}`;
 
+    // 描述 + 下一级预览（被动按等级生成；其余用原 desc）
+    const lvTexts = passiveLevelTexts(b.id, b.level);
+    const descRaw = lvTexts ? lvTexts.current : b.desc || '';
+    const nextRaw = lvTexts ? lvTexts.next : null;
+    const descLineCount = Math.ceil(descRaw.length / 16);
+    const nextLineCount = nextRaw ? Math.ceil(`下一级：${nextRaw}`.length / 16) : 0;
+    // 描述换行高度自适应：描述超过一行时按行数抬高 tooltip
+    const boxHTotal = boxH + Math.max(0, descLineCount + nextLineCount - 1) * 16;
+
     // 锚定到 buff 图标中心（而非手指位置）：手指按在图标上时，tooltip 悬浮于图标上方，
     // 不在手指覆盖区内 → 移动端不再遮挡内容。水平居中于图标，垂直位于图标上方 10px。
     const iconCx = rect.x + this.buffSize / 2;
     const iconCy = rect.y + this.buffSize / 2;
-    // 描述换行高度自适应：描述超过一行时按行数抬高 tooltip
-    const descLines = Math.ceil((b.desc || '').length / 16);
-    const boxHTotal = boxH + Math.max(0, descLines - 1) * 16;
     const boxX = Phaser.Math.Clamp(iconCx, boxW / 2 + 4, viewW - boxW / 2 - 4);
     let boxY = iconCy - boxHTotal / 2 - 10;
     // 顶部越界 → 翻转到图标下方
@@ -641,13 +647,30 @@ export class HUD {
     this.tooltipContainer.add(lvTextObj);
 
     // 描述
-    const descText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxHTotal / 2 + 34, b.desc || '', {
+    const descText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxHTotal / 2 + 34, descRaw, {
       fontSize: '13px',
       color: '#bbbbbb',
       wordWrap: { width: boxW - 24 },
       lineSpacing: 4,
     }).setOrigin(0, 0);
     this.tooltipContainer.add(descText);
+
+    // 下一级预览（金色，紧随描述下方）
+    if (nextRaw) {
+      const nextText = createUIText(
+        this.scene,
+        boxX - boxW / 2 + 12,
+        boxY - boxHTotal / 2 + 34 + descLineCount * 16 + 2,
+        `下一级：${nextRaw}`,
+        {
+          fontSize: '12px',
+          color: '#ffd54f',
+          wordWrap: { width: boxW - 24 },
+          lineSpacing: 4,
+        }
+      ).setOrigin(0, 0);
+      this.tooltipContainer.add(nextText);
+    }
 
     this.tooltipContainer.setVisible(true);
   }

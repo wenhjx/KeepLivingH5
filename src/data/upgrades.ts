@@ -242,7 +242,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     id: 'passive_bounce',
     name: '弹射',
     type: 'passive',
-    description: '命中后伤害弹射至附近敌人（每级 +1 次，50% 伤害）',
+    description: '命中后伤害弹射至附近敌人（每级 +1 次，70% 伤害）',
     icon: '🪩',
     rarity: 'epic',
     maxLevel: 3,
@@ -261,7 +261,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     id: 'passive_burn',
     name: '灼烧',
     type: 'passive',
-    description: '攻击有概率点燃敌人持续灼烧（每级 +10%）',
+    description: '攻击有概率点燃敌人持续灼烧（每级 +15%）',
     icon: '🔥',
     rarity: 'epic',
     effect: {},
@@ -367,15 +367,40 @@ export const FALLBACK_UPGRADES: UpgradeOption[] = [
 /**
  * 按等级生成被动描述：金币/经验等数值随等级线性增长的被动，返回含当前等级的精确文案；
  * 其余升级项返回原文案（HUD 提示、升级三选一、商店卡片共用，避免静态描述与实际数值不符）。
- * 实际公式见 Player.addGold / Player.addExp：金币 = 50% + level×10%，经验 = 25% + level×10%。
+ * 实际公式见 Player.addGold / Player.addExp / Enemy.applyPlayerEffects / Player 回血回荆棘。
  */
 export function passiveDescForLevel(id: string, level: number, fallback: string): string {
+  return passiveLevelTexts(id, level)?.current ?? fallback;
+}
+
+/** 被动等级化描述（current=当前级效果，next=下一级预览，无等级变化返回 null） */
+export interface PassiveLevelDesc {
+  current: string;
+  next: string | null;
+}
+
+/** 各被动的等级效果文案（数值与代码实现一致：Player.addExp/addGold/updatePassives、Enemy.applyPlayerEffects） */
+export function passiveLevelTexts(id: string, level: number): PassiveLevelDesc | null {
   switch (id) {
-    case 'passive_gold_boost':
-      return `获得金币 +${50 + level * 10}%（Lv.${level}）`;
+    case 'passive_regen':
+      return { current: `每秒恢复 ${1 + level} 点生命`, next: `每秒恢复 ${2 + level} 点生命` };
+    case 'passive_thorns':
+      return { current: `受击反弹 ${20 + level * 5}% 伤害`, next: `受击反弹 ${25 + level * 5}% 伤害` };
     case 'passive_exp_boost':
-      return `获得经验 +${25 + level * 10}%（Lv.${level}）`;
+      return { current: `获得经验 +${25 + level * 10}%`, next: `获得经验 +${35 + level * 10}%` };
+    case 'passive_gold_boost':
+      return { current: `获得金币 +${50 + level * 10}%`, next: `获得金币 +${60 + level * 10}%` };
+    case 'passive_lifesteal':
+      return { current: `攻击回复 ${level * 3}% 伤害`, next: `攻击回复 ${(level + 1) * 3}% 伤害` };
+    case 'passive_freeze':
+      return { current: `冰冻概率 ${level * 8}%（减速 2 秒）`, next: `冰冻概率 ${(level + 1) * 8}%（减速 2 秒）` };
+    case 'passive_burn':
+      return { current: `点燃概率 ${level * 15}%`, next: `点燃概率 ${(level + 1) * 15}%` };
+    case 'passive_chain':
+      return { current: `闪电链概率 ${level * 10}%`, next: `闪电链概率 ${(level + 1) * 10}%` };
+    case 'passive_bounce':
+      return { current: `弹射 ${level} 次（70% 伤害）`, next: `弹射 ${level + 1} 次（70% 伤害）` };
     default:
-      return fallback;
+      return null;
   }
 }
