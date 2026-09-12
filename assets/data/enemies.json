@@ -1,0 +1,12 @@
+{
+  "enemies": [
+    {
+      "type": "normal",
+      "name": "普通僵尸",
+      "maxHealth": 30,
+      "moveSpeed": 60,
+      "attackPower": 8
+    }
+  ],
+  "_comment": "敌人配置数据"
+}

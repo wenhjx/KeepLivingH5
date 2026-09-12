@@ -1,0 +1,10 @@
+{
+  "waves": [
+    {
+      "wave": 1,
+      "duration": 30000,
+      "difficultyMultiplier": 1.0
+    }
+  ],
+  "_comment": "波次配置数据"
+}
