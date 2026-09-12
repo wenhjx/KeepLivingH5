@@ -672,7 +672,7 @@
 
 ## 待办
 
-- 成就解锁提示（GuideCard）层级抬到最高：玩家反馈通关结算时右上角提示层级偏低，需确保浮于所有 UI 之上（当前 depth=500，结算场景有更高层元素时被压）
+- ✅ 成就解锁提示层级（已完成 2026-09-12，237d14c）：显示层级收编为 Layers 常量表（Layers.GUIDE=10000），GuideCard 改 setDepth(Layers.GUIDE)，浮于一切 UI 之上
 
 ### 2026-09-11 关卡差异化主线（独特怪 + 选关图鉴 + 变体视觉，分支 feat-terrain-boss）
 
@@ -688,7 +688,17 @@
 
 - 测试环境注意：__debug.setLevel() 调试接口不切关卡（只改玩家等级且会 NaN），切关验证需 JS 注入 gs.levelConfig/waveManager.levelConfig 后 buildSpawnTable；试玩场地 Lv.NaN 为既有现象（无 quickStart）
 
-- 词条系统（远期规划，未落码）：调研 D3/泰拉瑞亚/七日杀精英词条共识＝属性词缀（迅捷/厚皮/吸血）+ 机制词缀（分裂/爆炸/召唤/冰冻减速/毒）+ 稀有度分层 + 视觉标注；本项目已具备 EnemyConfig.affix（elite 固定 enrage/shield/split）与 Enemy.affixSpeedMult/affixText 基础设施，"低基础怪随机挂极品词条实现逆袭"可在其上加随机稀有度词条池
+### 2026-09-12（词缀系统 + 玩家状态 UI 统一 + 横幅根治，提交 237d14c → ee0fe0d）
+
+- 显示层级收编为 Layers 常量表（237d14c）：setDepth 魔法数字全部摘除（GUIDE=10000 / BANNER=300 / HUD_BUFF_ICON=51 等），成就提示层级问题随此修复
+
+- 词缀系统第1层（fe69ade）：数据化词缀表 src/data/affixes.ts + 普通怪低概率挂词缀 + 稀有度分层；剧毒词缀（命中玩家施加 3s 持续中毒，每秒 8% 攻击力伤害，无视无敌帧）
+
+- 限时状态图标系统（ef2f13d）：剧毒红色减益图标（结束前闪烁）→ 移入 HUD buff 栏（96d74d1）→ 作为伪条目并入 buff 栏统一渲染（ee0fe0d）：同款卡片视觉 + 剩余秒数角标 + 到期前 3s 闪烁 + 点击出说明，移除独立 PlayerStatusIcons 流程；确立"玩家状态图标统一归纳进 buff 栏"设计约定（记于文件头）
+
+- 波次/Boss 横幅根治（ebf3b48 → 7588259）：从 GameFeedback 迁至 UIScene uiRoot + 物理像素坐标（宽 50% / 高 18%），修复高度受限 FIT 窗口渲染丢失（阈值≈宽高比 1.5）；第 1 波时序补显示（GameScene.lastWaveBanner）
+
+- 词条系统（第1层已落码 2026-09-12 fe69ade：剧毒；远期继续扩展）：调研 D3/泰拉瑞亚/七日杀精英词条共识＝属性词缀（迅捷/厚皮/吸血）+ 机制词缀（分裂/爆炸/召唤/冰冻减速/毒）+ 稀有度分层 + 视觉标注；基础设施 affixes.ts 数据表 + Enemy 词缀分支已就绪，"低基础怪随机挂极品词条实现逆袭"可在其上继续加词缀
 
 ## 📐 UI 排版经验（2026-09-10 选关面板重构沉淀）
 
