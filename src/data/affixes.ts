@@ -136,11 +136,11 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
   },
   summon: {
     id: 'summon',
-    name: '召唤',
+    name: '增援',
     icon: '🌀',
     color: 0xcc88aa,
     rarity: 'epic',
-    description: '死亡时召唤 1 只冲锋怪，死了也不消停',
+    description: '死亡时召来 1 只冲锋怪增援，死了也不消停',
     summonOnDeath: { type: 'charger', count: 1 },
   },
 };
