@@ -46,6 +46,8 @@ export class HUD {
   private buffContainer!: Phaser.GameObjects.Container;
   private buffIcons: Map<string, Phaser.GameObjects.Container> = new Map();
   private lastBuffCount: number = -1;
+  /** 环境状态提示文本（冰面减速 / 风道加速；位置状态不进 buff 栏，独立显示） */
+  private envStateText!: Phaser.GameObjects.Text;
 
   // buff 点击提示（tooltip）
   private tooltipContainer!: Phaser.GameObjects.Container;
@@ -129,6 +131,16 @@ export class HUD {
     this.barCenterY = bottomY;
     this.expBarY = bottomY + this.barHeight / 2 + 6;
 
+    // 环境状态提示（冰面减速 / 风道加速）：位于 buff 栏上方居中
+    this.envStateText = createUIText(this.scene, centerX, barTop - this.buffSize - 12 - 18, '', {
+      fontSize: '13px',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    })
+      .setOrigin(0.5)
+      .setVisible(false);
+
     // 血量条背景
     this.healthBarBg = this.scene.add.graphics();
     this.healthBarBg.fillStyle(0x1a1a25, 0.9);
@@ -141,13 +153,12 @@ export class HUD {
 
     // 血量文字
     this.healthText = createUIText(this.scene, centerX, bottomY, '100/100', {
-        fontSize: '14px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 3,
-      })
-      .setOrigin(0.5);
+      fontSize: '14px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    }).setOrigin(0.5);
 
     // 经验条背景
     const expY = bottomY + this.barHeight / 2 + 6;
@@ -162,13 +173,12 @@ export class HUD {
 
     // 等级文字（血条左侧，放大）
     this.levelText = createUIText(this.scene, barLeft - 12, bottomY, 'Lv.1', {
-        fontSize: '20px',
-        color: '#ffb347',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
-      .setOrigin(1, 0.5);
+      fontSize: '20px',
+      color: '#ffb347',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(1, 0.5);
 
     // ========== 左侧（小地图下方）：波次、击杀、分数、金币、Boss 预告 ==========
     // 玩家需时常确认的信息统一放在小地图下方；右上角让位给暂停按钮与提示卡片（GuideCard），避免遮挡
@@ -178,46 +188,40 @@ export class HUD {
     const infoTop = GameConfig.anchorY(minimapBottomY + 120 * (GameConfig.uiScale - 1) + 10, height);
 
     this.waveText = createUIText(this.scene, infoLeft, infoTop, '波次: 1', {
-        fontSize: '16px',
-        color: '#ff6b35',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0, 0);
+      fontSize: '16px',
+      color: '#ff6b35',
+      fontStyle: 'bold',
+    }).setOrigin(0, 0);
 
     this.killsText = createUIText(this.scene, infoLeft, infoTop + 24, '击杀: 0', {
-        fontSize: '14px',
-        color: '#cccccc',
-      })
-      .setOrigin(0, 0);
+      fontSize: '14px',
+      color: '#cccccc',
+    }).setOrigin(0, 0);
 
     this.scoreText = createUIText(this.scene, infoLeft, infoTop + 46, '分数: 0', {
-        fontSize: '14px',
-        color: '#ffb347',
-      })
-      .setOrigin(0, 0);
+      fontSize: '14px',
+      color: '#ffb347',
+    }).setOrigin(0, 0);
 
     // 金币
     this.coinText = createUIText(this.scene, infoLeft, infoTop + 68, '💰 0', {
-        fontSize: '14px',
-        color: '#ffcc00',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0, 0);
+      fontSize: '14px',
+      color: '#ffcc00',
+      fontStyle: 'bold',
+    }).setOrigin(0, 0);
 
     // 波次预告：距下个 Boss 波还有几波（给玩家战前节奏预期）
     this.bossWarnText = createUIText(this.scene, infoLeft, infoTop + 88, '', {
-        fontSize: '13px',
-        color: '#ff6b6b',
-      })
-      .setOrigin(0, 0);
+      fontSize: '13px',
+      color: '#ff6b6b',
+    }).setOrigin(0, 0);
 
     // ========== 顶部中间：存活时间 ==========
     this.timeText = createUIText(this.scene, width / 2, topY, '00:00', {
-        fontSize: '20px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5, 0);
+      fontSize: '20px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0);
 
     // ========== Boss 血条（唯一 Boss 出现时显示） ==========
     this.bossContainer = this.scene.add.container(width / 2, topY + 40).setDepth(Layers.HUD_BOSS);
@@ -225,13 +229,12 @@ export class HUD {
 
     // Boss 名称
     this.bossNameText = createUIText(this.scene, 0, -this.bossBarHeight - 6, 'BOSS', {
-        fontSize: '20px',
-        color: '#ff3344',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5, 0);
+      fontSize: '20px',
+      color: '#ff3344',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5, 0);
     this.bossContainer.add(this.bossNameText);
 
     // 血条背景
@@ -248,13 +251,12 @@ export class HUD {
 
     // 血量数值
     this.bossValueText = createUIText(this.scene, 0, this.bossBarHeight / 2, '', {
-        fontSize: '12px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 3,
-      })
-      .setOrigin(0.5);
+      fontSize: '12px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    }).setOrigin(0.5);
     this.bossContainer.add(this.bossValueText);
 
     // ========== 左下角：增益列表（武器/被动） ==========
@@ -341,6 +343,8 @@ export class HUD {
         this.updateLevel();
         this.coinText.setText(`💰 ${player.getCoins?.() ?? 0}`);
         this.updateBuffs(player);
+        // 环境状态（冰面减速 / 风道加速）
+        this.updateEnvState(gameScene, player);
       }
       // 唯一 Boss 顶部大血条
       this.updateBossBar(gameScene.getActiveBoss?.());
@@ -358,13 +362,40 @@ export class HUD {
     }
   }
 
+  /** 环境状态提示（冰面减速 / 风道加速）：位置状态不进 buff 栏，独立显示于 buff 栏上方 */
+  private updateEnvState(gameScene: any, player: any): void {
+    const f = gameScene.getSpeedFactorAt?.(player.x, player.y) ?? 1;
+    if (f < 1) {
+      this.envStateText
+        .setText(`❄ 减速中 -${Math.round((1 - f) * 100)}%`)
+        .setColor('#8ec9f0')
+        .setVisible(true);
+    } else if (f > 1) {
+      this.envStateText
+        .setText(`💨 加速中 +${Math.round((f - 1) * 100)}%`)
+        .setColor('#7fe3a5')
+        .setVisible(true);
+    } else {
+      this.envStateText.setVisible(false);
+    }
+  }
+
   /** 更新血条上方增益列表（被动 + 武器统一展示；stat 属性在 C 键面板） */
   private updateBuffs(player: any): void {
     const passives = player.getPassives?.() || [];
     const weapons = player.getWeapons?.() || [];
 
     // 合并为统一格式（附加 desc 描述，供点击提示显示）
-    const allBuffs: Array<{ id: string; name: string; level: number; maxLevel?: number; desc: string; icon: string; color: number; bt?: number }> = [];
+    const allBuffs: Array<{
+      id: string;
+      name: string;
+      level: number;
+      maxLevel?: number;
+      desc: string;
+      icon: string;
+      color: number;
+      bt?: number;
+    }> = [];
     passives.forEach((p: any) => {
       const opt = UPGRADE_OPTIONS.find((u) => u.id === p.id);
       const vis = this.passiveVisuals[p.id];
@@ -407,6 +438,30 @@ export class HUD {
       });
     }
 
+    // 护盾 / 狂暴（限时增益，同 buff 栏标准：秒数角标 + 到期闪烁）
+    const shieldRem = player.getShieldRemaining?.() ?? 0;
+    if (shieldRem > 0) {
+      allBuffs.push({
+        id: 'shield',
+        name: '能量护盾',
+        level: Math.max(1, Math.ceil(shieldRem / 1000)),
+        desc: '免疫伤害（无敌护盾）',
+        icon: '🛡️',
+        color: 0x4a9de8,
+      });
+    }
+    const rageRem = player.getRageRemaining?.() ?? 0;
+    if (rageRem > 0) {
+      allBuffs.push({
+        id: 'rage',
+        name: '狂暴药水',
+        level: Math.max(1, Math.ceil(rageRem / 1000)),
+        desc: '攻速与攻击力 +50%',
+        icon: '⚡',
+        color: 0xffa040,
+      });
+    }
+
     // 数量变化时重建列表
     if (allBuffs.length !== this.lastBuffCount) {
       this.rebuildBuffList(allBuffs);
@@ -424,15 +479,33 @@ export class HUD {
       }
     });
 
-    // 剧毒到期前闪烁（剩余 <=3s 时 150ms 周期闪烁，警示状态即将结束；未来限时 buff 同标准）
-    if (poisonRem > 0 && poisonRem <= this.statusFlashBefore) {
-      const icon = this.buffIcons.get('poison');
-      if (icon) icon.setVisible(Math.floor(this.scene.time.now / 150) % 2 === 0);
+    // 限时状态到期前闪烁（剧毒/护盾/狂暴，剩余 <=3s 时 150ms 周期闪烁）
+    const timedStates: Array<[string, number]> = [
+      ['poison', poisonRem],
+      ['shield', shieldRem],
+      ['rage', rageRem],
+    ];
+    for (const [id, rem] of timedStates) {
+      if (rem > 0 && rem <= this.statusFlashBefore) {
+        const icon = this.buffIcons.get(id);
+        if (icon) icon.setVisible(Math.floor(this.scene.time.now / 150) % 2 === 0);
+      }
     }
   }
 
   /** 重建增益列表（整体居中于血条上方，buff 多时均匀向两侧铺开） */
-  private rebuildBuffList(buffs: Array<{ id: string; level: number; icon: string; color: number; name?: string; desc?: string; maxLevel?: number; bt?: number }>): void {
+  private rebuildBuffList(
+    buffs: Array<{
+      id: string;
+      level: number;
+      icon: string;
+      color: number;
+      name?: string;
+      desc?: string;
+      maxLevel?: number;
+      bt?: number;
+    }>
+  ): void {
     // 清除旧图标
     this.buffIcons.forEach((icon) => icon.destroy());
     this.buffIcons.clear();
@@ -472,20 +545,18 @@ export class HUD {
 
       // 图标
       const iconText = createUIText(this.scene, this.buffSize / 2, this.buffSize / 2 - 2, b.icon, {
-          fontSize: '16px',
-        })
-        .setOrigin(0.5);
+        fontSize: '16px',
+      }).setOrigin(0.5);
       container.add(iconText);
 
       // 等级
       const levelText = createUIText(this.scene, this.buffSize - 2, this.buffSize - 1, `${b.level}`, {
-          fontSize: '10px',
-          color: '#ffffff',
-          fontStyle: 'bold',
-          stroke: '#000000',
-          strokeThickness: 2,
-        })
-        .setOrigin(1, 1);
+        fontSize: '10px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 2,
+      }).setOrigin(1, 1);
       container.add(levelText);
 
       // 注意：此处不再对图标 Container setInteractive——Phaser 嵌套 Container（uiRoot scale=1/z
@@ -499,7 +570,16 @@ export class HUD {
 
   /** 显示 buff 详情提示（悬浮于 buff 图标正上方，避开手指/鼠标遮挡；越界翻转到图标下方） */
   private showBuffTooltip(
-    b: { id: string; name?: string; level: number; icon: string; color: number; desc?: string; maxLevel?: number; bt?: number },
+    b: {
+      id: string;
+      name?: string;
+      level: number;
+      icon: string;
+      color: number;
+      desc?: string;
+      maxLevel?: number;
+      bt?: number;
+    },
     rect: { b: any; x: number; y: number }
   ): void {
     // 已在显示同一 buff 的提示 → 关闭
@@ -545,29 +625,26 @@ export class HUD {
 
     // 标题行：图标 + 名称 + 等级
     const titleText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxHTotal / 2 + 8, `${b.icon}  ${title}`, {
-        fontSize: '16px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0, 0);
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0, 0);
     this.tooltipContainer.add(titleText);
 
     const lvTextObj = createUIText(this.scene, boxX + boxW / 2 - 12, boxY - boxHTotal / 2 + 8, lvText, {
-        fontSize: '13px',
-        color: '#ffd54f',
-        fontStyle: 'bold',
-      })
-      .setOrigin(1, 0);
+      fontSize: '13px',
+      color: '#ffd54f',
+      fontStyle: 'bold',
+    }).setOrigin(1, 0);
     this.tooltipContainer.add(lvTextObj);
 
     // 描述
     const descText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxHTotal / 2 + 34, b.desc || '', {
-        fontSize: '13px',
-        color: '#bbbbbb',
-        wordWrap: { width: boxW - 24 },
-        lineSpacing: 4,
-      })
-      .setOrigin(0, 0);
+      fontSize: '13px',
+      color: '#bbbbbb',
+      wordWrap: { width: boxW - 24 },
+      lineSpacing: 4,
+    }).setOrigin(0, 0);
     this.tooltipContainer.add(descText);
 
     this.tooltipContainer.setVisible(true);
@@ -666,7 +743,13 @@ export class HUD {
     else if (percent < 0.6) color = 0xffaa00;
 
     this.healthBar.fillStyle(color, 1);
-    this.healthBar.fillRoundedRect(this.barLeftX + 3, this.barTopY + 3, (this.barWidth - 6) * percent, this.barHeight - 6, 4);
+    this.healthBar.fillRoundedRect(
+      this.barLeftX + 3,
+      this.barTopY + 3,
+      (this.barWidth - 6) * percent,
+      this.barHeight - 6,
+      4
+    );
 
     this.healthText.setText(`${Math.ceil(current)}/${max}`);
   }

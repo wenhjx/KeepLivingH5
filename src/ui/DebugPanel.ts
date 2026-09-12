@@ -105,22 +105,27 @@ export class DebugPanel {
     this.updateScrollbar();
 
     // 标题
-    const title = createUIText(this.scene, this.panelX + this.panelWidth / 2, this.panelY + 14, '🔧 调试面板  (按 ` 切换)', {
+    const title = createUIText(
+      this.scene,
+      this.panelX + this.panelWidth / 2,
+      this.panelY + 14,
+      '🔧 调试面板  (按 ` 切换)',
+      {
         fontSize: '13px',
         color: '#ff6b35',
         fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
+      }
+    ).setOrigin(0.5);
     this.container.add(title);
 
     // 关闭按钮（标题栏右侧；触屏端没有 ` 快捷键，面板打开后又会盖住唤起按钮，
     // 必须有可视关闭入口。桌面端同样可用）
     const closeBtn = createUIText(this.scene, this.panelX + this.panelWidth - 14, this.panelY + 14, '✕', {
-        fontSize: '16px',
-        color: '#ff6b35',
-        fontStyle: 'bold',
-        padding: { left: 8, right: 8, top: 2, bottom: 2 },
-      })
+      fontSize: '16px',
+      color: '#ff6b35',
+      fontStyle: 'bold',
+      padding: { left: 8, right: 8, top: 2, bottom: 2 },
+    })
       .setOrigin(1, 0.5)
       .setInteractive({ useHandCursor: true });
     closeBtn.on('pointerdown', () => this.toggle());
@@ -155,103 +160,179 @@ export class DebugPanel {
 
     // 快捷操作
     this.addSectionTitle(col, '⚡ 快捷操作');
-    this.addRow(col, { text: '❤️ 回满血', fn: () => this.getPlayer()?.heal(9999) }, { text: '⭐ +1 级', fn: () => this.addLevel(1) });
-    this.addRow(col, { text: '🌟 +5 级', fn: () => this.addLevel(5) }, { text: '💀 清空敌人', fn: () => this.clearEnemies() });
-    this.addRow(col, { text: '🎁 宝箱', fn: () => {
-      const p = this.getPlayer();
-      const gs = this.scene.scene.get('GameScene') as any;
-      if (p && gs?.spawnPickup) {
-        gs.spawnPickup({ type: 'chest', texture: 'pickup_chest', value: 0, magnetSpeed: 200 }, p.x + 40, p.y);
+    this.addRow(
+      col,
+      { text: '❤️ 回满血', fn: () => this.getPlayer()?.heal(9999) },
+      { text: '⭐ +1 级', fn: () => this.addLevel(1) }
+    );
+    this.addRow(
+      col,
+      { text: '🌟 +5 级', fn: () => this.addLevel(5) },
+      { text: '💀 清空敌人', fn: () => this.clearEnemies() }
+    );
+    this.addRow(
+      col,
+      {
+        text: '🎁 宝箱',
+        fn: () => {
+          const p = this.getPlayer();
+          const gs = this.scene.scene.get('GameScene') as any;
+          if (p && gs?.spawnPickup) {
+            gs.spawnPickup({ type: 'chest', texture: 'pickup_chest', value: 0, magnetSpeed: 200 }, p.x + 40, p.y);
+          }
+        },
+      },
+      {
+        text: '🦹 精英怪',
+        fn: () => {
+          const p = this.getPlayer();
+          const gs = this.scene.scene.get('GameScene') as any;
+          if (p && gs?.spawnEnemy) {
+            gs.spawnEnemy(
+              {
+                id: 'elite_test',
+                type: 'elite',
+                name: '精英僵尸',
+                texture: 'enemy_normal',
+                maxHealth: 200,
+                moveSpeed: 70,
+                attackPower: 20,
+                attackRange: 35,
+                attackCooldown: 1200,
+                expReward: 30,
+                scoreReward: 60,
+                size: 28,
+                color: 0xffaa00,
+              },
+              p.x + 160,
+              p.y
+            );
+          }
+        },
       }
-    } }, { text: '🦹 精英怪', fn: () => {
-      const p = this.getPlayer();
-      const gs = this.scene.scene.get('GameScene') as any;
-      if (p && gs?.spawnEnemy) {
-        gs.spawnEnemy(
-          { id: 'elite_test', type: 'elite', name: '精英僵尸', texture: 'enemy_normal', maxHealth: 200, moveSpeed: 70, attackPower: 20, attackRange: 35, attackCooldown: 1200, expReward: 30, scoreReward: 60, size: 28, color: 0xffaa00 },
-          p.x + 160, p.y
-        );
-      }
-    } });
-    this.addRow(col, { text: '🏆 清空成就', fn: () => this.callDebug('resetAchievements') }, { text: '🧨 清空全部', fn: () => this.callDebug('resetAllData') });
-    this.addRow(col, { text: '⚡ 跳满级', fn: () => this.callDebug('setLevel', 100) }, { text: '♾ 超限+1', fn: () => this.callDebug('addOverflow', 1) });
-    this.addRow(col, { text: '♾ 超限+10', fn: () => this.callDebug('addOverflow', 10) }, { text: '♾ 超限+50', fn: () => this.callDebug('addOverflow', 50) });
+    );
+    this.addRow(
+      col,
+      { text: '🏆 清空成就', fn: () => this.callDebug('resetAchievements') },
+      { text: '🧨 清空全部', fn: () => this.callDebug('resetAllData') }
+    );
+    this.addRow(
+      col,
+      { text: '⚡ 跳满级', fn: () => this.callDebug('setLevel', 100) },
+      { text: '♾ 超限+1', fn: () => this.callDebug('addOverflow', 1) }
+    );
+    this.addRow(
+      col,
+      { text: '♾ 超限+10', fn: () => this.callDebug('addOverflow', 10) },
+      { text: '♾ 超限+50', fn: () => this.callDebug('addOverflow', 50) }
+    );
+    this.addRow(col, { text: '🗺 解锁全地图', fn: () => this.callDebug('unlockAllLevels') });
     this.addAutoPlayRow(col);
     this.addThemeRow(col);
     this.addSectionTitle(col, '🧪 试玩刷怪（环绕玩家，测特效/伤害）');
-    this.addRow3(col,
+    this.addRow3(
+      col,
       { text: '🦠 普通×5', fn: () => this.callDebug('spawnTestEnemies', 'normal', 5) },
       { text: '🏃 疾速×5', fn: () => this.callDebug('spawnTestEnemies', 'fast', 5) },
-      { text: '🛡 重装×3', fn: () => this.callDebug('spawnTestEnemies', 'tank', 3) },
+      { text: '🛡 重装×3', fn: () => this.callDebug('spawnTestEnemies', 'tank', 3) }
     );
-    this.addRow3(col,
+    this.addRow3(
+      col,
       { text: '🏹 远程×5', fn: () => this.callDebug('spawnTestEnemies', 'ranged', 5) },
       { text: '🧟 精英×2', fn: () => this.callDebug('spawnTestEnemies', 'elite', 2) },
-      { text: '💣 自爆×5', fn: () => this.callDebug('spawnTestEnemies', 'suicider', 5) },
+      { text: '💣 自爆×5', fn: () => this.callDebug('spawnTestEnemies', 'suicider', 5) }
     );
     this.addRow(col, { text: '🐲 Boss×1', fn: () => this.callDebug('spawnBoss') });
-    const spawnTip = createUIText(this.scene, 0, col.y, '更多类型/倍率：__debug.spawnTestEnemies(splitter, 3, {hpMult:5, radius:300})', {
+    const spawnTip = createUIText(
+      this.scene,
+      0,
+      col.y,
+      '更多类型/倍率：__debug.spawnTestEnemies(splitter, 3, {hpMult:5, radius:300})',
+      {
         fontSize: '10px',
         color: '#aa8866',
-      })
-      .setOrigin(0, 0);
+      }
+    ).setOrigin(0, 0);
     this.content.add(spawnTip);
     col.step(this.tipSpacing);
 
     // 游戏速度调节（0.25~4 倍速，模拟明日方舟 2 倍速 / 慢速观察细节；快捷键 - / =）
     this.addSectionTitle(col, '⏱ 游戏速度（快捷键 -/=）');
     this.speedText = createUIText(this.scene, 0, col.y, `当前速度 ×${this.getGameSpeed().toFixed(2)}`, {
-        fontSize: '11px',
-        color: '#88ccff',
-      })
-      .setOrigin(0, 0);
+      fontSize: '11px',
+      color: '#88ccff',
+    }).setOrigin(0, 0);
     this.content.add(this.speedText);
     col.step(this.tipSpacing);
-    this.addRow3(col,
+    this.addRow3(
+      col,
       { text: '🐢 0.5×', fn: () => this.setGameSpeed(0.5) },
       { text: '▶ 1×', fn: () => this.setGameSpeed(1) },
-      { text: '🐇 2×', fn: () => this.setGameSpeed(2) },
+      { text: '🐇 2×', fn: () => this.setGameSpeed(2) }
     );
-    this.addRow(col, { text: '⏪ 减速', fn: () => this.adjustSpeed(-0.25) }, { text: '⏩ 加速', fn: () => this.adjustSpeed(0.25) });
+    this.addRow(
+      col,
+      { text: '⏪ 减速', fn: () => this.adjustSpeed(-0.25) },
+      { text: '⏩ 加速', fn: () => this.adjustSpeed(0.25) }
+    );
     // 高倍速下 AI 决策粒度误差随物理位移放大、易跟不上，自动游玩建议 ≤2×（倍速定位为调试/观察）
     const tip = createUIText(this.scene, 0, col.y, '⚠ 自动游玩建议 ≤2×（高倍速决策易跟不上）', {
-        fontSize: '10px',
-        color: '#aa8866',
-      })
-      .setOrigin(0, 0);
+      fontSize: '10px',
+      color: '#aa8866',
+    }).setOrigin(0, 0);
     this.content.add(tip);
     col.step(this.tipSpacing);
 
     // 属性调整
     this.addSectionTitle(col, '📊 属性调整');
-    this.addRow(col, { text: '🧲 拾取+50', fn: () => this.addPickupRadius(50) }, { text: '🧲 拾取+200', fn: () => this.addPickupRadius(200) });
-    this.addRow(col, { text: '🧲 全屏拾取', fn: () => this.setPickupRadius(9999) }, { text: '📈 +1000 经验', fn: () => this.addExp(1000) });
+    this.addRow(
+      col,
+      { text: '🧲 拾取+50', fn: () => this.addPickupRadius(50) },
+      { text: '🧲 拾取+200', fn: () => this.addPickupRadius(200) }
+    );
+    this.addRow(
+      col,
+      { text: '🧲 全屏拾取', fn: () => this.setPickupRadius(9999) },
+      { text: '📈 +1000 经验', fn: () => this.addExp(1000) }
+    );
 
     // 属性升级（与 UPGRADE_OPTIONS.stat 对齐）
     this.addSectionTitle(col, '📈 属性升级（点击应用）');
-    this.addOptionsRows(col, UPGRADE_OPTIONS.filter((o) => o.type === 'stat'));
+    this.addOptionsRows(
+      col,
+      UPGRADE_OPTIONS.filter((o) => o.type === 'stat')
+    );
 
     // 武器（与 UPGRADE_OPTIONS.weapon 对齐）
     this.addSectionTitle(col, '🔫 武器（点击获取/升级）');
-    this.addOptionsRows(col, UPGRADE_OPTIONS.filter((o) => o.type === 'weapon'));
+    this.addOptionsRows(
+      col,
+      UPGRADE_OPTIONS.filter((o) => o.type === 'weapon')
+    );
 
     // 被动（与 UPGRADE_OPTIONS.passive 对齐）
     this.addSectionTitle(col, '✨ 被动技能（点击获取/升级）');
-    this.addOptionsRows(col, UPGRADE_OPTIONS.filter((o) => o.type === 'passive'));
+    this.addOptionsRows(
+      col,
+      UPGRADE_OPTIONS.filter((o) => o.type === 'passive')
+    );
 
     // 道具栏（物品栏六种主动道具，点击加入；与商店即时生效道具分区，避免混淆）
     this.addSectionTitle(col, '🎒 道具栏（点击加入）');
-    this.addRow(col,
+    this.addRow(
+      col,
       { text: '🛡️ 护盾+1', fn: () => this.callDebug('giveItem', 'shield') },
-      { text: '⚡ 狂暴+1', fn: () => this.callDebug('giveItem', 'rage') },
+      { text: '⚡ 狂暴+1', fn: () => this.callDebug('giveItem', 'rage') }
     );
-    this.addRow(col,
+    this.addRow(
+      col,
       { text: '💣 炸弹+1', fn: () => this.callDebug('giveItem', 'bomb') },
-      { text: '❤️ 血包+1', fn: () => this.callDebug('giveItem', 'heal') },
+      { text: '❤️ 血包+1', fn: () => this.callDebug('giveItem', 'heal') }
     );
-    this.addRow(col,
+    this.addRow(
+      col,
       { text: '⏳ 减速+1', fn: () => this.callDebug('giveItem', 'slow') },
-      { text: '🧲 磁铁+1', fn: () => this.callDebug('giveItem', 'magnet') },
+      { text: '🧲 磁铁+1', fn: () => this.callDebug('giveItem', 'magnet') }
     );
 
     // 商店道具（即时生效，方便测试；不叠加属性，不影响玩家状态）
@@ -266,15 +347,26 @@ export class DebugPanel {
     const curHp = gs?.enemyHpBoost ?? 1;
     const curAtk = gs?.enemyAtkBoost ?? 1;
     this.enemyBoostText = createUIText(this.scene, 0, col.y, `当前：血量×${curHp} · 攻击×${curAtk}`, {
-        fontSize: '11px',
-        color: '#88ff88',
-      })
-      .setOrigin(0, 0);
+      fontSize: '11px',
+      color: '#88ff88',
+    }).setOrigin(0, 0);
     this.content.add(this.enemyBoostText);
     col.step(this.tipSpacing);
-    this.addRow(col, { text: '🩸 血量×2', fn: () => this.setEnemyBoost(2, -1) }, { text: '⚔️ 攻击×2', fn: () => this.setEnemyBoost(-1, 2) });
-    this.addRow(col, { text: '🩸 血量×4', fn: () => this.setEnemyBoost(4, -1) }, { text: '⚔️ 攻击×4', fn: () => this.setEnemyBoost(-1, 4) });
-    this.addRow(col, { text: '🩸 血量×1', fn: () => this.setEnemyBoost(1, -1) }, { text: '⚔️ 攻击×1', fn: () => this.setEnemyBoost(-1, 1) });
+    this.addRow(
+      col,
+      { text: '🩸 血量×2', fn: () => this.setEnemyBoost(2, -1) },
+      { text: '⚔️ 攻击×2', fn: () => this.setEnemyBoost(-1, 2) }
+    );
+    this.addRow(
+      col,
+      { text: '🩸 血量×4', fn: () => this.setEnemyBoost(4, -1) },
+      { text: '⚔️ 攻击×4', fn: () => this.setEnemyBoost(-1, 4) }
+    );
+    this.addRow(
+      col,
+      { text: '🩸 血量×1', fn: () => this.setEnemyBoost(1, -1) },
+      { text: '⚔️ 攻击×1', fn: () => this.setEnemyBoost(-1, 1) }
+    );
 
     // 计算可滚动上限（内容总高 - 可视区高）
     this.maxScroll = Math.max(0, col.y + this.padding - this.viewportH);
@@ -306,7 +398,19 @@ export class DebugPanel {
     const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
     // 道具栏（6 主动道具 3 行）+ 商店道具（FALLBACK 2 行 + 复活币 1 行）
     const shopRows = Math.ceil(FALLBACK_UPGRADES.length / 2);
-    return 28 + sectionH(6) + sectionH(4) + sectionH(2) + sectionH(statRows) + sectionH(weaponRows) + sectionH(passiveRows) + sectionH(3) + sectionH(shopRows + 1) + sectionH(4) + this.padding;
+    return (
+      28 +
+      sectionH(6) +
+      sectionH(4) +
+      sectionH(2) +
+      sectionH(statRows) +
+      sectionH(weaponRows) +
+      sectionH(passiveRows) +
+      sectionH(3) +
+      sectionH(shopRows + 1) +
+      sectionH(4) +
+      this.padding
+    );
   }
 
   /** 分区标题（content 内；前后留白统一由本函数管理，避免调用处间距不一致） */
@@ -314,11 +418,10 @@ export class DebugPanel {
     col.step(this.sectionSpacing);
     const y = col.y;
     const title = createUIText(this.scene, 0, y, text, {
-        fontSize: '11px',
-        color: '#ffb347',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0, 0);
+      fontSize: '11px',
+      color: '#ffb347',
+      fontStyle: 'bold',
+    }).setOrigin(0, 0);
     this.content.add(title);
     col.step(18);
   }
@@ -327,7 +430,8 @@ export class DebugPanel {
   private addRow(col: UILayout, left?: BtnSpec, right?: BtnSpec): void {
     const y = col.y;
     if (left) this.placeButton(this.makeButton(left.text, left.fn, this.btnWidth), 0, y);
-    if (right) this.placeButton(this.makeButton(right.text, right.fn, this.btnWidth), this.btnWidth + this.btnSpacing, y);
+    if (right)
+      this.placeButton(this.makeButton(right.text, right.fn, this.btnWidth), this.btnWidth + this.btnSpacing, y);
     col.step(this.btnHeight + this.btnSpacing);
   }
 
@@ -366,10 +470,9 @@ export class DebugPanel {
     bg.strokeRoundedRect(0, 0, width, this.btnHeight, 4);
 
     const txt = createUIText(this.scene, width / 2, this.btnHeight / 2, text, {
-        fontSize: '11px',
-        color: '#cccccc',
-      })
-      .setOrigin(0.5);
+      fontSize: '11px',
+      color: '#cccccc',
+    }).setOrigin(0.5);
 
     const hit = this.scene.add
       .rectangle(width / 2, this.btnHeight / 2, width, this.btnHeight, 0xffffff, 0)
@@ -420,10 +523,9 @@ export class DebugPanel {
     bg.strokeRoundedRect(0, 0, fullW, this.btnHeight, 4);
 
     this.autoPlayText = createUIText(this.scene, fullW / 2, this.btnHeight / 2, '🤖 AI 托管：关闭（点击开启）', {
-        fontSize: '11px',
-        color: '#cccccc',
-      })
-      .setOrigin(0.5);
+      fontSize: '11px',
+      color: '#cccccc',
+    }).setOrigin(0.5);
     this.autoPlayBg = bg;
 
     const hit = this.scene.add
@@ -482,10 +584,9 @@ export class DebugPanel {
     bg.strokeRoundedRect(0, 0, fullW, this.btnHeight, 4);
 
     this.themeText = createUIText(this.scene, fullW / 2, this.btnHeight / 2, '', {
-        fontSize: '11px',
-        color: '#cccccc',
-      })
-      .setOrigin(0.5);
+      fontSize: '11px',
+      color: '#cccccc',
+    }).setOrigin(0.5);
     this.themeBg = bg;
 
     const hit = this.scene.add
@@ -494,7 +595,9 @@ export class DebugPanel {
 
     const updateState = (theme: 'pixel' | 'classic') => {
       if (this.themeText) {
-        this.themeText.setText(theme === 'classic' ? '🎨 主题：经典矢量（点击切像素）' : '🎨 主题：像素风（点击切经典）');
+        this.themeText.setText(
+          theme === 'classic' ? '🎨 主题：经典矢量（点击切像素）' : '🎨 主题：像素风（点击切经典）'
+        );
       }
       bg.clear();
       const on = theme === 'classic';

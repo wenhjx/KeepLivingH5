@@ -48,9 +48,15 @@ export class GameManager {
   private _pendingRun: SavedRun | null = null;
   /** 最近一局结算快照（endRun 定格，供结算场景读，避免延时击杀/实时值污染） */
   private _lastRunSummary: {
-    wave: number; level: number; kills: number; score: number;
-    survivalTime: number; isVictory: boolean; highScore: number;
-  } | null = null;  private _initialized = false;
+    wave: number;
+    level: number;
+    kills: number;
+    score: number;
+    survivalTime: number;
+    isVictory: boolean;
+    highScore: number;
+  } | null = null;
+  private _initialized = false;
   /** 试玩场地：复用主场景全部战斗逻辑，但不产生任何收益（不存档/不计统计/不解锁/不触发成就） */
   private _testMode = false;
   /** 当前激活角色 id（默认拓荒者；未来主角选择界面切换此值） */
@@ -93,9 +99,7 @@ export class GameManager {
     if (typeof navigator === 'undefined') return false;
 
     // 1. userAgent 正则匹配（覆盖大多数移动设备和浏览器设备模拟）
-    const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
+    const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     // 2. 触摸点检测（触摸设备至少 1 个点）
     const hasTouch = (navigator.maxTouchPoints || 0) > 0;
@@ -472,7 +476,12 @@ export class GameManager {
     if (!this._saveSystem) return;
     const existing = this._saveSystem.load();
     this._saveSystem.save({
-      ...(existing ?? { version: 1, timestamp: Date.now(), stats: this._stats, settings: { quality: this._qualityLevel, soundVolume: 1, musicVolume: 0.7, muted: false } }),
+      ...(existing ?? {
+        version: 1,
+        timestamp: Date.now(),
+        stats: this._stats,
+        settings: { quality: this._qualityLevel, soundVolume: 1, musicVolume: 0.7, muted: false },
+      }),
       achievements: data,
     });
   }
@@ -502,6 +511,14 @@ export class GameManager {
     const cfg = LEVELS[index];
     if (!cfg || this._unlocked.includes(cfg.id)) return;
     this._unlocked.push(cfg.id);
+    this.saveProgress();
+  }
+
+  /** 解锁全部关卡（调试用，无视试玩场地限制） */
+  unlockAllLevels(): void {
+    for (const cfg of LEVELS) {
+      if (!this._unlocked.includes(cfg.id)) this._unlocked.push(cfg.id);
+    }
     this.saveProgress();
   }
 

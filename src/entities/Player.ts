@@ -23,8 +23,8 @@ import { Layers } from '../constants/Layers';
 export const BREAKTHROUGH_STATS: string[] = [
   'attack_power', // 力量强化：攻击力 +20%/级
   'attack_speed', // 急速：攻速 +15%/级
-  'crit_rate',    // 暴击精通：暴击率 +10%/级（突破可到100%+，溢出转爆伤）
-  'crit_damage',  // 致命一击：暴击伤害 +50%/级
+  'crit_rate', // 暴击精通：暴击率 +10%/级（突破可到100%+，溢出转爆伤）
+  'crit_damage', // 致命一击：暴击伤害 +50%/级
 ];
 
 /**
@@ -35,7 +35,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // 属性
   private stats: PlayerStats;
   /** percent stat 的基准值快照（构造/读档时记录，含成就加成）：percent 加算以它为底，杜绝乘算指数爆炸 */
-  private _baseStats: PlayerStats = {} as PlayerStats;  // 武器列表
+  private _baseStats: PlayerStats = {} as PlayerStats; // 武器列表
   private weapons: Map<string, { config: WeaponConfig; level: number; cooldown: number }> = new Map();
   /** 环形冲击波爆发计数：每 5s 周期内快速 3 连发 */
   private novaBurstCount = 0;
@@ -258,7 +258,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private calcWeaponDamage(config: WeaponConfig, level: number): number {
     const atk = Number(this.getStats().attackPower);
     const attackPower = isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
-    const raw = config.damage * (1 + level * 0.2) * attackPower / 10;
+    const raw = (config.damage * (1 + level * 0.2) * attackPower) / 10;
     return isFinite(raw) && raw > 0 ? raw : config.damage;
   }
 
@@ -306,12 +306,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.playWeaponSfx(config.id);
 
     // 枪口闪光（射击瞬间，颜色随武器；霰弹多弹只闪一次）
-    scene.getFXManager?.()?.muzzleFlash(
-      this.x + Math.cos(angle) * 18,
-      this.y + Math.sin(angle) * 18,
-      angle,
-      visual.color ?? 0xffffff
-    );
+    scene
+      .getFXManager?.()
+      ?.muzzleFlash(this.x + Math.cos(angle) * 18, this.y + Math.sin(angle) * 18, angle, visual.color ?? 0xffffff);
 
     // 发射子弹（霰弹等可随等级增加弹丸数）
     const baseCount = config.projectileCount || 1;
@@ -348,9 +345,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
    * 获取武器视觉参数（颜色/缩放/弹道拖尾），用于区分不同武器子弹
    * 每把武器一套专属视觉：颜色 + 形状 + 拖尾颜色/密度
    */
-  private getWeaponVisual(
-    weaponId: string
-  ): { color?: number; scaleX?: number; scaleY?: number; trailColor?: number; trailEvery?: number } {
+  private getWeaponVisual(weaponId: string): {
+    color?: number;
+    scaleX?: number;
+    scaleY?: number;
+    trailColor?: number;
+    trailEvery?: number;
+  } {
     switch (weaponId) {
       case 'machine_gun':
         return { color: 0xffcc00, scaleX: 0.7, scaleY: 0.7, trailColor: 0xffaa00, trailEvery: 3 }; // 橙黄小弹+橙黄拖尾
@@ -371,14 +372,30 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private playWeaponSfx(weaponId: string): void {
     const audio = AudioManager.getInstance();
     switch (weaponId) {
-      case 'shotgun': audio.playSfx(SOUND_KEYS.SFX_SHOOT_SHOTGUN, 0.8); break;
-      case 'machine_gun': audio.playSfx(SOUND_KEYS.SFX_SHOOT_MACHINE_GUN, 0.6); break;
-      case 'laser': audio.playSfx(SOUND_KEYS.SFX_SHOOT_LASER, 0.7); break;
-      case 'rocket': audio.playSfx(SOUND_KEYS.SFX_SHOOT_ROCKET, 1); break;
-      case 'boomerang': audio.playSfx(SOUND_KEYS.SFX_BOOMERANG, 0.8); break;
-      case 'lightsaber': audio.playSfx(SOUND_KEYS.SFX_MELEE_SWING, 0.7); break;
-      case 'nova': audio.playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.85); break;
-      default: audio.playSfx(SOUND_KEYS.SFX_SHOOT_DEFAULT, 0.5); break;
+      case 'shotgun':
+        audio.playSfx(SOUND_KEYS.SFX_SHOOT_SHOTGUN, 0.8);
+        break;
+      case 'machine_gun':
+        audio.playSfx(SOUND_KEYS.SFX_SHOOT_MACHINE_GUN, 0.6);
+        break;
+      case 'laser':
+        audio.playSfx(SOUND_KEYS.SFX_SHOOT_LASER, 0.7);
+        break;
+      case 'rocket':
+        audio.playSfx(SOUND_KEYS.SFX_SHOOT_ROCKET, 1);
+        break;
+      case 'boomerang':
+        audio.playSfx(SOUND_KEYS.SFX_BOOMERANG, 0.8);
+        break;
+      case 'lightsaber':
+        audio.playSfx(SOUND_KEYS.SFX_MELEE_SWING, 0.7);
+        break;
+      case 'nova':
+        audio.playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.85);
+        break;
+      default:
+        audio.playSfx(SOUND_KEYS.SFX_SHOOT_DEFAULT, 0.5);
+        break;
     }
   }
 
@@ -592,7 +609,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.poisonDamage = Math.max(this.poisonDamage, dps);
     this.poisonTimer = Math.max(this.poisonTimer, duration);
     this.poisonTick = 500;
-
   }
 
   /**
@@ -857,9 +873,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   /** 计算指定等级升级所需经验（与 GameConfig.LEVEL 曲线一致） */
   private calcExpToNext(level: number): number {
-    return Math.floor(
-      GameConfig.LEVEL.baseExp * Math.pow(level, GameConfig.LEVEL.expGrowth)
-    );
+    return Math.floor(GameConfig.LEVEL.baseExp * Math.pow(level, GameConfig.LEVEL.expGrowth));
   }
 
   // ========== 武器管理 ==========
@@ -1168,6 +1182,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** 狂暴是否激活中（供 AI/UI 判断） */
   isRageActive(): boolean {
     return this.rageActive;
+  }
+
+  /** 护盾剩余时长(ms)，0 = 无护盾（护盾期受击免伤，invincibleTimer 不被受击覆盖） */
+  getShieldRemaining(): number {
+    return this.shieldActive ? Math.max(0, this.invincibleTimer) : 0;
+  }
+
+  /** 狂暴剩余时长(ms)，0 = 无狂暴 */
+  getRageRemaining(): number {
+    return this.rageTimer;
   }
 
   getLevel(): number {

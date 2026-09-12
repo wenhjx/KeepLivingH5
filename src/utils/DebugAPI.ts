@@ -66,6 +66,8 @@ export interface DebugAPI {
   resetAchievements: () => string;
   /** 彻底清空全部存档（成就/统计/最高分/对局），刷新生效 */
   resetAllData: () => string;
+  /** 解锁全部关卡（调试用，回主菜单可选冰原等地图） */
+  unlockAllLevels: () => string;
   /** 开关 AI 自动玩 */
   autoPlay: (enabled?: boolean) => boolean;
   /** 稳定测试态：无敌 + 不升级 + 关闭所有覆盖面板（避免升级/商店弹窗干扰 UI 点击测试） */
@@ -260,6 +262,13 @@ export function initDebugAPI(game: Phaser.Game): void {
       return 'all data cleared';
     },
 
+    /** 解锁全部关卡（调试用） */
+    unlockAllLevels: () => {
+      gm.unlockAllLevels();
+      console.log('[debug] 全部关卡已解锁，回主菜单可选冰原等地图');
+      return 'all levels unlocked';
+    },
+
     autoPlay: (enabled?: boolean) => {
       const gs = getGameScene();
       if (!gs) {
@@ -301,7 +310,21 @@ export function initDebugAPI(game: Phaser.Game): void {
         };
         gs.spawnEnemy(c, player.x + Math.cos(ang) * radius, player.y + Math.sin(ang) * radius);
       }
-      return '已生成 ' + n + ' × ' + cfg.name + '（hp×' + hpMult + ' atk×' + atkMult + ' spd×' + spdMult + '，环绕半径 ' + radius + 'px）';
+      return (
+        '已生成 ' +
+        n +
+        ' × ' +
+        cfg.name +
+        '（hp×' +
+        hpMult +
+        ' atk×' +
+        atkMult +
+        ' spd×' +
+        spdMult +
+        '，环绕半径 ' +
+        radius +
+        'px）'
+      );
     },
 
     spawnBoss: () => {
@@ -316,7 +339,9 @@ export function initDebugAPI(game: Phaser.Game): void {
       }
       (gs.waveManager as any).resetBossState?.();
       const ok = (gs.waveManager as any).forceSpawnBoss?.();
-      return ok ? 'Boss 已生成（当前关卡 Boss 类型，完整血条/演出）' : 'Boss 已在场或生成失败（waveManager.forceSpawnBoss）';
+      return ok
+        ? 'Boss 已生成（当前关卡 Boss 类型，完整血条/演出）'
+        : 'Boss 已在场或生成失败（waveManager.forceSpawnBoss）';
     },
     setTheme: (theme: 'pixel' | 'classic') => {
       GameConfig.VISUAL_THEME = theme;
