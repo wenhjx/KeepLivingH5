@@ -22,6 +22,7 @@ export class GameFeedback {
   private scene: Phaser.Scene;
   private unsubs: Array<() => void> = [];
   private banner: Phaser.GameObjects.Text | null = null;
+  private bannerResizeHandler: (() => void) | null = null;
   private lastCritAt = 0;
 
   constructor(scene: Phaser.Scene) {
@@ -50,10 +51,11 @@ export class GameFeedback {
 
     const banner = createUIText(
       scene,
-      // scrollFactor(0) 时显示位置 = x × zoom，需除以 zoom 才真正居中
-      scene.cameras.main.width / 2 / scene.cameras.main.zoom,
-      // y 按屏幕高度 18% 定位（相对比例，分辨率/缩放变化时位置不跑偏；与 Boss 入场横幅 16% 错开避免叠字）
-      scene.cameras.main.height * 0.18 / scene.cameras.main.zoom,
+      // 屏幕目标位置：用 Scale Manager 权威视口尺寸（宽 50% / 高 18%）。
+      // scrollFactor(0) 对象显示位置 = 局部坐标 × zoom，需除以 zoom 才落在目标屏幕位置。
+      // 不用 cam.width/height：启动/超宽屏时序下相机参数可能尚未就绪（曾导致横幅被甩到屏幕外）。
+      scene.scale.width * 0.5 / (scene.cameras.main.zoom || 1),
+      scene.scale.height * 0.18 / (scene.cameras.main.zoom || 1),
       isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${wave} 波`,
       {
         fontSize: (isBoss ? 44 : 34) * GameConfig.uiScale + 'px',
@@ -71,6 +73,18 @@ export class GameFeedback {
       .setScale(0.7);
 
     this.banner = banner;
+
+    // 兜底重定位：启动/窗口 resize 时序下相机参数可能尚未就绪，
+    // 创建后一帧 + 显示期间每次 resize 都按权威尺寸重算位置，保证任何时序下落在目标屏幕位置
+    const relocate = (): void => {
+      if (!banner.active) return;
+      const z = scene.cameras.main.zoom || 1;
+      banner.setPosition(scene.scale.width * 0.5 / z, scene.scale.height * 0.18 / z);
+    };
+    scene.time.delayedCall(32, relocate);
+    if (this.bannerResizeHandler) scene.scale.off(Phaser.Scale.Events.RESIZE, this.bannerResizeHandler);
+    this.bannerResizeHandler = relocate;
+    scene.scale.on(Phaser.Scale.Events.RESIZE, this.bannerResizeHandler);
 
     // 入场：淡入 + 弹跳放大
     scene.tweens.add({
@@ -96,6 +110,10 @@ export class GameFeedback {
     if (this.banner) {
       this.banner.destroy();
       this.banner = null;
+    }
+    if (this.bannerResizeHandler) {
+      this.scene.scale.off(Phaser.Scale.Events.RESIZE, this.bannerResizeHandler);
+      this.bannerResizeHandler = null;
     }
   }
 

@@ -1030,7 +1030,7 @@ export class GameScene extends Phaser.Scene {
     const cam = this.cameras.main;
     const cfg = (boss as any).config as EnemyConfig | undefined;
     const name = cfg?.name ?? 'BOSS';
-    const banner = createUIText(this, cam.width / 2 / cam.zoom, cam.height * 0.16 / cam.zoom, `⚠ ${name} 来袭`, {
+    const banner = createUIText(this, this.scale.width * 0.5 / (cam.zoom || 1), this.scale.height * 0.16 / (cam.zoom || 1), `⚠ ${name} 来袭`, {
       fontSize: '30px',
       color: '#ff5555',
       fontStyle: 'bold',
