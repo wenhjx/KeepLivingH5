@@ -48,6 +48,8 @@ export interface AffixDef {
   slowOnHit?: { factor: number; duration: number };
   /** 死亡召唤：生成 type 小怪 count 只（机制词缀） */
   summonOnDeath?: { type: string; count: number };
+  /** 应对提示（词缀图鉴显示，玩家侧反制手段） */
+  counter?: string;
 }
 
 export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
@@ -58,6 +60,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0xff8844,
     rarity: 'common',
     description: '攻击 ×1.2、移速 ×1.3，横冲直撞的危险分子',
+    counter: '攻速移速双高，别贪刀贴身，保持距离风筝',
     atkMult: 1.2,
     speedMult: 1.3,
   },
@@ -68,6 +71,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0x44aaff,
     rarity: 'common',
     description: '额外护盾吸收 60% 最大生命值的伤害',
+    counter: '先破护盾再打本体，穿透类高伤武器最划算',
     shieldPercent: 0.6,
   },
   swift: {
@@ -77,6 +81,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0x88ff44,
     rarity: 'rare',
     description: '移速 ×1.4，难以甩开',
+    counter: '移速飞快难拉开，用范围/追踪武器覆盖',
     speedMult: 1.4,
   },
   thick: {
@@ -86,6 +91,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0xddaa44,
     rarity: 'rare',
     description: '生命 ×1.5、受到伤害 -20%',
+    counter: '血厚又减伤，高伤单发武器更有效',
     hpMult: 1.5,
     dmgReduction: 0.2,
   },
@@ -96,6 +102,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0xcc88ff,
     rarity: 'epic',
     description: '死亡时分裂成 2 只小怪',
+    counter: '死亡会裂成小怪，优先击杀别让它死在怪堆里',
     splitOnDeath: { type: 'normal', count: 2 },
   },
   venom: {
@@ -105,6 +112,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0x66ff66,
     rarity: 'epic',
     description: '命中玩家施加持续中毒（3 秒，每秒造成攻击力 8% 的伤害，无视无敌帧）',
+    counter: '被打中会持续中毒掉血，注意躲避并及时回血',
     poison: { dpsMult: 0.08, duration: 3000 },
   },
   lifesteal: {
@@ -114,6 +122,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0xdd4466,
     rarity: 'rare',
     description: '命中玩家时回复造成伤害 25% 的生命，越打越难缠',
+    counter: '越打越回血，持续压制别给它喘息',
     lifestealMult: 0.25,
   },
   explosive: {
@@ -123,6 +132,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0xffaa44,
     rarity: 'rare',
     description: '死亡时爆炸：对 130px 内玩家造成攻击力 60% 的伤害',
+    counter: '死亡会爆炸，保持距离再击杀',
     explodeOnDeath: { radius: 130, dmgMult: 0.6 },
   },
   frost: {
@@ -132,6 +142,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0x88ddff,
     rarity: 'epic',
     description: '命中玩家减速 30%（2 秒），被黏上就难甩开',
+    counter: '被打中减速 2 秒，注意走位别被黏上',
     slowOnHit: { factor: 0.7, duration: 2000 },
   },
   summon: {
@@ -141,6 +152,7 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     color: 0xcc88aa,
     rarity: 'epic',
     description: '死亡时召来 1 只冲锋怪增援，死了也不消停',
+    counter: '死亡召冲锋怪，优先集火本体',
     summonOnDeath: { type: 'charger', count: 1 },
   },
 };
