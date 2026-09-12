@@ -53,6 +53,7 @@ export class EnemyCodexScene extends Phaser.Scene {
   private titleText!: Phaser.GameObjects.Text;
   private enemyTabBtn!: Phaser.GameObjects.Text;
   private affixTabBtn!: Phaser.GameObjects.Text;
+  private tabIndicator!: Phaser.GameObjects.Rectangle;
   private enemyCells: Array<{ bg: any; spr: any; name: any; tag: any }> = [];
   private affixCells: Array<{ bg: any; icon: any; name: any; rarity: any }> = [];
   private detail!: Phaser.GameObjects.Container;
@@ -105,23 +106,31 @@ export class EnemyCodexScene extends Phaser.Scene {
       this.scene.stop();
     });
 
-    // 标签页（敌人 / 词缀）：居中对称
+    // 标签页（敌人 / 词缀）：文字选项卡 + 底部指示条滑条
     this.enemyTabBtn = createUIText(this, cx - 60, 106, '👾 敌人', {
-      fontSize: '17px',
-      backgroundColor: '#1a1a35',
-      padding: { left: 22, right: 22, top: 7, bottom: 7 },
+      fontSize: '18px',
+      padding: { left: 20, right: 20, top: 8, bottom: 8 },
     })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     this.affixTabBtn = createUIText(this, cx + 60, 106, '✨ 词缀', {
-      fontSize: '17px',
-      backgroundColor: '#1a1a35',
-      padding: { left: 22, right: 22, top: 7, bottom: 7 },
+      fontSize: '18px',
+      padding: { left: 20, right: 20, top: 8, bottom: 8 },
     })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     this.enemyTabBtn.on('pointerdown', () => this.switchTab('enemy'));
     this.affixTabBtn.on('pointerdown', () => this.switchTab('affix'));
+    this.enemyTabBtn.on('pointerover', () =>
+      this.enemyTabBtn.setStyle({ color: this.tab === 'enemy' ? '#ff6b35' : '#c8c8c8' })
+    );
+    this.enemyTabBtn.on('pointerout', () => this.updateTabButtons());
+    this.affixTabBtn.on('pointerover', () =>
+      this.affixTabBtn.setStyle({ color: this.tab === 'affix' ? '#ff6b35' : '#c8c8c8' })
+    );
+    this.affixTabBtn.on('pointerout', () => this.updateTabButtons());
+    // 指示条（选中项下方橙色滑条，切换时平滑滑动）
+    this.tabIndicator = this.add.rectangle(cx - 60, 130, 48, 3, 0xff6b35, 1).setOrigin(0.5);
     this.updateTabButtons();
 
     // ===== 左侧敌人网格列表（2 列，本关敌人） =====
@@ -233,12 +242,17 @@ export class EnemyCodexScene extends Phaser.Scene {
     }
   }
 
-  /** 标签按钮高亮：当前页橙色，另一页灰色 */
+  /** 标签按钮高亮 + 指示条滑动（当前页橙色加粗，另一页灰） */
   private updateTabButtons(): void {
-    const active = { color: '#ff6b35', backgroundColor: '#353555' };
-    const idle = { color: '#c8c8c8', backgroundColor: '#1a1a35' };
-    this.enemyTabBtn.setStyle(this.tab === 'enemy' ? active : idle);
-    this.affixTabBtn.setStyle(this.tab === 'affix' ? active : idle);
+    this.enemyTabBtn.setStyle(
+      this.tab === 'enemy' ? { color: '#ff6b35', fontStyle: 'bold' } : { color: '#8a8a99', fontStyle: 'normal' }
+    );
+    this.affixTabBtn.setStyle(
+      this.tab === 'affix' ? { color: '#ff6b35', fontStyle: 'bold' } : { color: '#8a8a99', fontStyle: 'normal' }
+    );
+    const targetX = this.tab === 'enemy' ? this.enemyTabBtn.x : this.affixTabBtn.x;
+    this.tweens.killTweensOf(this.tabIndicator);
+    this.tweens.add({ targets: this.tabIndicator, x: targetX, duration: 180, ease: 'Cubic.easeOut' });
   }
 
   /** 选中敌人 → 高亮列表 + 重绘详情 */
