@@ -72,6 +72,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   private poisonDamage = 0;
   private poisonTick = 0;
+  // 冰冻减速（冰冻词缀怪攻击施加）：剩余时长(ms) + 移速倍率
+  private slowTimer = 0;
+  private slowFactor = 1;
+  /** 减速剩余时长（HUD buff 栏驱动用） */
+  getSlowRemaining(): number {
+    return this.slowTimer;
+  }
+  /** 当前移速倍率（减速中取 slowFactor，否则 1） */
+  getSlowFactor(): number {
+    return this.slowTimer > 0 ? this.slowFactor : 1;
+  }
   private rageActive = false;
   private rageRing: Phaser.GameObjects.Arc | null = null;
   // 复活币（商店购买，死亡时原地复活）
@@ -182,11 +193,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
+    // 冰冻减速（冰冻词缀怪攻击施加）：到期自动恢复移速
+    if (this.slowTimer > 0) {
+      this.slowTimer -= delta;
+      if (this.slowTimer <= 0) this.slowFactor = 1;
+    }
+
     // 移动
     const moveDir = input.getMoveDirection();
     this.setVelocity(
-      moveDir.x * this.stats.moveSpeed * this.movementMultiplier,
-      moveDir.y * this.stats.moveSpeed * this.movementMultiplier
+      moveDir.x * this.stats.moveSpeed * this.movementMultiplier * this.getSlowFactor(),
+      moveDir.y * this.stats.moveSpeed * this.movementMultiplier * this.getSlowFactor()
     );
 
     // 更新朝向（朝移动方向），并旋转箭头指向移动方向
@@ -609,6 +626,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.poisonDamage = Math.max(this.poisonDamage, dps);
     this.poisonTimer = Math.max(this.poisonTimer, duration);
     this.poisonTick = 500;
+  }
+
+  /** 冰冻减速（冰冻词缀怪攻击施加）：移速 × factor，持续 duration(ms)；重复命中取更慢/更久 */
+  applySlow(factor: number, duration: number): void {
+    if (this.stats.health <= 0) return;
+    this.slowFactor = Math.min(this.slowFactor, factor);
+    this.slowTimer = Math.max(this.slowTimer, duration);
   }
 
   /**

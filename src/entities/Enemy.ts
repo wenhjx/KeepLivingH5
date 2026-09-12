@@ -59,6 +59,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private affixDmgReduction = 0;
   /** 剧毒词缀：命中玩家施加的毒（每秒伤害倍率 + 时长），null 表示无 */
   private affixPoison: { dpsMult: number; duration: number } | null = null;
+  /** 吸血词缀：命中回复 = 造成伤害 × lifestealMult */
+  private lifestealMult = 0;
+  /** 冰冻词缀：命中给玩家减速 */
+  private slowOnHit: { factor: number; duration: number } | null = null;
   private affixText!: Phaser.GameObjects.Text;
   // ===== Boss 专属：阶段系统 + 技能状态 =====
   private bossPhase = 1; // 1/2/3（血量阈值 66%/33%）
@@ -169,6 +173,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.affixSpeedMult = 1;
     this.affixDmgReduction = 0;
     this.affixPoison = null;
+    this.lifestealMult = 0;
+    this.slowOnHit = null;
     const affixDef = this.affix ? AFFIXES[this.affix] : undefined;
     if (affixDef) {
       this.affixAtkBoost = affixDef.atkMult ?? 1;
@@ -185,6 +191,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (affixDef.poison) {
         this.affixPoison = affixDef.poison;
       }
+      this.lifestealMult = affixDef.lifestealMult ?? 0;
+      this.slowOnHit = affixDef.slowOnHit ?? null;
       this.setTint(affixDef.color);
     }
     // Boss 专属状态重置（对象池复用，必须重置以免残留上一只的状态）
@@ -242,6 +250,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.affixSpeedMult = 1;
     this.affixDmgReduction = 0;
     this.affixPoison = null;
+    this.lifestealMult = 0;
+    this.slowOnHit = null;
     this.bossPhase = 1;
     this.bossSkillLast = {};
     this.bossChargeState = 0;
@@ -1085,15 +1095,23 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private attackPlayer(player: Player): void {
     const bossMult = this.config.type === 'boss' ? 1.3 : 1;
     const chargeMult = this.chargerState === 2 ? 1.6 : 1;
-    player.takeDamage(
-      this.config.attackPower * bossMult * chargeMult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost
-    );
+    const dmg =
+      this.config.attackPower * bossMult * chargeMult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost;
+    player.takeDamage(dmg);
+    // 吸血词缀：命中回复造成伤害的 lifestealMult 生命
+    if (this.lifestealMult > 0) {
+      this.health = Math.min(this.maxHealth, this.health + Math.max(1, Math.floor(dmg * this.lifestealMult)));
+    }
     // 剧毒词缀：命中玩家附加持续中毒（每秒 = 攻击力 × dpsMult，绕过无敌帧；applyPoison 内部有存活检查）
     if (this.affixPoison && player) {
       player.applyPoison(
         Math.max(1, this.config.attackPower * this.difficultyMultiplier * this.affixPoison.dpsMult),
         this.affixPoison.duration
       );
+    }
+    // 冰冻词缀：命中玩家施加减速（applySlow 内部有存活检查）
+    if (this.slowOnHit && player) {
+      player.applySlow(this.slowOnHit.factor, this.slowOnHit.duration);
     }
     this.attackCooldown = this.config.attackCooldown;
   }
@@ -1201,6 +1219,37 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (productConfig && scene?.getObjectPool?.()) {
         const splitCount = splitDef.splitOnDeath.count;
         for (let i = 0; i < splitCount; i++) {
+          const offsetX = (i % 2 === 0 ? -1 : 1) * 20;
+          scene
+            .getObjectPool()
+            .spawnEnemy(
+              productConfig,
+              this.x + offsetX,
+              this.y + (i % 2 === 0 ? 15 : -15),
+              this.difficultyMultiplier * 0.6
+            );
+        }
+      }
+    }
+    // 爆炸词缀：死亡时对范围内玩家造成伤害（玩家可提前拉开距离）
+    const explodeDef = this.affix ? AFFIXES[this.affix] : undefined;
+    if (explodeDef?.explodeOnDeath) {
+      const p = scene?.getPlayer?.();
+      if (p && p.active && p.stats?.health > 0) {
+        const dist = Phaser.Math.Distance.Between(this.x, this.y, p.x, p.y);
+        if (dist <= explodeDef.explodeOnDeath.radius) {
+          p.takeDamage(
+            Math.max(1, this.config.attackPower * this.difficultyMultiplier * explodeDef.explodeOnDeath.dmgMult)
+          );
+        }
+      }
+    }
+    // 召唤词缀：死亡时召唤小怪（查 AFFIXES 表，与分裂词缀同模式）
+    const summonDef = this.affix ? AFFIXES[this.affix] : undefined;
+    if (summonDef?.summonOnDeath) {
+      const productConfig = ENEMY_CONFIGS[summonDef.summonOnDeath.type as keyof typeof ENEMY_CONFIGS];
+      if (productConfig && scene?.getObjectPool?.()) {
+        for (let i = 0; i < summonDef.summonOnDeath.count; i++) {
           const offsetX = (i % 2 === 0 ? -1 : 1) * 20;
           scene
             .getObjectPool()

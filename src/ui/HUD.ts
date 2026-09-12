@@ -446,6 +446,20 @@ export class HUD {
       });
     }
 
+    // 冰冻减速（冰冻词缀怪攻击施加）：同 buff 栏标准（秒数角标 + 到期闪烁）
+    const slowRem = player.getSlowRemaining?.() ?? 0;
+    if (slowRem > 0) {
+      const slowPct = Math.round((1 - (player.getSlowFactor?.() ?? 1)) * 100);
+      allBuffs.push({
+        id: 'slow',
+        name: '冰冻减速',
+        level: Math.max(1, Math.ceil(slowRem / 1000)),
+        desc: `移动速度 -${slowPct}%（${Math.ceil(slowRem / 1000)} 秒）`,
+        icon: '❄️',
+        color: 0x66ccff,
+      });
+    }
+
     // 数量变化时重建列表
     if (allBuffs.length !== this.lastBuffCount) {
       this.rebuildBuffList(allBuffs);

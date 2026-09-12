@@ -12,7 +12,8 @@
  */
 export type AffixRarity = 'common' | 'rare' | 'epic';
 
-export type EnemyAffixId = 'enrage' | 'shield' | 'swift' | 'thick' | 'split' | 'venom';
+export type EnemyAffixId =
+  'enrage' | 'shield' | 'swift' | 'thick' | 'split' | 'venom' | 'lifesteal' | 'explosive' | 'frost' | 'summon';
 
 export interface AffixDef {
   id: EnemyAffixId;
@@ -39,6 +40,14 @@ export interface AffixDef {
   splitOnDeath?: { type: string; count: number };
   /** 命中玩家施加中毒：每秒伤害 = 攻击力 × dpsMult，持续 duration(ms)，绕过无敌帧 */
   poison?: { dpsMult: number; duration: number };
+  /** 命中玩家回复生命 = 造成伤害 × lifestealMult（机制词缀） */
+  lifestealMult?: number;
+  /** 死亡爆炸：对 radius(px) 内玩家造成攻击力 × dmgMult 伤害（机制词缀） */
+  explodeOnDeath?: { radius: number; dmgMult: number };
+  /** 命中玩家施加减速：移速 × factor，持续 duration(ms)（机制词缀） */
+  slowOnHit?: { factor: number; duration: number };
+  /** 死亡召唤：生成 type 小怪 count 只（机制词缀） */
+  summonOnDeath?: { type: string; count: number };
 }
 
 export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
@@ -98,9 +107,56 @@ export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
     description: '命中玩家施加持续中毒（3 秒，每秒造成攻击力 8% 的伤害，无视无敌帧）',
     poison: { dpsMult: 0.08, duration: 3000 },
   },
+  lifesteal: {
+    id: 'lifesteal',
+    name: '吸血',
+    icon: '🩸',
+    color: 0xdd4466,
+    rarity: 'rare',
+    description: '命中玩家时回复造成伤害 25% 的生命，越打越难缠',
+    lifestealMult: 0.25,
+  },
+  explosive: {
+    id: 'explosive',
+    name: '爆炸',
+    icon: '💣',
+    color: 0xffaa44,
+    rarity: 'rare',
+    description: '死亡时爆炸：对 130px 内玩家造成攻击力 60% 的伤害',
+    explodeOnDeath: { radius: 130, dmgMult: 0.6 },
+  },
+  frost: {
+    id: 'frost',
+    name: '冰冻',
+    icon: '❄️',
+    color: 0x88ddff,
+    rarity: 'epic',
+    description: '命中玩家减速 30%（2 秒），被黏上就难甩开',
+    slowOnHit: { factor: 0.7, duration: 2000 },
+  },
+  summon: {
+    id: 'summon',
+    name: '召唤',
+    icon: '🌀',
+    color: 0xcc88aa,
+    rarity: 'epic',
+    description: '死亡时召唤 1 只冲锋怪，死了也不消停',
+    summonOnDeath: { type: 'charger', count: 1 },
+  },
 };
 
 /** 普通怪词缀抽取池（epic 留给精英怪，保持稀有度节奏） */
-export const COMMON_AFFIX_POOL: EnemyAffixId[] = ['enrage', 'shield', 'swift', 'thick'];
+export const COMMON_AFFIX_POOL: EnemyAffixId[] = ['enrage', 'shield', 'swift', 'thick', 'lifesteal', 'explosive'];
 /** 精英怪词缀池（全部，含 epic） */
-export const ELITE_AFFIX_POOL: EnemyAffixId[] = ['enrage', 'shield', 'swift', 'thick', 'split', 'venom'];
+export const ELITE_AFFIX_POOL: EnemyAffixId[] = [
+  'enrage',
+  'shield',
+  'swift',
+  'thick',
+  'split',
+  'venom',
+  'lifesteal',
+  'explosive',
+  'frost',
+  'summon',
+];
