@@ -36,3 +36,22 @@ export function calcOverflowCritDamage(critDamage: number): number {
 export function calcOverflowMaxHealth(maxHealth: number): number {
   return Math.floor(maxHealth + 20);
 }
+
+/**
+ * 暴击结算（确定性部分）：
+ * critRate 超过 100% 的部分按 1:2 转暴击伤害（每 1% 溢出 → +2% 爆伤），
+ * 判定率 clamp 到 100%（溢出后必定暴击）。
+ * 返回 clamp 后的判定率与最终暴击伤害倍率；是否暴击由调用处 Math.random() 判定。
+ */
+export interface CritStats {
+  critRate?: number;
+  critDamage?: number;
+}
+
+export function calcCritStats(stats: CritStats | undefined): { critRate: number; critDamageMult: number } {
+  const rawCritRate = stats?.critRate ?? 0.05;
+  const critRateOverflow = Math.max(0, rawCritRate - 1);
+  const critRate = Math.min(1, rawCritRate);
+  const critDamageMult = (stats?.critDamage ?? 1.5) + critRateOverflow * 2;
+  return { critRate, critDamageMult };
+}

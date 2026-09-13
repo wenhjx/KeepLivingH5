@@ -5,6 +5,7 @@ import {
   calcOverflowCritRate,
   calcOverflowCritDamage,
   calcOverflowMaxHealth,
+  calcCritStats,
 } from '../src/logic/player';
 
 describe('calcThornsReflect 荆棘反弹', () => {
@@ -42,5 +43,30 @@ describe('超限强化（线性化，2026-09-13 收敛）', () => {
   it('生命：+20 取整（替代 ×1.05）', () => {
     expect(calcOverflowMaxHealth(100)).toBe(120);
     expect(calcOverflowMaxHealth(99.4)).toBe(119); // floor
+  });
+});
+
+describe('calcCritStats 暴击率溢出转暴伤（1:2）', () => {
+  it('无属性：默认暴击率 5%、爆伤 1.5', () => {
+    expect(calcCritStats(undefined)).toEqual({ critRate: 0.05, critDamageMult: 1.5 });
+  });
+
+  it('暴击率未溢出（0.05~1.0）：爆伤不增加', () => {
+    expect(calcCritStats({ critRate: 0.05, critDamage: 1.5 })).toEqual({ critRate: 0.05, critDamageMult: 1.5 });
+    expect(calcCritStats({ critRate: 0.8, critDamage: 2.0 })).toEqual({ critRate: 0.8, critDamageMult: 2.0 });
+    expect(calcCritStats({ critRate: 1.0, critDamage: 1.5 })).toEqual({ critRate: 1.0, critDamageMult: 1.5 });
+  });
+
+  it('溢出 20%：判定率 clamp 到 100%，爆伤 +40%（1:2）', () => {
+    expect(calcCritStats({ critRate: 1.2, critDamage: 1.5 })).toEqual({ critRate: 1.0, critDamageMult: 1.9 });
+  });
+
+  it('溢出 100%：爆伤 +200%（1.5 → 3.5），判定率仍 100%', () => {
+    expect(calcCritStats({ critRate: 2.0, critDamage: 1.5 })).toEqual({ critRate: 1.0, critDamageMult: 3.5 });
+  });
+
+  it('自带爆伤 + 溢出叠加（回归 2026-09-13 前 1700% 爆伤事故：倍率线性累加不指数）', () => {
+    // 6 级致命一击 = 1.5 + 3.0 = 4.5；再叠加 50% 溢出 → +1.0 → 5.5
+    expect(calcCritStats({ critRate: 1.5, critDamage: 4.5 })).toEqual({ critRate: 1.0, critDamageMult: 5.5 });
   });
 });

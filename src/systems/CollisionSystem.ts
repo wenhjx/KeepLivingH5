@@ -3,6 +3,7 @@ import { GameManager } from '../game/GameManager';
 import { EventBus, EventKeys } from '../utils/EventBus';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
+import { calcCritStats } from '../logic/player';
 import type { Player } from '../entities/Player';
 import type { Enemy } from '../entities/Enemy';
 import type { Bullet } from '../entities/Bullet';
@@ -60,12 +61,9 @@ export class CollisionSystem {
     const playerStats = gameScene?.getPlayer?.()?.getStats?.();
     // 暴击率溢出转化：critRate 超过 100% 的部分按 1:2 转暴击伤害（每 1% 溢出 → +2% 爆伤），
     // 同时把判定率 clamp 到 100%（溢出后必定暴击）
-    const rawCritRate = playerStats?.critRate ?? 0.05;
-    const critRateOverflow = Math.max(0, rawCritRate - 1);
-    const critRate = Math.min(1, rawCritRate);
-    const critDamage = (playerStats?.critDamage ?? 1.5) + critRateOverflow * 2;
+    const { critRate, critDamageMult } = calcCritStats(playerStats as any);
     const isCrit = Math.random() < critRate;
-    const finalDamage = isCrit ? damage * critDamage : damage;
+    const finalDamage = isCrit ? damage * critDamageMult : damage;
 
     // 演出事件：玩家暴击命中（GameFeedback 订阅播震屏/顿帧；纯表现）
     if (isCrit) {
