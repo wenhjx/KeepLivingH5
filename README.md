@@ -49,12 +49,12 @@ Keep Living H5/
 │   │   ├── SaveSystem.ts / AudioManager.ts / GuideManager.ts
 │   ├── ui/                    # UI组件
 │   │   ├── HUD.ts             # 抬头显示（buff 栏：等级化提示 + 下一级预览）
-│   │   ├── VirtualJoystick.ts / HealthBar.ts / Minimap.ts
+│   │   ├── VirtualJoystick.ts / Minimap.ts
 │   │   ├── UpgradePanel.ts / OptionCard.ts / InventoryUI.ts
 │   │   ├── DebugPanel.ts      # 调试面板（刷怪/召唤Boss/调数值）
 │   │   └── GuideCard.ts / DamageTextManager.ts / UIScrollBar.ts
 │   ├── data/                  # 数据配置（实际数据源）
-│   │   ├── weapons.ts / enemies.ts / waves.ts / upgrades.ts
+│   │   ├── weapons.ts / enemies.ts / upgrades.ts
 │   │   ├── levels.ts          # 三地图关卡配置（草原/废墟/冰原）
 │   │   ├── affixes.ts         # 词缀表（10 词缀，稀有度分层）
 │   │   ├── achievements.ts    # 成就定义
@@ -67,6 +67,10 @@ Keep Living H5/
 ├── package.json / tsconfig.json / vite.config.ts
 └── README.md
 ```
+
+## 在线试玩
+
+👉 https://wenhjx.github.io/KeepLivingH5/（GitHub Pages 部署，点开即玩，PC / 移动端均可）
 
 ## 快速开始
 
@@ -128,7 +132,7 @@ npm run preview # 预览生产版本
 ## 后续扩展方向
 
 - [x] 成就系统
-- [x] 词缀系统（第 1/2 层已上线，第 3 层待做）
+- [x] 词缀系统（第 1 层已上线：10 种词缀，稀有度分层）
 - [ ] 多人同步对战（WebSocket + 账号系统 + 世界级 Boss）
 - [ ] 后台管理页（数据统计 / 参数热更）
 - [ ] 随机地图 / 更复杂关卡结构
