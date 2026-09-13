@@ -35,6 +35,21 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private isDead: boolean = false;
   private hitFlashTimer: number = 0;
   private difficultyMultiplier: number = 1;
+
+  /** 有朝向特征的敌人（眼睛/尖角/非对称造型）：随移动方向旋转；tank/blob 对称不可见、shielded 自有朝向，均排除 */
+  private static readonly FACING_TYPES = new Set<string>([
+    'normal',
+    'fast',
+    'ranged',
+    'elite',
+    'suicider',
+    'splitter',
+    'summoner',
+    'healer',
+    'caster',
+    'charger',
+    'boss',
+  ]);
   private atkBoost: number = 1;
   /** 击退（环形冲击波等推离效果）：速度分量 + 剩余时长（ms） */
   private knockbackVx = 0;
@@ -524,6 +539,19 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.y = cy;
         this.body.position.set(cx, cy);
       }
+    }
+    // 身体朝向：随移动方向旋转（放在移动/击退/边界全部结算之后）
+    this.updateFacing();
+  }
+
+  private updateFacing(): void {
+    // 有朝向特征（眼睛/尖角/非对称造型）的敌人随移动方向旋转，赋予"盯人"身体语言；
+    // 对称类（tank/blob）旋转不可见故排除，shielded 已有自己的护盾朝向逻辑。
+    if (!Enemy.FACING_TYPES.has(this.config.type) || !this.body) return;
+    const vx = this.body.velocity.x;
+    const vy = this.body.velocity.y;
+    if (Math.hypot(vx, vy) > 8) {
+      this.setRotation(Math.atan2(vy, vx));
     }
   }
 
@@ -1110,6 +1138,20 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       affixAtkBoost: this.affixAtkBoost,
     });
     player.takeDamage(dmg);
+    // 攻击反馈：身体瞬间闪白 + 轻微放大脉冲（纯表现，不改时序；复用池 despawn 时 setScale(1) 兜底复位）
+    const origTint = this.tintTopLeft;
+    this.setTint(0xffffff);
+    this.scene.time.delayedCall(90, () => {
+      if (this.active) this.setTint(origTint);
+    });
+    const baseScale = this.scaleX;
+    this.setScale(baseScale * 1.15);
+    this.scene.tweens.add({
+      targets: this,
+      scale: baseScale,
+      duration: 160,
+      ease: Phaser.Math.Easing.Cubic.Out,
+    });
     // 吸血词缀：命中回复造成伤害的 lifestealMult 生命
     if (this.lifestealMult > 0) {
       this.health = calcLifestealHeal(this.health, this.maxHealth, dmg, this.lifestealMult);
