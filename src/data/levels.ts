@@ -4,75 +4,21 @@ import type { EnemyType } from '../types';
 
 /**
 
-
-
-
-
-
-
  * 关卡化配置（数据驱动）
-
-
-
-
-
-
 
  *
 
-
-
-
-
-
-
  * 每一关 = 地形 + 敌人构成 + 特殊规则(modifier) + 关底 Boss + 直进快速开局包。
-
-
-
-
-
-
 
  * 以后新增区域只需：
 
-
-
-
-
-
-
  *   1. terrain.ts 里加一套新 TerrainConfig；
-
-
-
-
-
-
 
  *   2. enemies.ts 里加新敌人/Boss（可选）；
 
-
-
-
-
-
-
  *   3. 在本文件追加一个 LevelConfig 条目。
 
-
-
-
-
-
-
  * 游戏逻辑（GameScene/WaveManager/EndlessChoice）不写死关卡，全部消费本配置。
-
-
-
-
-
-
 
  */
 
