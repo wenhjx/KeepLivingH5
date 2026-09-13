@@ -98,8 +98,8 @@ export class PlayerInfoScene extends Phaser.Scene {
     // 暴击溢出：直接封顶 100%（不附说明文字），多出部分按 1:2 转暴击伤害
     const critOverflow = Math.max(0, crit - 1);
     const critDisplay = crit >= 1 ? '100%' : `${(crit * 100).toFixed(0)}%`;
-    // 暴击伤害：基础部分白字，溢出转化部分暗金色标注
-    const critDmgBase = `${(critDmg * 100).toFixed(0)}%`;
+    // 暴击伤害：隐藏基础 100%（二游惯例，只显示额外加成），溢出转化部分暗金色标注
+    const critDmgBase = `${Math.max(0, (critDmg - 1) * 100).toFixed(0)}%`;
     const critDmgDisplay: string | Array<{ text: string; color: string }> =
       critOverflow > 0
         ? [
