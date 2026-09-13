@@ -10,7 +10,7 @@ import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import { AchievementManager } from '../systems/AchievementManager';
 import type { PlayerStats, WeaponConfig, UpgradeOption } from '../types';
-import { calcThornsReflect } from '../logic/player';
+import { calcThornsReflect, calcOverflowAttack, calcOverflowCritRate, calcOverflowCritDamage, calcOverflowMaxHealth } from '../logic/player';
 import type { InputManager } from '../systems/InputManager';
 import { Layers } from '../constants/Layers';
 
@@ -832,23 +832,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   /**
    * 应用一轮超限强化（自动轮换，共 4 项循环）：
-   * 攻击 ×1.03 → 暴击率 +1% → 爆伤 +3% → 生命 ×1.05
+   * 攻击 +3 → 暴击率 +1% → 暴伤 +0.5% → 生命 +20（线性化，见 src/logic/player.ts）
    */
   private applyOverflow(): void {
     const idx = this.stats.overflowCount % 4;
     switch (idx) {
       case 0:
-        this.stats.attackPower *= 1.03;
+        this.stats.attackPower = calcOverflowAttack(this.stats.attackPower);
         break;
       case 1:
-        this.stats.critRate += 0.01; // 小数单位（0.05 = 5%）
+        this.stats.critRate = calcOverflowCritRate(this.stats.critRate);
         break;
       case 2:
-        this.stats.critDamage += 0.03; // 倍率单位（1.5 = 150%）
+        this.stats.critDamage = calcOverflowCritDamage(this.stats.critDamage);
         break;
       case 3: {
         const oldMax = this.stats.maxHealth;
-        this.stats.maxHealth = Math.floor(this.stats.maxHealth * 1.05);
+        this.stats.maxHealth = calcOverflowMaxHealth(this.stats.maxHealth);
         // 保持当前血量比例（不回满，避免超限 = 免费回血）
         this.stats.health = Math.min(this.stats.maxHealth, this.stats.health + (this.stats.maxHealth - oldMax));
         break;
