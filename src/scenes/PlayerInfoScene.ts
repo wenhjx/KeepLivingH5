@@ -18,10 +18,34 @@ import { Layers } from '../constants/Layers';
  * 以及当前持有的武器/被动/stat 升级（含 Boss 突破次数）。
  * 与 UpgradeScene/BreakthroughScene 一样作为独立叠加场景，暂停游戏逻辑。
  * 关闭后恢复打开前的暂停状态（打开前在游玩中则继续游玩，在暂停菜单则回到暂停）。
+ *
+ * 实时刷新：面板打开期间每 200ms 轮询玩家状态快照，属性/持有列表变化才重绘
+ * （setText 复用文本对象，避免重建闪烁）。属性修改点分散（升级/拾取/词缀/调试面板），
+ * 事件驱动容易漏发，轮询 + 差异刷新更稳。
  */
 export class PlayerInfoScene extends Phaser.Scene {
   // 打开前的暂停状态，由调用方（GameScene C 键 / 暂停菜单按钮）显式传入
   private prevPaused = false;
+
+  private player?: Player;
+
+  // 属性值文本引用（每行最多两段：白字基础 + 暗金溢出，复用对象 setText 无闪烁）
+  private leftValues: Array<{ base: Phaser.GameObjects.Text; extra: Phaser.GameObjects.Text }> = [];
+  private rightValues: Array<{ base: Phaser.GameObjects.Text; extra: Phaser.GameObjects.Text }> = [];
+
+  // 持有列表（可滚动区）
+  private holdingsContainer?: Phaser.GameObjects.Container;
+  private scrollContent?: Phaser.GameObjects.Container;
+  private scrollBar?: UIScrollBar;
+  private scrollY = 0;
+  private scrollOff = 0;
+  private maxScroll = 0;
+  private holdingsSig = '';
+  private hintText?: Phaser.GameObjects.Text;
+
+  // 轮询
+  private refreshTimer = 0;
+  private readonly REFRESH_INTERVAL = 200;
 
   constructor() {
     super('PlayerInfoScene');
@@ -40,6 +64,7 @@ export class PlayerInfoScene extends Phaser.Scene {
       this.closePanel();
       return;
     }
+    this.player = player;
 
     // 半透明背景（盖住暂停遮罩与游戏画面）
     this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0).setInteractive();
@@ -81,7 +106,126 @@ export class PlayerInfoScene extends Phaser.Scene {
       this.closePanel();
     });
 
-    // ===== 属性数据 =====
+    // ===== 属性值文本（先创建空文本占位，刷新时 setText） =====
+    const colX = cx - panelW / 2 + 70;
+    const colX2 = cx + 40;
+    const startY = cy - panelH / 2 + 85;
+    const rowGap = 36;
+    const valueX = 150;
+
+    const createValuePair = (x: number, y: number) => {
+      const base = createUIText(this, x + valueX, y, '', {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      }).setOrigin(0, 0);
+      const extra = createUIText(this, x + valueX, y, '', {
+        fontSize: '16px',
+        color: '#c9a227',
+        fontStyle: 'bold',
+      }).setOrigin(0, 0).setVisible(false);
+      return { base, extra };
+    };
+
+    ['⚔️ 攻击力', '⚡ 攻速', '🎯 暴击率', '💥 暴击伤害', '👟 移速'].forEach((label, i) => {
+      createUIText(this, colX, startY + i * rowGap, label, { fontSize: '16px', color: '#bbbbbb' }).setOrigin(0, 0);
+      this.leftValues.push(createValuePair(colX, startY + i * rowGap));
+    });
+    ['❤️ 生命', '🛡️ 防御', '🍀 幸运', '🧲 拾取范围', '💰 金币'].forEach((label, i) => {
+      createUIText(this, colX2, startY + i * rowGap, label, { fontSize: '16px', color: '#bbbbbb' }).setOrigin(0, 0);
+      this.rightValues.push(createValuePair(colX2, startY + i * rowGap));
+    });
+
+    // ===== 底部：武器 / 被动 / stat =====
+    // 持有区整体上移，滚动区固定 4 行可视高度（更美观，也避免与底部提示重叠）
+    const bottomY = cy + panelH / 2 - 198;
+
+    createUIText(this, cx - panelW / 2 + 30, bottomY, '📦 持有', {
+      fontSize: '15px',
+      color: '#ffd54f',
+      fontStyle: 'bold',
+    }).setOrigin(0, 0);
+
+    // ===== 持有列表（可滚动区域：GeometryMask 遮罩 + 滚轮/拖拽滚动 + 滚动条） =====
+    // Phaser 3 无内置 UI 滚动容器，采用标准做法：内容放入 Container，
+    // 用矩形 GeometryMask 裁剪可视区域，滚轮/拖拽修改容器 y 偏移实现滚动。
+    const itemPerRow = 4;
+    const itemColW = 165;
+    const rowH = 34;
+    const itemX0 = cx - panelW / 2 + 30;
+    const scrollX = itemX0 - 8;
+    const scrollY = bottomY + 28;
+    const scrollW = panelW - 60;
+    const scrollH = 4 * rowH; // 固定 4 行可视高度
+    const barX = scrollX + scrollW + 6; // 滚动条 x
+
+    // 遮罩（不加入显示列表，仅作裁剪几何）
+    const maskG = this.make.graphics(undefined, false);
+    maskG.fillStyle(0xffffff, 1);
+    maskG.fillRect(scrollX, scrollY, scrollW, scrollH);
+    const mask = maskG.createGeometryMask();
+
+    // 内容容器（遮罩内滚动）
+    this.scrollContent = this.add.container(scrollX, scrollY).setDepth(Layers.SCROLL_CONTENT);
+    this.scrollContent.setMask(mask);
+    this.scrollY = scrollY;
+
+    // 滚动条（统一组件：轨道+滑块一体，无可滚动内容时不显示）
+    this.scrollBar = new UIScrollBar(this, barX, scrollY, 5, scrollH);
+
+    const applyScroll = () => {
+      this.scrollContent?.setY(scrollY - this.scrollOff);
+      this.scrollBar?.update(this.scrollOff);
+    };
+
+    // 滚轮滚动（deltaY 除以相机 zoom 换算为逻辑像素，与布局坐标系一致）
+    const zoom = this.cameras.main.zoom;
+    this.input.on('wheel', (_p: any, _o: any, _dx: number, dy: number) => {
+      if (this.maxScroll <= 0) return;
+      this.scrollOff = Phaser.Math.Clamp(this.scrollOff + dy / zoom, 0, this.maxScroll);
+      applyScroll();
+    });
+
+    // 拖拽滚动（按住上下拖动内容区）
+    // 位移超阈值才真正滚动：轻点/微移不跳动内容，也为将来滚动区放入可交互组件预留防误触
+    let dragging = false;
+    let dragMoved = false;
+    let dragStartY = 0;
+    let dragStartOff = 0;
+    const DRAG_THRESHOLD = 12;
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      dragging = true;
+      dragMoved = false;
+      dragStartY = p.y;
+      dragStartOff = this.scrollOff;
+    });
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (!dragging || this.maxScroll <= 0) return;
+      if (!dragMoved && Math.abs(p.y - dragStartY) > DRAG_THRESHOLD) dragMoved = true;
+      if (dragMoved) {
+        this.scrollOff = Phaser.Math.Clamp(dragStartOff + (dragStartY - p.y) / zoom, 0, this.maxScroll);
+        applyScroll();
+      }
+    });
+    this.input.on('pointerup', () => {
+      dragging = false;
+    });
+
+    // 底部提示
+    this.hintText = createUIText(this, cx, cy + panelH / 2 - 20, '', {
+      fontSize: '13px',
+      color: '#666688',
+    }).setOrigin(0.5);
+
+    // 首次渲染
+    this.refreshStats();
+    this.refreshHoldings();
+  }
+
+  /** 刷新属性区：重算显示值并 setText（复用对象，富文本两段自动衔接） */
+  private refreshStats(): void {
+    const player = this.player;
+    if (!player) return;
     const s = player.getStats();
     const atk = s.attackPower ?? 10;
     const spd = s.attackSpeed ?? 1;
@@ -100,74 +244,43 @@ export class PlayerInfoScene extends Phaser.Scene {
     const critDisplay = crit >= 1 ? '100%' : `${(crit * 100).toFixed(0)}%`;
     // 暴击伤害：隐藏基础 100%（二游惯例，只显示额外加成），溢出转化部分暗金色标注
     const critDmgBase = `${Math.max(0, (critDmg - 1) * 100).toFixed(0)}%`;
-    const critDmgDisplay: string | Array<{ text: string; color: string }> =
-      critOverflow > 0
-        ? [
-            { text: critDmgBase, color: '#ffffff' },
-            { text: `+${(critOverflow * 200).toFixed(0)}%`, color: '#c9a227' },
-          ]
-        : critDmgBase;
 
-    // 属性列表（左列：战斗；右列：生存）
-    const leftProps: Array<[string, string | Array<{ text: string; color: string }>]> = [
-      ['⚔️ 攻击力', atk.toFixed(1)],
-      ['⚡ 攻速', `${spd.toFixed(2)}/s`],
-      ['🎯 暴击率', critDisplay],
-      ['💥 暴击伤害', critDmgDisplay],
-      ['👟 移速', mspd.toFixed(0)],
+    const left: Array<string | { base: string; extra: string }> = [
+      atk.toFixed(1),
+      `${spd.toFixed(2)}/s`,
+      critDisplay,
+      critOverflow > 0 ? { base: critDmgBase, extra: `+${(critOverflow * 200).toFixed(0)}%` } : critDmgBase,
+      mspd.toFixed(0),
     ];
-    const rightProps: Array<[string, string]> = [
-      ['❤️ 生命', `${Math.ceil(hp)}/${Math.ceil(maxHp)}`],
-      ['🛡️ 防御', def.toFixed(0)],
-      ['🍀 幸运', luck.toFixed(0)],
-      ['🧲 拾取范围', pick.toFixed(0)],
-      ['💰 金币', coins.toFixed(0)],
+    const right: Array<string | { base: string; extra: string }> = [
+      `${Math.ceil(hp)}/${Math.ceil(maxHp)}`,
+      def.toFixed(0),
+      luck.toFixed(0),
+      pick.toFixed(0),
+      coins.toFixed(0),
     ];
 
-    const colX = cx - panelW / 2 + 70;
-    const colX2 = cx + 40;
-    const startY = cy - panelH / 2 + 85;
-    const rowGap = 36;
-
-    const drawCol = (props: Array<[string, string | Array<{ text: string; color: string }>]>, x: number) => {
-      props.forEach(([label, value], i) => {
-        createUIText(this, x, startY + i * rowGap, label, {
-          fontSize: '16px',
-          color: '#bbbbbb',
-        }).setOrigin(0, 0);
-        const vy = startY + i * rowGap;
-        if (Array.isArray(value)) {
-          // 富文本分段：逐段渲染并横向衔接（如暴击伤害 基础白字 + 溢出暗金）
-          let vx = x + 150;
-          for (const seg of value) {
-            const t = createUIText(this, vx, vy, seg.text, {
-              fontSize: '16px',
-              color: seg.color,
-              fontStyle: 'bold',
-            }).setOrigin(0, 0);
-            vx += t.width + 6;
-          }
-        } else {
-          createUIText(this, x + 150, vy, value, {
-            fontSize: '16px',
-            color: '#ffffff',
-            fontStyle: 'bold',
-          }).setOrigin(0, 0);
-        }
-      });
+    const applyPair = (
+      pair: { base: Phaser.GameObjects.Text; extra: Phaser.GameObjects.Text },
+      v: string | { base: string; extra: string }
+    ) => {
+      if (typeof v === 'string') {
+        pair.base.setText(v);
+        pair.extra.setVisible(false);
+      } else {
+        pair.base.setText(v.base);
+        pair.extra.setText(v.extra);
+        pair.extra.setVisible(true).setX(pair.base.x + pair.base.width + 6);
+      }
     };
-    drawCol(leftProps, colX);
-    drawCol(rightProps, colX2);
+    left.forEach((v, i) => this.leftValues[i] && applyPair(this.leftValues[i], v));
+    right.forEach((v, i) => this.rightValues[i] && applyPair(this.rightValues[i], v));
+  }
 
-    // ===== 底部：武器 / 被动 / stat =====
-    // 持有区整体上移，滚动区固定 4 行可视高度（更美观，也避免与底部提示重叠）
-    const bottomY = cy + panelH / 2 - 198;
-
-    createUIText(this, cx - panelW / 2 + 30, bottomY, '📦 持有', {
-      fontSize: '15px',
-      color: '#ffd54f',
-      fontStyle: 'bold',
-    }).setOrigin(0, 0);
+  /** 刷新持有区：签名变化才重建（清空 container 重绘，滚动位置归零） */
+  private refreshHoldings(): void {
+    const player = this.player;
+    if (!player || !this.scrollContent) return;
 
     // 收集武器/被动/stat 展示项（过滤异常空项，避免显示 "undefined"）
     const weapons = (player.getWeapons?.() || [])
@@ -193,34 +306,19 @@ export class PlayerInfoScene extends Phaser.Scene {
       .filter((s: any) => s && s.name);
 
     const holdings = [...weapons, ...passives, ...stats];
+    const sig = holdings.map((h) => `${h.icon}|${h.name}|${h.lv}`).join(';');
+    if (sig === this.holdingsSig) return;
+    this.holdingsSig = sig;
 
-    // ===== 持有列表（可滚动区域：GeometryMask 遮罩 + 滚轮/拖拽滚动 + 滚动条） =====
-    // Phaser 3 无内置 UI 滚动容器，采用标准做法：内容放入 Container，
-    // 用矩形 GeometryMask 裁剪可视区域，滚轮/拖拽修改容器 y 偏移实现滚动。
+    // 重建内容
+    this.scrollContent.removeAll(true);
     const itemPerRow = 4;
     const itemColW = 165;
     const rowH = 34;
-    const itemX0 = cx - panelW / 2 + 30;
-    const scrollX = itemX0 - 8;
-    const scrollY = bottomY + 28;
-    const scrollW = panelW - 60;
-    const scrollH = 4 * rowH; // 固定 4 行可视高度
-    const barX = scrollX + scrollW + 6; // 滚动条 x
-
-    // 遮罩（不加入显示列表，仅作裁剪几何）
-    const maskG = this.make.graphics(undefined, false);
-    maskG.fillStyle(0xffffff, 1);
-    maskG.fillRect(scrollX, scrollY, scrollW, scrollH);
-    const mask = maskG.createGeometryMask();
-
-    // 内容容器（遮罩内滚动）
-    const scrollContent = this.add.container(scrollX, scrollY).setDepth(Layers.SCROLL_CONTENT);
-    scrollContent.setMask(mask);
-
     holdings.forEach((h, i) => {
       const col = i % itemPerRow;
       const row = Math.floor(i / itemPerRow);
-      scrollContent.add(
+      this.scrollContent!.add(
         createUIText(this, col * itemColW, row * rowH, `${h.icon} ${h.name}  Lv.${h.lv}`, {
           fontSize: '14px',
           color: '#e0e0e0',
@@ -228,64 +326,26 @@ export class PlayerInfoScene extends Phaser.Scene {
       );
     });
 
-    // 滚动范围与状态
+    // 滚动范围与状态（内容变化后归零，并更新滚动条/提示）
     const contentH = Math.ceil(holdings.length / itemPerRow) * rowH;
-    const maxScroll = Math.max(0, contentH - scrollH);
-    let scrollOff = 0;
-    const zoom = this.cameras.main.zoom;
+    this.maxScroll = Math.max(0, contentH - 4 * rowH);
+    this.scrollOff = 0;
+    this.scrollContent.setY(this.scrollY);
+    this.scrollBar?.setRange(contentH, 4 * rowH);
+    this.scrollBar?.update(0);
+    if (this.hintText) {
+      this.hintText.setText(this.maxScroll > 0 ? '滚轮 / 拖动滚动 · 按 C 或点击 ✕ 关闭' : '按 C 或点击 ✕ 关闭');
+    }
+  }
 
-    // 滚动条（统一组件：轨道+滑块一体，无可滚动内容时不显示）
-    const scrollBar = new UIScrollBar(this, barX, scrollY, 5, scrollH);
-    scrollBar.setRange(contentH, scrollH);
-    const applyScroll = () => {
-      scrollContent.setY(scrollY - scrollOff);
-      scrollBar.update(scrollOff);
-    };
-    applyScroll();
-
-    // 滚轮滚动（deltaY 除以相机 zoom 换算为逻辑像素，与布局坐标系一致）
-    this.input.on('wheel', (_p: any, _o: any, _dx: number, dy: number) => {
-      if (maxScroll <= 0) return;
-      scrollOff = Phaser.Math.Clamp(scrollOff + dy / zoom, 0, maxScroll);
-      applyScroll();
-    });
-
-    // 拖拽滚动（按住上下拖动内容区）
-    // 位移超阈值才真正滚动：轻点/微移不跳动内容，也为将来滚动区放入可交互组件预留防误触
-    let dragging = false;
-    let dragMoved = false;
-    let dragStartY = 0;
-    let dragStartOff = 0;
-    const DRAG_THRESHOLD = 12;
-    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      dragging = true;
-      dragMoved = false;
-      dragStartY = p.y;
-      dragStartOff = scrollOff;
-    });
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (!dragging || maxScroll <= 0) return;
-      if (!dragMoved && Math.abs(p.y - dragStartY) > DRAG_THRESHOLD) dragMoved = true;
-      if (dragMoved) {
-        scrollOff = Phaser.Math.Clamp(dragStartOff + (dragStartY - p.y) / zoom, 0, maxScroll);
-        applyScroll();
-      }
-    });
-    this.input.on('pointerup', () => {
-      dragging = false;
-    });
-
-    // 底部提示
-    createUIText(
-      this,
-      cx,
-      cy + panelH / 2 - 20,
-      maxScroll > 0 ? '滚轮 / 拖动滚动 · 按 C 或点击 ✕ 关闭' : '按 C 或点击 ✕ 关闭',
-      {
-        fontSize: '13px',
-        color: '#666688',
-      }
-    ).setOrigin(0.5);
+  update(_time: number, delta: number): void {
+    // 暂停态轮询：属性/持有变化才刷新（200ms 间隔足够"实时"，开销极小）
+    this.refreshTimer += delta;
+    if (this.refreshTimer >= this.REFRESH_INTERVAL) {
+      this.refreshTimer = 0;
+      this.refreshStats();
+      this.refreshHoldings();
+    }
   }
 
   private getWeaponIcon(id: string): string {
