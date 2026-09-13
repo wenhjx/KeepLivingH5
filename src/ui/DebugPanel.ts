@@ -481,10 +481,11 @@ export class DebugPanel {
       color: '#cccccc',
     }).setOrigin(0.5);
 
-    // hit 矩形仅用于命中（Phaser 命中检测只看 active，不看 visible），隐藏后不参与渲染
+    // hit 矩形仅用于命中。注意：不能 setVisible(false)——Phaser 输入命中测试会跳过
+    // 不可见对象，隐藏后按钮全部无法点击（2026-09-13 掉帧修复引入的回归）。
+    // hit 为透明矩形（fillAlpha 0），渲染无视觉且不占 draw call 性能，保持可见即可。
     const hit = this.scene.add
       .rectangle(width / 2, this.btnHeight / 2, width, this.btnHeight, 0xffffff, 0)
-      .setVisible(false)
       .setInteractive({ useHandCursor: true });
 
     hit.on('pointerover', () => {
@@ -744,7 +745,9 @@ export class DebugPanel {
       this.content.remove(this.content.list[0], false);
     }
     this.content.add([...layers[0], ...layers[1], ...layers[2]]);
-    for (const obj of layers[2]) (obj as Phaser.GameObjects.Image).visible = false;
+    // 注意：命中层 Rectangle 必须保持可见——Phaser 输入命中测试会跳过 visible=false
+    // 的对象，隐藏会导致调试面板按钮全部无法点击（2026-09-13 掉帧修复引入的回归）。
+    // 命中层为透明矩形（fillAlpha 0），渲染无视觉也无性能开销，保留可见不影响帧率。
   }
 
   // ===== 对外/内部方法（保持原语义） =====
