@@ -1,4 +1,5 @@
 import { createUIText } from '../utils/UIText';
+import { UIColors, UIFonts, createUIButton, createUIPanel } from '../ui/UIStyle';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -97,18 +98,18 @@ export class MainMenuScene extends Phaser.Scene {
     });
     // 副标题
     createUIText(this, centerX, height * 0.25 + 50, '2D 割草生存', {
-      fontSize: '20px',
-      color: '#888888',
+      fontSize: UIFonts.body,
+      color: UIColors.textDim,
     }).setOrigin(0.5);
     // 菜单按钮（6 个：选择角色/开始/继续/设置/成就/试玩场地，整体上移防止底部信息被遮挡）
     const buttonSpacing = 56;
     const buttonY = height * 0.44 - buttonSpacing / 2;
     this.createMenuButton(centerX, buttonY, '🛡️ 选择角色', () => this.scene.start('CharacterSelectScene'));
     this.createMenuButton(centerX, buttonY + buttonSpacing, '开始游戏', () => this.openLevelSelect());
-    this.createMenuButton(centerX, buttonY + buttonSpacing, '继续游戏', () => this.continueGame());
-    this.createMenuButton(centerX, buttonY + buttonSpacing * 2, '设置', () => this.openSettings());
-    this.createMenuButton(centerX, buttonY + buttonSpacing * 3, '🏅 成就', () => this.openAchievements());
-    this.createMenuButton(centerX, buttonY + buttonSpacing * 4, '🧪 试玩场地', () => this.enterTestField());
+    this.createMenuButton(centerX, buttonY + buttonSpacing * 2, '继续游戏', () => this.continueGame());
+    this.createMenuButton(centerX, buttonY + buttonSpacing * 3, '设置', () => this.openSettings());
+    this.createMenuButton(centerX, buttonY + buttonSpacing * 4, '🏅 成就', () => this.openAchievements());
+    this.createMenuButton(centerX, buttonY + buttonSpacing * 5, '🧪 试玩场地', () => this.enterTestField());
     // 底部信息
     const stats = gm.stats;
     createUIText(
@@ -117,14 +118,14 @@ export class MainMenuScene extends Phaser.Scene {
       height - 60,
       `最高分: ${stats.highScore}  |  总击杀: ${stats.totalKills}  |  游戏次数: ${stats.gamesPlayed}`,
       {
-        fontSize: '14px',
-        color: '#555555',
+        fontSize: UIFonts.small,
+        color: UIColors.textFaint,
       }
     ).setOrigin(0.5);
     // 版本号
     createUIText(this, width - 10, height - 10, 'v0.2.0', {
-      fontSize: '12px',
-      color: '#333333',
+      fontSize: UIFonts.tiny,
+      color: UIColors.textFaint,
     }).setOrigin(1, 1);
 
     // 版本更新检测：与上次游玩版本对比，变化时提示（识别缓存旧版/确认已加载新版）
@@ -133,8 +134,8 @@ export class MainMenuScene extends Phaser.Scene {
       const lastVer = localStorage.getItem('keep_living_ui_version');
       if (lastVer && lastVer !== UI_VERSION) {
         createUIText(this, width - 10, height - 38, '⚡ 已更新至 ' + UI_VERSION, {
-          fontSize: '13px',
-          color: '#88ccff',
+          fontSize: UIFonts.small,
+          color: UIColors.blue,
           backgroundColor: 'rgba(20,20,40,0.7)',
           padding: { left: 8, right: 8, top: 3, bottom: 3 },
         }).setOrigin(1, 1);
@@ -146,8 +147,8 @@ export class MainMenuScene extends Phaser.Scene {
     // 设备标识
     if (gm.isMobile) {
       createUIText(this, 10, height - 10, `移动端 · ${gm.qualityLevel}`, {
-        fontSize: '12px',
-        color: '#333333',
+        fontSize: UIFonts.tiny,
+        color: UIColors.textFaint,
       }).setOrigin(0, 1);
     }
     // 创建设置面板 + 关卡选择面板（初始隐藏）
@@ -212,32 +213,9 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private createMenuButton(x: number, y: number, text: string, callback: () => void): void {
-    const btn = createUIText(this, x, y, text, {
+    createUIButton(this, x, y, text, callback, {
       fontSize: '24px',
-      color: '#e0e0e0',
-      backgroundColor: '#1a1a25',
       padding: { left: 40, right: 40, top: 12, bottom: 12 },
-    })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-    btn.on('pointerdown', () => {
-      this.tweens.add({
-        targets: btn,
-        scaleX: 0.94,
-        scaleY: 0.94,
-        duration: 70,
-        yoyo: true,
-      });
-    });
-    btn.on('pointerover', () => {
-      btn.setStyle({ color: '#ff6b35', backgroundColor: '#2a2a35' });
-    });
-    btn.on('pointerout', () => {
-      btn.setStyle({ color: '#e0e0e0', backgroundColor: '#1a1a25' });
-    });
-    btn.on('pointerdown', () => {
-      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
-      callback();
     });
   }
   /** 开始对局：levelIndex=0 全新第 1 关；>0 直进模式（附快速开局包补偿 build 积累） */
@@ -318,25 +296,21 @@ export class MainMenuScene extends Phaser.Scene {
     mask.on('pointerdown', () => this.levelSelectOverlay.setVisible(false));
     this.levelSelectOverlay.add(mask);
     // 面板背景
-    const bg = this.add.graphics();
-    bg.fillStyle(0x16161f, 0.98);
-    bg.fillRoundedRect(cx - panelW / 2, cy - panelH / 2, panelW, panelH, 14);
-    bg.lineStyle(2, 0xff6b35, 0.4);
-    bg.strokeRoundedRect(cx - panelW / 2, cy - panelH / 2, panelW, panelH, 14);
+    const bg = createUIPanel(this, cx - panelW / 2, cy - panelH / 2, panelW, panelH);
     this.levelSelectOverlay.add(bg);
     // 标题
     this.levelSelectOverlay.add(
       createUIText(this, cx, cy - panelH / 2 + 40, '选择区域', {
-        fontSize: '28px',
-        color: '#ff6b35',
+        fontSize: UIFonts.titleM,
+        color: UIColors.accent,
         fontStyle: 'bold',
       }).setOrigin(0.5)
     );
     // 说明
     this.levelSelectOverlay.add(
       createUIText(this, cx, cy - panelH / 2 + 78, '通关前置区域后解锁；已解锁区域可随时直进（附快速开局包）', {
-        fontSize: '13px',
-        color: '#888888',
+        fontSize: UIFonts.small,
+        color: UIColors.textDim,
       }).setOrigin(0.5)
     );
     // 各关卡按钮（第 1 关恒解锁）
@@ -350,17 +324,17 @@ export class MainMenuScene extends Phaser.Scene {
       const label = `${i === 0 ? '🌿' : i === 1 ? '🏚️' : '❄️'} ${lv.name}  ${unlocked ? '' : '🔒'}`;
       const btn = createUIText(this, cx - 210, y, label, {
         fontSize: '20px',
-        color: unlocked ? '#e0e0e0' : '#555555',
-        backgroundColor: unlocked ? '#252530' : '#1a1a22',
+        color: unlocked ? UIColors.text : UIColors.textFaint,
+        backgroundColor: unlocked ? UIColors.btnPanelBg : UIColors.btnLockedBg,
         padding: { left: 46, right: 46, top: 12, bottom: 12 },
       }).setOrigin(0.5);
       if (unlocked) {
         btn.setInteractive({ useHandCursor: true });
         btn.on('pointerover', () => {
-          btn.setStyle({ color: '#ff6b35', backgroundColor: '#353555' });
+          btn.setStyle({ color: UIColors.accent, backgroundColor: '#353555' });
           this.updateLevelPreview(LEVELS[i]);
         });
-        btn.on('pointerout', () => btn.setStyle({ color: '#e0e0e0', backgroundColor: '#252530' }));
+        btn.on('pointerout', () => btn.setStyle({ color: UIColors.text, backgroundColor: UIColors.btnPanelBg }));
         btn.on('pointerdown', () => {
           this.levelSelectOverlay.setVisible(false);
           this.startGame(i);
@@ -370,9 +344,9 @@ export class MainMenuScene extends Phaser.Scene {
       // 感叹号按钮：移动端无 hover，点击查看该关敌人图鉴（桌面端 hover 保留）
       if (unlocked) {
         const infoBtn = createUIText(this, cx - 110, y, '!', {
-          fontSize: '16px',
-          color: '#88ccff',
-          backgroundColor: '#1a1a35',
+          fontSize: UIFonts.label,
+          color: UIColors.blue,
+          backgroundColor: UIColors.btnBlueBg,
           padding: { left: 10, right: 10, top: 6, bottom: 6 },
         })
           .setOrigin(0.5)
@@ -394,16 +368,16 @@ export class MainMenuScene extends Phaser.Scene {
     const gy = cy - panelH / 2 + 130;
     this.levelSelectOverlay.add(
       createUIText(this, gx, gy - 26, '本关敌人', {
-        fontSize: '18px',
-        color: '#ff6b35',
+        fontSize: UIFonts.body,
+        color: UIColors.accent,
         fontStyle: 'bold',
       }).setOrigin(0, 0.5)
     );
     // 敌方情报入口（打开独立图鉴页，明日方舟式左列表右详情）
     const codexBtn = createUIText(this, gx + 212, gy - 26, '📖 敌方情报', {
-      fontSize: '15px',
-      color: '#88ccff',
-      backgroundColor: '#1a1a35',
+      fontSize: UIFonts.desc,
+      color: UIColors.blue,
+      backgroundColor: UIColors.btnBlueBg,
       padding: { left: 12, right: 12, top: 5, bottom: 5 },
     })
       .setOrigin(0.5)
@@ -421,29 +395,22 @@ export class MainMenuScene extends Phaser.Scene {
     this.levelPreviewRows = [];
     for (let r = 0; r < 5; r++) {
       const nameT = createUIText(this, gx, gy + r * 34, '', {
-        fontSize: '14px',
-        color: '#c8c8c8',
+        fontSize: UIFonts.small,
+        color: UIColors.textDim,
       }).setOrigin(0, 0.5);
       const noteT = createUIText(this, gx + 88, gy + r * 34, '', {
-        fontSize: '13px',
-        color: '#8a8a99',
+        fontSize: UIFonts.small,
+        color: UIColors.textDim,
       }).setOrigin(0, 0.5);
       this.levelSelectOverlay.add(nameT);
       this.levelSelectOverlay.add(noteT);
       this.levelPreviewRows.push({ name: nameT, note: noteT });
     }
     this.updateLevelPreview(LEVELS[0]);
-    const closeBtn = createUIText(this, cx, cy + panelH / 2 - 32, '关闭', {
-      fontSize: '18px',
-      color: '#e0e0e0',
-      backgroundColor: '#1a1a25',
+    const closeBtn = createUIButton(this, cx, cy + panelH / 2 - 32, '关闭', () => this.levelSelectOverlay.setVisible(false), {
+      fontSize: UIFonts.body,
       padding: { left: 36, right: 36, top: 10, bottom: 10 },
-    })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerover', () => closeBtn.setStyle({ color: '#ff6b35', backgroundColor: '#2a2a35' }));
-    closeBtn.on('pointerout', () => closeBtn.setStyle({ color: '#e0e0e0', backgroundColor: '#1a1a25' }));
-    closeBtn.on('pointerdown', () => this.levelSelectOverlay.setVisible(false));
+    });
     this.levelSelectOverlay.add(closeBtn);
   }
   /** 打开前刷新解锁状态（通关后回到主菜单，新区域应变为可点） */
@@ -478,8 +445,8 @@ export class MainMenuScene extends Phaser.Scene {
     this.levelInfoButtons.forEach((b, k) => {
       const active = k === this.previewLevelIndex;
       b.setStyle({
-        color: active ? '#ffd700' : '#88ccff',
-        backgroundColor: active ? '#35355a' : '#1a1a35',
+        color: active ? UIColors.gold : UIColors.blue,
+        backgroundColor: active ? '#35355a' : UIColors.btnBlueBg,
       });
     });
   }
@@ -492,13 +459,13 @@ export class MainMenuScene extends Phaser.Scene {
       const unlocked = i === 0 || gm.isLevelUnlocked(i);
       btn.setText(`${i === 0 ? '🌿' : i === 1 ? '🏚️' : '❄️'} ${lv.name}  ${unlocked ? '' : '🔒'}`);
       btn.setStyle({
-        color: unlocked ? '#e0e0e0' : '#555555',
-        backgroundColor: unlocked ? '#252530' : '#1a1a22',
+        color: unlocked ? UIColors.text : UIColors.textFaint,
+        backgroundColor: unlocked ? UIColors.btnPanelBg : UIColors.btnLockedBg,
       });
       if (unlocked && !btn.input?.enabled) {
         btn.setInteractive({ useHandCursor: true });
-        btn.on('pointerover', () => btn.setStyle({ color: '#ff6b35', backgroundColor: '#353555' }));
-        btn.on('pointerout', () => btn.setStyle({ color: '#e0e0e0', backgroundColor: '#252530' }));
+        btn.on('pointerover', () => btn.setStyle({ color: UIColors.accent, backgroundColor: '#353555' }));
+        btn.on('pointerout', () => btn.setStyle({ color: UIColors.text, backgroundColor: UIColors.btnPanelBg }));
         btn.on('pointerdown', () => {
           this.levelSelectOverlay.setVisible(false);
           this.startGame(i);
@@ -521,30 +488,26 @@ export class MainMenuScene extends Phaser.Scene {
     mask.on('pointerdown', () => this.settingsOverlay.setVisible(false));
     this.settingsOverlay.add(mask);
     // 面板背景
-    const bg = this.add.graphics();
-    bg.fillStyle(0x16161f, 0.98);
-    bg.fillRoundedRect(cx - panelW / 2, cy - panelH / 2, panelW, panelH, 14);
-    bg.lineStyle(2, 0x00ffff, 0.4);
-    bg.strokeRoundedRect(cx - panelW / 2, cy - panelH / 2, panelW, panelH, 14);
+    const bg = createUIPanel(this, cx - panelW / 2, cy - panelH / 2, panelW, panelH);
     this.settingsOverlay.add(bg);
     // 标题
     this.settingsOverlay.add(
       createUIText(this, cx, cy - panelH / 2 + 38, '设 置', {
-        fontSize: '28px',
-        color: '#00ffff',
+        fontSize: UIFonts.titleM,
+        color: UIColors.accent,
         fontStyle: 'bold',
       }).setOrigin(0.5)
     );
     const labelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-      fontSize: '16px',
-      color: '#cccccc',
+      fontSize: UIFonts.label,
+      color: UIColors.text,
     };
     // ---------- 音乐音量 ----------
     const musicY = cy - panelH / 2 + 96;
     this.settingsOverlay.add(createUIText(this, cx - 170, musicY, '音乐音量', labelStyle).setOrigin(0, 0.5));
     this.musicVolText = createUIText(this, cx - 20, musicY, `${this.musicVolume}%`, {
-      fontSize: '16px',
-      color: '#ffffff',
+      fontSize: UIFonts.label,
+      color: UIColors.textBright,
       fontStyle: 'bold',
     }).setOrigin(0.5);
     this.settingsOverlay.add(this.musicVolText);
@@ -554,8 +517,8 @@ export class MainMenuScene extends Phaser.Scene {
     const sfxY = cy - panelH / 2 + 146;
     this.settingsOverlay.add(createUIText(this, cx - 170, sfxY, '音效音量', labelStyle).setOrigin(0, 0.5));
     this.sfxVolText = createUIText(this, cx - 20, sfxY, `${this.sfxVolume}%`, {
-      fontSize: '16px',
-      color: '#ffffff',
+      fontSize: UIFonts.label,
+      color: UIColors.textBright,
       fontStyle: 'bold',
     }).setOrigin(0.5);
     this.settingsOverlay.add(this.sfxVolText);
@@ -579,8 +542,8 @@ export class MainMenuScene extends Phaser.Scene {
     const muteY = cy - panelH / 2 + 246;
     this.settingsOverlay.add(createUIText(this, cx - 170, muteY, '静音', labelStyle).setOrigin(0, 0.5));
     this.muteText = createUIText(this, cx, muteY, this.muted ? '开' : '关', {
-      fontSize: '16px',
-      color: this.muted ? '#ff6b35' : '#ffffff',
+      fontSize: UIFonts.label,
+      color: this.muted ? UIColors.accent : UIColors.textBright,
       fontStyle: 'bold',
     })
       .setOrigin(0.5)
@@ -592,8 +555,8 @@ export class MainMenuScene extends Phaser.Scene {
     this.settingsOverlay.add(createUIText(this, cx - 170, showFpsY, '显示FPS', labelStyle).setOrigin(0, 0.5));
     const gmFps = GameManager.getInstance();
     this.showFpsText = createUIText(this, cx, showFpsY, gmFps.showFps ? '开' : '关', {
-      fontSize: '16px',
-      color: gmFps.showFps ? '#ff6b35' : '#ffffff',
+      fontSize: UIFonts.label,
+      color: gmFps.showFps ? UIColors.accent : UIColors.textBright,
       fontStyle: 'bold',
     })
       .setOrigin(0.5)
@@ -601,17 +564,10 @@ export class MainMenuScene extends Phaser.Scene {
     this.showFpsText.on('pointerdown', () => this.toggleShowFps());
     this.settingsOverlay.add(this.showFpsText);
     // ---------- 关闭 ----------
-    const closeBtn = createUIText(this, cx, cy + panelH / 2 - 30, '关闭', {
-      fontSize: '18px',
-      color: '#e0e0e0',
-      backgroundColor: '#1a1a25',
+    const closeBtn = createUIButton(this, cx, cy + panelH / 2 - 30, '关闭', () => this.settingsOverlay.setVisible(false), {
+      fontSize: UIFonts.body,
       padding: { left: 36, right: 36, top: 10, bottom: 10 },
-    })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerover', () => closeBtn.setStyle({ color: '#ff6b35', backgroundColor: '#2a2a35' }));
-    closeBtn.on('pointerout', () => closeBtn.setStyle({ color: '#e0e0e0', backgroundColor: '#1a1a25' }));
-    closeBtn.on('pointerdown', () => this.settingsOverlay.setVisible(false));
+    });
     this.settingsOverlay.add(closeBtn);
     // 初始化画质按钮高亮
     this.refreshQualityHighlight();
@@ -620,15 +576,15 @@ export class MainMenuScene extends Phaser.Scene {
 
   private createSmallButton(x: number, y: number, label: string, callback: () => void): Phaser.GameObjects.Text {
     const btn = createUIText(this, x, y, label, {
-      fontSize: '16px',
-      color: '#e0e0e0',
-      backgroundColor: '#252530',
+      fontSize: UIFonts.label,
+      color: UIColors.text,
+      backgroundColor: UIColors.btnPanelBg,
       padding: { left: 14, right: 14, top: 6, bottom: 6 },
     })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-    btn.on('pointerover', () => btn.setStyle({ color: '#ffffff', backgroundColor: '#353555' }));
-    btn.on('pointerout', () => btn.setStyle({ color: '#e0e0e0', backgroundColor: '#252530' }));
+    btn.on('pointerover', () => btn.setStyle({ color: UIColors.textBright, backgroundColor: '#353555' }));
+    btn.on('pointerout', () => btn.setStyle({ color: UIColors.text, backgroundColor: UIColors.btnPanelBg }));
     btn.on('pointerdown', callback);
     return btn;
   }
@@ -659,9 +615,9 @@ export class MainMenuScene extends Phaser.Scene {
     qLabels.forEach((lvl) => {
       const text = this.qualityTexts[lvl];
       if (lvl === this.quality) {
-        text.setStyle({ color: '#000000', backgroundColor: '#00ffff' });
+        text.setStyle({ color: '#000000', backgroundColor: UIColors.accent });
       } else {
-        text.setStyle({ color: '#e0e0e0', backgroundColor: '#252530' });
+        text.setStyle({ color: UIColors.text, backgroundColor: UIColors.btnPanelBg });
       }
     });
   }
@@ -670,7 +626,7 @@ export class MainMenuScene extends Phaser.Scene {
     const gm = GameManager.getInstance();
     gm.setShowFps(!gm.showFps);
     this.showFpsText.setText(gm.showFps ? '开' : '关');
-    this.showFpsText.setColor(gm.showFps ? '#ff6b35' : '#ffffff');
+    this.showFpsText.setColor(gm.showFps ? UIColors.accent : UIColors.textBright);
   }
 
   private toggleMute(): void {
@@ -678,7 +634,7 @@ export class MainMenuScene extends Phaser.Scene {
     AudioManager.getInstance().setMuted(this.muted);
     this.muteText.setText(this.muted ? '开' : '关');
     this.muteText.setStyle({
-      color: this.muted ? '#ff6b35' : '#ffffff',
+      color: this.muted ? UIColors.accent : UIColors.textBright,
       fontStyle: 'bold',
     });
     GameManager.getInstance().saveProgress();

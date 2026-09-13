@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { createUIText } from '../utils/UIText';
+import { UIColors, UIFonts, createSceneTitle, createBackButton, createUIPanel, styleTab } from '../ui/UIStyle';
 import { GameConfig } from '../game/GameConfig';
 import { setupUICamera } from '../utils/CameraHelper';
 import { AudioManager } from '../systems/AudioManager';
@@ -30,9 +31,9 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 /** 词缀稀有度 → 颜色 / 中文标签 / 格子底色 */
-const RARITY_COLOR: Record<string, string> = { common: '#c8c8c8', rare: '#88ccff', epic: '#cc88ff' };
+const RARITY_COLOR: Record<string, string> = { common: UIColors.textDim, rare: UIColors.blue, epic: '#cc88ff' };
 const RARITY_LABEL: Record<string, string> = { common: '普通', rare: '稀有', epic: '史诗' };
-const RARITY_BG: Record<string, number> = { common: 0x2a2a38, rare: 0x1a2a48, epic: 0x331a48 };
+const RARITY_BG: Record<string, number> = { common: UIColors.card, rare: 0x1a2a48, epic: 0x331a48 };
 
 /** Boss 机制一句话说明 */
 function describeBossMechanic(type: EnemyType): string {
@@ -77,44 +78,29 @@ export class EnemyCodexScene extends Phaser.Scene {
     const cx = width / 2;
 
     // 背景 + 顶部渐变带
-    this.add.rectangle(0, 0, width, height, 0x0a0a14, 0.97).setOrigin(0).setInteractive();
+    this.add.rectangle(0, 0, width, height, UIColors.sceneBgAlt, 0.97).setOrigin(0).setInteractive();
     const topBar = this.add.graphics();
     topBar.fillGradientStyle(0x14142a, 0x14142a, 0x1a1a35, 0x1a1a35, 1);
     topBar.fillRect(0, 0, width, 110);
 
     // 标题（随标签页切换）
-    this.titleText = createUIText(this, cx, 44, `📖 敌方情报 · ${this.level.name}`, {
-      fontSize: '32px',
-      color: '#ff6b35',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 4,
-    }).setOrigin(0.5);
+    this.titleText = createSceneTitle(this, cx, 44, `📖 敌方情报 · ${this.level.name}`);
 
     // 返回
-    const backBtn = createUIText(this, 60, 44, '← 返回', {
-      fontSize: '18px',
-      color: '#e0e0e0',
-      backgroundColor: '#1a1a25',
-      padding: { left: 16, right: 16, top: 8, bottom: 8 },
-    })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-    backBtn.on('pointerdown', () => {
-      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
+    const backBtn = createBackButton(this, 60, 44, () => {
       // 叠加场景：只关闭图鉴页，保留下层选关面板
       this.scene.stop();
     });
 
     // 标签页（敌人 / 词缀）：文字选项卡 + 底部指示条滑条
     this.enemyTabBtn = createUIText(this, cx - 60, 106, '👾 敌人', {
-      fontSize: '18px',
+      fontSize: UIFonts.body,
       padding: { left: 20, right: 20, top: 8, bottom: 8 },
     })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     this.affixTabBtn = createUIText(this, cx + 60, 106, '✨ 词缀', {
-      fontSize: '18px',
+      fontSize: UIFonts.body,
       padding: { left: 20, right: 20, top: 8, bottom: 8 },
     })
       .setOrigin(0.5)
@@ -122,11 +108,11 @@ export class EnemyCodexScene extends Phaser.Scene {
     this.enemyTabBtn.on('pointerdown', () => this.switchTab('enemy'));
     this.affixTabBtn.on('pointerdown', () => this.switchTab('affix'));
     this.enemyTabBtn.on('pointerover', () =>
-      this.enemyTabBtn.setStyle({ color: this.tab === 'enemy' ? '#ff6b35' : '#c8c8c8' })
+      this.enemyTabBtn.setStyle({ color: this.tab === 'enemy' ? UIColors.accent : UIColors.textDim })
     );
     this.enemyTabBtn.on('pointerout', () => this.updateTabButtons());
     this.affixTabBtn.on('pointerover', () =>
-      this.affixTabBtn.setStyle({ color: this.tab === 'affix' ? '#ff6b35' : '#c8c8c8' })
+      this.affixTabBtn.setStyle({ color: this.tab === 'affix' ? UIColors.accent : UIColors.textDim })
     );
     this.affixTabBtn.on('pointerout', () => this.updateTabButtons());
     // 指示条（选中项下方橙色滑条，切换时平滑滑动）
@@ -147,12 +133,12 @@ export class EnemyCodexScene extends Phaser.Scene {
       const x = listX + col * (cellW + gap);
       const y = listY + row * (cellH + gap);
       const bg = this.add
-        .rectangle(x + cellW / 2, y + cellH / 2, cellW, cellH, 0x1a1a28, 1)
-        .setStrokeStyle(1, 0x333355)
+        .rectangle(x + cellW / 2, y + cellH / 2, cellW, cellH, UIColors.card, 1)
+        .setStrokeStyle(1, UIColors.cardBorder)
         .setInteractive({ useHandCursor: true });
       bg.on('pointerdown', () => this.selectEnemy(item.type));
-      bg.on('pointerover', () => bg.setFillStyle(0x23233a));
-      bg.on('pointerout', () => bg.setFillStyle(this.selectedType === item.type ? 0x2a2a45 : 0x1a1a28));
+      bg.on('pointerover', () => bg.setFillStyle(UIColors.cardHover));
+      bg.on('pointerout', () => bg.setFillStyle(this.selectedType === item.type ? UIColors.cardActive : UIColors.card));
       const color = '#' + (cfg.color ?? 0x888888).toString(16).padStart(6, '0');
       const spr = this.add.sprite(x + 26, y + cellH / 2, GameConfig.themeKey(cfg.texture || 'enemy_normal'));
       spr.setDisplaySize(34, 34);
@@ -166,7 +152,7 @@ export class EnemyCodexScene extends Phaser.Scene {
       }).setOrigin(0, 0.5);
       const tagT = createUIText(this, x + 52, y + cellH / 2 + 16, TYPE_LABEL[item.type] ?? '', {
         fontSize: '12px',
-        color: '#8888aa',
+        color: UIColors.textDim,
       }).setOrigin(0, 0.5);
       this.enemyCells.push({ bg, spr, name: nameT, tag: tagT });
     });
@@ -180,12 +166,12 @@ export class EnemyCodexScene extends Phaser.Scene {
       const x = listX + col * (cellW + gap);
       const y = listY + row * (cellH + gap);
       const bg = this.add
-        .rectangle(x + cellW / 2, y + cellH / 2, cellW, cellH, 0x1a1a28, 1)
-        .setStrokeStyle(1, 0x333355)
+        .rectangle(x + cellW / 2, y + cellH / 2, cellW, cellH, UIColors.card, 1)
+        .setStrokeStyle(1, UIColors.cardBorder)
         .setInteractive({ useHandCursor: true });
       bg.on('pointerdown', () => this.selectAffix(id));
-      bg.on('pointerover', () => bg.setFillStyle(0x23233a));
-      bg.on('pointerout', () => bg.setFillStyle(this.selectedAffix === id ? 0x2a2a45 : 0x1a1a28));
+      bg.on('pointerover', () => bg.setFillStyle(UIColors.cardHover));
+      bg.on('pointerout', () => bg.setFillStyle(this.selectedAffix === id ? UIColors.cardActive : UIColors.card));
       const iconSpr = this.add.sprite(x + 28, y + cellH / 2, this.ensureEmojiTexture(id, def.icon));
       iconSpr.setDisplaySize(26, 26);
       const nameT = createUIText(this, x + 52, y + cellH / 2 - 10, def.name, {
@@ -195,7 +181,7 @@ export class EnemyCodexScene extends Phaser.Scene {
       }).setOrigin(0, 0.5);
       const rarityT = createUIText(this, x + 52, y + cellH / 2 + 16, `${RARITY_LABEL[def.rarity]}词缀`, {
         fontSize: '12px',
-        color: '#8888aa',
+        color: UIColors.textDim,
       }).setOrigin(0, 0.5);
       this.affixCells.push({ bg, icon: iconSpr, name: nameT, rarity: rarityT });
     });
@@ -243,12 +229,8 @@ export class EnemyCodexScene extends Phaser.Scene {
 
   /** 标签按钮高亮 + 指示条滑动（当前页橙色加粗，另一页灰） */
   private updateTabButtons(): void {
-    this.enemyTabBtn.setStyle(
-      this.tab === 'enemy' ? { color: '#ff6b35', fontStyle: 'bold' } : { color: '#8a8a99', fontStyle: 'normal' }
-    );
-    this.affixTabBtn.setStyle(
-      this.tab === 'affix' ? { color: '#ff6b35', fontStyle: 'bold' } : { color: '#8a8a99', fontStyle: 'normal' }
-    );
+    styleTab(this.enemyTabBtn, this.tab === 'enemy');
+    styleTab(this.affixTabBtn, this.tab === 'affix');
     const targetX = this.tab === 'enemy' ? this.enemyTabBtn.x : this.affixTabBtn.x;
     this.tweens.killTweensOf(this.tabIndicator);
     this.tweens.add({ targets: this.tabIndicator, x: targetX, duration: 180, ease: 'Cubic.easeOut' });
@@ -272,11 +254,7 @@ export class EnemyCodexScene extends Phaser.Scene {
     const color = '#' + (cfg.color ?? 0x888888).toString(16).padStart(6, '0');
 
     // 面板底
-    const panel = this.add.graphics();
-    panel.fillStyle(0x16161f, 0.98);
-    panel.fillRoundedRect(dx, dy, dw, dh, 14);
-    panel.lineStyle(2, 0xff6b35, 0.4);
-    panel.strokeRoundedRect(dx, dy, dw, dh, 14);
+    const panel = createUIPanel(this, dx, dy, dw, dh);
     this.detail.add(panel);
 
     // 大图标：复用游戏内敌人贴图，与关卡实际怪物一致
@@ -300,7 +278,7 @@ export class EnemyCodexScene extends Phaser.Scene {
       dx + 130,
       dy + 104,
       `${TYPE_LABEL[type] ?? ''}${cfg.type === 'boss' ? ' · 关底 Boss' : ''}`,
-      { fontSize: '15px', color: '#ffd700' }
+      { fontSize: UIFonts.desc, color: UIColors.gold }
     ).setOrigin(0, 0.5);
     this.detail.add(tag);
 
@@ -316,7 +294,7 @@ export class EnemyCodexScene extends Phaser.Scene {
       const ratio = Math.min(1, st.value / st.ref);
       const lb = createUIText(this, dx + 40, sy, st.label, {
         fontSize: '15px',
-        color: '#c8c8c8',
+        color: UIColors.textDim,
       }).setOrigin(0, 0.5);
       this.detail.add(lb);
       this.detail.add(this.add.rectangle(dx + 110, sy, 200, 10, 0x2a2a38, 1).setOrigin(0, 0.5));
@@ -327,7 +305,7 @@ export class EnemyCodexScene extends Phaser.Scene {
       }
       const val = createUIText(this, dx + 330, sy, `${st.value}`, {
         fontSize: '15px',
-        color: '#e0e0e0',
+        color: UIColors.text,
         fontStyle: 'bold',
       }).setOrigin(0, 0.5);
       this.detail.add(val);
@@ -338,20 +316,20 @@ export class EnemyCodexScene extends Phaser.Scene {
     const note = (this.level.enemyPreview ?? []).find((i) => i.type === type)?.note ?? '';
     const tipTitle = createUIText(this, dx + 40, sy + 10, '作战提示', {
       fontSize: '15px',
-      color: '#ff6b35',
+      color: UIColors.accent,
       fontStyle: 'bold',
     }).setOrigin(0, 0);
     this.detail.add(tipTitle);
     const tip = createUIText(this, dx + 40, sy + 40, note, {
       fontSize: '15px',
-      color: '#cccccc',
+      color: UIColors.text,
       wordWrap: { width: dw - 80 },
     }).setOrigin(0, 0);
     this.detail.add(tip);
     if (cfg.type === 'boss') {
       const mech = createUIText(this, dx + 40, sy + 86, describeBossMechanic(type), {
         fontSize: '14px',
-        color: '#88ccff',
+        color: UIColors.blue,
         wordWrap: { width: dw - 80 },
       }).setOrigin(0, 0);
       this.detail.add(mech);
@@ -395,11 +373,7 @@ export class EnemyCodexScene extends Phaser.Scene {
     const color = RARITY_COLOR[def.rarity];
 
     // 面板底
-    const panel = this.add.graphics();
-    panel.fillStyle(0x16161f, 0.98);
-    panel.fillRoundedRect(dx, dy, dw, dh, 14);
-    panel.lineStyle(2, 0xff6b35, 0.4);
-    panel.strokeRoundedRect(dx, dy, dw, dh, 14);
+    const panel = createUIPanel(this, dx, dy, dw, dh);
     this.detail.add(panel);
 
     // 大图标（Canvas 纹理精灵，完整显示 emoji 且不裁切）+ 稀有度底色圆
@@ -417,7 +391,7 @@ export class EnemyCodexScene extends Phaser.Scene {
     this.detail.add(name);
     const rarity = createUIText(this, dx + 130, dy + 102, `${RARITY_LABEL[def.rarity]}词缀`, {
       fontSize: '15px',
-      color: '#ffd700',
+      color: UIColors.gold,
     }).setOrigin(0, 0.5);
     this.detail.add(rarity);
 
@@ -427,20 +401,20 @@ export class EnemyCodexScene extends Phaser.Scene {
       dx + 130,
       dy + 132,
       def.rarity === 'epic' ? '出没：仅精英怪携带' : '出没：普通怪低概率 · 精英怪必带',
-      { fontSize: '13px', color: '#8a8a99' }
+      { fontSize: UIFonts.small, color: UIColors.textDim }
     ).setOrigin(0, 0.5);
     this.detail.add(appear);
 
     // 效果说明
     const descTitle = createUIText(this, dx + 40, dy + 168, '效果', {
       fontSize: '16px',
-      color: '#ff6b35',
+      color: UIColors.accent,
       fontStyle: 'bold',
     }).setOrigin(0, 0);
     this.detail.add(descTitle);
     const desc = createUIText(this, dx + 40, dy + 198, def.description, {
       fontSize: '15px',
-      color: '#e0e0e0',
+      color: UIColors.text,
       wordWrap: { width: dw - 80 },
     }).setOrigin(0, 0);
     this.detail.add(desc);
@@ -448,13 +422,13 @@ export class EnemyCodexScene extends Phaser.Scene {
     // 应对提示
     const counterTitle = createUIText(this, dx + 40, dy + 258, '应对', {
       fontSize: '16px',
-      color: '#ff6b35',
+      color: UIColors.accent,
       fontStyle: 'bold',
     }).setOrigin(0, 0);
     this.detail.add(counterTitle);
     const counter = createUIText(this, dx + 40, dy + 288, def.counter ?? '暂无', {
       fontSize: '15px',
-      color: '#88ccff',
+      color: UIColors.blue,
       wordWrap: { width: dw - 80 },
     }).setOrigin(0, 0);
     this.detail.add(counter);

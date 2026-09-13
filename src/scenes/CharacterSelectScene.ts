@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { CHARACTERS, type CharacterConfig } from '../data/characters';
 import { createUIText } from '../utils/UIText';
+import { UIColors, UIFonts, createSceneTitle, createBackButton, createUIButton } from '../ui/UIStyle';
 
 /**
  * 角色选择场景（选角系统第一步）
@@ -17,12 +18,12 @@ export class CharacterSelectScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor('#0a0a0f');
+    this.cameras.main.setBackgroundColor('#' + UIColors.sceneBg.toString(16).padStart(6, '0'));
 
-    createUIText(this, width / 2, 56, '选择角色', { fontSize: '34px', color: '#ff6b35' }).setOrigin(0.5);
+    createSceneTitle(this, width / 2, 56, '选择角色');
     createUIText(this, width / 2, 96, '不同角色拥有不同的武器熟练与独特被动', {
       fontSize: '14px',
-      color: '#888888',
+      color: UIColors.textDim,
     }).setOrigin(0.5);
 
     const ids = Object.keys(CHARACTERS);
@@ -48,36 +49,30 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     // 底部说明
     createUIText(this, width / 2, height - 44, '点击角色切换，返回后开始游戏生效', {
-      fontSize: '13px',
-      color: '#777777',
+      fontSize: UIFonts.small,
+      color: UIColors.textFaint,
     }).setOrigin(0.5);
 
     // 返回按钮
-    const backBtn = createUIText(this, width - 16, 16, '‹ 返回', {
-      fontSize: '18px',
-      color: '#cccccc',
-      backgroundColor: 'rgba(255,255,255,0.08)',
-      padding: { x: 12, y: 6 },
-    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
-    backBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
+    const backBtn = createBackButton(this, width - 46, 40, () => this.scene.start('MainMenuScene'));
 
     // 开始冒险：选完角色直接进关卡选择（无需先回主菜单再点开始）
-    const playBtn = createUIText(this, width - 16, height - 16, '▶ 开始冒险', {
-      fontSize: '18px',
-      color: '#ff6b35',
-      backgroundColor: 'rgba(255,107,53,0.15)',
-      padding: { x: 14, y: 6 },
-    }).setOrigin(1, 1).setInteractive({ useHandCursor: true });
-    playBtn.on('pointerdown', () => this.scene.start('MainMenuScene', { openLevelSelect: true }));
+    const playBtn = createUIButton(this, width - 16, height - 16, '▶ 开始冒险', () => this.scene.start('MainMenuScene', { openLevelSelect: true }), {
+      fontSize: UIFonts.body,
+      color: UIColors.accent,
+      bg: UIColors.accentBg,
+      bgHover: '#3a2a20',
+      padding: { left: 14, right: 14, top: 6, bottom: 6 },
+    }).setOrigin(1, 1);
   }
 
   private createCard(config: CharacterConfig, x: number, y: number, w: number, h: number, selected: boolean): void {
     const gfx = this.add.graphics();
     const draw = () => {
       gfx.clear();
-      gfx.fillStyle(selected ? 0x2a2018 : 0x16161d, 1);
+      gfx.fillStyle(selected ? UIColors.cardActive : UIColors.card, 1);
       gfx.fillRoundedRect(-w / 2, -h / 2, w, h, 14);
-      gfx.lineStyle(selected ? 3 : 1, selected ? 0xff6b35 : 0x2a2a35, 1);
+      gfx.lineStyle(selected ? 3 : 1, selected ? UIColors.accentDim : UIColors.cardBorder, 1);
       gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, 14);
     };
     draw();
@@ -90,7 +85,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     texts.push(
       createUIText(this, 0, -h / 2 + 34, config.name, {
         fontSize: isNarrow ? '24px' : '26px',
-        color: '#ffffff',
+        color: UIColors.textBright,
         fontStyle: 'bold',
       }).setOrigin(0.5)
     );
@@ -98,7 +93,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     texts.push(
       createUIText(this, 0, -h / 2 + 66, config.description, {
         fontSize: '12px',
-        color: '#aaaaaa',
+        color: UIColors.textDim,
         align: 'center',
         wordWrap: { width: w - pad * 2 },
       }).setOrigin(0.5)
@@ -108,7 +103,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       texts.push(
         createUIText(this, 0, -h / 2 + (isNarrow ? 108 : 132), config.passiveDesc, {
           fontSize: '12px',
-          color: '#ff9a6b',
+          color: UIColors.accentSoft,
           align: 'center',
           wordWrap: { width: w - pad * 2 },
         }).setOrigin(0.5)
@@ -121,7 +116,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     texts.push(
       createUIText(this, 0, -h / 2 + (isNarrow ? 92 : 180), favored, {
         fontSize: '13px',
-        color: config.favoredTags?.length ? '#6bd5ff' : '#8a8a8a',
+        color: config.favoredTags?.length ? UIColors.blue : UIColors.textDim,
       }).setOrigin(0.5)
     );
 
@@ -137,7 +132,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         texts.push(
           createUIText(this, 0, -h / 2 + (isNarrow ? 132 : 210), parts.join('  '), {
             fontSize: '12px',
-            color: '#7ee0a0',
+            color: UIColors.green,
           }).setOrigin(0.5)
         );
       }
@@ -145,7 +140,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     if (selected) {
       texts.push(
-        createUIText(this, 0, h / 2 - 18, '✓ 当前角色', { fontSize: '13px', color: '#ff6b35' }).setOrigin(0.5)
+        createUIText(this, 0, h / 2 - 18, '✓ 当前角色', { fontSize: UIFonts.small, color: UIColors.accent }).setOrigin(0.5)
       );
     }
 
