@@ -102,8 +102,9 @@ export class MainMenuScene extends Phaser.Scene {
       color: UIColors.textDim,
     }).setOrigin(0.5);
     // 菜单按钮（5 个：开始游戏/继续/设置/成就/试玩场地；开始游戏 = 新游戏入口，先进选角再选关）
+    // 布局：避开副标题（0.25H+50），也远离底部统计（H-60）
     const buttonSpacing = 56;
-    const buttonY = height * 0.5 - buttonSpacing * 2;
+    const buttonY = height * 0.44 - buttonSpacing / 2;
     this.createMenuButton(centerX, buttonY, '开始游戏', () => this.scene.start('CharacterSelectScene'));
     this.createMenuButton(centerX, buttonY + buttonSpacing, '继续游戏', () => this.continueGame());
     this.createMenuButton(centerX, buttonY + buttonSpacing * 2, '设置', () => this.openSettings());
