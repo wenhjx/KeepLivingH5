@@ -736,13 +736,11 @@ export class GameScene extends Phaser.Scene {
         this.player.triggerPendingBossBuffs();
       }
     }
-    // 自动存档（统计信息 + 进行中对局进度）
+    // 自动存档（saveRun 基于内存缓存读取，stats/settings/unlocked/成就一并保留，无需再调 saveProgress）
     this.autoSaveTimer += d;
     if (this.autoSaveTimer >= GameConfig.SAVE.autoSaveInterval) {
       this.autoSaveTimer = 0;
-      const gm = GameManager.getInstance();
-      gm.saveProgress();
-      gm.saveRun(this.player);
+      GameManager.getInstance().saveRun(this.player);
     }
     // 物理倍速：所有实体已在本帧 setVelocity 原始值，统一缩放 body 速度以维持 gameSpeed 倍移动
     this.applySpeedToBodies();

@@ -125,7 +125,7 @@ export class GameConfig {
   // ========== 存档 ==========
   static readonly SAVE = {
     localStorageKey: 'keep_living_save_v1',
-    autoSaveInterval: 10000,
+    autoSaveInterval: 30000,
     cloudSyncEnabled: false,
   };
 

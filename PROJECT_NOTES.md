@@ -758,6 +758,11 @@
   - README 补「在线试玩」（GitHub Pages 链接）、修正过时结构（waves/HealthBar）；index.html 补 SEO meta（description/og:title/description/url）+ 内联 SVG favicon；og:image 待宣传截图
   - 待办区仍保留：Enemy 受击击退 TODO（真实未实现）、SaveSystem 云端同步 TODO（远期）
 
+- ✅ 2026-09-13 存档写入优化（localStorage 滥用排查）：
+  - 根因：autoSaveInterval=10s + 自动存档点连续调用 saveProgress+saveRun（同一 key 二次覆盖，一半写入纯浪费；同步 setItem 在主线程造成卡顿；日志每次打印整个存档对象刷屏）
+  - 修复：自动存档只调 saveRun（基于内存缓存，stats/settings/unlocked/成就一并保留）；日志去掉 data 大对象；间隔 10s→30s（beforeunload 兜底；约定：以后只优化保存内容，不再动间隔）
+  - 验证：lint/test 全绿；buildSaveData 用内存 stats，saveRun 兜底无回归
+
 
 - ✅ 成就解锁提示层级（已完成 2026-09-12，237d14c）：显示层级收编为 Layers 常量表（Layers.GUIDE=10000），GuideCard 改 setDepth(Layers.GUIDE)，浮于一切 UI 之上
 

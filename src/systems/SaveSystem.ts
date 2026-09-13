@@ -38,7 +38,7 @@ export class SaveSystem {
     }
 
     EventBus.emit(EventKeys.SAVE_COMPLETE);
-    Logger.info('[SaveSystem] 存档保存成功', data);
+    Logger.info('[SaveSystem] 存档保存成功');
   }
 
   /**
