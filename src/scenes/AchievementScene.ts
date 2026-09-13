@@ -1,12 +1,11 @@
 import { createUIText } from '../utils/UIText';
+import { createBackButton } from '../ui/UIStyle';
 import Phaser from 'phaser';
 import { setupUICamera } from '../utils/CameraHelper';
 import { UILayout } from '../utils/UILayout';
 import { UIScrollBar } from '../utils/UIScrollBar';
 import { ACHIEVEMENTS, type AchievementDef, type AchievementSeries } from '../data/achievements';
 import { AchievementManager } from '../systems/AchievementManager';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
 import { GameConfig } from '../game/GameConfig';
 import { Layers } from '../constants/Layers';
 
@@ -61,19 +60,8 @@ export class AchievementScene extends Phaser.Scene {
       color: '#cccccc',
     }).setOrigin(0.5);
 
-    // 返回按钮
-    const backBtn = createUIText(this, 60, 44, '← 返回', {
-      fontSize: '18px',
-      color: '#e0e0e0',
-      backgroundColor: '#1a1a25',
-      padding: { left: 16, right: 16, top: 8, bottom: 8 },
-    })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-    backBtn.on('pointerdown', () => {
-      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
-      this.scene.start('MainMenuScene');
-    });
+    // 返回按钮（统一左上角标准组件）
+    const backBtn = createBackButton(this, 60, 44, () => this.scene.start('MainMenuScene'));
 
     // Tab 行（7 个 Tab 总宽 7×128+6×6=932 < 960，居中不溢出）
     const tabLayout = new UILayout({ x: cx - 466, y: 128, direction: 'row', spacing: 6, itemSize: 128 });
