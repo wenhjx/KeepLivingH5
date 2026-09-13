@@ -834,3 +834,22 @@
 - [ ] 长文本列预留宽度上限，超长截断/省略号，防溢出
 - [ ] 截图目视（Read 原图）+ 移动端（?mobile=1&uiscale=1.35）双验证
 - [ ] 与游戏其他 UI（结算/成就/商店）风格统一：深色面板 + 橙色描边 + 同字号体系
+
+
+## 🛠️ 开发协作工作流（AI 工具踩坑备忘，2026-09-13 定稿）
+
+### Edit 工具 "Native execution failed" 根因 = CRLF 行尾
+- 现象：改真实项目文件时，只要 old_string 跨行（含 \n）就报 Native execution failed（单行从不报）
+- 根因：git 拉取的 Windows 文件是 CRLF（\r\n）行尾，Edit 的多行 old_string 用 \n 分隔 → 逐行匹配失败，且错误信息被包装成误导性的 "Native execution failed"
+- 实测：PROJECT_NOTES.md 836 行全 CRLF → 多行 old 必失败、单行 old 必成功；Write 新建文件（LF）多行 old 正常
+- 解法（按优先级）：
+  1. old_string 用**单行锚点**（必成功；要改多行就拆成多次单行 Edit）
+  2. 多行替换 → Write 一个临时 .py（io.open 读文本 + replace + count 断言唯一 + 写回 newline='' 保留原行尾），python 执行后删除
+  3. 判断"匹配不到"不要靠重试：先 Read 最新文件内容，逐字符复制（含缩进/中文括号）
+
+### Bash 工具实际是 PowerShell 包装（引号转义铁律）
+- 本机 Bash 工具执行的命令由 PowerShell 解析，**不支持 heredoc（<<'PY'）和 &&**
+- **单引号字符串** '...'：内部一切字面量（ASCII 双引号、中文引号、反引号、$、% 均不解析）—— 复杂文本首选
+- **双引号字符串** "..."：内部**不能出现 ASCII 双引号**（提前终止字符串报 ParseException），中文引号“”可以
+- 命令分隔用 `;`（PowerShell 5.1 不支持 &&）
+- **写文件铁律**：含引号/多行/中文的文本一律用 Write 工具写脚本文件再执行，不在命令行内联长字符串
