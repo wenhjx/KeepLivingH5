@@ -1292,8 +1292,15 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (p && p.active && p.stats?.health > 0) {
         const dist = Phaser.Math.Distance.Between(this.x, this.y, p.x, p.y);
         if (dist <= explodeDef.explodeOnDeath.radius) {
+          // 与自爆怪同款距离衰减：近身全额、边缘 50%，防止“击杀必然贴脸→必然吃满”
           p.takeDamage(
-            Math.max(1, this.config.attackPower * this.difficultyMultiplier * explodeDef.explodeOnDeath.dmgMult)
+            calcExplodePlayerDamage(
+              this.config.attackPower,
+              this.difficultyMultiplier,
+              explodeDef.explodeOnDeath.dmgMult,
+              dist,
+              explodeDef.explodeOnDeath.radius
+            )
           );
         }
       }
