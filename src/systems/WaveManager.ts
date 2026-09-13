@@ -8,6 +8,7 @@ import { EventBus, EventKeys } from '../utils/EventBus';
 import type { ObjectPool } from './ObjectPool';
 import type { EnemyConfig, EnemyType } from '../types';
 import { ENEMY_CONFIGS } from '../data/enemies';
+import { waveDifficulty, bossDifficulty } from '../logic/wave';
 import type { LevelConfig } from '../data/levels';
 
 /**
@@ -194,7 +195,7 @@ export class WaveManager {
     if (!player) return;
 
     const spawnPos = this.getSpawnPosition(player.x, player.y);
-    const difficultyMultiplier = 1 + (this.currentWave - 1) * 0.1;
+    const difficultyMultiplier = waveDifficulty(this.currentWave);
 
     this.objectPool.spawnEnemy(config, spawnPos.x, spawnPos.y, difficultyMultiplier);
   }
@@ -243,10 +244,7 @@ export class WaveManager {
     // Boss 按层级指数增长：第5波=×1.0, 第10波=×1.5, 第15波=×2.25...（Boss 波数值保持旧版一致）
     // 档内平滑：1.5^((wave-5)/5) 连续成长，非 Boss 波召唤不再原地踏步；
     // wave1-4 钳制下限 ×1.0（2026-09-10 调平，原 2.2 指数后期天文数字）
-    const difficultyMultiplier = Math.max(
-      1,
-      Math.pow(1.5, (this.currentWave - GameConfig.WAVE.bossWaveInterval) / GameConfig.WAVE.bossWaveInterval)
-    );
+    const difficultyMultiplier = bossDifficulty(this.currentWave, GameConfig.WAVE.bossWaveInterval);
 
     this.objectPool.spawnEnemy(config, spawnPos.x, spawnPos.y, difficultyMultiplier);
     this.bossActive = true;
@@ -332,7 +330,7 @@ export class WaveManager {
 
   /** 直接生成敌人（供外部调用） */
   spawnEnemy(config: EnemyConfig, x: number, y: number): void {
-    const difficultyMultiplier = 1 + (this.currentWave - 1) * 0.1;
+    const difficultyMultiplier = waveDifficulty(this.currentWave);
     this.objectPool.spawnEnemy(config, x, y, difficultyMultiplier);
   }
 }

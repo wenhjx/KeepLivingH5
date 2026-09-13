@@ -10,6 +10,7 @@ import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import { AchievementManager } from '../systems/AchievementManager';
 import type { PlayerStats, WeaponConfig, UpgradeOption } from '../types';
+import { calcThornsReflect } from '../logic/player';
 import type { InputManager } from '../systems/InputManager';
 import { Layers } from '../constants/Layers';
 
@@ -599,7 +600,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 被动：荆棘（受击时反弹伤害给最近敌人）
     const thornsLevel = this.getPassiveLevel('passive_thorns');
     if (thornsLevel > 0) {
-      const reflectDamage = actualDamage * (0.2 + thornsLevel * 0.05);
+      const reflectDamage = calcThornsReflect(actualDamage, thornsLevel);
       const nearest = this.findNearestEnemy();
       if (nearest) {
         (nearest as any).takeDamage?.(reflectDamage, false);

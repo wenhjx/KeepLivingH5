@@ -1,4 +1,5 @@
 import type { UpgradeOption } from '../types';
+import { waveDifficulty } from '../logic/wave';
 
 /**
  * 升级选项配置数据
@@ -354,7 +355,7 @@ export const FALLBACK_UPGRADES: UpgradeOption[] = [
       const list = enemies.getChildren() as any[];
       // 清屏伤害随波次成长（× 小怪难度系数）
       const wave = (scene as any)?.waveManager?.getCurrentWave?.() ?? 1;
-      const waveFactor = 1 + (wave - 1) * 0.1;
+      const waveFactor = waveDifficulty(wave);
       list.forEach((e: any) => {
         if (e?.active && e?.takeDamage) {
           e.takeDamage(300 * waveFactor, false);

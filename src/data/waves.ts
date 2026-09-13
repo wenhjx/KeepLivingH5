@@ -1,4 +1,5 @@
 import type { WaveConfig, EnemyType } from '../types';
+import { waveDifficulty } from '../logic/wave';
 
 /**
  * 波次配置数据
@@ -19,7 +20,7 @@ const BASE_SPAWN_TABLE = [
  * 难度随波次递增
  */
 export const generateWaveConfig = (wave: number): WaveConfig => {
-  const difficultyMultiplier = 1 + (wave - 1) * 0.1;
+  const difficultyMultiplier = waveDifficulty(wave);
 
   // 动态构建生成表
   const spawnTable = BASE_SPAWN_TABLE.map((entry) => {

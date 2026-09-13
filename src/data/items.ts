@@ -1,6 +1,7 @@
 import type { Player } from '../entities/Player';
 import { SOUND_KEYS } from './sounds';
 import { AudioManager } from '../systems/AudioManager';
+import { waveDifficulty } from '../logic/wave';
 
 /**
  * 可主动使用的物品定义（物品栏系统）
@@ -53,7 +54,7 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
       const list = enemies.getChildren() as any[];
       // 全屏炸弹伤害随波次成长（× 小怪难度系数），后期不再是挠痒
       const wave = (gameScene as any)?.waveManager?.getCurrentWave?.() ?? 1;
-      const waveFactor = 1 + (wave - 1) * 0.1;
+      const waveFactor = waveDifficulty(wave);
       list.forEach((e: any) => {
         if (e.active && typeof e.takeDamage === 'function') {
           e.takeDamage(500 * waveFactor, true);

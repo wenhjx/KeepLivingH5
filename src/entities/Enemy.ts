@@ -11,8 +11,7 @@ import type { Player } from './Player';
 import { TextSmoothing } from '../utils/UIText';
 import { Layers } from '../constants/Layers';
 import { AFFIXES, COMMON_AFFIX_POOL, ELITE_AFFIX_POOL, type EnemyAffixId } from '../data/affixes';
-import { calcPoisonDps } from '../logic/poison';
-import { calcExplodeBase, calcExplodePlayerDamage, calcLifestealHeal } from '../logic/affixCombat';
+import { calcPoisonDps, calcExplodeBase, calcExplodePlayerDamage, calcLifestealHeal, calcAttackDamage } from '../logic/affix';
 
 /**
 
@@ -1096,8 +1095,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private attackPlayer(player: Player): void {
     const bossMult = this.config.type === 'boss' ? 1.3 : 1;
     const chargeMult = this.chargerState === 2 ? 1.6 : 1;
-    const dmg =
-      this.config.attackPower * bossMult * chargeMult * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost;
+    const dmg = calcAttackDamage(this.config.attackPower, this.difficultyMultiplier, {
+      bossMult,
+      chargeMult,
+      atkBoost: this.atkBoost,
+      affixAtkBoost: this.affixAtkBoost,
+    });
     player.takeDamage(dmg);
     // 吸血词缀：命中回复造成伤害的 lifestealMult 生命
     if (this.lifestealMult > 0) {
