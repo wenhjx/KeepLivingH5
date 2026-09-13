@@ -68,7 +68,9 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     icon: '💥',
     rarity: 'epic',
     maxLevel: 3,
-    effect: { stat: 'critDamage', value: 0.5, isPercent: true },
+    // 暴击伤害内部是倍率（基础 1.5 含隐藏 100%），百分比描述指倍率差，必须直接加值；
+    // 若用 isPercent 会按基准 1.5 计算（+0.75/级），显示多出 25% 且逐级错位
+    effect: { stat: 'critDamage', value: 0.5 },
   },
   {
     id: 'pickup_radius',
