@@ -42,11 +42,11 @@ export class CharacterSelectScene extends Phaser.Scene {
       let y: number;
       if (isMobile) {
         x = width / 2;
-        y = startY + i * (cardH + gap);
+        y = startY + cardH / 2 + i * (cardH + gap);
       } else {
         const totalW = ids.length * cardW + (ids.length - 1) * gap;
         x = (width - totalW) / 2 + cardW / 2 + i * (cardW + gap);
-        y = startY;
+        y = startY + cardH / 2;
       }
       this.createCard(CHARACTERS[id], x, y, cardW, cardH, id === GameManager.getInstance().getActiveCharacterId());
     });
@@ -93,7 +93,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       iconBg.fillCircle(0, -h / 2 + 62, 30);
       container.add(iconBg);
       texts.push(
-        createUIText(this, 0, -h / 2 + 34, config.icon, {
+        createUIText(this, 0, -h / 2 + 62, config.icon, {
           fontSize: '26px',
         }).setOrigin(0.5)
       );
