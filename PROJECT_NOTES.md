@@ -549,6 +549,22 @@
 
   - 权衡：平衡成本随角色数线性上升；专属被动可与"突破上限靠任务/boss 奖励"联动，形成角色成长线
 
+  - ✅ **一期已实施（2026-09-13，选角系统）**：3 角色（拓荒者/机械师/圣骑士），差异化 = 初始属性 + 武器系别熟练 + 受击减伤（数据驱动，均未写死在业务代码）：
+
+    - 数据：`CharacterConfig` 扩展 `favoredTags`/`favoredBonus`/`damageReduction`/`passiveDesc`；`WeaponConfig` 新增 `tags`（gun/melee/aoe/summon/heavy 五系别，9 武器全部标注）
+
+    - 角色：**拓荒者**（全均衡、保留暴击溢出 1:2 转暴伤）；**机械师**（枪械系伤害 +20%、暴击 +5%、初始机枪）；**圣骑士**（近战/范围系伤害 +20%、受击 -20%、生命 +80 移速 +10、初始光剑）
+
+    - 结算挂点：`Player.calcWeaponDamage`（熟练倍率，纯函数 `calcFavoredDamageMult` 已测试）、`Player` 构造（statBonus + starterWeapon）、`Player.takeDamage`（damageReduction）
+
+    - 持久化：`settings.activeCharacterId` 随存档读写，刷新/重启保持选择；老存档缺省回退拓荒者
+
+    - UI：新增 `CharacterSelectScene`（独立场景，宽屏 3 卡横排/窄屏竖排，当前角色橙色高亮，点击即存档），主菜单顶部加"🛡️ 选择角色"入口（6 按钮整体上移）
+
+    - 测试：`calcFavoredDamageMult` 4 用例（均衡/无标签/命中/多标签），64 用例全绿
+
+    - 已验证（真实游戏流程）：机械师初始机枪 + 暴击 0.1 + 枪械伤害 ×1.2；圣骑士 180 血/210 移速/光剑/受击 100 只扣 80；刷新后角色保持
+
 - [ ] **⑥ 技能自由组合（DOTA 4+2 式）**（想法备忘 2026-09-03，暂缓）
 
   - 方向：技能随意组合、单一技能本身复杂、组合出神奇效果（与 ⑤ 正交，可叠加：⑤ 管"选谁"、⑥ 管"局内怎么构建"）

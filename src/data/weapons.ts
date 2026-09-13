@@ -7,6 +7,7 @@ import type { WeaponConfig } from '../types';
 export const WEAPONS: Record<string, WeaponConfig> = {
   default_gun: {
     id: 'default_gun',
+    tags: ['gun'],
     name: '基础射击',
     type: 'ranged',
     texture: 'bullet',
@@ -22,6 +23,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
   },
   shotgun: {
     id: 'shotgun',
+    tags: ['gun'],
     name: '霰弹枪',
     type: 'ranged',
     texture: 'bullet',
@@ -39,6 +41,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
   },
   machine_gun: {
     id: 'machine_gun',
+    tags: ['gun'],
     name: '机枪',
     type: 'ranged',
     texture: 'bullet',
@@ -53,6 +56,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
   },
   boomerang: {
     id: 'boomerang',
+    tags: ['aoe'],
     name: '回旋镖',
     type: 'aoe',
     texture: 'bullet',
@@ -70,6 +74,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
   },
   drone: {
     id: 'drone',
+    tags: ['summon'],
     name: '无人机',
     type: 'summon',
     texture: 'bullet',
@@ -84,6 +89,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
   },
   lightsaber: {
     id: 'lightsaber',
+    tags: ['melee'],
     name: '光剑',
     type: 'melee',
     texture: 'weapon_sword',
@@ -97,6 +103,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
   },
   rocket: {
     id: 'rocket',
+    tags: ['heavy'],
     name: '火箭筒',
     type: 'aoe',
     texture: 'bullet',
@@ -113,6 +120,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
   },
   laser: {
     id: 'laser',
+    tags: ['gun'],
     name: '激光',
     type: 'ranged',
     texture: 'bullet',
@@ -128,6 +136,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
   },
   nova: {
     id: 'nova',
+    tags: ['aoe'],
     name: '环形冲击波',
     type: 'aoe',
     texture: 'bullet',

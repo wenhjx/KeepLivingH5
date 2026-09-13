@@ -4,13 +4,14 @@ import { EventBus, EventKeys } from '../utils/EventBus';
 import { MathUtils } from '../utils/MathUtils';
 import { Drone } from './Drone';
 import { WEAPONS } from '../data/weapons';
+import { GameManager } from '../game/GameManager';
 import { UPGRADE_OPTIONS } from '../data/upgrades';
 import { USABLE_ITEMS } from '../data/items';
 import { SOUND_KEYS } from '../data/sounds';
 import { AudioManager } from '../systems/AudioManager';
 import { AchievementManager } from '../systems/AchievementManager';
 import type { PlayerStats, WeaponConfig, UpgradeOption } from '../types';
-import { calcThornsReflect, calcOverflowAttack, calcOverflowCritRate, calcOverflowCritDamage, calcOverflowMaxHealth } from '../logic/player';
+import { calcThornsReflect, calcOverflowAttack, calcOverflowCritRate, calcOverflowCritDamage, calcOverflowMaxHealth, calcFavoredDamageMult } from '../logic/player';
 import type { InputManager } from '../systems/InputManager';
 import { Layers } from '../constants/Layers';
 
@@ -120,7 +121,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       coins: 30,
       overflowCount: 0,
     };
-    // percent 加算基准（含成就加成；局内升级/突破不再改它）
+    // 应用角色配置 statBonus（选角界面/存档决定；叠加在成就加成之上）
+    const character = GameManager.getInstance().getActiveCharacter();
+    if (character.statBonus) {
+      const b = character.statBonus;
+      if (b.maxHealth) {
+        this.stats.maxHealth += b.maxHealth;
+        this.stats.health += b.maxHealth;
+      }
+      if (b.attackPower) this.stats.attackPower += b.attackPower;
+      if (b.moveSpeed) this.stats.moveSpeed += b.moveSpeed;
+      if (b.critRate) this.stats.critRate += b.critRate;
+      if (b.critDamage) this.stats.critDamage += b.critDamage;
+    }
+    // percent 加算基准（含成就/角色加成；局内升级/突破不再改它）
     this._baseStats = { ...this.stats };
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -132,8 +146,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.body!.setOffset((this.displayWidth - 32) / 2, (this.displayHeight - 32) / 2);
     this.setDepth(Layers.PLAYER);
 
-    // 初始武器（默认武器，配置来自统一数据源 src/data/weapons.ts）
-    this.addWeapon(WEAPONS['default_gun']);
+    // 初始武器：角色 starterWeapon（缺省回退 default_gun；配置来自 src/data/weapons.ts）
+    this.addWeapon(WEAPONS[character.starterWeapon] ?? WEAPONS['default_gun']);
   }
 
   update(time: number, delta: number, input: InputManager): void {
@@ -277,7 +291,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const atk = Number(this.getStats().attackPower);
     const attackPower = isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
     const raw = (config.damage * (1 + level * 0.2) * attackPower) / 10;
-    return isFinite(raw) && raw > 0 ? raw : config.damage;
+    const base = isFinite(raw) && raw > 0 ? raw : config.damage;
+    // 角色熟练系别加成（机械师枪械/圣骑士近战范围 +20% 等；数据驱动，公式见 logic/player.calcFavoredDamageMult）
+    const character = GameManager.getInstance().getActiveCharacter();
+    const mult = calcFavoredDamageMult(config.tags, character.favoredTags, character.favoredBonus?.damageMult);
+    return base * mult;
   }
 
   /** 按武器类型分发攻击逻辑 */
@@ -586,7 +604,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   takeDamage(amount: number): void {
     if (this.invincible || this.stats.health <= 0) return;
 
-    const actualDamage = Math.max(1, amount - this.stats.defense);
+    let actualDamage = Math.max(1, amount - this.stats.defense);
+    // 角色减伤（圣骑士圣盾等，数据驱动：damageReduction=0.2 → ×0.8）
+    const reduction = GameManager.getInstance().getActiveCharacter().damageReduction ?? 0;
+    if (reduction > 0) actualDamage = Math.max(1, Math.floor(actualDamage * (1 - reduction)));
     this.stats.health -= actualDamage;
     // 立即 clamp 到 0：否则广播 player:damage 时 HUD 同步刷新会读到"大负数"
     // （后期 Boss 单次伤害可达数十万，695 血会瞬间被扣成 -999999305 级并显示在血条上）

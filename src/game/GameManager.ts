@@ -162,10 +162,11 @@ export class GameManager {
     return this._activeCharacterId;
   }
 
-  /** 切换激活角色；未知 id 拒绝并返回 false */
+  /** 切换激活角色；未知 id 拒绝并返回 false（写入存档 settings，下次启动保持） */
   setActiveCharacterId(id: string): boolean {
     if (CHARACTERS[id]) {
       this._activeCharacterId = id;
+      this.saveProgress();
       return true;
     }
     return false;
@@ -396,6 +397,7 @@ export class GameManager {
         musicVolume: audio.getMusicVolume(),
         muted: audio.isMuted(),
         showFps: this._showFps,
+        activeCharacterId: this._activeCharacterId,
       },
     };
   }
@@ -416,10 +418,14 @@ export class GameManager {
       if (data.unlocked && Array.isArray(data.unlocked) && data.unlocked.length > 0) {
         this._unlocked = data.unlocked;
       }
-      // 恢复设置（画质、音量、静音）
+      // 恢复设置（画质、音量、静音、激活角色）
       if (data.settings) {
         this._qualityLevel = data.settings.quality || 'medium';
         this._showFps = data.settings.showFps ?? false;
+        // 恢复激活角色（老存档缺省 default；未知 id 回退默认）
+        if (data.settings.activeCharacterId && CHARACTERS[data.settings.activeCharacterId]) {
+          this._activeCharacterId = data.settings.activeCharacterId;
+        }
         const audio = AudioManager.getInstance();
         audio.setSfxVolume(data.settings.soundVolume ?? 1);
         audio.setMusicVolume(data.settings.musicVolume ?? 0.7);
@@ -443,6 +449,7 @@ export class GameManager {
         musicVolume: audio.getMusicVolume(),
         muted: audio.isMuted(),
         showFps: this._showFps,
+        activeCharacterId: this._activeCharacterId,
       },
       // 保留已有的进行中对局存档（endRun 会先 clearSavedRun 再调用，所以死亡时不会残留）
       run: (existing as any).run,

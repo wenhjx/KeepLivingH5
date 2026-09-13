@@ -105,6 +105,8 @@ export interface BossTuning {
 
 export type WeaponType = 'melee' | 'ranged' | 'aoe' | 'summon';
 
+export type WeaponTag = 'gun' | 'melee' | 'aoe' | 'summon' | 'heavy';
+
 export interface WeaponConfig {
   id: string;
   name: string;
@@ -120,6 +122,8 @@ export interface WeaponConfig {
   maxLevel: number;
   /** 武器专属矢量图标贴图（升级/商店卡片用，缺省回退 emoji） */
   iconTexture?: string;
+  /** 系别标签（角色熟练系别匹配用：枪械/近战/范围/召唤/爆破） */
+  tags?: WeaponTag[];
   // 行为标记
   pierce?: boolean; // 穿透敌人
   explosive?: boolean; // 命中后爆炸范围伤害
@@ -233,6 +237,8 @@ export interface SaveSettings {
   muted: boolean;
   /** 设置面板开关：显示 FPS（缺省关闭） */
   showFps?: boolean;
+  /** 当前激活角色 id（选角界面写入，缺省 default） */
+  activeCharacterId?: string;
 }
 
 // ========== 进行中对局存档 ==========

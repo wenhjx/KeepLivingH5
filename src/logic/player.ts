@@ -1,3 +1,4 @@
+import type { WeaponTag } from '../types';
 /**
  * 玩家侧被动/属性结算（纯函数，可单测，零 Phaser 依赖）
  *
@@ -54,4 +55,17 @@ export function calcCritStats(stats: CritStats | undefined): { critRate: number;
   const critRate = Math.min(1, rawCritRate);
   const critDamageMult = (stats?.critDamage ?? 1.5) + critRateOverflow * 2;
   return { critRate, critDamageMult };
+}
+
+/**
+ * 角色熟练系别武器加成：武器任一系别命中角色熟练系别 → 应用伤害倍率（默认 1 = 全均衡）。
+ * 无熟练系别（拓荒者）、武器无标签或未命中 → 1（不受影响）。
+ */
+export function calcFavoredDamageMult(
+  weaponTags: WeaponTag[] | undefined,
+  favoredTags: WeaponTag[] | undefined,
+  damageMult: number | undefined,
+): number {
+  if (!weaponTags || weaponTags.length === 0 || !favoredTags || favoredTags.length === 0 || !damageMult) return 1;
+  return favoredTags.some((t) => weaponTags.includes(t)) ? damageMult : 1;
 }
