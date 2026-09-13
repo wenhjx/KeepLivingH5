@@ -193,11 +193,7 @@ export class ShopScene extends Phaser.Scene {
       name: item.name,
       icon: item.icon,
       iconTexture: item.iconTexture,
-      desc: passiveDescForLevel(
-        item.id,
-        (this.getPlayer()?.getPassiveLevel?.(item.id) ?? 0) + 1,
-        item.desc
-      ),
+      desc: passiveDescForLevel(item.id, (this.getPlayer()?.getPassiveLevel?.(item.id) ?? 0) + 1, item.desc),
       rarity: item.rarity,
       cardWidth: this.cardWidth,
       cardHeight: this.cardHeight,

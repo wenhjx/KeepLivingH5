@@ -11,7 +11,13 @@ import type { Player } from './Player';
 import { TextSmoothing } from '../utils/UIText';
 import { Layers } from '../constants/Layers';
 import { AFFIXES, COMMON_AFFIX_POOL, ELITE_AFFIX_POOL, type EnemyAffixId } from '../data/affixes';
-import { calcPoisonDps, calcExplodeBase, calcExplodePlayerDamage, calcLifestealHeal, calcAttackDamage } from '../logic/affix';
+import {
+  calcPoisonDps,
+  calcExplodeBase,
+  calcExplodePlayerDamage,
+  calcLifestealHeal,
+  calcAttackDamage,
+} from '../logic/affix';
 
 /**
 
@@ -599,7 +605,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
     // 对玩家造成伤害（范围衰减）
     const pDist = MathUtils.distance(this.x, this.y, player.x, player.y);
-    player.takeDamage(calcExplodePlayerDamage(this.config.explodeDamage ?? 30, this.difficultyMultiplier, this.atkBoost, pDist, radius));
+    player.takeDamage(
+      calcExplodePlayerDamage(this.config.explodeDamage ?? 30, this.difficultyMultiplier, this.atkBoost, pDist, radius)
+    );
     // 自爆视觉：双环 + 橙色粒子 + 轻震屏（统一走 FXManager）+ 爆炸音效
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.8);
     scene?.getFXManager?.()?.explosion(this.x, this.y, radius);
