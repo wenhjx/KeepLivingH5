@@ -101,15 +101,14 @@ export class MainMenuScene extends Phaser.Scene {
       fontSize: UIFonts.body,
       color: UIColors.textDim,
     }).setOrigin(0.5);
-    // 菜单按钮（6 个：选择角色/开始/继续/设置/成就/试玩场地，整体上移防止底部信息被遮挡）
+    // 菜单按钮（5 个：开始游戏/继续/设置/成就/试玩场地；开始游戏 = 新游戏入口，先进选角再选关）
     const buttonSpacing = 56;
-    const buttonY = height * 0.44 - buttonSpacing / 2;
-    this.createMenuButton(centerX, buttonY, '🛡️ 选择角色', () => this.scene.start('CharacterSelectScene'));
-    this.createMenuButton(centerX, buttonY + buttonSpacing, '开始游戏', () => this.openLevelSelect());
-    this.createMenuButton(centerX, buttonY + buttonSpacing * 2, '继续游戏', () => this.continueGame());
-    this.createMenuButton(centerX, buttonY + buttonSpacing * 3, '设置', () => this.openSettings());
-    this.createMenuButton(centerX, buttonY + buttonSpacing * 4, '🏅 成就', () => this.openAchievements());
-    this.createMenuButton(centerX, buttonY + buttonSpacing * 5, '🧪 试玩场地', () => this.enterTestField());
+    const buttonY = height * 0.5 - buttonSpacing * 2;
+    this.createMenuButton(centerX, buttonY, '开始游戏', () => this.scene.start('CharacterSelectScene'));
+    this.createMenuButton(centerX, buttonY + buttonSpacing, '继续游戏', () => this.continueGame());
+    this.createMenuButton(centerX, buttonY + buttonSpacing * 2, '设置', () => this.openSettings());
+    this.createMenuButton(centerX, buttonY + buttonSpacing * 3, '🏅 成就', () => this.openAchievements());
+    this.createMenuButton(centerX, buttonY + buttonSpacing * 4, '🧪 试玩场地', () => this.enterTestField());
     // 底部信息
     const stats = gm.stats;
     createUIText(

@@ -48,7 +48,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     });
 
     // 底部说明
-    createUIText(this, width / 2, height - 44, '点击角色切换，返回后开始游戏生效', {
+    createUIText(this, width / 2, height - 44, '点击角色切换，点「开始冒险」进入选关', {
       fontSize: UIFonts.small,
       color: UIColors.textFaint,
     }).setOrigin(0.5);
