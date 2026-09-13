@@ -16,7 +16,7 @@ interface BtnSpec {
 
 /** 构建出的按钮对象（bg/txt/hit 均为 content 内局部坐标元素） */
 interface BtnParts {
-  bg: Phaser.GameObjects.Graphics;
+  bg: Phaser.GameObjects.Image;
   txt: Phaser.GameObjects.Text;
   hit: Phaser.GameObjects.Rectangle;
 }
@@ -77,6 +77,14 @@ export class DebugPanel {
   }
 
   private create(): void {
+    // 预渲染标准按钮底图：75+ 个按钮若各自用 Graphics 渲染，每帧大量独立 draw call
+    // （WebGL 下与 Text 交错更会反复切换 pipeline，实测面板打开掉帧到 ~20fps）。
+    // 改为同一纹理的 Image（可批量），hover 换高亮纹理，draw call 从 75+ 降到 ~1。
+    this.makeButtonTexture('debug_btn_bg', 0x252530, 0x444455);
+    this.makeButtonTexture('debug_btn_bg_hover', 0x353555, 0xff6b35);
+    this.makeButtonTexture('debug_btn_bg_green', 0x1a3a2a, 0x66ff99);
+    this.makeButtonTexture('debug_btn_bg_blue', 0x1a2a3a, 0x66ccff);
+
     const { width, height } = this.scene.scale;
     this.panelX = GameConfig.anchorX(width - 12, width) - this.panelWidth; // 右缘贴边（宽度随缩放放大，需按右缘锚定）
     this.panelY = GameConfig.anchorY(12, height);
@@ -382,6 +390,8 @@ export class DebugPanel {
 
     // 触摸拖动滚动 + 点击防误触（移动端在按钮上滑动 = 滚动而非点击）
     this.setupTouchInput();
+    // 渲染分层兜底：content 内所有对象按类型统一 depth（Graphics=0 / Text=1 / 命中矩形=2 不渲染）
+    this.applyRenderLayers();
   }
 
   // ===== 布局辅助 =====
@@ -461,35 +471,28 @@ export class DebugPanel {
 
   /** 创建单个按钮（content 局部坐标，未定位） */
   private makeButton(text: string, onClick: () => void, width: number): BtnParts {
-    const bg = this.scene.add.graphics();
-    bg.fillStyle(0x252530, 1);
-    bg.fillRoundedRect(0, 0, width, this.btnHeight, 4);
-    bg.lineStyle(1, 0x444455, 0.6);
-    bg.strokeRoundedRect(0, 0, width, this.btnHeight, 4);
+    const bg = this.scene.add
+      .image(0, 0, 'debug_btn_bg')
+      .setOrigin(0, 0)
+      .setDisplaySize(width, this.btnHeight);
 
     const txt = createUIText(this.scene, width / 2, this.btnHeight / 2, text, {
       fontSize: '11px',
       color: '#cccccc',
     }).setOrigin(0.5);
 
+    // hit 矩形仅用于命中（Phaser 命中检测只看 active，不看 visible），隐藏后不参与渲染
     const hit = this.scene.add
       .rectangle(width / 2, this.btnHeight / 2, width, this.btnHeight, 0xffffff, 0)
+      .setVisible(false)
       .setInteractive({ useHandCursor: true });
 
     hit.on('pointerover', () => {
-      bg.clear();
-      bg.fillStyle(0x353555, 1);
-      bg.fillRoundedRect(0, 0, width, this.btnHeight, 4);
-      bg.lineStyle(1, 0xff6b35, 0.8);
-      bg.strokeRoundedRect(0, 0, width, this.btnHeight, 4);
+      bg.setTexture('debug_btn_bg_hover');
       txt.setColor('#ffffff');
     });
     hit.on('pointerout', () => {
-      bg.clear();
-      bg.fillStyle(0x252530, 1);
-      bg.fillRoundedRect(0, 0, width, this.btnHeight, 4);
-      bg.lineStyle(1, 0x444455, 0.6);
-      bg.strokeRoundedRect(0, 0, width, this.btnHeight, 4);
+      bg.setTexture('debug_btn_bg');
       txt.setColor('#cccccc');
     });
     // 点击改为"按下记录 + 松手判定"：移动端按下后滑动（超阈值）视为滚动而非误触
@@ -514,11 +517,10 @@ export class DebugPanel {
   private addAutoPlayRow(col: UILayout): void {
     const y = col.y;
     const fullW = this.btnWidth * 2 + this.btnSpacing;
-    const bg = this.scene.add.graphics();
-    bg.fillStyle(0x252530, 1);
-    bg.fillRoundedRect(0, 0, fullW, this.btnHeight, 4);
-    bg.lineStyle(1, 0x444455, 0.6);
-    bg.strokeRoundedRect(0, 0, fullW, this.btnHeight, 4);
+    const bg = this.scene.add
+      .image(0, 0, 'debug_btn_bg')
+      .setOrigin(0, 0)
+      .setDisplaySize(fullW, this.btnHeight);
 
     this.autoPlayText = createUIText(this.scene, fullW / 2, this.btnHeight / 2, '🤖 AI 托管：关闭（点击开启）', {
       fontSize: '11px',
@@ -534,15 +536,11 @@ export class DebugPanel {
         this.autoPlayText.setText(enabled ? '🤖 AI 托管：开启中（点击停止）' : '🤖 AI 托管：关闭（点击开启）');
         this.autoPlayText.setColor(enabled ? '#66ff99' : '#cccccc');
       }
-      bg.clear();
-      bg.fillStyle(enabled ? 0x1a3a2a : 0x252530, 1);
-      bg.fillRoundedRect(0, 0, fullW, this.btnHeight, 4);
-      bg.lineStyle(1, enabled ? 0x66ff99 : 0x444455, 0.8);
-      bg.strokeRoundedRect(0, 0, fullW, this.btnHeight, 4);
+      bg.setTexture(enabled ? 'debug_btn_bg_green' : 'debug_btn_bg');
     };
 
     hit.on('pointerover', () => {
-      updateState(this.getGameScene()?.isAutoPlay?.() || false);
+      bg.setTexture('debug_btn_bg_hover');
       this.autoPlayText?.setColor('#ffffff');
     });
     hit.on('pointerout', () => {
@@ -574,11 +572,10 @@ export class DebugPanel {
   private addThemeRow(col: UILayout): void {
     const y = col.y;
     const fullW = this.btnWidth * 2 + this.btnSpacing;
-    const bg = this.scene.add.graphics();
-    bg.fillStyle(0x252530, 1);
-    bg.fillRoundedRect(0, 0, fullW, this.btnHeight, 4);
-    bg.lineStyle(1, 0x444455, 0.6);
-    bg.strokeRoundedRect(0, 0, fullW, this.btnHeight, 4);
+    const bg = this.scene.add
+      .image(0, 0, 'debug_btn_bg')
+      .setOrigin(0, 0)
+      .setDisplaySize(fullW, this.btnHeight);
 
     this.themeText = createUIText(this.scene, fullW / 2, this.btnHeight / 2, '', {
       fontSize: '11px',
@@ -595,16 +592,12 @@ export class DebugPanel {
           theme === 'classic' ? '🎨 主题：经典矢量（点击切像素）' : '🎨 主题：像素风（点击切经典）'
         );
       }
-      bg.clear();
       const on = theme === 'classic';
-      bg.fillStyle(on ? 0x1a2a3a : 0x252530, 1);
-      bg.fillRoundedRect(0, 0, fullW, this.btnHeight, 4);
-      bg.lineStyle(1, on ? 0x66ccff : 0x444455, 0.8);
-      bg.strokeRoundedRect(0, 0, fullW, this.btnHeight, 4);
+      bg.setTexture(on ? 'debug_btn_bg_blue' : 'debug_btn_bg');
     };
 
     hit.on('pointerover', () => {
-      updateState(GameConfig.VISUAL_THEME);
+      bg.setTexture('debug_btn_bg_hover');
       this.themeText?.setColor('#ffffff');
     });
     hit.on('pointerout', () => updateState(GameConfig.VISUAL_THEME));
@@ -718,6 +711,40 @@ export class DebugPanel {
     };
     this.scene.input.on('pointerup', settle);
     this.scene.input.on('pointerupoutside', settle);
+  }
+
+  /** 预渲染标准按钮底图（宽 btnWidth，高 btnHeight，圆角 4） */
+  private makeButtonTexture(key: string, fill: number, stroke: number): void {
+    if (this.scene.textures.exists(key)) return;
+    const tmp = this.scene.add.graphics();
+    tmp.fillStyle(fill, 1);
+    tmp.fillRoundedRect(0, 0, this.btnWidth, this.btnHeight, 4);
+    tmp.lineStyle(1, stroke, 0.9);
+    tmp.strokeRoundedRect(0, 0, this.btnWidth, this.btnHeight, 4);
+    tmp.generateTexture(key, this.btnWidth, this.btnHeight);
+    tmp.destroy();
+  }
+
+  /**
+   * 渲染分层（掉帧修复）：WebGL 下 Graphics/Text/Rectangle 分属不同 pipeline，
+   * 且 Phaser Container 内部按加入顺序渲染（depth 不参与排序），
+   * 若 Graphics 与 Text 交错创建，每帧会在 pipeline 之间反复切换（flush），
+   * 对象越多掉帧越明显（实测面板打开后跌至 ~20fps）。
+   * 按类型重排 content 子对象，让同类连续渲染：pipeline 切换从对象数次降到 2-3 次。
+   * 注意：content 内的 Rectangle 全部是按钮命中区，隐藏后仍可点击（Phaser 命中只看 active）。
+   */
+  private applyRenderLayers(): void {
+    const layers: Phaser.GameObjects.GameObject[][] = [[], [], []];
+    for (const obj of this.content.list) {
+      if (obj instanceof Phaser.GameObjects.Text) layers[1].push(obj);
+      else if (obj instanceof Phaser.GameObjects.Rectangle) layers[2].push(obj);
+      else layers[0].push(obj); // Graphics / Image（背景、按钮底图等）
+    }
+    while (this.content.list.length > 0) {
+      this.content.remove(this.content.list[0], false);
+    }
+    this.content.add([...layers[0], ...layers[1], ...layers[2]]);
+    for (const obj of layers[2]) (obj as Phaser.GameObjects.Image).visible = false;
   }
 
   // ===== 对外/内部方法（保持原语义） =====
