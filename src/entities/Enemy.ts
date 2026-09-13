@@ -11,6 +11,7 @@ import type { Player } from './Player';
 import { TextSmoothing } from '../utils/UIText';
 import { Layers } from '../constants/Layers';
 import { AFFIXES, COMMON_AFFIX_POOL, ELITE_AFFIX_POOL, type EnemyAffixId } from '../data/affixes';
+import { calcPoisonDps } from '../logic/poison';
 
 /**
 
@@ -1105,7 +1106,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 剧毒词缀：命中玩家附加持续中毒（每秒 = 攻击力 × dpsMult，绕过无敌帧；applyPoison 内部有存活检查）
     if (this.affixPoison && player) {
       player.applyPoison(
-        Math.max(1, this.config.attackPower * this.difficultyMultiplier * this.affixPoison.dpsMult),
+        calcPoisonDps(this.config.attackPower, this.difficultyMultiplier, this.affixPoison.dpsMult),
         this.affixPoison.duration
       );
     }
