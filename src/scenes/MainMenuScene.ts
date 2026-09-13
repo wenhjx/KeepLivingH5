@@ -38,9 +38,13 @@ export class MainMenuScene extends Phaser.Scene {
   constructor() {
     super('MainMenuScene');
   }
-  create(): void {
+  create(data?: { openLevelSelect?: boolean }): void {
     // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
     this.cameras.main.setZoom(GameConfig.uiScale);
+    // 从选角场景点「开始冒险」进入时：自动打开选关面板
+    if (data?.openLevelSelect) {
+      this.time.delayedCall(120, () => this.openLevelSelect());
+    }
     // 调试场景常驻保障：主菜单阶段也确保 DebugScene 可用（异常停掉后自动恢复）
     if (!this.scene.isActive('DebugScene')) {
       this.scene.launch('DebugScene');

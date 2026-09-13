@@ -60,6 +60,15 @@ export class CharacterSelectScene extends Phaser.Scene {
       padding: { x: 12, y: 6 },
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     backBtn.on('pointerdown', () => this.scene.start('MainMenuScene'));
+
+    // 开始冒险：选完角色直接进关卡选择（无需先回主菜单再点开始）
+    const playBtn = createUIText(this, width - 16, height - 16, '▶ 开始冒险', {
+      fontSize: '18px',
+      color: '#ff6b35',
+      backgroundColor: 'rgba(255,107,53,0.15)',
+      padding: { x: 14, y: 6 },
+    }).setOrigin(1, 1).setInteractive({ useHandCursor: true });
+    playBtn.on('pointerdown', () => this.scene.start('MainMenuScene', { openLevelSelect: true }));
   }
 
   private createCard(config: CharacterConfig, x: number, y: number, w: number, h: number, selected: boolean): void {
