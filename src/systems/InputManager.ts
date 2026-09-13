@@ -143,11 +143,6 @@ export class InputManager {
     this.joystickVector = { x: 0, y: 0 };
   }
 
-  /** 移动端触摸攻击（由 UI 按钮调用） */
-  triggerAttack(): void {
-    // TODO: 移动端攻击按钮逻辑
-  }
-
   // ========== 工具方法 ==========
 
   /** 是否有移动输入 */

@@ -114,9 +114,6 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
         player.addCoins(this.config.value);
         AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PICKUP_COIN, 0.6);
         break;
-      case 'item':
-        // TODO: 道具系统
-        break;
       case 'chest':
         this.openChest(player);
         break;

@@ -753,6 +753,12 @@
 
 ## 待办
 
+- ✅ 2026-09-13 代码清理与发布物料：
+  - 死代码删除：src/data/waves.ts（波次数据废弃）、src/ui/HealthBar.ts（HUD 自带血条）、InputManager.triggerAttack 空方法（无调用）、Pickup case 'item' 死分支（无 type:'item' 生成，道具系统走道具栏/宝箱）
+  - README 补「在线试玩」（GitHub Pages 链接）、修正过时结构（waves/HealthBar）；index.html 补 SEO meta（description/og:title/description/url）+ 内联 SVG favicon；og:image 待宣传截图
+  - 待办区仍保留：Enemy 受击击退 TODO（真实未实现）、SaveSystem 云端同步 TODO（远期）
+
+
 - ✅ 成就解锁提示层级（已完成 2026-09-12，237d14c）：显示层级收编为 Layers 常量表（Layers.GUIDE=10000），GuideCard 改 setDepth(Layers.GUIDE)，浮于一切 UI 之上
 
 - ✅ 词缀爆炸距离衰减（已完成 2026-09-13）：Enemy 词缀爆炸接线 calcExplodePlayerDamage（近身全额、边缘 50%，与自爆怪 falloff 一致），公式测试已全覆盖（贴脸/边缘/半程/超半径兜底）
