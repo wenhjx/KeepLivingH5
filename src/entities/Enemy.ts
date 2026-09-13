@@ -12,6 +12,7 @@ import { TextSmoothing } from '../utils/UIText';
 import { Layers } from '../constants/Layers';
 import { AFFIXES, COMMON_AFFIX_POOL, ELITE_AFFIX_POOL, type EnemyAffixId } from '../data/affixes';
 import { calcPoisonDps } from '../logic/poison';
+import { calcExplodeBase, calcExplodePlayerDamage, calcLifestealHeal } from '../logic/affixCombat';
 
 /**
 
@@ -584,7 +585,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private explode(player: Player): void {
     if (this.isDead) return;
     const radius = this.config.explodeRadius ?? 60;
-    const damage = (this.config.explodeDamage ?? 30) * this.difficultyMultiplier * this.atkBoost;
+    const damage = calcExplodeBase(this.config.explodeDamage ?? 30, this.difficultyMultiplier, this.atkBoost);
     // 对范围内的敌人也造成伤害（连锁爆炸的爽感）
     const scene = this.scene as any;
     const enemies = scene?.getEnemies?.();
@@ -599,8 +600,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
     // 对玩家造成伤害（范围衰减）
     const pDist = MathUtils.distance(this.x, this.y, player.x, player.y);
-    const falloff = 1 - Math.max(0, pDist / radius) * 0.5;
-    player.takeDamage(Math.max(1, damage * falloff));
+    player.takeDamage(calcExplodePlayerDamage(this.config.explodeDamage ?? 30, this.difficultyMultiplier, this.atkBoost, pDist, radius));
     // 自爆视觉：双环 + 橙色粒子 + 轻震屏（统一走 FXManager）+ 爆炸音效
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.8);
     scene?.getFXManager?.()?.explosion(this.x, this.y, radius);
@@ -1101,7 +1101,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     player.takeDamage(dmg);
     // 吸血词缀：命中回复造成伤害的 lifestealMult 生命
     if (this.lifestealMult > 0) {
-      this.health = Math.min(this.maxHealth, this.health + Math.max(1, Math.floor(dmg * this.lifestealMult)));
+      this.health = calcLifestealHeal(this.health, this.maxHealth, dmg, this.lifestealMult);
     }
     // 剧毒词缀：命中玩家附加持续中毒（每秒 = 攻击力 × dpsMult，绕过无敌帧；applyPoison 内部有存活检查）
     if (this.affixPoison && player) {
