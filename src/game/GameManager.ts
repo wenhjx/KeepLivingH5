@@ -16,6 +16,7 @@ export class GameManager {
   private static _instance: GameManager | null = null;
 
   private _qualityLevel: QualityLevel = 'medium';
+  private _showFps = false;
   private _isMobile: boolean = false;
   private _stats: SaveStats = {
     totalKills: 0,
@@ -260,6 +261,12 @@ export class GameManager {
     EventBus.emit(EventKeys.QUALITY_CHANGED, level);
   }
 
+  /** 是否显示 FPS（设置面板切换，全局生效） */
+  setShowFps(v: boolean): void {
+    this._showFps = v;
+    this.saveProgress();
+  }
+
   // ========== 进行中对局存档（继续游戏） ==========
 
   /** 是否有可继续的对局 */
@@ -388,6 +395,7 @@ export class GameManager {
         soundVolume: audio.getSfxVolume(),
         musicVolume: audio.getMusicVolume(),
         muted: audio.isMuted(),
+        showFps: this._showFps,
       },
     };
   }
@@ -411,6 +419,7 @@ export class GameManager {
       // 恢复设置（画质、音量、静音）
       if (data.settings) {
         this._qualityLevel = data.settings.quality || 'medium';
+        this._showFps = data.settings.showFps ?? false;
         const audio = AudioManager.getInstance();
         audio.setSfxVolume(data.settings.soundVolume ?? 1);
         audio.setMusicVolume(data.settings.musicVolume ?? 0.7);
@@ -433,6 +442,7 @@ export class GameManager {
         soundVolume: audio.getSfxVolume(),
         musicVolume: audio.getMusicVolume(),
         muted: audio.isMuted(),
+        showFps: this._showFps,
       },
       // 保留已有的进行中对局存档（endRun 会先 clearSavedRun 再调用，所以死亡时不会残留）
       run: (existing as any).run,
@@ -480,7 +490,7 @@ export class GameManager {
         version: 1,
         timestamp: Date.now(),
         stats: this._stats,
-        settings: { quality: this._qualityLevel, soundVolume: 1, musicVolume: 0.7, muted: false },
+        settings: { quality: this._qualityLevel, soundVolume: 1, musicVolume: 0.7, muted: false, showFps: false },
       }),
       achievements: data,
     });
@@ -581,6 +591,10 @@ export class GameManager {
 
   get qualityLevel(): QualityLevel {
     return this._qualityLevel;
+  }
+
+  get showFps(): boolean {
+    return this._showFps;
   }
 
   get qualitySettings() {

@@ -31,6 +31,7 @@ export class MainMenuScene extends Phaser.Scene {
     Phaser.GameObjects.Text
   >;
   private muteText!: Phaser.GameObjects.Text;
+  private showFpsText!: Phaser.GameObjects.Text;
   // 关卡选择面板
   private levelSelectOverlay!: Phaser.GameObjects.Container;
 
@@ -508,7 +509,7 @@ export class MainMenuScene extends Phaser.Scene {
     const cx = width / 2;
     const cy = height / 2;
     const panelW = 440;
-    const panelH = 380;
+    const panelH = 420;
     this.settingsOverlay = this.add.container(0, 0).setDepth(Layers.MENU_OVERLAY).setVisible(false);
     // 全屏遮罩（点击遮罩也可关闭）
     const mask = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7).setInteractive();
@@ -581,6 +582,19 @@ export class MainMenuScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     this.muteText.on('pointerdown', () => this.toggleMute());
     this.settingsOverlay.add(this.muteText);
+    // ---------- 显示 FPS ----------
+    const showFpsY = cy - panelH / 2 + 296;
+    this.settingsOverlay.add(createUIText(this, cx - 170, showFpsY, '显示FPS', labelStyle).setOrigin(0, 0.5));
+    const gmFps = GameManager.getInstance();
+    this.showFpsText = createUIText(this, cx, showFpsY, gmFps.showFps ? '开' : '关', {
+      fontSize: '16px',
+      color: gmFps.showFps ? '#ff6b35' : '#ffffff',
+      fontStyle: 'bold',
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    this.showFpsText.on('pointerdown', () => this.toggleShowFps());
+    this.settingsOverlay.add(this.showFpsText);
     // ---------- 关闭 ----------
     const closeBtn = createUIText(this, cx, cy + panelH / 2 - 30, '关闭', {
       fontSize: '18px',
@@ -645,6 +659,13 @@ export class MainMenuScene extends Phaser.Scene {
         text.setStyle({ color: '#e0e0e0', backgroundColor: '#252530' });
       }
     });
+  }
+
+  private toggleShowFps(): void {
+    const gm = GameManager.getInstance();
+    gm.setShowFps(!gm.showFps);
+    this.showFpsText.setText(gm.showFps ? '开' : '关');
+    this.showFpsText.setColor(gm.showFps ? '#ff6b35' : '#ffffff');
   }
 
   private toggleMute(): void {

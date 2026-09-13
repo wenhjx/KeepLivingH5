@@ -231,6 +231,8 @@ export interface SaveSettings {
   soundVolume: number;
   musicVolume: number;
   muted: boolean;
+  /** 设置面板开关：显示 FPS（缺省关闭） */
+  showFps?: boolean;
 }
 
 // ========== 进行中对局存档 ==========

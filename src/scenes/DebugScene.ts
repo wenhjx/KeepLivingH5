@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { GameConfig } from '../game/GameConfig';
+import { GameManager } from '../game/GameManager';
+import { createUIText } from '../utils/UIText';
 import { DebugPanel } from '../ui/DebugPanel';
 
 /**
@@ -16,6 +18,8 @@ import { DebugPanel } from '../ui/DebugPanel';
 export class DebugScene extends Phaser.Scene {
   private debugPanel!: DebugPanel;
   private uiRoot!: Phaser.GameObjects.Container;
+  private fpsText!: Phaser.GameObjects.Text;
+  private fpsTimer = 0;
 
   constructor() {
     super('DebugScene');
@@ -33,10 +37,40 @@ export class DebugScene extends Phaser.Scene {
     // 调试面板（按 ` 键切换）；传入 uiRoot 供滚动遮罩做 world 坐标换算
     this.debugPanel = new DebugPanel(this, this.uiRoot);
 
+    // FPS 显示（设置面板开关，全局生效）：左下角小字，随 UI 缩放
+    this.fpsText = createUIText(
+      this,
+      GameConfig.anchorX(12, this.scale.width),
+      GameConfig.anchorY(this.scale.height - 12, this.scale.height),
+      '',
+      {
+        fontSize: '12px',
+        color: '#ffffff',
+        backgroundColor: 'rgba(0,0,0,0.35)',
+        padding: { left: 6, right: 6, top: 2, bottom: 2 },
+      }
+    ).setOrigin(0, 1);
+    this.uiRoot.add(this.fpsText);
+    this.fpsText.setVisible(GameManager.getInstance().showFps);
+
     // 将面板创建的全部 UI 对象移入反向缩放根容器（保持视觉位置/比例不变）
     this.children.list.slice().forEach((child) => {
       if (child !== this.uiRoot) this.uiRoot.add(child);
     });
+  }
+
+  update(_time: number, delta: number): void {
+    const gm = GameManager.getInstance();
+    if (!gm.showFps) {
+      if (this.fpsText.visible) this.fpsText.setVisible(false);
+      return;
+    }
+    if (!this.fpsText.visible) this.fpsText.setVisible(true);
+    this.fpsTimer += delta;
+    if (this.fpsTimer >= 200) {
+      this.fpsTimer = 0;
+      this.fpsText.setText(`FPS ${Math.round(this.game.loop.actualFps)}`);
+    }
   }
 
   /** 供调试钩子（__debug 等）访问面板 */
