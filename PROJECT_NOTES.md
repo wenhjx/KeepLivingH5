@@ -77,6 +77,14 @@
 
 
 
+## 📌 近期改动速览（2026-09-13，简历工程化：DESIGN.md + 测试基建，已推 Gitee）
+
+### 简历三件套（工程化信号）
+- DESIGN.md（bd9f116）：技术架构文档——架构分层 / 核心系统设计（数据驱动、GameManager、词缀、程序化纹理、双端 UI、HUD 双键重建）/ 关键踩坑记录（面试素材）/ 开发规范 / 已知短板
+- vitest 单测 + CI（398067e）：27 例单测全绿——升级公式 passiveLevelTexts（9 被动逐级断言）+ 词缀表完整性（5 例）+ MathUtils（10 例）；`npm test`；.github/workflows/ci.yml（push/PR 自动 tsc + 单测门禁）
+- 教训：vitest 5.x 要求 vite 6+，本项目 vite 5 → 装 vitest@^2.1；PowerShell 内联 node -e 引号转义易碎 → 改用临时脚本文件（_patch_*.cjs 用完即删）
+- 待办：数值收敛（三件套最后一件）未开工——需实测 + 平衡设计，另找时间
+
 ## 📌 近期改动速览（2026-09-11 ~ 09-12，玩家状态可见性 + 标准化 + 死代码清理，已推 Gitee）
 
 
