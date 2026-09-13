@@ -52,6 +52,21 @@ export class PlayerInfoScene extends Phaser.Scene {
   }
 
   create(data?: { prevPaused?: boolean }): void {
+    // Phaser 场景复用实例：scene.stop 不会重置实例字段，二次 create 必须清零，
+    // 否则旧 Text 引用残留导致 setText 失效/持有列表跳过重建（面板值空白）。
+    this.player = undefined;
+    this.leftValues = [];
+    this.rightValues = [];
+    this.holdingsContainer = undefined;
+    this.scrollContent = undefined;
+    this.scrollBar = undefined;
+    this.scrollY = 0;
+    this.scrollOff = 0;
+    this.maxScroll = 0;
+    this.holdingsSig = '';
+    this.hintText = undefined;
+    this.refreshTimer = 0;
+
     // 真机 UI 缩放：中心放大面板（贴边元素已用 anchor 换算）
     this.cameras.main.setZoom(GameConfig.uiScale);
     this.prevPaused = data?.prevPaused ?? GameManager.getInstance().isPaused;
