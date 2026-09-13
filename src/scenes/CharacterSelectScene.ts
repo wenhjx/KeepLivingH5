@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { CHARACTERS, type CharacterConfig } from '../data/characters';
 import { createUIText } from '../utils/UIText';
+import { setupUICamera } from '../utils/CameraHelper';
+import { GameConfig } from '../game/GameConfig';
 import { UIColors, UIFonts, createSceneTitle, createBackButton, createUIButton } from '../ui/UIStyle';
 
 /**
@@ -17,7 +19,9 @@ export class CharacterSelectScene extends Phaser.Scene {
   }
 
   create(): void {
-    const { width, height } = this.scale;
+    // UI 相机统一设置：zoom + scroll 补偿，返回逻辑分辨率 960x640（与其他菜单场景一致）
+    this.cameras.main.setZoom(GameConfig.uiScale);
+    const { width, height } = setupUICamera(this);
     this.cameras.main.setBackgroundColor('#' + UIColors.sceneBg.toString(16).padStart(6, '0'));
 
     createSceneTitle(this, width / 2, 56, '选择角色');
@@ -29,9 +33,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     const ids = Object.keys(CHARACTERS);
     const isMobile = width < 700;
     const cardW = isMobile ? Math.min(width - 80, 520) : 260;
-    const cardH = isMobile ? 148 : 310;
+    const cardH = isMobile ? 148 : 350;
     const gap = isMobile ? 16 : 24;
-    const startY = isMobile ? 140 : 170;
+    const startY = isMobile ? 140 : 150;
 
     ids.forEach((id, i) => {
       let x: number;
@@ -80,10 +84,23 @@ export class CharacterSelectScene extends Phaser.Scene {
     const container = this.add.container(x, y, [gfx]);
     const texts: Phaser.GameObjects.Text[] = [];
     const pad = 18;
-    const isNarrow = w < 400;
+    // isNarrow：仅极小卡片用紧凑版；桌面 260 卡 / 手机 520 卡均走标准分层布局
+    const isNarrow = w < 180 || h < 250;
+
+    if (!isNarrow) {
+      const iconBg = this.add.graphics();
+      iconBg.fillStyle(0x2a2a35, 1);
+      iconBg.fillCircle(0, -h / 2 + 62, 30);
+      container.add(iconBg);
+      texts.push(
+        createUIText(this, 0, -h / 2 + 34, config.icon, {
+          fontSize: '26px',
+        }).setOrigin(0.5)
+      );
+    }
 
     texts.push(
-      createUIText(this, 0, -h / 2 + 34, config.name, {
+      createUIText(this, 0, -h / 2 + (isNarrow ? 30 : 122), config.name, {
         fontSize: isNarrow ? '24px' : '26px',
         color: UIColors.textBright,
         fontStyle: 'bold',
@@ -91,7 +108,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     );
 
     texts.push(
-      createUIText(this, 0, -h / 2 + 66, config.description, {
+      createUIText(this, 0, -h / 2 + (isNarrow ? 58 : 150), config.description, {
         fontSize: '12px',
         color: UIColors.textDim,
         align: 'center',
@@ -100,12 +117,19 @@ export class CharacterSelectScene extends Phaser.Scene {
     );
 
     if (config.passiveDesc) {
+      if (!isNarrow) {
+        const passiveY = -h / 2 + 196;
+        const descBg = this.add.graphics();
+        descBg.fillStyle(0x000000, 0.35);
+        descBg.fillRoundedRect(-(w - 20) / 2, passiveY - 39, w - 20, 78, 6);
+        container.add(descBg);
+      }
       texts.push(
-        createUIText(this, 0, -h / 2 + (isNarrow ? 108 : 132), config.passiveDesc, {
+        createUIText(this, 0, -h / 2 + (isNarrow ? 88 : 196), config.passiveDesc, {
           fontSize: '12px',
-          color: UIColors.accentSoft,
+          color: isNarrow ? UIColors.accentSoft : '#cccccc',
           align: 'center',
-          wordWrap: { width: w - pad * 2 },
+          wordWrap: { width: w - pad * 2 - (isNarrow ? 0 : 12) },
         }).setOrigin(0.5)
       );
     }
@@ -114,7 +138,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       ? `熟练系别：${config.favoredTags.map((t) => TAG_NAMES[t] ?? t).join('、')}`
       : '全武器均衡';
     texts.push(
-      createUIText(this, 0, -h / 2 + (isNarrow ? 92 : 180), favored, {
+      createUIText(this, 0, -h / 2 + (isNarrow ? 112 : 244), favored, {
         fontSize: '13px',
         color: config.favoredTags?.length ? UIColors.blue : UIColors.textDim,
       }).setOrigin(0.5)
@@ -130,7 +154,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       if (b.critDamage) parts.push(`爆伤+${Math.round(b.critDamage * 100)}%`);
       if (parts.length) {
         texts.push(
-          createUIText(this, 0, -h / 2 + (isNarrow ? 132 : 210), parts.join('  '), {
+          createUIText(this, 0, -h / 2 + (isNarrow ? 132 : 268), parts.join('  '), {
             fontSize: '12px',
             color: UIColors.green,
           }).setOrigin(0.5)
@@ -138,7 +162,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       }
     }
 
-    if (selected) {
+    if (selected && !isNarrow) {
       texts.push(
         createUIText(this, 0, h / 2 - 18, '✓ 当前角色', { fontSize: UIFonts.small, color: UIColors.accent }).setOrigin(0.5)
       );

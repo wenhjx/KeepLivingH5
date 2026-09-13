@@ -1,4 +1,5 @@
 import { createUIText } from '../utils/UIText';
+import { createSceneTitle, UIColors } from '../ui/UIStyle';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -38,13 +39,7 @@ export class UpgradeScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0).setInteractive();
 
     // 标题
-    createUIText(this, width / 2, 70, 'LEVEL UP!', {
-      fontSize: '42px',
-      color: '#ffb347',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 4,
-    }).setOrigin(0.5);
+    createSceneTitle(this, width / 2, 70, 'LEVEL UP!');
 
     // 过滤掉玩家已满级的选项，不足时用兜底项补位
     const availableOptions = this.getAvailableOptions();
@@ -54,7 +49,7 @@ export class UpgradeScene extends Phaser.Scene {
     // 避免"提示选择升级、弹出的却是消耗品"的违和感
     createUIText(this, width / 2, 115, availableOptions.length === 0 ? '选择一项补给' : '选择一项升级', {
       fontSize: '16px',
-      color: '#aaaaaa',
+      color: UIColors.textDim,
     }).setOrigin(0.5);
 
     // 升级面板

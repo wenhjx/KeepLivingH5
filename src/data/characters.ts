@@ -10,6 +10,8 @@ import type { WeaponTag } from '../types';
 export interface CharacterConfig {
   id: string;
   name: string;
+  /** 角色图标（emoji，选角卡片/图鉴展示） */
+  icon: string;
   description: string;
   /** 初始武器 id（对应 data/weapons.ts 的 WEAPONS 配置键） */
   starterWeapon: string;
@@ -35,6 +37,7 @@ export const CHARACTERS: Record<string, CharacterConfig> = {
   default: {
     id: 'default',
     name: '拓荒者',
+    icon: '🪖',
     description: '均衡型初始角色：任何武器都能平均发挥',
     starterWeapon: 'default_gun',
     passiveDesc: '双暴向：暴击率溢出按 1:2 转为暴击伤害',
@@ -42,6 +45,7 @@ export const CHARACTERS: Record<string, CharacterConfig> = {
   mechanic: {
     id: 'mechanic',
     name: '机械师',
+    icon: '🔧',
     description: '枪械专家：枪械系武器伤害 +20%',
     starterWeapon: 'machine_gun',
     statBonus: { critRate: 0.05 },
@@ -52,6 +56,7 @@ export const CHARACTERS: Record<string, CharacterConfig> = {
   paladin: {
     id: 'paladin',
     name: '圣骑士',
+    icon: '🛡️',
     description: '圣盾近战：近战/范围系武器伤害 +20%，受击 -20%',
     starterWeapon: 'lightsaber',
     statBonus: { maxHealth: 80, moveSpeed: 10 },

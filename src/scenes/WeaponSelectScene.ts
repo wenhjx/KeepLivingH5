@@ -1,4 +1,5 @@
 import { createUIText } from '../utils/UIText';
+import { createSceneTitle, UIColors } from '../ui/UIStyle';
 import Phaser from 'phaser';
 import { GameManager } from '../game/GameManager';
 import { GameConfig } from '../game/GameConfig';
@@ -37,18 +38,12 @@ export class WeaponSelectScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0).setInteractive();
 
     // 标题（与升级场景区分）
-    createUIText(this, width / 2, 70, '⚔ 武器强化', {
-      fontSize: '40px',
-      color: '#ffb347',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 4,
-    }).setOrigin(0.5);
+    createSceneTitle(this, width / 2, 70, '⚔ 武器强化');
 
     // 提示（通用：Boss 后/前期武器奖励节点均会弹出，不特指"击败强敌"）
     createUIText(this, width / 2, 118, '选择一把武器强化', {
       fontSize: '16px',
-      color: '#aaaaaa',
+      color: UIColors.textDim,
     }).setOrigin(0.5);
 
     const choices = this.getWeaponChoices();
