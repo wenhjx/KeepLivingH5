@@ -55,12 +55,23 @@ export interface BoostZoneConfig {
   color?: number;
 }
 
+/** 火盆（火源安全区）：霜蚀类规则下，玩家处于半径内时不流失生命（逼走位的缓冲点） */
+export interface FireZoneConfig {
+  id: string;
+  x: number;
+  y: number;
+  /** 安全半径（世界单位） */
+  radius: number;
+}
+
 export interface TerrainConfig {
   obstacles: ObstacleConfig[];
   /** 减速区（可选，数据驱动） */
   slowZones?: SlowZoneConfig[];
   /** 加速区（可选，数据驱动） */
   boostZones?: BoostZoneConfig[];
+  /** 火盆安全区（可选，配合霜蚀等持续伤害规则） */
+  fireZones?: FireZoneConfig[];
 }
 
 /** 障碍物类型默认颜色 */
@@ -174,5 +185,14 @@ export const ICE_TERRAIN: TerrainConfig = {
   slowZones: [
     { id: 'slow_01', x: 1000, y: 1000, width: 400, height: 400, slowFactor: 0.6, color: 0x3aa6dd },
     { id: 'slow_02', x: 1600, y: 1600, width: 400, height: 400, slowFactor: 0.6, color: 0x3aa6dd },
+  ],
+  // 火盆（霜蚀安全区）：出生点 + 四角各一处，半径内不掉血。
+  // 走位节奏：火盆之间保持 1400+ 间距，玩家清怪 → 回火堆回温 → 再出去。
+  fireZones: [
+    { id: 'fire_00', x: 1500, y: 1500, radius: 160 },
+    { id: 'fire_01', x: 500, y: 500, radius: 140 },
+    { id: 'fire_02', x: 2500, y: 500, radius: 140 },
+    { id: 'fire_03', x: 500, y: 2500, radius: 140 },
+    { id: 'fire_04', x: 2500, y: 2500, radius: 140 },
   ],
 };

@@ -1,5 +1,11 @@
 import Phaser from 'phaser';
-import { type TerrainConfig, type ObstacleConfig, type SlowZoneConfig, type BoostZoneConfig } from '../data/terrain';
+import {
+  type TerrainConfig,
+  type ObstacleConfig,
+  type SlowZoneConfig,
+  type BoostZoneConfig,
+  type FireZoneConfig,
+} from '../data/terrain';
 import { GameConfig } from '../game/GameConfig';
 import { Layers } from '../constants/Layers';
 
@@ -23,6 +29,9 @@ export class TerrainManager {
   private slowZoneLayer!: Phaser.GameObjects.Graphics;
   private boostZoneList: BoostZoneConfig[] = [];
   private boostZoneLayer!: Phaser.GameObjects.Graphics;
+  private fireZoneList: FireZoneConfig[] = [];
+  private fireGlowLayer!: Phaser.GameObjects.Graphics;
+  private firePitLayer!: Phaser.GameObjects.Graphics;
 
   /** 可破坏物被击碎后的默认恢复随机区间 [min, max]（ms）：20~40 秒，防蹲守且保留偶遇感 */
   private static readonly DEFAULT_RESPAWN_RANGE: [number, number] = [20000, 40000];
@@ -47,6 +56,7 @@ export class TerrainManager {
     this.obstacleGroup = this.scene.physics.add.staticGroup();
     this.createSlowZones();
     this.createBoostZones();
+    this.createFireZones();
 
     for (const obs of this.config.obstacles) {
       this.spawnObstacle(obs);
@@ -150,6 +160,57 @@ export class TerrainManager {
     return 1;
   }
 
+  /** 创建火盆安全区：暖色光晕（闪烁）+ 火盆本体（石圈+火焰），不参与物理 */
+  private createFireZones(): void {
+    this.fireZoneList = [...(this.config.fireZones ?? [])];
+    this.fireGlowLayer = this.scene.add.graphics().setDepth(Layers.TERRAIN_ZONE);
+    this.firePitLayer = this.scene.add.graphics().setDepth(Layers.TERRAIN_ZONE + 1);
+
+    for (const z of this.fireZoneList) {
+      // 光晕：半径铺满安全区，提示"站这里不掉血"；双层圆环让边界更清晰
+      this.fireGlowLayer.fillStyle(0xff8833, 0.16);
+      this.fireGlowLayer.fillCircle(z.x, z.y, z.radius);
+      this.fireGlowLayer.fillStyle(0xffaa44, 0.1);
+      this.fireGlowLayer.fillCircle(z.x, z.y, z.radius * 0.75);
+      this.fireGlowLayer.lineStyle(3, 0xffaa44, 0.55);
+      this.fireGlowLayer.strokeCircle(z.x, z.y, z.radius);
+      // 火盆本体：外圈石环 + 橙红外焰 + 明黄火心 + 顶部火星，尺寸加大保证可见
+      this.firePitLayer.fillStyle(0x4a2f1d, 1);
+      this.firePitLayer.fillCircle(z.x, z.y, 34);
+      this.firePitLayer.fillStyle(0xff8833, 0.95);
+      this.firePitLayer.fillCircle(z.x, z.y, 24);
+      this.firePitLayer.fillStyle(0xffdd55, 1);
+      this.firePitLayer.fillCircle(z.x, z.y, 14);
+      this.firePitLayer.fillStyle(0xfff0b0, 0.95);
+      this.firePitLayer.fillCircle(z.x - 6, z.y - 10, 5);
+      this.firePitLayer.fillCircle(z.x + 5, z.y - 4, 3);
+    }
+
+    // 光晕呼吸闪烁（提示"安全区"存在感，而非静态贴图）
+    this.scene.tweens.add({
+      targets: this.fireGlowLayer,
+      alpha: 0.6,
+      duration: 1400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.InOut',
+    });  }
+
+  /** 火盆安全区列表（供霜蚀等规则查询玩家是否处于安全区） */
+  getFireZones(): FireZoneConfig[] {
+    return this.fireZoneList;
+  }
+
+  /** 某点是否处于任一火盆安全区内（霜蚀豁免判定） */
+  isInFireZone(x: number, y: number): boolean {
+    for (const z of this.fireZoneList) {
+      const dx = x - z.x;
+      const dy = y - z.y;
+      if (dx * dx + dy * dy <= z.radius * z.radius) return true;
+    }
+    return false;
+  }
+
   /** 减速区列表 */
   getSlowZones(): SlowZoneConfig[] {
     return this.slowZoneList;
@@ -207,10 +268,12 @@ export class TerrainManager {
     // 取消所有待恢复任务（防止旧关木箱复活到新地图）
     for (const t of this.pendingRespawns) t.remove(false);
     this.pendingRespawns = [];
-    // 销毁旧障碍物 + 减速区
+    // 销毁旧障碍物 + 区域层
     this.obstacleGroup?.clear(true, true);
     this.slowZoneLayer?.destroy();
     this.boostZoneLayer?.destroy();
+    this.fireGlowLayer?.destroy();
+    this.firePitLayer?.destroy();
     this.obstacleList = [];
     this.config = config;
     this.create();

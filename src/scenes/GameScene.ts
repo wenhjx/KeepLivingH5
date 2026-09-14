@@ -262,6 +262,8 @@ export class GameScene extends Phaser.Scene {
     // 关卡特殊规则（嗜血回血 / 霜蚀掉血）
     this.modifierSystem = new ModifierSystem(this);
     this.modifierSystem.setModifiers(this.levelConfig.modifiers ?? []);
+    // 注入火盆安全区（霜蚀豁免判定；直接读关卡配置，不依赖 terrainManager.create 时机）
+    this.modifierSystem.setFireZones(this.levelConfig.terrain.fireZones ?? []);
     // 音频管理
     this.audioManager = AudioManager.getInstance();
     this.audioManager.init(this);
