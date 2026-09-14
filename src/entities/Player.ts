@@ -988,20 +988,21 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
       }
     }
-    // 重建被动
+    // 重建被动（关卡初始存档可能只有 id/level，name 缺失时从 UPGRADE_OPTIONS 补中文名，避免 HUD 显示英文 id）
     this.passives.clear();
     if (saved.passives) {
       for (const p of saved.passives) {
-        this.passives.set(p.id, { id: p.id, name: p.name, level: p.level, maxLevel: 5 });
+        const opt = UPGRADE_OPTIONS.find((u) => u.id === p.id);
+        this.passives.set(p.id, { id: p.id, name: opt?.name || p.name || p.id, level: p.level, maxLevel: 5 });
       }
     }
-    // 重建 stat 升级计数（从 UPGRADE_OPTIONS 取 maxLevel；旧存档无此字段则跳过）
+    // 重建 stat 升级计数（从 UPGRADE_OPTIONS 取 maxLevel 与中文名；旧存档无此字段则跳过）
     this.statUpgrades.clear();
     if (saved.statUpgrades) {
       for (const s of saved.statUpgrades) {
         const opt = UPGRADE_OPTIONS.find((u) => u.id === s.id);
         if (opt?.maxLevel) {
-          this.statUpgrades.set(s.id, { id: s.id, name: s.name, level: s.level, maxLevel: opt.maxLevel });
+          this.statUpgrades.set(s.id, { id: s.id, name: opt.name, level: s.level, maxLevel: opt.maxLevel });
         }
       }
     }
