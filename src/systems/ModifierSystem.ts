@@ -31,10 +31,10 @@ export class ModifierSystem {
 
   private frostCount = 0;
 
-  
   /** 火盆安全区（由 GameScene 注入本关地形数据）：处于半径内时霜蚀不流失生命 */
   private fireZones: Array<{ x: number; y: number; radius: number }> = [];
-constructor(scene: Phaser.Scene) {
+
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
   }
 
@@ -68,14 +68,14 @@ constructor(scene: Phaser.Scene) {
 
     if (!this.has('frostbite')) return;
 
-    
-
     // 火盆安全区：玩家在火盆半径内不掉血（霜蚀的缓冲点，配合走位节奏）
     for (const z of this.fireZones) {
       const dx = player.x - z.x;
       const dy = player.y - z.y;
       if (dx * dx + dy * dy <= z.radius * z.radius) return;
-    }const cfg = MODIFIER_CONFIGS.frostbite;
+    }
+
+    const cfg = MODIFIER_CONFIGS.frostbite;
 
     this.frostTick += delta;
 
