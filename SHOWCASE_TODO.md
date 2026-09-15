@@ -264,5 +264,131 @@
 
 ---
 
-## 九、其他建议
+## 九、移动设备发热风险分析
+
+> **2026-09-15 新增**：对游戏主循环、渲染管线、物理碰撞、实体更新、特效系统逐层代码审查后，确认存在多个足以导致移动设备异常发热的性能瓶颈。
+
+### 严重级 — 直接导致发热
+
+#### 9.1 渲染分辨率对移动端过高
+
+`main.ts` 第 40-47 行的 `computeRenderScale()`：
+
+```typescript
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+const fit = Math.min(window.innerWidth / 960, window.innerHeight / 640);
+return Math.min(Math.max(fit, 1) * dpr, cap);
+```
+
+移动端 dpr 通常为 2-3，fit 约 1.0-1.5，所以 `renderScale` 会被拉到 2-3，再按画质封顶。最终内部分辨率：
+
+| 画质 | 封顶 | 内部分辨率 | 每帧像素数 | 60fps 像素吞吐 |
+|---|---|---|---|---|
+| low | 1.5 | 1440×960 | 1.38M | 83M/s |
+| medium | 2.0 | 1920×1280 | 2.46M | **147M/s** |
+| high | 2.5 | 2400×1600 | 3.84M | **230M/s** |
+
+移动端 GPU 的填充率上限通常在 200-500M 像素/秒，但这是**理论峰值**——实际还要同时做混合、纹理采样、Canvas2D bridge。medium 画质下每秒 147M 像素已经接近移动 GPU 的舒适区上限，high 画质下 230M 几乎肯定会导致 GPU 满载发热。
+
+#### 9.2 画质检测不考虑移动端
+
+`GameManager.detectQuality()` 第 119-126 行：
+
+```typescript
+private detectQuality(): QualityLevel {
+  const memory = (navigator as any).deviceMemory || 4;
+  const cores = navigator.hardwareConcurrency || 4;
+  if (memory <= 2 || cores <= 2) return 'low';
+  if (memory >= 8 && cores >= 8) return 'high';  // 旗舰手机命中此条件
+  return 'medium';
+}
+```
+
+旗舰手机普遍报告 8GB+ RAM 和 8 核 CPU，因此被检测为 **high** 画质——200 个同屏敌人、resolutionScale 2.5、enableShadows true、enablePostFX true。`isMobile` 已被检测但**完全没有参与画质分级**，导致旗舰手机被当作桌面高性能设备对待。
+
+#### 9.3 粒子发射器频繁创建/销毁
+
+`FXManager.emit()` 第 61-73 行：
+
+```typescript
+const emitter = this.scene.add.particles(x, y, texture, { ... });
+this.scene.time.delayedCall(lifespan + 120, () => emitter.destroy());
+```
+
+每次命中/死亡/拾取都创建一个**新的 ParticleEmitter 对象**，用完后销毁。在密集战斗中（200 敌人、多武器同时开火），每秒可能创建数十个发射器。这种 create/destroy churn 导致：
+- 频繁 GC 压力（emitter 是重量级对象，含粒子池、shader 配置）
+- WebGL 状态频繁切换（每次创建新 emitter 可能触发 shader/texture binding 变更）
+
+相比之下，`DamageTextManager` 已正确池化 Text 对象，但粒子和近战挥砍 Graphics 没有池化。
+
+### 中等级 — 持续推高负载
+
+#### 9.4 每帧多次全数组遍历（O(n) 多趟）
+
+一个帧内对 enemies 数组的遍历次数（medium 画质 120 敌人时）：
+
+| 调用点 | 遍历对象 | 每帧次数 |
+|---|---|---|
+| `GameScene.update` — enemies.children.each | 敌人 | 1 |
+| `GameScene.update` — bullets.children.each | 子弹 | 1 |
+| `GameScene.update` — pickups.children.each | 拾取物 | 1 |
+| `Enemy.update` → `avoidObstacles` | 障碍物 | ×n 敌人 |
+| `Player.fireNova` / `fireMelee` / `findNearestEnemy` | 敌人 | 每次开火 1 |
+| `HealerAI`（每 1.2s） | 敌人 | ×healer 数 |
+| `Drone.update` | 敌人+子弹 | ×drone 数 |
+| `Minimap.update` | 敌人+障碍物 | 1 |
+| `HUD.update` | — | 1（多 setText） |
+
+核心问题是 **`avoidObstacles`**：每个敌人每帧遍历全部障碍物（O(m)），总复杂度 O(n×m)。medium 画质下 120 敌人 × ~15 障碍物 = 1800 次/帧 × 60fps = 108,000 次/秒。high 画质下 200×20=4000 次/帧 = 240,000 次/秒。这个量级 CPU 不会过载，但是**它发生在每个敌人的 update 中，与物理引擎的 body 同步、setVelocity 串行执行，无法被 Phaser 批量化**。
+
+#### 9.5 HUD 每帧 setText（触发纹理重栅格化）
+
+`HUD.update()` 第 309-336 行每帧调用 5 次 `setText()`：
+
+```typescript
+this.waveText.setText(`波次: ${runData.wave}...`);
+this.killsText.setText(`击杀: ${runData.kills}`);
+this.scoreText.setText(`分数: ${runData.score}`);
+this.timeText.setText(this.formatTime(runData.survivalTime));
+this.coinText.setText(`💰 ${player.getCoins?.() ?? 0}`);
+```
+
+Phaser 的 Text 不是矢量字体——每次 `setText` 若文本变化，内部会**重新光栅化到 Canvas 纹理**。波次/击杀/分数/时间/金币每帧都可能变化（尤其时间是持续递增的），每帧 5 次纹理重生成是显著的 CPU+GPU 开销。
+
+#### 9.6 小地图每帧 Graphics.clear() + 全量重绘
+
+`Minimap.update()` 每帧 `graphics.clear()` 然后遍历所有敌人 + 障碍物重绘。120 敌人时 = 120 次 `fillRect` + 障碍物绘制，每帧重建 Graphics 命令缓冲。Graphics 不是 retained mode，每帧 clear + redraw 在移动端会产生持续 Canvas2D 负载。
+
+### 较低级 — 辅助贡献
+
+#### 9.7 近战挥砍 Graphics 对象创建
+
+`Player.createMeleeSlash()` 第 562 行每次近战攻击创建新 Graphics 对象，150ms 后销毁。高攻速下（attackSpeed 2+）每秒 2+ 次 create/destroy。
+
+#### 9.8 DamageText Tween 创建
+
+虽然 DamageTextManager 池化了 Text 对象，但每次 `show()` 仍创建新的 tween。nova 武器一次命中 50 个敌人 = 瞬间 50 个 tween 对象创建。
+
+### 结论
+
+**存在足以导致移动设备异常发热的性能瓶颈**，核心原因有三个：
+
+1. **GPU 填充率超标**：renderScale 2-2.5x 导致 medium/high 画质下每帧 2.5-3.8M 像素，移动端 GPU 长期满载
+2. **画质检测缺陷**：旗舰手机被误判为 high 画质（200 敌人 + shadows + postFX），`isMobile` 未参与降级
+3. **粒子发射器 create/destroy churn**：密集战斗中每秒数十次 emitter 创建销毁，GC 压力持续
+
+这三者叠加后，移动端在战斗激烈场景下 GPU 满载 + CPU 高频 GC + 物理 O(n×m) 遍历，持续 60fps 拉满，**足以在数分钟内导致设备明显发热**。
+
+### 建议修复方向
+
+1. **`detectQuality` 加入 `isMobile` 判断**：移动端强制不超过 medium 画质，旗舰手机也走 medium（maxEnemies 120, resolutionScale 2, no postFX）
+2. **移动端 renderScale 封顶 1.5**：在 `computeRenderScale` 中若 `isMobile` 则 `cap = min(cap, 1.5)`，将像素吞吐降到 83M/s
+3. **粒子发射器池化**：FXManager 预创建 3-5 个 emitter 轮转复用，而非每次 new + destroy
+4. **HUD setText 节流**：波次/击杀/分数仅在值变化时 setText，时间文本降频到每 500ms 更新一次
+5. **小地图降频**：移动端每 2-3 帧更新一次小地图（肉眼不可察觉，减半 Canvas2D 负载）
+6. **近战挥砍 Graphics 池化**：预创建 2-3 个 Graphics 对象轮转复用
+
+---
+
+## 十、其他建议
 - 区域特色还不够明显，废墟可以设计一些陷阱，比如掉落陷阱的石头，玩家需要小心。区域内目前仅有障碍物，没有其他机制。（待定：区域机制模块化设计）
