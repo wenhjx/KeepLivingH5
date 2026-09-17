@@ -1,0 +1,11 @@
+{
+  "upgrades": [
+    {
+      "id": "max_hp",
+      "name": "生命强化",
+      "type": "stat",
+      "rarity": "common"
+    }
+  ],
+  "_comment": "升级选项配置数据"
+}

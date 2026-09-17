@@ -1,0 +1,13 @@
+{
+  "weapons": [
+    {
+      "id": "default_gun",
+      "name": "基础射击",
+      "type": "ranged",
+      "damage": 10,
+      "attackSpeed": 2,
+      "range": 400
+    }
+  ],
+  "_comment": "武器配置数据，实际项目中可由服务端或策划表生成"
+}
