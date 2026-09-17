@@ -111,7 +111,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: "强化基础射击，伤害提升且可穿透敌人",
     icon: "🔫",
     iconTexture: "weapon_icon_default_gun",
-    rarity: "common",
+    rarity: "rare",
     effect: { weaponId: "default_gun", weaponLevel: 1 },
   },
   {

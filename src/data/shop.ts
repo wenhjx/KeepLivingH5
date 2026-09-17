@@ -64,6 +64,7 @@ function fromUpgrade(
 
 /** 武器类商品（价格档：普通 45 / 稀有 55 / 传说 80） */
 const WEAPON_ITEMS: ShopItem[] = [
+  fromUpgrade("weapon_default_gun", "weapon", 45),
   fromUpgrade("weapon_shotgun", "weapon", 45),
   fromUpgrade("weapon_machine_gun", "weapon", 45),
   fromUpgrade("weapon_boomerang", "weapon", 55),
