@@ -58,8 +58,8 @@ export function applyUpgradeToPlayer(
   trySuperEvolve(player, scene);
 }
 
-/** 检查超武进化条件（每局每组合仅一次） */
-function trySuperEvolve(player: Player, scene?: any): void {
+/** 检查超武进化条件（每局每组合仅一次）；导出供场景加载后补检 */
+export function trySuperEvolve(player: Player, scene?: any): void {
   for (const cfg of Object.values(SUPER_WEAPONS)) {
     if (player.hasSuper(cfg.id)) continue;
     const weaponOk = player.isWeaponMaxLevel(cfg.weaponId);

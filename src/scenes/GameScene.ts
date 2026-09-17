@@ -21,6 +21,7 @@ import {
 } from "../data/levels";
 import { getBackgroundByLevelId } from "../data/backgrounds";
 import { UPGRADE_OPTIONS } from "../data/upgrades";
+import { trySuperEvolve } from "../utils/UpgradeApplier";
 import { GameFeedback } from "../systems/GameFeedback";
 import { EventBus, EventKeys } from "../utils/EventBus";
 import type { SuperWeaponConfig } from "../data/superWeapons";
@@ -166,6 +167,8 @@ export class GameScene extends Phaser.Scene {
     this.setupCollisions();
     this.setupCamera();
     this.setupEventListeners();
+    // 存档/直进恢复后补一次超武进化检查（条件已满足的存档立即进化）
+    trySuperEvolve(this.player);
     // 页面刷新/关闭前强制存档（Phaser SHUTDOWN 在页面卸载时可能来不及执行）
     this.beforeUnloadHandler = () => {
       const gm = GameManager.getInstance();
