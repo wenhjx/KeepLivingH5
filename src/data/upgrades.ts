@@ -106,7 +106,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
   // ========== 武器升级 ==========
   {
     id: "weapon_default_gun",
-    name: "基础射击",
+    name: "冲锋枪",
     type: "weapon",
     description: "强化基础射击，伤害提升且可穿透敌人",
     icon: "🔫",

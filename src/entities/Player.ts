@@ -4,6 +4,7 @@ import { EventBus, EventKeys } from "../utils/EventBus";
 import { MathUtils } from "../utils/MathUtils";
 import { Drone } from "./Drone";
 import { WEAPONS } from "../data/weapons";
+import { getSuperByWeapon } from "../data/superWeapons";
 import { GameManager } from "../game/GameManager";
 import { UPGRADE_OPTIONS } from "../data/upgrades";
 import { USABLE_ITEMS } from "../data/items";
@@ -45,6 +46,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private stats: PlayerStats;
   /** percent stat 的基准值快照（构造/读档时记录，含成就加成）：percent 加算以它为底，杜绝乘算指数爆炸 */
   private _baseStats: PlayerStats = {} as PlayerStats; // 武器列表
+  /** 已进化超武（局内） */
+  private evolvedSupers: Set<string> = new Set();
   private weapons: Map<
     string,
     { config: WeaponConfig; level: number; cooldown: number }
@@ -336,6 +339,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   /** 按武器类型分发攻击逻辑 */
   private fireWeapon(config: WeaponConfig, level: number): void {
+    const superCfg = getSuperByWeapon(config.id);
+    if (superCfg && this.evolvedSupers.has(superCfg.id) && superCfg.override) {
+      config = { ...config, ...superCfg.override };
+    }
     switch (config.type) {
       case "melee":
         this.fireMelee(config, level);
@@ -1402,6 +1409,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** 是否拥有某武器 */
   hasWeapon(weaponId: string): boolean {
     return this.weapons.has(weaponId);
+  }
+
+  /** 是否已进化某超武 */
+  hasSuper(id: string): boolean {
+    return this.evolvedSupers.has(id);
+  }
+
+  /** 标记超武已进化 */
+  evolveSuper(id: string): void {
+    this.evolvedSupers.add(id);
   }
 
   /** 获取某武器等级（0 表示未拥有） */

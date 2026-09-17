@@ -1,4 +1,6 @@
 import { WEAPONS } from "../data/weapons";
+import { SUPER_WEAPONS } from "../data/superWeapons";
+import { EventBus } from "./EventBus";
 import type { Player } from "../entities/Player";
 import type { UpgradeOption } from "../types";
 
@@ -50,5 +52,22 @@ export function applyUpgradeToPlayer(
   // 被动技能
   if (option.type === "passive") {
     player.addPassive(option.id, option.name, 5);
+  }
+
+  // 超武进化检测（武器满级 + 辅助升级满级组合达成即进化）
+  trySuperEvolve(player, scene);
+}
+
+/** 检查超武进化条件（每局每组合仅一次） */
+function trySuperEvolve(player: Player, scene?: any): void {
+  for (const cfg of Object.values(SUPER_WEAPONS)) {
+    if (player.hasSuper(cfg.id)) continue;
+    const weaponOk = player.isWeaponMaxLevel(cfg.weaponId);
+    const upgradeOk =
+      player.getStatUpgradeLevel(cfg.requiredUpgradeId) >= cfg.requiredUpgradeMax;
+    if (weaponOk && upgradeOk) {
+      player.evolveSuper(cfg.id);
+      EventBus.emit("super:evolved", cfg);
+    }
   }
 }

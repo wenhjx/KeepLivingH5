@@ -23,6 +23,7 @@ import { getBackgroundByLevelId } from "../data/backgrounds";
 import { UPGRADE_OPTIONS } from "../data/upgrades";
 import { GameFeedback } from "../systems/GameFeedback";
 import { EventBus, EventKeys } from "../utils/EventBus";
+import type { SuperWeaponConfig } from "../data/superWeapons";
 import { SOUND_KEYS } from "../data/sounds";
 import type { EnemyConfig, PickupConfig } from "../types";
 
@@ -592,6 +593,14 @@ export class GameScene extends Phaser.Scene {
     const sub = (fn: () => void) => this.eventUnsubscribers.push(fn);
     // 玩家死亡
     sub(EventBus.on(EventKeys.PLAYER_DEATH, () => this.onPlayerDeath()));
+    // 超武进化：横幅提示 + 震屏 + 音效
+    sub(
+      EventBus.on("super:evolved", (cfg: SuperWeaponConfig) => {
+        this.audioManager.playSfx("sfx_levelup");
+        this.cameras.main.shake(300, 0.008);
+        (this.scene.get("UIScene") as any)?.showBanner?.(`⭐ ${cfg.name} 进化！`, true);
+      }),
+    );
     // 复活币生效：清空周围敌人 + 震屏反馈，避免复活瞬间被围死
     sub(
       EventBus.on(EventKeys.PLAYER_REVIVE, () => {

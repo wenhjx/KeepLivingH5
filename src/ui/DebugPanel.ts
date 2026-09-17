@@ -6,6 +6,8 @@ import { GameConfig } from "../game/GameConfig";
 import { UILayout } from "../utils/UILayout";
 import type { UpgradeOption } from "../types";
 import type { Player } from "../entities/Player";
+import { SUPER_WEAPONS } from "../data/superWeapons";
+import { EventBus } from "../utils/EventBus";
 import { Layers } from "../constants/Layers";
 
 /** 单个按钮的规格 */
@@ -413,6 +415,40 @@ export class DebugPanel {
       col,
       UPGRADE_OPTIONS.filter((o) => o.type === "passive"),
     );
+
+    // 超武（进化测试；条件：武器满级 + 辅助升级满级，见 data/superWeapons.ts）
+    this.addSectionTitle(col, "⭐ 超武（进化测试）");
+    const superState = createUIText(
+      this.scene,
+      0,
+      col.y,
+      "当前超武：无",
+      { fontSize: "11px", color: "#ffd75e" },
+    ).setOrigin(0, 0);
+    this.content.add(superState);
+    col.step(this.tipSpacing);
+    const refreshSuper = () => {
+      const p = this.getPlayer();
+      const names = Object.values(SUPER_WEAPONS)
+        .filter((s) => p?.hasSuper(s.id))
+        .map((s) => s.name)
+        .join("、");
+      superState.setText(`当前超武：${names || "无"}`);
+    };
+    Object.values(SUPER_WEAPONS).forEach((s) => {
+      this.addRow(col, {
+        text: `${s.icon} ${s.name}（${s.conditionDesc}）`,
+        fn: () => {
+          const p = this.getPlayer();
+          if (p && !p.hasSuper(s.id)) {
+            p.evolveSuper(s.id);
+            EventBus.emit("super:evolved", s);
+            refreshSuper();
+          }
+        },
+      });
+    });
+    refreshSuper();
 
     // 道具栏（物品栏六种主动道具，点击加入；与商店即时生效道具分区，避免混淆）
     this.addSectionTitle(col, "🎒 道具栏（点击加入）");

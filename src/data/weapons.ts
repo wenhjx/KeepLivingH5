@@ -8,7 +8,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
   default_gun: {
     id: "default_gun",
     tags: ["gun"],
-    name: "基础射击",
+    name: "冲锋枪",
     type: "ranged",
     texture: "bullet",
     damage: 10,
