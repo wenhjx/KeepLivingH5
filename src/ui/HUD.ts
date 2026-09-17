@@ -458,6 +458,7 @@ export class HUD {
       desc: string;
       icon: string;
       color: number;
+      rarity?: string;
       bt?: number;
     }> = [];
     passives.forEach((p: any) => {
@@ -472,6 +473,7 @@ export class HUD {
         desc: passiveDescForLevel(p.id, p.level, opt?.description || ""),
         icon: vis.icon,
         color: vis.color,
+        rarity: opt?.rarity,
       });
     });
     weapons.forEach((w: any) => {
@@ -486,6 +488,7 @@ export class HUD {
           desc: sc.effectDesc,
           icon: sc.icon,
           color: 0xffd700,
+          rarity: sc.rarity ?? "legendary",
         });
         return;
       }
@@ -502,6 +505,7 @@ export class HUD {
         desc: opt?.description || "",
         icon: vis.icon,
         color: vis.color,
+        rarity: opt?.rarity,
       });
     });
 
@@ -556,6 +560,15 @@ export class HUD {
       });
     }
 
+    // buff 按稀有度降序排列（legendary > epic > rare > common，无稀有度的限时状态排最后，同级保持原顺）
+    {
+      const RARITY_ORDER = ["common", "rare", "epic", "legendary"];
+      allBuffs.sort(
+        (a, b) =>
+          (b.rarity ? RARITY_ORDER.indexOf(b.rarity) + 1 : 0) -
+          (a.rarity ? RARITY_ORDER.indexOf(a.rarity) + 1 : 0),
+      );
+    }
     // 持久条目（被动/武器）数量或等级变化 → 重建（等级提升需刷新 tooltip desc 与图标角标）。
     // 限时状态（剧毒/护盾/狂暴/减速）：出现/消失（存在性键变化）→ 重建；
     // 秒数变化不重建——角标实时更新（下方），tooltip 秒数为进入快照可接受。

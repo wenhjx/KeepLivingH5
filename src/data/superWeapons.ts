@@ -17,6 +17,8 @@ export interface SuperWeaponConfig {
   requiredUpgradeMax: number;
   name: string;
   sourceName: string;
+  /** 超武级别（进化后等同传说级，buff栏排序用） */
+  rarity: "legendary";
   icon: string;
   /** 合成条件描述（玩家可见，图鉴/提示展示） */
   conditionDesc: string;
@@ -38,6 +40,7 @@ export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
     requiredUpgradeId: "crit_rate",
     requiredUpgradeMax: 5,
     name: "无限弹幕",
+    rarity: "legendary",
     sourceName: "冲锋枪",
     icon: "🌀",
     conditionDesc: "冲锋枪满级 + 暴击精通满级",
@@ -58,6 +61,7 @@ export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
     requiredUpgradeId: "attack_speed",
     requiredUpgradeMax: 5,
     name: "风暴突突",
+    rarity: "legendary",
     sourceName: "机枪",
     icon: "🌪️",
     conditionDesc: "机枪满级 + 急速满级",
@@ -78,6 +82,7 @@ export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
     requiredUpgradeId: "passive_bounce",
     requiredUpgradeMax: 3,
     name: "链式散射",
+    rarity: "legendary",
     sourceName: "霰弹枪",
     icon: "💥",
     conditionDesc: "霰弹枪满级 + 弹射满级",
