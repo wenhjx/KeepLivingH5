@@ -14,57 +14,63 @@
 
 ```
 Keep Living H5/
-├── public/                    # 静态资源（可选音频）
+├── public/                        # 静态资源（可选音频）
 ├── src/
-│   ├── main.ts                # 游戏入口（场景注册）
-│   ├── game/                  # 游戏核心
-│   │   ├── GameConfig.ts      # 全局配置（画质分级/对象池/波次/玩家数值）
-│   │   └── GameManager.ts     # 全局管理器(单例，对局存档/成就进度/存档)
-│   ├── scenes/                # 场景
-│   │   ├── BootScene.ts / PreloadScene.ts   # 启动与预加载（程序化纹理）
-│   │   ├── MainMenuScene.ts   # 主菜单（开始/继续/成就/试玩/设置 + 选关面板）
-│   │   ├── GameScene.ts       # 游戏主场景（三地图 + 无尽模式）
-│   │   ├── UIScene.ts         # UI叠加场景（HUD/暂停/调试入口）
-│   │   ├── GameOverScene.ts   # 结算场景
-│   │   ├── UpgradeScene.ts    # 升级选择（三选一/突破）
-│   │   ├── ShopScene.ts       # 神秘商店
-│   │   ├── WeaponSelectScene.ts  # 开局武器选择
-│   │   ├── EndlessChoiceScene.ts # 无尽模式选择
-│   │   ├── BreakthroughScene.ts  # 满级突破奖励
-│   │   ├── PlayerInfoScene.ts # 玩家属性面板（C 键）
-│   │   ├── AchievementScene.ts   # 成就页
-│   │   ├── EnemyCodexScene.ts   # 敌方情报图鉴（敌人/词缀双标签）
-│   │   └── DebugScene.ts      # 调试菜单（暂停时 \` 键）
-│   ├── entities/              # 实体
-│   │   ├── Player.ts          # 玩家（被动/升级/存档恢复）
-│   │   ├── Enemy.ts           # 敌人（13 种 AI + 词缀系统）
+│   ├── main.ts                    # 游戏入口（场景注册 / renderScale 计算）
+│   ├── game/                      # 游戏核心
+│   │   ├── GameConfig.ts          # 全局配置（画质分级/对象池/波次/玩家数值）
+│   │   └── GameManager.ts         # 全局管理器（单例，对局存档/成就进度/存档）
+│   ├── logic/                     # 纯逻辑层（无 Phaser 依赖，可单元测试）
+│   │   ├── affix.ts               # 词缀逻辑（伤害/状态结算）
+│   │   ├── player.ts              # 玩家数值逻辑
+│   │   └── wave.ts                # 波次生成/成长曲线
+│   ├── scenes/                    # 场景
+│   │   ├── BootScene.ts / PreloadScene.ts    # 启动与预加载（程序化纹理）
+│   │   ├── MainMenuScene.ts       # 主菜单（开始/继续/成就/试玩/设置 + 选关面板）
+│   │   ├── CharacterSelectScene.ts # 角色选择（多角色差异化）
+│   │   ├── WeaponSelectScene.ts   # 开局武器选择
+│   │   ├── GameScene.ts           # 游戏主场景（三地图 + 无尽模式）
+│   │   ├── UIScene.ts             # UI 叠加场景（HUD/暂停/调试入口）
+│   │   ├── GameOverScene.ts / UpgradeScene.ts / ShopScene.ts
+│   │   ├── EndlessChoiceScene.ts / BreakthroughScene.ts
+│   │   ├── PlayerInfoScene.ts     # 玩家属性面板（C 键）
+│   │   ├── AchievementScene.ts    # 成就页
+│   │   ├── EnemyCodexScene.ts     # 敌方情报图鉴（敌人/词缀双标签）
+│   │   └── DebugScene.ts          # 调试菜单（暂停时 ` 键）
+│   ├── entities/                  # 实体
+│   │   ├── Player.ts              # 玩家（被动/升级/存档恢复）
+│   │   ├── Enemy.ts               # 敌人（13 种 AI + 词缀系统）
 │   │   ├── Bullet.ts / Drone.ts / Pickup.ts
-│   ├── systems/               # 系统
-│   │   ├── WaveManager.ts     # 波次管理（难度成长/Boss 波）
+│   ├── systems/                   # 系统
+│   │   ├── WaveManager.ts         # 波次管理（难度成长/Boss 波）
 │   │   ├── AchievementManager.ts  # 成就系统（含隐藏成就）
-│   │   ├── TerrainManager.ts  # 地形系统（冰面/加速带等）
-│   │   ├── ModifierSystem.ts  # 词缀/修改器系统
+│   │   ├── TerrainManager.ts      # 地形系统（冰面/加速带等）
+│   │   ├── ModifierSystem.ts      # 词缀/修改器系统
 │   │   ├── FXManager.ts / GameFeedback.ts  # 特效与反馈
 │   │   ├── InputManager.ts / ObjectPool.ts / CollisionSystem.ts
 │   │   ├── SaveSystem.ts / AudioManager.ts / GuideManager.ts
-│   ├── ui/                    # UI组件
-│   │   ├── HUD.ts             # 抬头显示（buff 栏：等级化提示 + 下一级预览）
+│   ├── ui/                        # UI 组件
+│   │   ├── HUD.ts                 # 抬头显示（buff 栏：等级化提示 + 下一级预览）
 │   │   ├── VirtualJoystick.ts / Minimap.ts
 │   │   ├── UpgradePanel.ts / OptionCard.ts / InventoryUI.ts
-│   │   ├── DebugPanel.ts      # 调试面板（刷怪/召唤Boss/调数值）
+│   │   ├── DebugPanel.ts          # 调试面板（刷怪/召唤Boss/调数值）
+│   │   ├── UIStyle.ts             # UI 统一风格令牌
 │   │   └── GuideCard.ts / DamageTextManager.ts / UIScrollBar.ts
-│   ├── data/                  # 数据配置（实际数据源）
+│   ├── data/                      # 数据配置（实际数据源）
 │   │   ├── weapons.ts / enemies.ts / upgrades.ts
-│   │   ├── levels.ts          # 三地图关卡配置（草原/废墟/冰原）
-│   │   ├── affixes.ts         # 词缀表（10 词缀，稀有度分层）
-│   │   ├── achievements.ts    # 成就定义
-│   │   ├── shop.ts            # 神秘商店商品池
+│   │   ├── levels.ts              # 三地图关卡配置（草原/废墟/冰原）
+│   │   ├── affixes.ts             # 词缀表（10 词缀，稀有度分层）
+│   │   ├── achievements.ts / shop.ts
 │   │   ├── items.ts / terrain.ts / characters.ts / backgrounds.ts / sounds.ts
-│   ├── constants/Layers.ts    # 显示层级常量表
-│   ├── utils/                 # 工具类（UIText/CameraHelper/UILayout/DebugAPI 等）
+│   ├── constants/Layers.ts        # 显示层级常量表
+│   ├── utils/                     # 工具类（UIText/CameraHelper/UILayout/TextureGenerator 等）
 │   └── types/index.ts
+├── tests/                         # Vitest 单元测试（逻辑层覆盖）
+├── scripts/                       # 开发脚本（balance-audit 平衡审计）
 ├── index.html
 ├── package.json / tsconfig.json / vite.config.ts
+├── .eslintrc.cjs / .prettierrc.json / .gitattributes
+├── PROJECT_NOTES.md               # 项目开发笔记/待办
 └── README.md
 ```
 
