@@ -58,7 +58,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // 返回按钮（统一左上角，与图鉴/成就页一致）
-    const backBtn = createBackButton(this, 60, 44, () => this.scene.start('MainMenuScene'));
+    const backBtn = createBackButton(this, 60, 44, () => this.scene.start('MainMenuScene', {}));
 
     // 开始冒险：选完角色直接进关卡选择（无需先回主菜单再点开始）
     const playBtn = createUIButton(this, width - 16, height - 16, '▶ 开始冒险', () => this.scene.start('MainMenuScene', { openLevelSelect: true }), {

@@ -218,7 +218,7 @@ export class UIScene extends Phaser.Scene {
       this.scene.stop('GameScene');
       this.scene.stop('UIScene');
       GameConfig.OVERLAY_SCENES.forEach((k) => this.scene.stop(k));
-      this.scene.start('MainMenuScene');
+      this.scene.start('MainMenuScene', {});
     });
     this.pauseOverlay.add(menuBtn);
 

@@ -97,7 +97,7 @@ export class PreloadScene extends Phaser.Scene {
       this.percentText.setText('100%');
       this.loadingText.setText('准备就绪');
       this.time.delayedCall(400, () => {
-        this.scene.start('MainMenuScene');
+        this.scene.start('MainMenuScene', {});
       });
     });
 

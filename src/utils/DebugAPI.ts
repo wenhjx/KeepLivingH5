@@ -174,7 +174,7 @@ export function initDebugAPI(game: Phaser.Game): void {
       sc.stop('GameScene');
       sc.stop('GameOverScene');
       GameConfig.OVERLAY_SCENES.forEach((k) => sc.stop(k));
-      sc.start('MainMenuScene');
+      sc.start('MainMenuScene', {});
     },
 
     pause: () => gm.setPaused(true),

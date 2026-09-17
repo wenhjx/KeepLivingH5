@@ -61,7 +61,7 @@ export class AchievementScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // 返回按钮（统一左上角标准组件）
-    const backBtn = createBackButton(this, 60, 44, () => this.scene.start('MainMenuScene'));
+    const backBtn = createBackButton(this, 60, 44, () => this.scene.start('MainMenuScene', {}));
 
     // Tab 行（7 个 Tab 总宽 7×128+6×6=932 < 960，居中不溢出）
     const tabLayout = new UILayout({ x: cx - 466, y: 128, direction: 'row', spacing: 6, itemSize: 128 });

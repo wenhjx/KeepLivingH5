@@ -187,7 +187,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   private toMenu(): void {
-    this.scene.start('MainMenuScene');
+    this.scene.start('MainMenuScene', {});
   }
 
   private formatTime(ms: number): string {
