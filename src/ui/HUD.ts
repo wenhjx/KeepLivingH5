@@ -562,7 +562,7 @@ export class HUD {
 
     // buff 按稀有度降序排列（legendary > epic > rare > common，无稀有度的限时状态排最后，同级保持原顺）
     {
-      const RARITY_ORDER = ["common", "rare", "epic", "legendary"];
+      const RARITY_ORDER = ["common", "rare", "epic", "legendary", "super"];
       allBuffs.sort(
         (a, b) =>
           (b.rarity ? RARITY_ORDER.indexOf(b.rarity) + 1 : 0) -
