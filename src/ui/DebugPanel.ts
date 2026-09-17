@@ -7,6 +7,7 @@ import { UILayout } from "../utils/UILayout";
 import type { UpgradeOption } from "../types";
 import type { Player } from "../entities/Player";
 import { SUPER_WEAPONS } from "../data/superWeapons";
+import { getPinnedSupers, togglePinSuper } from "../data/superTrack";
 import { EventBus } from "../utils/EventBus";
 import { Layers } from "../constants/Layers";
 
@@ -426,7 +427,25 @@ export class DebugPanel {
       { fontSize: "11px", color: "#ffd75e" },
     ).setOrigin(0, 0);
     this.content.add(superState);
+    const pinState = createUIText(
+      this.scene,
+      0,
+      col.y,
+      "📌 追踪：无",
+      { fontSize: "11px", color: "#8fe388" },
+    ).setOrigin(0, 0);
+    this.content.add(pinState);
     col.step(this.tipSpacing);
+    const refreshPin = () => {
+      const pins = getPinnedSupers();
+      pinState.setText(
+        pins.length
+          ? `📌 追踪：${pins
+              .map((id) => SUPER_WEAPONS[id]?.name ?? id)
+              .join("、")}`
+          : "📌 追踪：无（点击行内 📌 勾选目标超武）",
+      );
+    };
     const refreshSuper = () => {
       const p = this.getPlayer();
       const names = Object.values(SUPER_WEAPONS)
@@ -436,18 +455,29 @@ export class DebugPanel {
       superState.setText(`当前超武：${names || "无"}`);
     };
     Object.values(SUPER_WEAPONS).forEach((s) => {
-      this.addRow(col, {
-        text: `${s.icon} ${s.sourceName}·${s.name}（${s.conditionDesc}）`,
-        fn: () => {
-          const p = this.getPlayer();
-          if (p && !p.hasSuper(s.id)) {
-            p.evolveSuper(s.id);
-            EventBus.emit("super:evolved", s);
-            refreshSuper();
-          }
+      this.addRow(
+        col,
+        {
+          text: `${s.icon} ${s.sourceName}·${s.name}（${s.conditionDesc}）`,
+          fn: () => {
+            const p = this.getPlayer();
+            if (p && !p.hasSuper(s.id)) {
+              p.evolveSuper(s.id);
+              EventBus.emit("super:evolved", s);
+              refreshSuper();
+            }
+          },
         },
-      });
+        {
+          text: "📌",
+          fn: () => {
+            togglePinSuper(s.id);
+            refreshPin();
+          },
+        },
+      );
     });
+    refreshPin();
     refreshSuper();
 
     // 道具栏（物品栏六种主动道具，点击加入；与商店即时生效道具分区，避免混淆）

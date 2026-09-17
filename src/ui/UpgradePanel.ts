@@ -5,6 +5,8 @@ import { UPGRADE_OPTIONS, passiveDescForLevel } from "../data/upgrades";
 import { GameConfig } from "../game/GameConfig";
 import { createOptionCard } from "./OptionCard";
 import { Layers } from "../constants/Layers";
+import { SUPER_WEAPONS } from "../data/superWeapons";
+import { getPinnedSupers } from "../data/superTrack";
 
 /**
  * 升级选择面板
@@ -169,6 +171,16 @@ export class UpgradePanel {
 
     this.options.forEach((option, index) => {
       const x = startX + index * (this.cardWidth + this.cardSpacing);
+      // 超武追踪：该选项是否为已勾选目标超武的必要组件（源武器/辅助升级）
+      const pinnedSuper = getPinnedSupers()
+        .map((pid) => SUPER_WEAPONS[pid])
+        .filter((s): s is NonNullable<typeof s> => !!s)
+        .find(
+          (s) =>
+            option.type === "weapon"
+              ? s.weaponId === (option as any).effect?.weaponId
+              : s.requiredUpgradeId === option.id,
+        );
       const card = createOptionCard(this.scene, x, cardY, {
         name: option.name,
         icon: option.icon,
@@ -183,6 +195,18 @@ export class UpgradePanel {
         cardHeight: this.cardHeight,
         onClick: () => this.setSelectedIndex(index, false),
       });
+      if (pinnedSuper) {
+        const tag = this.scene.add
+          .text(
+            this.cardWidth / 2 - 18,
+            -this.cardHeight / 2 + 18,
+            "👍",
+            { fontSize: "22px" },
+          )
+          .setOrigin(0.5)
+          .setDepth(1000);
+        card.add(tag);
+      }
       card.setData("isUpgradeCard", true);
       this.container.add(card);
       this.cardContainers.push(card);
