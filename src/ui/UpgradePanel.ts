@@ -1,10 +1,10 @@
-import { createUIText } from '../utils/UIText';
-import Phaser from 'phaser';
-import type { UpgradeOption } from '../types';
-import { UPGRADE_OPTIONS, passiveDescForLevel } from '../data/upgrades';
-import { GameConfig } from '../game/GameConfig';
-import { createOptionCard } from './OptionCard';
-import { Layers } from '../constants/Layers';
+import { createUIText } from "../utils/UIText";
+import Phaser from "phaser";
+import type { UpgradeOption } from "../types";
+import { UPGRADE_OPTIONS, passiveDescForLevel } from "../data/upgrades";
+import { GameConfig } from "../game/GameConfig";
+import { createOptionCard } from "./OptionCard";
+import { Layers } from "../constants/Layers";
 
 /**
  * 升级选择面板
@@ -38,11 +38,21 @@ export class UpgradePanel {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.container = scene.add.container(0, 0).setDepth(Layers.OVERLAY).setVisible(false);
+    this.container = scene.add
+      .container(0, 0)
+      .setDepth(Layers.OVERLAY)
+      .setVisible(false);
 
     // 半透明遮罩
     this.overlay = scene.add
-      .rectangle(0, 0, GameConfig.GAME_WIDTH, GameConfig.GAME_HEIGHT, 0x000000, 0.7)
+      .rectangle(
+        0,
+        0,
+        GameConfig.GAME_WIDTH,
+        GameConfig.GAME_HEIGHT,
+        0x000000,
+        0.7,
+      )
       .setOrigin(0)
       .setInteractive();
     this.container.add(this.overlay);
@@ -54,7 +64,11 @@ export class UpgradePanel {
    * @param availableOptions 可选升级列表（默认从全部中随机）
    * @param onSkip 跳过回调（提供时渲染"跳过拿金币"按钮；突破/武器强化场景不传则不显示）
    */
-  show(onSelect: (option: UpgradeOption) => void, availableOptions?: UpgradeOption[], onSkip?: () => void): void {
+  show(
+    onSelect: (option: UpgradeOption) => void,
+    availableOptions?: UpgradeOption[],
+    onSkip?: () => void,
+  ): void {
     this.onSelectCallback = onSelect;
     this.onSkipCallback = onSkip ?? null;
     this.selectedIndex = -1;
@@ -108,16 +122,22 @@ export class UpgradePanel {
 
     // AI 自动选中时，在卡片底部显示"即将选择..."
     this.cardContainers.forEach((card, i) => {
-      const existing = card.getData('autoLabel');
+      const existing = card.getData("autoLabel");
       if (existing) existing.destroy();
       if (i === index && auto) {
-        const label = createUIText(this.scene, 0, this.cardHeight / 2 - 20, '即将选择...', {
-          fontSize: '13px',
-          color: '#66ff99',
-          fontStyle: 'bold',
-        }).setOrigin(0.5);
+        const label = createUIText(
+          this.scene,
+          0,
+          this.cardHeight / 2 - 20,
+          "即将选择...",
+          {
+            fontSize: "13px",
+            color: "#66ff99",
+            fontStyle: "bold",
+          },
+        ).setOrigin(0.5);
         card.add(label);
-        card.setData('autoLabel', label);
+        card.setData("autoLabel", label);
       }
     });
   }
@@ -135,11 +155,15 @@ export class UpgradePanel {
   /** 渲染选项卡片 */
   private renderOptions(): void {
     // 清除旧卡片
-    this.container.list.filter((obj) => obj.getData('isUpgradeCard')).forEach((obj) => obj.destroy());
+    this.container.list
+      .filter((obj) => obj.getData("isUpgradeCard"))
+      .forEach((obj) => obj.destroy());
     this.cardContainers = [];
 
     const width = GameConfig.GAME_WIDTH;
-    const totalWidth = this.options.length * this.cardWidth + (this.options.length - 1) * this.cardSpacing;
+    const totalWidth =
+      this.options.length * this.cardWidth +
+      (this.options.length - 1) * this.cardSpacing;
     const startX = (width - totalWidth) / 2 + this.cardWidth / 2;
     const cardY = GameConfig.GAME_HEIGHT / 2 - 10;
 
@@ -152,14 +176,14 @@ export class UpgradePanel {
         desc: passiveDescForLevel(
           option.id,
           ((this.scene as any).player?.getPassiveLevel?.(option.id) ?? 0) + 1,
-          option.description
+          option.description,
         ),
-        rarity: option.rarity as 'common' | 'rare' | 'epic' | 'legendary',
+        rarity: option.rarity as "common" | "rare" | "epic" | "legendary",
         cardWidth: this.cardWidth,
         cardHeight: this.cardHeight,
         onClick: () => this.setSelectedIndex(index, false),
       });
-      card.setData('isUpgradeCard', true);
+      card.setData("isUpgradeCard", true);
       this.container.add(card);
       this.cardContainers.push(card);
     });
@@ -169,7 +193,7 @@ export class UpgradePanel {
   private refreshCardHighlights(): void {
     this.cardContainers.forEach((card, i) => {
       // 清除旧高亮
-      const oldHighlight = card.getData('highlight');
+      const oldHighlight = card.getData("highlight");
       if (oldHighlight) oldHighlight.destroy();
 
       if (i === this.selectedIndex) {
@@ -181,10 +205,10 @@ export class UpgradePanel {
           -this.cardHeight / 2 - 3,
           this.cardWidth + 6,
           this.cardHeight + 6,
-          14
+          14,
         );
         card.add(hl);
-        card.setData('highlight', hl);
+        card.setData("highlight", hl);
         card.setScale(1.05);
       } else {
         card.setScale(1);
@@ -210,26 +234,40 @@ export class UpgradePanel {
 
     const bg = this.scene.add.graphics();
     const txt = createUIText(this.scene, x, y, `跳过 +${reward} 金币`, {
-      fontSize: '16px',
-      color: '#ffd77a',
-      fontStyle: 'bold',
+      fontSize: "16px",
+      color: "#ffd77a",
+      fontStyle: "bold",
     }).setOrigin(0.5);
 
-    const hit = this.scene.add.rectangle(x, y, btnWidth, btnHeight, 0xffffff, 0).setOrigin(0.5);
+    const hit = this.scene.add
+      .rectangle(x, y, btnWidth, btnHeight, 0xffffff, 0)
+      .setOrigin(0.5);
 
     const draw = (hover: boolean) => {
       bg.clear();
       bg.fillStyle(hover ? 0x7a5c1a : 0x4a3a14, 1);
-      bg.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+      bg.fillRoundedRect(
+        x - btnWidth / 2,
+        y - btnHeight / 2,
+        btnWidth,
+        btnHeight,
+        8,
+      );
       bg.lineStyle(2, hover ? 0xffd77a : 0x8a7a3a, 0.9);
-      bg.strokeRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+      bg.strokeRoundedRect(
+        x - btnWidth / 2,
+        y - btnHeight / 2,
+        btnWidth,
+        btnHeight,
+        8,
+      );
     };
     draw(false);
 
     hit.setInteractive({ useHandCursor: true });
-    hit.on('pointerover', () => draw(true));
-    hit.on('pointerout', () => draw(false));
-    hit.on('pointerdown', () => this.skipSelection());
+    hit.on("pointerover", () => draw(true));
+    hit.on("pointerout", () => draw(false));
+    hit.on("pointerdown", () => this.skipSelection());
 
     this.container.add([bg, txt, hit]);
     this.skipBtn = { bg, txt, hit };
@@ -250,37 +288,63 @@ export class UpgradePanel {
     const y = GameConfig.GAME_HEIGHT - 60;
 
     const bg = this.scene.add.graphics();
-    const txt = createUIText(this.scene, x, y, '请先选择一项升级', {
-      fontSize: '18px',
-      color: '#666666',
-      fontStyle: 'bold',
+    const txt = createUIText(this.scene, x, y, "请先选择一项升级", {
+      fontSize: "18px",
+      color: "#666666",
+      fontStyle: "bold",
     }).setOrigin(0.5);
 
-    const hit = this.scene.add.rectangle(x, y, btnWidth, btnHeight, 0xffffff, 0).setOrigin(0.5);
+    const hit = this.scene.add
+      .rectangle(x, y, btnWidth, btnHeight, 0xffffff, 0)
+      .setOrigin(0.5);
 
     const drawBtn = (enabled: boolean) => {
       bg.clear();
       bg.fillStyle(enabled ? 0x2a6a4a : 0x252530, 1);
-      bg.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+      bg.fillRoundedRect(
+        x - btnWidth / 2,
+        y - btnHeight / 2,
+        btnWidth,
+        btnHeight,
+        8,
+      );
       bg.lineStyle(2, enabled ? 0x66ff99 : 0x444455, 0.8);
-      bg.strokeRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
-      txt.setColor(enabled ? '#ffffff' : '#666666');
-      txt.setText(enabled ? '✓ 确认选择' : '请先选择一项升级');
+      bg.strokeRoundedRect(
+        x - btnWidth / 2,
+        y - btnHeight / 2,
+        btnWidth,
+        btnHeight,
+        8,
+      );
+      txt.setColor(enabled ? "#ffffff" : "#666666");
+      txt.setText(enabled ? "✓ 确认选择" : "请先选择一项升级");
     };
     drawBtn(false);
 
     hit.setInteractive({ useHandCursor: true });
-    hit.on('pointerover', () => {
+    hit.on("pointerover", () => {
       if (this.selectedIndex >= 0) {
         bg.clear();
         bg.fillStyle(0x3a8a5a, 1);
-        bg.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+        bg.fillRoundedRect(
+          x - btnWidth / 2,
+          y - btnHeight / 2,
+          btnWidth,
+          btnHeight,
+          8,
+        );
         bg.lineStyle(2, 0x88ffbb, 1);
-        bg.strokeRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+        bg.strokeRoundedRect(
+          x - btnWidth / 2,
+          y - btnHeight / 2,
+          btnWidth,
+          btnHeight,
+          8,
+        );
       }
     });
-    hit.on('pointerout', () => drawBtn(this.selectedIndex >= 0));
-    hit.on('pointerdown', () => {
+    hit.on("pointerout", () => drawBtn(this.selectedIndex >= 0));
+    hit.on("pointerdown", () => {
       if (this.selectedIndex >= 0) this.confirmSelection();
     });
 
@@ -300,11 +364,23 @@ export class UpgradePanel {
 
     bg.clear();
     bg.fillStyle(enabled ? 0x2a6a4a : 0x252530, 1);
-    bg.fillRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
+    bg.fillRoundedRect(
+      x - btnWidth / 2,
+      y - btnHeight / 2,
+      btnWidth,
+      btnHeight,
+      8,
+    );
     bg.lineStyle(2, enabled ? 0x66ff99 : 0x444455, 0.8);
-    bg.strokeRoundedRect(x - btnWidth / 2, y - btnHeight / 2, btnWidth, btnHeight, 8);
-    txt.setColor(enabled ? '#ffffff' : '#666666');
-    txt.setText(enabled ? '✓ 确认选择' : '请先选择一项升级');
+    bg.strokeRoundedRect(
+      x - btnWidth / 2,
+      y - btnHeight / 2,
+      btnWidth,
+      btnHeight,
+      8,
+    );
+    txt.setColor(enabled ? "#ffffff" : "#666666");
+    txt.setText(enabled ? "✓ 确认选择" : "请先选择一项升级");
   }
 
   /** 洗牌算法 */

@@ -1,24 +1,20 @@
-import Phaser from 'phaser';
-import { Logger } from '../utils/Logger';
-
+import Phaser from "phaser";
+import { Logger } from "../utils/Logger";
 /**
  * 音频管理器（单例）
  * 统一管理背景音乐和音效播放，支持音量控制、淡入淡出
  */
 export class AudioManager {
   private static _instance: AudioManager | null = null;
-
   private scene: Phaser.Scene | null = null;
   private bgm: Phaser.Sound.WebAudioSound | null = null;
-  private currentBgmKey: string = '';
+  private currentBgmKey: string = "";
   private sfxVolume: number = 1.0;
   private musicVolume: number = 0.7;
   private muted: boolean = false;
   private initialized: boolean = false;
-
   // 音效缓存
   private sfxCache: Map<string, Phaser.Sound.BaseSound> = new Map();
-
   private constructor() {}
 
   static getInstance(): AudioManager {
@@ -32,19 +28,16 @@ export class AudioManager {
   init(scene: Phaser.Scene): void {
     this.scene = scene;
     this.initialized = true;
-    Logger.info('[AudioManager] 初始化完成');
+    Logger.info("[AudioManager] 初始化完成");
   }
 
   // ========== 背景音乐 ==========
-
   /** 播放背景音乐 */
   playBgm(key: string, loop: boolean = true): void {
     if (!this.initialized || !this.scene) return;
     if (this.currentBgmKey === key && this.bgm?.isPlaying) return;
-
     // 停止当前 BGM
     this.stopBgm();
-
     try {
       this.bgm = this.scene.sound.add(key, {
         loop,
@@ -64,7 +57,7 @@ export class AudioManager {
       this.bgm.stop();
       this.bgm.destroy();
       this.bgm = null;
-      this.currentBgmKey = '';
+      this.currentBgmKey = "";
     }
   }
 
@@ -108,11 +101,9 @@ export class AudioManager {
   }
 
   // ========== 音效 ==========
-
   /** 播放音效 */
   playSfx(key: string, volume?: number): void {
     if (!this.initialized || !this.scene || this.muted) return;
-
     try {
       const finalVolume = (volume ?? 1) * this.sfxVolume;
       this.scene.sound.play(key, { volume: finalVolume });
@@ -123,20 +114,23 @@ export class AudioManager {
   }
 
   /** 播放带空间感的音效（根据距离衰减） */
-  playSfxAtPosition(key: string, x: number, y: number, listenerX: number, listenerY: number): void {
+  playSfxAtPosition(
+    key: string,
+    x: number,
+    y: number,
+    listenerX: number,
+    listenerY: number,
+  ): void {
     if (!this.initialized || !this.scene || this.muted) return;
-
     const dist = Phaser.Math.Distance.Between(x, y, listenerX, listenerY);
     const maxDist = 800;
     const volume = Math.max(0, 1 - dist / maxDist) * this.sfxVolume;
-
     if (volume > 0.01) {
       this.playSfx(key, volume);
     }
   }
 
   // ========== 音量控制 ==========
-
   setSfxVolume(volume: number): void {
     this.sfxVolume = Phaser.Math.Clamp(volume, 0, 1);
   }
@@ -161,7 +155,6 @@ export class AudioManager {
   }
 
   // ========== Getters ==========
-
   getSfxVolume(): number {
     return this.sfxVolume;
   }

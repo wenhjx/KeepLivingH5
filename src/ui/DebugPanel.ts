@@ -1,12 +1,12 @@
-import { createUIText } from '../utils/UIText';
-import Phaser from 'phaser';
-import { UPGRADE_OPTIONS, FALLBACK_UPGRADES } from '../data/upgrades';
-import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
-import { GameConfig } from '../game/GameConfig';
-import { UILayout } from '../utils/UILayout';
-import type { UpgradeOption } from '../types';
-import type { Player } from '../entities/Player';
-import { Layers } from '../constants/Layers';
+import { createUIText } from "../utils/UIText";
+import Phaser from "phaser";
+import { UPGRADE_OPTIONS, FALLBACK_UPGRADES } from "../data/upgrades";
+import { applyUpgradeToPlayer } from "../utils/UpgradeApplier";
+import { GameConfig } from "../game/GameConfig";
+import { UILayout } from "../utils/UILayout";
+import type { UpgradeOption } from "../types";
+import type { Player } from "../entities/Player";
+import { Layers } from "../constants/Layers";
 
 /** 单个按钮的规格 */
 interface BtnSpec {
@@ -59,7 +59,12 @@ export class DebugPanel {
   /** 位移超过该阈值（屏幕像素）判定为拖动滚动，抑制按钮点击 */
   private readonly TAP_THRESHOLD = 12;
   /** 按下的待结算点击（松手时若未拖动则触发） */
-  private pendingTap: { fn: () => void; sx: number; sy: number; moved: boolean } | null = null;
+  private pendingTap: {
+    fn: () => void;
+    sx: number;
+    sy: number;
+    moved: boolean;
+  } | null = null;
   /** 滚动区拖动状态 */
   private scrollDragging = false;
   private dragStartY = 0;
@@ -71,7 +76,10 @@ export class DebugPanel {
   constructor(scene: Phaser.Scene, uiRoot: Phaser.GameObjects.Container) {
     this.scene = scene;
     this.uiRoot = uiRoot;
-    this.container = scene.add.container(0, 0).setDepth(Layers.DEBUG).setVisible(false);
+    this.container = scene.add
+      .container(0, 0)
+      .setDepth(Layers.DEBUG)
+      .setVisible(false);
     this.create();
     this.setupHotkey();
   }
@@ -80,10 +88,10 @@ export class DebugPanel {
     // 预渲染标准按钮底图：75+ 个按钮若各自用 Graphics 渲染，每帧大量独立 draw call
     // （WebGL 下与 Text 交错更会反复切换 pipeline，实测面板打开掉帧到 ~20fps）。
     // 改为同一纹理的 Image（可批量），hover 换高亮纹理，draw call 从 75+ 降到 ~1。
-    this.makeButtonTexture('debug_btn_bg', 0x252530, 0x444455);
-    this.makeButtonTexture('debug_btn_bg_hover', 0x353555, 0xff6b35);
-    this.makeButtonTexture('debug_btn_bg_green', 0x1a3a2a, 0x66ff99);
-    this.makeButtonTexture('debug_btn_bg_blue', 0x1a2a3a, 0x66ccff);
+    this.makeButtonTexture("debug_btn_bg", 0x252530, 0x444455);
+    this.makeButtonTexture("debug_btn_bg_hover", 0x353555, 0xff6b35);
+    this.makeButtonTexture("debug_btn_bg_green", 0x1a3a2a, 0x66ff99);
+    this.makeButtonTexture("debug_btn_bg_blue", 0x1a2a3a, 0x66ccff);
 
     const { width, height } = this.scene.scale;
     this.panelX = GameConfig.anchorX(width - 12, width) - this.panelWidth; // 右缘贴边（宽度随缩放放大，需按右缘锚定）
@@ -93,20 +101,39 @@ export class DebugPanel {
     const contentHeight = this.computeContentHeight();
     // 界面高度不随内容无限变长：内容少时紧凑，内容多时封顶为屏幕高度 3/4，
     // 超出部分在面板内滚动查看（UILayout 排布 + 几何 mask 裁剪）
-    const panelHeight = Math.min(contentHeight + this.padding, Math.round((height * 0.75) / GameConfig.uiScale)); // 渲染高度仍封顶 3/4 屏
+    const panelHeight = Math.min(
+      contentHeight + this.padding,
+      Math.round((height * 0.75) / GameConfig.uiScale),
+    ); // 渲染高度仍封顶 3/4 屏
     this.viewportH = panelHeight - 40 - this.padding;
 
     // 半透明背景
     const bg = this.scene.add.graphics();
     bg.fillStyle(0x0a0a0f, 0.94);
-    bg.fillRoundedRect(this.panelX, this.panelY, this.panelWidth, panelHeight, 8);
+    bg.fillRoundedRect(
+      this.panelX,
+      this.panelY,
+      this.panelWidth,
+      panelHeight,
+      8,
+    );
     bg.lineStyle(2, 0xff6b35, 0.5);
-    bg.strokeRoundedRect(this.panelX, this.panelY, this.panelWidth, panelHeight, 8);
+    bg.strokeRoundedRect(
+      this.panelX,
+      this.panelY,
+      this.panelWidth,
+      panelHeight,
+      8,
+    );
     this.container.add(bg);
 
     // 滚动条（右侧轨道+滑块；仅内容溢出时显示，位置由 updateScrollbar 维护）
-    this.scrollTrack = this.scene.add.rectangle(0, 0, 4, this.viewportH, 0x333344, 0.7).setOrigin(0, 0);
-    this.scrollThumb = this.scene.add.rectangle(0, 0, 4, 24, 0xff6b35, 0.95).setOrigin(0, 0);
+    this.scrollTrack = this.scene.add
+      .rectangle(0, 0, 4, this.viewportH, 0x333344, 0.7)
+      .setOrigin(0, 0);
+    this.scrollThumb = this.scene.add
+      .rectangle(0, 0, 4, 24, 0xff6b35, 0.95)
+      .setOrigin(0, 0);
     this.container.add([this.scrollTrack, this.scrollThumb]);
     this.updateScrollbar();
 
@@ -115,30 +142,39 @@ export class DebugPanel {
       this.scene,
       this.panelX + this.panelWidth / 2,
       this.panelY + 14,
-      '🔧 调试面板  (按 ` 切换)',
+      "🔧 调试面板  (按 ` 切换)",
       {
-        fontSize: '13px',
-        color: '#ff6b35',
-        fontStyle: 'bold',
-      }
+        fontSize: "13px",
+        color: "#ff6b35",
+        fontStyle: "bold",
+      },
     ).setOrigin(0.5);
     this.container.add(title);
 
     // 关闭按钮（标题栏右侧；触屏端没有 ` 快捷键，面板打开后又会盖住唤起按钮，
     // 必须有可视关闭入口。桌面端同样可用）
-    const closeBtn = createUIText(this.scene, this.panelX + this.panelWidth - 14, this.panelY + 14, '✕', {
-      fontSize: '16px',
-      color: '#ff6b35',
-      fontStyle: 'bold',
-      padding: { left: 8, right: 8, top: 2, bottom: 2 },
-    })
+    const closeBtn = createUIText(
+      this.scene,
+      this.panelX + this.panelWidth - 14,
+      this.panelY + 14,
+      "✕",
+      {
+        fontSize: "16px",
+        color: "#ff6b35",
+        fontStyle: "bold",
+        padding: { left: 8, right: 8, top: 2, bottom: 2 },
+      },
+    )
       .setOrigin(1, 0.5)
       .setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => this.toggle());
+    closeBtn.on("pointerdown", () => this.toggle());
     this.container.add(closeBtn);
 
     // 内容容器（滚动对象）——局部坐标以 (panelX+padding, panelY+40) 为原点
-    this.content = this.scene.add.container(this.panelX + this.padding, this.panelY + 40);
+    this.content = this.scene.add.container(
+      this.panelX + this.padding,
+      this.panelY + 40,
+    );
     this.container.add(this.content);
     this.contentBaseY = this.panelY + 40;
 
@@ -148,7 +184,11 @@ export class DebugPanel {
     // 必须把面板可视区经 uiRoot 变换换算成 world 坐标后再画矩形，否则 mask 与
     // content 渲染位置错位——在部分窗口尺寸/高分屏下表现为"面板无内容但可点击"。
     const rm = this.uiRoot.getWorldTransformMatrix();
-    const origin = rm.transformPoint(this.panelX + this.padding, this.panelY + 40, new Phaser.Math.Vector2());
+    const origin = rm.transformPoint(
+      this.panelX + this.padding,
+      this.panelY + 40,
+      new Phaser.Math.Vector2(),
+    );
     const maskX = origin.x;
     const maskY = origin.y;
     const maskW = (this.panelWidth - this.padding * 2) * rm.scaleX;
@@ -162,44 +202,59 @@ export class DebugPanel {
     this.container.add(maskG);
 
     // ===== 用 UILayout 排布内容（游标只管理 y，行内两列按钮手动对齐到游标） =====
-    const col = new UILayout({ x: 0, y: 0, direction: 'column', spacing: this.btnSpacing, itemSize: this.btnHeight });
+    const col = new UILayout({
+      x: 0,
+      y: 0,
+      direction: "column",
+      spacing: this.btnSpacing,
+      itemSize: this.btnHeight,
+    });
 
     // 快捷操作
-    this.addSectionTitle(col, '⚡ 快捷操作');
+    this.addSectionTitle(col, "⚡ 快捷操作");
     this.addRow(
       col,
-      { text: '❤️ 回满血', fn: () => this.getPlayer()?.heal(9999) },
-      { text: '⭐ +1 级', fn: () => this.addLevel(1) }
+      { text: "❤️ 回满血", fn: () => this.getPlayer()?.heal(9999) },
+      { text: "⭐ +1 级", fn: () => this.addLevel(1) },
     );
     this.addRow(
       col,
-      { text: '🌟 +5 级', fn: () => this.addLevel(5) },
-      { text: '💀 清空敌人', fn: () => this.clearEnemies() }
+      { text: "🌟 +5 级", fn: () => this.addLevel(5) },
+      { text: "💀 清空敌人", fn: () => this.clearEnemies() },
     );
     this.addRow(
       col,
       {
-        text: '🎁 宝箱',
+        text: "🎁 宝箱",
         fn: () => {
           const p = this.getPlayer();
-          const gs = this.scene.scene.get('GameScene') as any;
+          const gs = this.scene.scene.get("GameScene") as any;
           if (p && gs?.spawnPickup) {
-            gs.spawnPickup({ type: 'chest', texture: 'pickup_chest', value: 0, magnetSpeed: 200 }, p.x + 40, p.y);
+            gs.spawnPickup(
+              {
+                type: "chest",
+                texture: "pickup_chest",
+                value: 0,
+                magnetSpeed: 200,
+              },
+              p.x + 40,
+              p.y,
+            );
           }
         },
       },
       {
-        text: '🦹 精英怪',
+        text: "🦹 精英怪",
         fn: () => {
           const p = this.getPlayer();
-          const gs = this.scene.scene.get('GameScene') as any;
+          const gs = this.scene.scene.get("GameScene") as any;
           if (p && gs?.spawnEnemy) {
             gs.spawnEnemy(
               {
-                id: 'elite_test',
-                type: 'elite',
-                name: '精英僵尸',
-                texture: 'enemy_normal',
+                id: "elite_test",
+                type: "elite",
+                name: "精英僵尸",
+                texture: "enemy_normal",
                 maxHealth: 200,
                 moveSpeed: 70,
                 attackPower: 20,
@@ -211,167 +266,212 @@ export class DebugPanel {
                 color: 0xffaa00,
               },
               p.x + 160,
-              p.y
+              p.y,
             );
           }
         },
-      }
+      },
     );
     this.addRow(
       col,
-      { text: '🏆 清空成就', fn: () => this.callDebug('resetAchievements') },
-      { text: '🧨 清空全部', fn: () => this.callDebug('resetAllData') }
+      { text: "🏆 清空成就", fn: () => this.callDebug("resetAchievements") },
+      { text: "🧨 清空全部", fn: () => this.callDebug("resetAllData") },
     );
     this.addRow(
       col,
-      { text: '⚡ 跳满级', fn: () => this.callDebug('setLevel', 100) },
-      { text: '♾ 超限+1', fn: () => this.callDebug('addOverflow', 1) }
+      { text: "⚡ 跳满级", fn: () => this.callDebug("setLevel", 100) },
+      { text: "♾ 超限+1", fn: () => this.callDebug("addOverflow", 1) },
     );
     this.addRow(
       col,
-      { text: '♾ 超限+10', fn: () => this.callDebug('addOverflow', 10) },
-      { text: '♾ 超限+50', fn: () => this.callDebug('addOverflow', 50) }
+      { text: "♾ 超限+10", fn: () => this.callDebug("addOverflow", 10) },
+      { text: "♾ 超限+50", fn: () => this.callDebug("addOverflow", 50) },
     );
-    this.addRow(col, { text: '🗺 解锁全地图', fn: () => this.callDebug('unlockAllLevels') });
+    this.addRow(col, {
+      text: "🗺 解锁全地图",
+      fn: () => this.callDebug("unlockAllLevels"),
+    });
     this.addAutoPlayRow(col);
     this.addThemeRow(col);
-    this.addSectionTitle(col, '🧪 试玩刷怪（环绕玩家，测特效/伤害）');
+    this.addSectionTitle(col, "🧪 试玩刷怪（环绕玩家，测特效/伤害）");
     this.addRow3(
       col,
-      { text: '🦠 普通×5', fn: () => this.callDebug('spawnTestEnemies', 'normal', 5) },
-      { text: '🏃 疾速×5', fn: () => this.callDebug('spawnTestEnemies', 'fast', 5) },
-      { text: '🛡 重装×3', fn: () => this.callDebug('spawnTestEnemies', 'tank', 3) }
+      {
+        text: "🦠 普通×5",
+        fn: () => this.callDebug("spawnTestEnemies", "normal", 5),
+      },
+      {
+        text: "🏃 疾速×5",
+        fn: () => this.callDebug("spawnTestEnemies", "fast", 5),
+      },
+      {
+        text: "🛡 重装×3",
+        fn: () => this.callDebug("spawnTestEnemies", "tank", 3),
+      },
     );
     this.addRow3(
       col,
-      { text: '🏹 远程×5', fn: () => this.callDebug('spawnTestEnemies', 'ranged', 5) },
-      { text: '🧟 精英×2', fn: () => this.callDebug('spawnTestEnemies', 'elite', 2) },
-      { text: '💣 自爆×5', fn: () => this.callDebug('spawnTestEnemies', 'suicider', 5) }
+      {
+        text: "🏹 远程×5",
+        fn: () => this.callDebug("spawnTestEnemies", "ranged", 5),
+      },
+      {
+        text: "🧟 精英×2",
+        fn: () => this.callDebug("spawnTestEnemies", "elite", 2),
+      },
+      {
+        text: "💣 自爆×5",
+        fn: () => this.callDebug("spawnTestEnemies", "suicider", 5),
+      },
     );
-    this.addRow(col, { text: '🐲 Boss×1', fn: () => this.callDebug('spawnBoss') });
+    this.addRow(col, {
+      text: "🐲 Boss×1",
+      fn: () => this.callDebug("spawnBoss"),
+    });
     const spawnTip = createUIText(
       this.scene,
       0,
       col.y,
-      '更多类型/倍率：__debug.spawnTestEnemies(splitter, 3, {hpMult:5, radius:300})',
+      "更多类型/倍率：__debug.spawnTestEnemies(splitter, 3, {hpMult:5, radius:300})",
       {
-        fontSize: '10px',
-        color: '#aa8866',
-      }
+        fontSize: "10px",
+        color: "#aa8866",
+      },
     ).setOrigin(0, 0);
     this.content.add(spawnTip);
     col.step(this.tipSpacing);
 
     // 游戏速度调节（0.25~4 倍速，模拟明日方舟 2 倍速 / 慢速观察细节；快捷键 - / =）
-    this.addSectionTitle(col, '⏱ 游戏速度（快捷键 -/=）');
-    this.speedText = createUIText(this.scene, 0, col.y, `当前速度 ×${this.getGameSpeed().toFixed(2)}`, {
-      fontSize: '11px',
-      color: '#88ccff',
-    }).setOrigin(0, 0);
+    this.addSectionTitle(col, "⏱ 游戏速度（快捷键 -/=）");
+    this.speedText = createUIText(
+      this.scene,
+      0,
+      col.y,
+      `当前速度 ×${this.getGameSpeed().toFixed(2)}`,
+      {
+        fontSize: "11px",
+        color: "#88ccff",
+      },
+    ).setOrigin(0, 0);
     this.content.add(this.speedText);
     col.step(this.tipSpacing);
     this.addRow3(
       col,
-      { text: '🐢 0.5×', fn: () => this.setGameSpeed(0.5) },
-      { text: '▶ 1×', fn: () => this.setGameSpeed(1) },
-      { text: '🐇 2×', fn: () => this.setGameSpeed(2) }
+      { text: "🐢 0.5×", fn: () => this.setGameSpeed(0.5) },
+      { text: "▶ 1×", fn: () => this.setGameSpeed(1) },
+      { text: "🐇 2×", fn: () => this.setGameSpeed(2) },
     );
     this.addRow(
       col,
-      { text: '⏪ 减速', fn: () => this.adjustSpeed(-0.25) },
-      { text: '⏩ 加速', fn: () => this.adjustSpeed(0.25) }
+      { text: "⏪ 减速", fn: () => this.adjustSpeed(-0.25) },
+      { text: "⏩ 加速", fn: () => this.adjustSpeed(0.25) },
     );
     // 高倍速下 AI 决策粒度误差随物理位移放大、易跟不上，自动游玩建议 ≤2×（倍速定位为调试/观察）
-    const tip = createUIText(this.scene, 0, col.y, '⚠ 自动游玩建议 ≤2×（高倍速决策易跟不上）', {
-      fontSize: '10px',
-      color: '#aa8866',
-    }).setOrigin(0, 0);
+    const tip = createUIText(
+      this.scene,
+      0,
+      col.y,
+      "⚠ 自动游玩建议 ≤2×（高倍速决策易跟不上）",
+      {
+        fontSize: "10px",
+        color: "#aa8866",
+      },
+    ).setOrigin(0, 0);
     this.content.add(tip);
     col.step(this.tipSpacing);
 
     // 属性调整
-    this.addSectionTitle(col, '📊 属性调整');
+    this.addSectionTitle(col, "📊 属性调整");
     this.addRow(
       col,
-      { text: '🧲 拾取+50', fn: () => this.addPickupRadius(50) },
-      { text: '🧲 拾取+200', fn: () => this.addPickupRadius(200) }
+      { text: "🧲 拾取+50", fn: () => this.addPickupRadius(50) },
+      { text: "🧲 拾取+200", fn: () => this.addPickupRadius(200) },
     );
     this.addRow(
       col,
-      { text: '🧲 全屏拾取', fn: () => this.setPickupRadius(9999) },
-      { text: '📈 +1000 经验', fn: () => this.addExp(1000) }
+      { text: "🧲 全屏拾取", fn: () => this.setPickupRadius(9999) },
+      { text: "📈 +1000 经验", fn: () => this.addExp(1000) },
     );
 
     // 属性升级（与 UPGRADE_OPTIONS.stat 对齐）
-    this.addSectionTitle(col, '📈 属性升级（点击应用）');
+    this.addSectionTitle(col, "📈 属性升级（点击应用）");
     this.addOptionsRows(
       col,
-      UPGRADE_OPTIONS.filter((o) => o.type === 'stat')
+      UPGRADE_OPTIONS.filter((o) => o.type === "stat"),
     );
 
     // 武器（与 UPGRADE_OPTIONS.weapon 对齐）
-    this.addSectionTitle(col, '🔫 武器（点击获取/升级）');
+    this.addSectionTitle(col, "🔫 武器（点击获取/升级）");
     this.addOptionsRows(
       col,
-      UPGRADE_OPTIONS.filter((o) => o.type === 'weapon')
+      UPGRADE_OPTIONS.filter((o) => o.type === "weapon"),
     );
 
     // 被动（与 UPGRADE_OPTIONS.passive 对齐）
-    this.addSectionTitle(col, '✨ 被动技能（点击获取/升级）');
+    this.addSectionTitle(col, "✨ 被动技能（点击获取/升级）");
     this.addOptionsRows(
       col,
-      UPGRADE_OPTIONS.filter((o) => o.type === 'passive')
+      UPGRADE_OPTIONS.filter((o) => o.type === "passive"),
     );
 
     // 道具栏（物品栏六种主动道具，点击加入；与商店即时生效道具分区，避免混淆）
-    this.addSectionTitle(col, '🎒 道具栏（点击加入）');
+    this.addSectionTitle(col, "🎒 道具栏（点击加入）");
     this.addRow(
       col,
-      { text: '🛡️ 护盾+1', fn: () => this.callDebug('giveItem', 'shield') },
-      { text: '⚡ 狂暴+1', fn: () => this.callDebug('giveItem', 'rage') }
+      { text: "🛡️ 护盾+1", fn: () => this.callDebug("giveItem", "shield") },
+      { text: "⚡ 狂暴+1", fn: () => this.callDebug("giveItem", "rage") },
     );
     this.addRow(
       col,
-      { text: '💣 炸弹+1', fn: () => this.callDebug('giveItem', 'bomb') },
-      { text: '❤️ 血包+1', fn: () => this.callDebug('giveItem', 'heal') }
+      { text: "💣 炸弹+1", fn: () => this.callDebug("giveItem", "bomb") },
+      { text: "❤️ 血包+1", fn: () => this.callDebug("giveItem", "heal") },
     );
     this.addRow(
       col,
-      { text: '⏳ 减速+1', fn: () => this.callDebug('giveItem', 'slow') },
-      { text: '🧲 磁铁+1', fn: () => this.callDebug('giveItem', 'magnet') }
+      { text: "⏳ 减速+1", fn: () => this.callDebug("giveItem", "slow") },
+      { text: "🧲 磁铁+1", fn: () => this.callDebug("giveItem", "magnet") },
     );
 
     // 商店道具（即时生效，方便测试；不叠加属性，不影响玩家状态）
-    this.addSectionTitle(col, '🛒 商店道具（即时生效）');
+    this.addSectionTitle(col, "🛒 商店道具（即时生效）");
     this.addOptionsRows(col, FALLBACK_UPGRADES);
     // 复活币（商店消耗品，被动触发，不进入物品栏）
-    this.addRow(col, { text: '🌟 复活币+1', fn: () => this.getPlayer()?.addReviveToken() });
+    this.addRow(col, {
+      text: "🌟 复活币+1",
+      fn: () => this.getPlayer()?.addReviveToken(),
+    });
 
     // 怪物增强（调试测试阈值用；只作用于新生成的敌人，不影响场上现有敌人）
-    this.addSectionTitle(col, '👹 怪物增强（新生成生效）');
+    this.addSectionTitle(col, "👹 怪物增强（新生成生效）");
     const gs = this.getGameScene();
     const curHp = gs?.enemyHpBoost ?? 1;
     const curAtk = gs?.enemyAtkBoost ?? 1;
-    this.enemyBoostText = createUIText(this.scene, 0, col.y, `当前：血量×${curHp} · 攻击×${curAtk}`, {
-      fontSize: '11px',
-      color: '#88ff88',
-    }).setOrigin(0, 0);
+    this.enemyBoostText = createUIText(
+      this.scene,
+      0,
+      col.y,
+      `当前：血量×${curHp} · 攻击×${curAtk}`,
+      {
+        fontSize: "11px",
+        color: "#88ff88",
+      },
+    ).setOrigin(0, 0);
     this.content.add(this.enemyBoostText);
     col.step(this.tipSpacing);
     this.addRow(
       col,
-      { text: '🩸 血量×2', fn: () => this.setEnemyBoost(2, -1) },
-      { text: '⚔️ 攻击×2', fn: () => this.setEnemyBoost(-1, 2) }
+      { text: "🩸 血量×2", fn: () => this.setEnemyBoost(2, -1) },
+      { text: "⚔️ 攻击×2", fn: () => this.setEnemyBoost(-1, 2) },
     );
     this.addRow(
       col,
-      { text: '🩸 血量×4', fn: () => this.setEnemyBoost(4, -1) },
-      { text: '⚔️ 攻击×4', fn: () => this.setEnemyBoost(-1, 4) }
+      { text: "🩸 血量×4", fn: () => this.setEnemyBoost(4, -1) },
+      { text: "⚔️ 攻击×4", fn: () => this.setEnemyBoost(-1, 4) },
     );
     this.addRow(
       col,
-      { text: '🩸 血量×1', fn: () => this.setEnemyBoost(1, -1) },
-      { text: '⚔️ 攻击×1', fn: () => this.setEnemyBoost(-1, 1) }
+      { text: "🩸 血量×1", fn: () => this.setEnemyBoost(1, -1) },
+      { text: "⚔️ 攻击×1", fn: () => this.setEnemyBoost(-1, 1) },
     );
 
     // 计算可滚动上限（内容总高 - 可视区高）
@@ -381,12 +481,21 @@ export class DebugPanel {
     // 滚轮滚动（面板可见时生效）
     // Phaser wheel 事件签名：(pointer, currentlyOver, deltaX, deltaY, deltaZ)。
     // deltaY 为屏幕像素，DebugPanel 布局即 canvas 像素坐标系（uiRoot 局部），故直接使用。
-    this.scene.input.on('wheel', (_pointer: any, _over: any, deltaX: number, deltaY: number, deltaZ: number) => {
-      if (!this.visible) return;
-      const dy = deltaY !== 0 ? deltaY : deltaZ;
-      if (dy === 0) return;
-      this.setScroll(this.scrollOffset - dy);
-    });
+    this.scene.input.on(
+      "wheel",
+      (
+        _pointer: any,
+        _over: any,
+        deltaX: number,
+        deltaY: number,
+        deltaZ: number,
+      ) => {
+        if (!this.visible) return;
+        const dy = deltaY !== 0 ? deltaY : deltaZ;
+        if (dy === 0) return;
+        this.setScroll(this.scrollOffset - dy);
+      },
+    );
 
     // 触摸拖动滚动 + 点击防误触（移动端在按钮上滑动 = 滚动而非点击）
     this.setupTouchInput();
@@ -401,9 +510,15 @@ export class DebugPanel {
     const rowH = this.btnHeight + this.btnSpacing;
     const sectionH = (rows: number) => 46 + rows * rowH; // 分区前留白10 + 标题18 + 后留白18
     // 快捷操作 4 行（含 AI/主题全宽）、属性 2 行
-    const statRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'stat').length / 2);
-    const weaponRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'weapon').length / 2);
-    const passiveRows = Math.ceil(UPGRADE_OPTIONS.filter((o) => o.type === 'passive').length / 2);
+    const statRows = Math.ceil(
+      UPGRADE_OPTIONS.filter((o) => o.type === "stat").length / 2,
+    );
+    const weaponRows = Math.ceil(
+      UPGRADE_OPTIONS.filter((o) => o.type === "weapon").length / 2,
+    );
+    const passiveRows = Math.ceil(
+      UPGRADE_OPTIONS.filter((o) => o.type === "passive").length / 2,
+    );
     // 道具栏（6 主动道具 3 行）+ 商店道具（FALLBACK 2 行 + 复活币 1 行）
     const shopRows = Math.ceil(FALLBACK_UPGRADES.length / 2);
     return (
@@ -426,9 +541,9 @@ export class DebugPanel {
     col.step(this.sectionSpacing);
     const y = col.y;
     const title = createUIText(this.scene, 0, y, text, {
-      fontSize: '11px',
-      color: '#ffb347',
-      fontStyle: 'bold',
+      fontSize: "11px",
+      color: "#ffb347",
+      fontStyle: "bold",
     }).setOrigin(0, 0);
     this.content.add(title);
     col.step(18);
@@ -437,19 +552,41 @@ export class DebugPanel {
   /** 排一行两个按钮（可缺省一侧），按钮定位到当前游标后推进 */
   private addRow(col: UILayout, left?: BtnSpec, right?: BtnSpec): void {
     const y = col.y;
-    if (left) this.placeButton(this.makeButton(left.text, left.fn, this.btnWidth), 0, y);
-    if (right)
-      this.placeButton(this.makeButton(right.text, right.fn, this.btnWidth), this.btnWidth + this.btnSpacing, y);
+    if (left)
+      this.placeButton(
+        this.makeButton(left.text, left.fn, this.btnWidth),
+        0,
+        y,
+      );
+    if (right) {
+      this.placeButton(
+        this.makeButton(right.text, right.fn, this.btnWidth),
+        this.btnWidth + this.btnSpacing,
+        y,
+      );
+    }
     col.step(this.btnHeight + this.btnSpacing);
   }
 
   /** 排一行三个等宽按钮（用于档位类均匀排列，如速度 0.5×/1×/2×） */
   private addRow3(col: UILayout, a: BtnSpec, b: BtnSpec, c: BtnSpec): void {
     const y = col.y;
-    const nw = Math.floor((this.panelWidth - this.padding * 2 - this.btnSpacing * 2) / 3);
+    const nw = Math.floor(
+      (this.panelWidth - this.padding * 2 - this.btnSpacing * 2) / 3,
+    );
     this.placeButton(this.makeButton(a.text, a.fn, nw), 0, y, nw);
-    this.placeButton(this.makeButton(b.text, b.fn, nw), nw + this.btnSpacing, y, nw);
-    this.placeButton(this.makeButton(c.text, c.fn, nw), (nw + this.btnSpacing) * 2, y, nw);
+    this.placeButton(
+      this.makeButton(b.text, b.fn, nw),
+      nw + this.btnSpacing,
+      y,
+      nw,
+    );
+    this.placeButton(
+      this.makeButton(c.text, c.fn, nw),
+      (nw + this.btnSpacing) * 2,
+      y,
+      nw,
+    );
     col.step(this.btnHeight + this.btnSpacing);
   }
 
@@ -459,7 +596,7 @@ export class DebugPanel {
       const opt = list[i];
       const right = list[i + 1];
       const toSpec = (o: UpgradeOption): BtnSpec => ({
-        text: `${o.icon || '✨'} ${o.name}`,
+        text: `${o.icon || "✨"} ${o.name}`,
         fn: () => {
           const player = this.getPlayer();
           if (player) applyUpgradeToPlayer(player, o, this.getGameScene());
@@ -470,34 +607,45 @@ export class DebugPanel {
   }
 
   /** 创建单个按钮（content 局部坐标，未定位） */
-  private makeButton(text: string, onClick: () => void, width: number): BtnParts {
+  private makeButton(
+    text: string,
+    onClick: () => void,
+    width: number,
+  ): BtnParts {
     const bg = this.scene.add
-      .image(0, 0, 'debug_btn_bg')
+      .image(0, 0, "debug_btn_bg")
       .setOrigin(0, 0)
       .setDisplaySize(width, this.btnHeight);
 
     const txt = createUIText(this.scene, width / 2, this.btnHeight / 2, text, {
-      fontSize: '11px',
-      color: '#cccccc',
+      fontSize: "11px",
+      color: "#cccccc",
     }).setOrigin(0.5);
 
     // hit 矩形仅用于命中。注意：不能 setVisible(false)——Phaser 输入命中测试会跳过
     // 不可见对象，隐藏后按钮全部无法点击（2026-09-13 掉帧修复引入的回归）。
     // hit 为透明矩形（fillAlpha 0），渲染无视觉且不占 draw call 性能，保持可见即可。
     const hit = this.scene.add
-      .rectangle(width / 2, this.btnHeight / 2, width, this.btnHeight, 0xffffff, 0)
+      .rectangle(
+        width / 2,
+        this.btnHeight / 2,
+        width,
+        this.btnHeight,
+        0xffffff,
+        0,
+      )
       .setInteractive({ useHandCursor: true });
 
-    hit.on('pointerover', () => {
-      bg.setTexture('debug_btn_bg_hover');
-      txt.setColor('#ffffff');
+    hit.on("pointerover", () => {
+      bg.setTexture("debug_btn_bg_hover");
+      txt.setColor("#ffffff");
     });
-    hit.on('pointerout', () => {
-      bg.setTexture('debug_btn_bg');
-      txt.setColor('#cccccc');
+    hit.on("pointerout", () => {
+      bg.setTexture("debug_btn_bg");
+      txt.setColor("#cccccc");
     });
     // 点击改为"按下记录 + 松手判定"：移动端按下后滑动（超阈值）视为滚动而非误触
-    hit.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    hit.on("pointerdown", (p: Phaser.Input.Pointer) => {
       this.pendingTap = { fn: onClick, sx: p.x, sy: p.y, moved: false };
     });
 
@@ -505,7 +653,12 @@ export class DebugPanel {
   }
 
   /** 将按钮组定位到 (x, y) 并加入 content；w 为实际按钮宽（默认标准半宽），文本/命中区按 w 居中 */
-  private placeButton(b: BtnParts, x: number, y: number, w: number = this.btnWidth): void {
+  private placeButton(
+    b: BtnParts,
+    x: number,
+    y: number,
+    w: number = this.btnWidth,
+  ): void {
     b.bg.setPosition(x, y);
     b.txt.setPosition(x + w / 2, y + this.btnHeight / 2);
     b.hit.setPosition(x + w / 2, y + this.btnHeight / 2);
@@ -519,35 +672,52 @@ export class DebugPanel {
     const y = col.y;
     const fullW = this.btnWidth * 2 + this.btnSpacing;
     const bg = this.scene.add
-      .image(0, 0, 'debug_btn_bg')
+      .image(0, 0, "debug_btn_bg")
       .setOrigin(0, 0)
       .setDisplaySize(fullW, this.btnHeight);
 
-    this.autoPlayText = createUIText(this.scene, fullW / 2, this.btnHeight / 2, '🤖 AI 托管：关闭（点击开启）', {
-      fontSize: '11px',
-      color: '#cccccc',
-    }).setOrigin(0.5);
+    this.autoPlayText = createUIText(
+      this.scene,
+      fullW / 2,
+      this.btnHeight / 2,
+      "🤖 AI 托管：关闭（点击开启）",
+      {
+        fontSize: "11px",
+        color: "#cccccc",
+      },
+    ).setOrigin(0.5);
 
     const hit = this.scene.add
-      .rectangle(fullW / 2, this.btnHeight / 2, fullW, this.btnHeight, 0xffffff, 0)
+      .rectangle(
+        fullW / 2,
+        this.btnHeight / 2,
+        fullW,
+        this.btnHeight,
+        0xffffff,
+        0,
+      )
       .setInteractive({ useHandCursor: true });
 
     const updateState = (enabled: boolean) => {
       if (this.autoPlayText) {
-        this.autoPlayText.setText(enabled ? '🤖 AI 托管：开启中（点击停止）' : '🤖 AI 托管：关闭（点击开启）');
-        this.autoPlayText.setColor(enabled ? '#66ff99' : '#cccccc');
+        this.autoPlayText.setText(
+          enabled
+            ? "🤖 AI 托管：开启中（点击停止）"
+            : "🤖 AI 托管：关闭（点击开启）",
+        );
+        this.autoPlayText.setColor(enabled ? "#66ff99" : "#cccccc");
       }
-      bg.setTexture(enabled ? 'debug_btn_bg_green' : 'debug_btn_bg');
+      bg.setTexture(enabled ? "debug_btn_bg_green" : "debug_btn_bg");
     };
 
-    hit.on('pointerover', () => {
-      bg.setTexture('debug_btn_bg_hover');
-      this.autoPlayText?.setColor('#ffffff');
+    hit.on("pointerover", () => {
+      bg.setTexture("debug_btn_bg_hover");
+      this.autoPlayText?.setColor("#ffffff");
     });
-    hit.on('pointerout', () => {
+    hit.on("pointerout", () => {
       updateState(this.getGameScene()?.isAutoPlay?.() || false);
     });
-    hit.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    hit.on("pointerdown", (p: Phaser.Input.Pointer) => {
       this.pendingTap = {
         fn: () => {
           const gs = this.getGameScene();
@@ -574,38 +744,54 @@ export class DebugPanel {
     const y = col.y;
     const fullW = this.btnWidth * 2 + this.btnSpacing;
     const bg = this.scene.add
-      .image(0, 0, 'debug_btn_bg')
+      .image(0, 0, "debug_btn_bg")
       .setOrigin(0, 0)
       .setDisplaySize(fullW, this.btnHeight);
 
-    this.themeText = createUIText(this.scene, fullW / 2, this.btnHeight / 2, '', {
-      fontSize: '11px',
-      color: '#cccccc',
-    }).setOrigin(0.5);
+    this.themeText = createUIText(
+      this.scene,
+      fullW / 2,
+      this.btnHeight / 2,
+      "",
+      {
+        fontSize: "11px",
+        color: "#cccccc",
+      },
+    ).setOrigin(0.5);
 
     const hit = this.scene.add
-      .rectangle(fullW / 2, this.btnHeight / 2, fullW, this.btnHeight, 0xffffff, 0)
+      .rectangle(
+        fullW / 2,
+        this.btnHeight / 2,
+        fullW,
+        this.btnHeight,
+        0xffffff,
+        0,
+      )
       .setInteractive({ useHandCursor: true });
 
-    const updateState = (theme: 'pixel' | 'classic') => {
+    const updateState = (theme: "pixel" | "classic") => {
       if (this.themeText) {
         this.themeText.setText(
-          theme === 'classic' ? '🎨 主题：经典矢量（点击切像素）' : '🎨 主题：像素风（点击切经典）'
+          theme === "classic"
+            ? "🎨 主题：经典矢量（点击切像素）"
+            : "🎨 主题：像素风（点击切经典）",
         );
       }
-      const on = theme === 'classic';
-      bg.setTexture(on ? 'debug_btn_bg_blue' : 'debug_btn_bg');
+      const on = theme === "classic";
+      bg.setTexture(on ? "debug_btn_bg_blue" : "debug_btn_bg");
     };
 
-    hit.on('pointerover', () => {
-      bg.setTexture('debug_btn_bg_hover');
-      this.themeText?.setColor('#ffffff');
+    hit.on("pointerover", () => {
+      bg.setTexture("debug_btn_bg_hover");
+      this.themeText?.setColor("#ffffff");
     });
-    hit.on('pointerout', () => updateState(GameConfig.VISUAL_THEME));
-    hit.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    hit.on("pointerout", () => updateState(GameConfig.VISUAL_THEME));
+    hit.on("pointerdown", (p: Phaser.Input.Pointer) => {
       this.pendingTap = {
         fn: () => {
-          const next: 'pixel' | 'classic' = GameConfig.VISUAL_THEME === 'classic' ? 'pixel' : 'classic';
+          const next: "pixel" | "classic" =
+            GameConfig.VISUAL_THEME === "classic" ? "pixel" : "classic";
           const api = (window as any).__debug;
           if (api?.setTheme) {
             api.setTheme(next);
@@ -649,9 +835,17 @@ export class DebugPanel {
       return;
     }
     const contentH = this.maxScroll + this.viewportH;
-    const thumbH = Math.max(24, Math.round((this.viewportH * this.viewportH) / contentH));
-    const thumbY = trackTop + (-this.scrollOffset / this.maxScroll) * (this.viewportH - thumbH);
-    this.scrollThumb.setVisible(true).setPosition(trackX, thumbY).setSize(4, thumbH);
+    const thumbH = Math.max(
+      24,
+      Math.round((this.viewportH * this.viewportH) / contentH),
+    );
+    const thumbY =
+      trackTop +
+      (-this.scrollOffset / this.maxScroll) * (this.viewportH - thumbH);
+    this.scrollThumb
+      .setVisible(true)
+      .setPosition(trackX, thumbY)
+      .setSize(4, thumbH);
   }
 
   /**
@@ -677,13 +871,13 @@ export class DebugPanel {
         this.panelWidth,
         40 + this.viewportH + this.padding,
         0xffffff,
-        0
+        0,
       )
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: false });
     this.container.addAt(panelZone, 0);
 
-    panelZone.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    panelZone.on("pointerdown", (p: Phaser.Input.Pointer) => {
       if (!this.visible || this.maxScroll <= 0) return;
       this.scrollDragging = true;
       this.dragStartY = p.y;
@@ -691,10 +885,13 @@ export class DebugPanel {
     });
 
     // 场景级 move：既结算点击拖动判定，也持续滚动（避免指针移出滚动区导致拖动中断）
-    this.scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+    this.scene.input.on("pointermove", (p: Phaser.Input.Pointer) => {
       if (!this.visible) return;
       if (this.pendingTap && !this.pendingTap.moved) {
-        if (Math.hypot(p.x - this.pendingTap.sx, p.y - this.pendingTap.sy) > this.TAP_THRESHOLD) {
+        if (
+          Math.hypot(p.x - this.pendingTap.sx, p.y - this.pendingTap.sy) >
+          this.TAP_THRESHOLD
+        ) {
           this.pendingTap.moved = true;
         }
       }
@@ -710,8 +907,8 @@ export class DebugPanel {
       }
       this.scrollDragging = false;
     };
-    this.scene.input.on('pointerup', settle);
-    this.scene.input.on('pointerupoutside', settle);
+    this.scene.input.on("pointerup", settle);
+    this.scene.input.on("pointerupoutside", settle);
   }
 
   /** 预渲染标准按钮底图（宽 btnWidth，高 btnHeight，圆角 4） */
@@ -759,34 +956,42 @@ export class DebugPanel {
     const curHp = gs.enemyHpBoost ?? 1;
     const curAtk = gs.enemyAtkBoost ?? 1;
     gs.setEnemyBoost(hp === -1 ? curHp : hp, atk === -1 ? curAtk : atk);
-    this.enemyBoostText?.setText(`当前：血量×${gs.enemyHpBoost} · 攻击×${gs.enemyAtkBoost}`);
+    this.enemyBoostText?.setText(
+      `当前：血量×${gs.enemyHpBoost} · 攻击×${gs.enemyAtkBoost}`,
+    );
   }
 
   private getGameScene(): any {
-    return this.scene.scene.get('GameScene');
+    return this.scene.scene.get("GameScene");
   }
 
   /** 调用 window.__debug 上的方法（若不存在则跳过） */
   private callDebug(name: string, ...args: unknown[]): void {
     const api = (window as any).__debug;
-    if (api && typeof api[name] === 'function') {
+    if (api && typeof api[name] === "function") {
       (api[name] as (...a: unknown[]) => void)(...args);
     } else {
-      console.warn('[debug] __debug.' + name + ' 不可用');
+      console.warn("[debug] __debug." + name + " 不可用");
     }
   }
 
   private setupHotkey(): void {
-    this.scene.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.BACKTICK).on('down', () => {
-      this.toggle();
-    });
+    this.scene.input.keyboard
+      ?.addKey(Phaser.Input.Keyboard.KeyCodes.BACKTICK)
+      .on("down", () => {
+        this.toggle();
+      });
     // 游戏速度快捷键：- 减速 / = 加速（步进 0.25，范围 0.25~4）
-    this.scene.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.MINUS).on('down', () => {
-      this.adjustSpeed(-0.25);
-    });
-    this.scene.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.PLUS).on('down', () => {
-      this.adjustSpeed(0.25);
-    });
+    this.scene.input.keyboard
+      ?.addKey(Phaser.Input.Keyboard.KeyCodes.MINUS)
+      .on("down", () => {
+        this.adjustSpeed(-0.25);
+      });
+    this.scene.input.keyboard
+      ?.addKey(Phaser.Input.Keyboard.KeyCodes.PLUS)
+      .on("down", () => {
+        this.adjustSpeed(0.25);
+      });
   }
 
   // ===== 游戏速度 =====
@@ -805,7 +1010,8 @@ export class DebugPanel {
   }
 
   private refreshSpeedText(): void {
-    if (this.speedText) this.speedText.setText(`当前速度 ×${this.getGameSpeed().toFixed(2)}`);
+    if (this.speedText)
+      this.speedText.setText(`当前速度 ×${this.getGameSpeed().toFixed(2)}`);
   }
 
   toggle(): void {
@@ -814,7 +1020,7 @@ export class DebugPanel {
   }
 
   private getPlayer(): Player | null {
-    const gameScene = this.scene.scene.get('GameScene') as any;
+    const gameScene = this.scene.scene.get("GameScene") as any;
     return gameScene?.getPlayer?.() || null;
   }
 
@@ -833,7 +1039,7 @@ export class DebugPanel {
   }
 
   private addPickupRadius(amount: number): void {
-    this.getPlayer()?.modifyStat('pickupRadius', amount, false);
+    this.getPlayer()?.modifyStat("pickupRadius", amount, false);
   }
 
   private setPickupRadius(value: number): void {
@@ -843,7 +1049,7 @@ export class DebugPanel {
   }
 
   private clearEnemies(): void {
-    const gameScene = this.scene.scene.get('GameScene') as any;
+    const gameScene = this.scene.scene.get("GameScene") as any;
     const enemies = gameScene?.getEnemies?.();
     if (!enemies) return;
     enemies.children.each((enemy: any) => {

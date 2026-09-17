@@ -1,5 +1,5 @@
-import Phaser from 'phaser';
-import { GuideCard, type GuideCardConfig } from '../ui/GuideCard';
+import Phaser from "phaser";
+import { GuideCard, type GuideCardConfig } from "../ui/GuideCard";
 
 /**
  * 引导提示管理器（单例）
@@ -129,7 +129,7 @@ export class GuideManager {
 
   private displayCard(config: GuideCardConfig): void {
     if (!this.scene) {
-      console.warn('[GuideManager] 未绑定场景，无法显示提示');
+      console.warn("[GuideManager] 未绑定场景，无法显示提示");
       return;
     }
 

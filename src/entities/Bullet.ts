@@ -1,7 +1,7 @@
-import Phaser from 'phaser';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { GameConfig } from '../game/GameConfig';
-import { Layers } from '../constants/Layers';
+import Phaser from "phaser";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { GameConfig } from "../game/GameConfig";
+import { Layers } from "../constants/Layers";
 
 /**
  * 子弹实体
@@ -40,7 +40,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
   private homingTurnRate: number = 0; // 弧度/秒
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 0, 0, GameConfig.themeKey('bullet'));
+    super(scene, 0, 0, GameConfig.themeKey("bullet"));
     scene.add.existing(this);
     scene.physics.add.existing(this, false);
     this.setActive(false);
@@ -55,7 +55,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     speed: number,
     damage: number,
     range: number,
-    texture: string = 'bullet',
+    texture: string = "bullet",
     options?: {
       pierce?: boolean;
       explosive?: boolean;
@@ -67,7 +67,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
       scaleY?: number; // 垂直缩放
       trailColor?: number; // 弹道拖尾颜色（不传则不生成拖尾）
       trailEvery?: number; // 每 N 帧生成一段拖尾（默认 3）
-    }
+    },
   ): void {
     this.isEnemyBullet = false;
     this.damage = damage;
@@ -90,7 +90,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.vy = Math.sin(angle) * speed;
 
     // 基础子弹按当前主题解析（classic 用霓虹能量弹）；武器自定义纹理（如 weapon_sword）保持原样
-    const tex = texture === 'bullet' ? GameConfig.themeKey('bullet') : texture;
+    const tex = texture === "bullet" ? GameConfig.themeKey("bullet") : texture;
     this.setTexture(tex);
     this.setPosition(x, y);
     this.setActive(true);
@@ -132,7 +132,12 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     angle: number,
     speed: number,
     damage: number,
-    options?: { color?: number; homing?: boolean; homingTurnRate?: number; scale?: number }
+    options?: {
+      color?: number;
+      homing?: boolean;
+      homingTurnRate?: number;
+      scale?: number;
+    },
   ): void {
     this.isEnemyBullet = true;
     this.damage = damage;
@@ -172,7 +177,11 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     if (!this.active) return;
 
     // 回旋镖逻辑：飞到最大距离后返回
-    if (this.boomerang && !this.returning && this.traveled >= this.range * 0.8) {
+    if (
+      this.boomerang &&
+      !this.returning &&
+      this.traveled >= this.range * 0.8
+    ) {
       this.returning = true;
     }
     if (this.boomerang && this.returning) {
@@ -186,7 +195,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
         this.vy = Math.sin(angle) * speed;
         this.setRotation(angle);
         // 回到玩家附近时销毁
-        if (Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y) < 30) {
+        if (
+          Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y) < 30
+        ) {
           this.despawn();
           return;
         }
@@ -204,7 +215,9 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
         while (diff > Math.PI) diff -= Math.PI * 2;
         while (diff < -Math.PI) diff += Math.PI * 2;
         const maxTurn = this.homingTurnRate * (delta / 1000);
-        const newAngle = curAngle + (diff > 0 ? Math.min(diff, maxTurn) : Math.max(diff, -maxTurn));
+        const newAngle =
+          curAngle +
+          (diff > 0 ? Math.min(diff, maxTurn) : Math.max(diff, -maxTurn));
         const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         this.vx = Math.cos(newAngle) * speed;
         this.vy = Math.sin(newAngle) * speed;
@@ -218,7 +231,14 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
       if (this.trailTimer >= this.trailEvery) {
         this.trailTimer = 0;
         const scene = this.scene as any;
-        scene?.getFXManager?.()?.bulletTrail(this.x, this.y, Math.atan2(this.vy, this.vx), this.trailColor);
+        scene
+          ?.getFXManager?.()
+          ?.bulletTrail(
+            this.x,
+            this.y,
+            Math.atan2(this.vy, this.vx),
+            this.trailColor,
+          );
       }
     }
 

@@ -1,19 +1,19 @@
-import { createUIText } from '../utils/UIText';
-import { createSceneTitle, UIColors } from '../ui/UIStyle';
-import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
-import { GameConfig } from '../game/GameConfig';
-import { UpgradePanel } from '../ui/UpgradePanel';
-import { GuideManager } from '../systems/GuideManager';
-import { WEAPONS } from '../data/weapons';
-import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED } from '../data/upgrades';
-import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { setupUICamera } from '../utils/CameraHelper';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import type { UpgradeOption } from '../types';
-import type { Player } from '../entities/Player';
+import { createUIText } from "../utils/UIText";
+import { createSceneTitle, UIColors } from "../ui/UIStyle";
+import Phaser from "phaser";
+import { GameManager } from "../game/GameManager";
+import { GameConfig } from "../game/GameConfig";
+import { UpgradePanel } from "../ui/UpgradePanel";
+import { GuideManager } from "../systems/GuideManager";
+import { WEAPONS } from "../data/weapons";
+import { UPGRADE_OPTIONS, UPGRADE_POOL_EXCLUDED } from "../data/upgrades";
+import { applyUpgradeToPlayer } from "../utils/UpgradeApplier";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { setupUICamera } from "../utils/CameraHelper";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import type { UpgradeOption } from "../types";
+import type { Player } from "../entities/Player";
 
 /**
  * 武器强化场景（独立武器系统）
@@ -24,7 +24,7 @@ export class WeaponSelectScene extends Phaser.Scene {
   private upgradePanel!: UpgradePanel;
 
   constructor() {
-    super('WeaponSelectScene');
+    super("WeaponSelectScene");
   }
 
   create(): void {
@@ -35,23 +35,29 @@ export class WeaponSelectScene extends Phaser.Scene {
     this.autoTriggered = false;
 
     // 半透明背景
-    this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0).setInteractive();
+    this.add
+      .rectangle(0, 0, width, height, 0x000000, 0.75)
+      .setOrigin(0)
+      .setInteractive();
 
     // 标题（与升级场景区分）
-    createSceneTitle(this, width / 2, 70, '⚔ 武器强化');
+    createSceneTitle(this, width / 2, 70, "⚔ 武器强化");
 
     // 提示（通用：Boss 后/前期武器奖励节点均会弹出，不特指"击败强敌"）
-    createUIText(this, width / 2, 118, '选择一把武器强化', {
-      fontSize: '16px',
+    createUIText(this, width / 2, 118, "选择一把武器强化", {
+      fontSize: "16px",
       color: UIColors.textDim,
     }).setOrigin(0.5);
 
     const choices = this.getWeaponChoices();
     this.upgradePanel = new UpgradePanel(this);
-    this.upgradePanel.show((option: UpgradeOption) => this.onSelect(option), choices);
+    this.upgradePanel.show(
+      (option: UpgradeOption) => this.onSelect(option),
+      choices,
+    );
 
     // AI 自动玩：选择一把武器（新武器优先，其次升级核心）
-    const gameScene = this.scene.get('GameScene') as any;
+    const gameScene = this.scene.get("GameScene") as any;
     if (gameScene?.isAutoPlay?.()) {
       this.triggerAutoPlay();
     }
@@ -64,7 +70,7 @@ export class WeaponSelectScene extends Phaser.Scene {
   triggerAutoPlay(): void {
     if (this.autoTriggered) return;
     this.autoTriggered = true;
-    const gameScene = this.scene.get('GameScene') as any;
+    const gameScene = this.scene.get("GameScene") as any;
     this.time.delayedCall(800, () => {
       const shown = this.upgradePanel.getOptions();
       const best = this.selectBestWeapon(shown, gameScene?.getPlayer?.());
@@ -74,7 +80,10 @@ export class WeaponSelectScene extends Phaser.Scene {
           console.log(`[AI 托管] 武器选择: ${best.icon} ${best.name}`);
           this.upgradePanel.setSelectedIndex(idx, true);
           this.time.delayedCall(1000, () => {
-            if (this.upgradePanel.isVisible() && this.upgradePanel.getSelectedIndex() === idx) {
+            if (
+              this.upgradePanel.isVisible() &&
+              this.upgradePanel.getSelectedIndex() === idx
+            ) {
               console.log(`[AI 托管] 确认武器: ${best.icon} ${best.name}`);
               this.upgradePanel.confirmSelection();
             }
@@ -86,23 +95,33 @@ export class WeaponSelectScene extends Phaser.Scene {
 
   /** 生成武器候选（新武器 + 已有武器升级，过滤已满级） */
   private getWeaponChoices(): UpgradeOption[] {
-    const gameScene = this.scene.get('GameScene') as any;
+    const gameScene = this.scene.get("GameScene") as any;
     const player = gameScene?.getPlayer() as Player | undefined;
 
-    const weaponOptions = UPGRADE_OPTIONS.filter((o) => o.type === 'weapon' && !UPGRADE_POOL_EXCLUDED.includes(o.id));
+    const weaponOptions = UPGRADE_OPTIONS.filter(
+      (o) => o.type === "weapon" && !UPGRADE_POOL_EXCLUDED.includes(o.id),
+    );
     if (!player) return weaponOptions.slice(0, 3);
 
-    const available = weaponOptions.filter((o) => o.effect.weaponId && !player.isWeaponMaxLevel(o.effect.weaponId));
+    const available = weaponOptions.filter(
+      (o) => o.effect.weaponId && !player.isWeaponMaxLevel(o.effect.weaponId),
+    );
     return available.slice(0, 3);
   }
 
   /** AI 武器选择：新武器优先（先凑齐武器库），其次升级已有武器；同池内按稀有度（legendary>epic>rare>common）优先，同稀有度随机 */
-  private selectBestWeapon(options: UpgradeOption[], player: any): UpgradeOption | null {
+  private selectBestWeapon(
+    options: UpgradeOption[],
+    player: any,
+  ): UpgradeOption | null {
     if (!options || options.length === 0) return null;
     if (!player) return this.pickByRarity(options);
     // 1) 新武器优先：未拥有过的武器
     const newWeapons = options.filter(
-      (o) => o.type === 'weapon' && o.effect?.weaponId && !player.hasWeapon(o.effect.weaponId)
+      (o) =>
+        o.type === "weapon" &&
+        o.effect?.weaponId &&
+        !player.hasWeapon(o.effect.weaponId),
     );
     if (newWeapons.length > 0) return this.pickByRarity(newWeapons);
     // 2) 已有武器升级：按稀有度优先（避免 AI 把资源砸在基础枪这类 common 上）
@@ -111,7 +130,7 @@ export class WeaponSelectScene extends Phaser.Scene {
 
   /** 按稀有度档取随机一项（legendary > epic > rare > common） */
   private pickByRarity(pool: UpgradeOption[]): UpgradeOption {
-    const rarityOrder = ['common', 'rare', 'epic', 'legendary'];
+    const rarityOrder = ["common", "rare", "epic", "legendary"];
     for (let r = rarityOrder.length - 1; r >= 0; r--) {
       const p = pool.filter((o) => o.rarity === rarityOrder[r]);
       if (p.length > 0) return p[Math.floor(Math.random() * p.length)];
@@ -120,11 +139,13 @@ export class WeaponSelectScene extends Phaser.Scene {
   }
 
   private onSelect(option: UpgradeOption): void {
-    const gameScene = this.scene.get('GameScene') as any;
+    const gameScene = this.scene.get("GameScene") as any;
     const player = gameScene?.getPlayer() as Player | undefined;
 
     const isNewWeapon =
-      option.type === 'weapon' && option.effect.weaponId ? !player?.hasWeapon(option.effect.weaponId) : false;
+      option.type === "weapon" && option.effect.weaponId
+        ? !player?.hasWeapon(option.effect.weaponId)
+        : false;
 
     if (player) {
       applyUpgradeToPlayer(player, option, gameScene);
@@ -137,10 +158,10 @@ export class WeaponSelectScene extends Phaser.Scene {
         AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_WEAPON_UNLOCK, 1);
         GuideManager.getInstance().show({
           title: `新武器: ${weapon.name}`,
-          description: weapon.description + '\n将自动攻击敌人',
-          icon: option.icon || '🔫',
+          description: weapon.description + "\n将自动攻击敌人",
+          icon: option.icon || "🔫",
           color: 0xff6b35,
-          position: 'top-right',
+          position: "top-right",
           duration: 4000,
           showButton: false,
         });
@@ -149,7 +170,7 @@ export class WeaponSelectScene extends Phaser.Scene {
 
     // 恢复游戏并通知 GameScene 开始下一波
     GameManager.getInstance().setPaused(false);
-    this.scene.stop('WeaponSelectScene');
+    this.scene.stop("WeaponSelectScene");
     EventBus.emit(EventKeys.WEAPONSELECT_CLOSED);
   }
 }

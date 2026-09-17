@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from "phaser";
 
 /**
  * 统一滚动条（轨道 + 滑块一体）
@@ -24,7 +24,13 @@ export class UIScrollBar {
   private contentH = 0;
   private maxScroll = 0;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, _width: number, height: number) {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    _width: number,
+    height: number,
+  ) {
     this.track = scene.add.graphics();
     this.thumb = scene.add.graphics();
     this.barX = x;
@@ -54,11 +60,20 @@ export class UIScrollBar {
     const innerH = this.barH - this.trackInset * 2;
     const trackX = this.barX;
     this.track.fillStyle(0xffffff, 0.08);
-    this.track.fillRoundedRect(trackX, this.barY + this.trackInset, 5, innerH, 2.5);
+    this.track.fillRoundedRect(
+      trackX,
+      this.barY + this.trackInset,
+      5,
+      innerH,
+      2.5,
+    );
 
     // 滑块：按内容/可视比例 + 当前偏移定位，嵌在轨道内
     const thumbH = Math.max(24, innerH * (innerH / this.contentH));
-    const thumbY = this.barY + this.trackInset + (innerH - thumbH) * (offset / this.maxScroll);
+    const thumbY =
+      this.barY +
+      this.trackInset +
+      (innerH - thumbH) * (offset / this.maxScroll);
     this.thumb.fillStyle(0xffffff, 0.35);
     this.thumb.fillRoundedRect(trackX, thumbY, 5, thumbH, 2.5);
   }

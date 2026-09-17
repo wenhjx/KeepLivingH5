@@ -7,12 +7,20 @@
  */
 
 /** 剧毒：每秒中毒伤害 = max(1, 攻击力 × 难度系数 × dpsMult)，至少 1 点 */
-export function calcPoisonDps(attackPower: number, difficultyMultiplier: number, dpsMult: number): number {
+export function calcPoisonDps(
+  attackPower: number,
+  difficultyMultiplier: number,
+  dpsMult: number,
+): number {
   return Math.max(1, attackPower * difficultyMultiplier * dpsMult);
 }
 
 /** 爆炸基础伤害 = 基础值 × 难度系数 × 攻击加成（explodeDamage 缺省 30 由调用方兜底） */
-export function calcExplodeBase(baseDamage: number, difficultyMultiplier: number, atkBoost: number): number {
+export function calcExplodeBase(
+  baseDamage: number,
+  difficultyMultiplier: number,
+  atkBoost: number,
+): number {
   return baseDamage * difficultyMultiplier * atkBoost;
 }
 
@@ -25,7 +33,7 @@ export function calcExplodePlayerDamage(
   difficultyMultiplier: number,
   atkBoost: number,
   playerDist: number,
-  radius: number
+  radius: number,
 ): number {
   const base = calcExplodeBase(baseDamage, difficultyMultiplier, atkBoost);
   const falloff = 1 - Math.max(0, playerDist / radius) * 0.5;
@@ -37,16 +45,24 @@ export function calcLifestealHeal(
   currentHealth: number,
   maxHealth: number,
   damage: number,
-  lifestealMult: number
+  lifestealMult: number,
 ): number {
-  return Math.min(maxHealth, currentHealth + Math.max(1, Math.floor(damage * lifestealMult)));
+  return Math.min(
+    maxHealth,
+    currentHealth + Math.max(1, Math.floor(damage * lifestealMult)),
+  );
 }
 
 /** 敌人普攻/冲锋：攻击力 × Boss倍率 × 冲锋倍率 × 难度系数 × 攻击加成 × 词缀攻击加成（各倍率缺省 1） */
 export function calcAttackDamage(
   attackPower: number,
   difficultyMultiplier: number,
-  opts: { bossMult?: number; chargeMult?: number; atkBoost?: number; affixAtkBoost?: number } = {}
+  opts: {
+    bossMult?: number;
+    chargeMult?: number;
+    atkBoost?: number;
+    affixAtkBoost?: number;
+  } = {},
 ): number {
   return (
     attackPower *

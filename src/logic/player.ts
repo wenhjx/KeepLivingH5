@@ -1,4 +1,4 @@
-import type { WeaponTag } from '../types';
+import type { WeaponTag } from "../types";
 /**
  * 玩家侧被动/属性结算（纯函数，可单测，零 Phaser 依赖）
  *
@@ -7,7 +7,10 @@ import type { WeaponTag } from '../types';
  */
 
 /** 荆棘反弹 = 实际受击伤害 × (0.2 + 荆棘等级 × 0.05) */
-export function calcThornsReflect(actualDamage: number, thornsLevel: number): number {
+export function calcThornsReflect(
+  actualDamage: number,
+  thornsLevel: number,
+): number {
   return actualDamage * (0.2 + thornsLevel * 0.05);
 }
 
@@ -49,7 +52,10 @@ export interface CritStats {
   critDamage?: number;
 }
 
-export function calcCritStats(stats: CritStats | undefined): { critRate: number; critDamageMult: number } {
+export function calcCritStats(stats: CritStats | undefined): {
+  critRate: number;
+  critDamageMult: number;
+} {
   const rawCritRate = stats?.critRate ?? 0.05;
   const critRateOverflow = Math.max(0, rawCritRate - 1);
   const critRate = Math.min(1, rawCritRate);
@@ -66,6 +72,13 @@ export function calcFavoredDamageMult(
   favoredTags: WeaponTag[] | undefined,
   damageMult: number | undefined,
 ): number {
-  if (!weaponTags || weaponTags.length === 0 || !favoredTags || favoredTags.length === 0 || !damageMult) return 1;
+  if (
+    !weaponTags ||
+    weaponTags.length === 0 ||
+    !favoredTags ||
+    favoredTags.length === 0 ||
+    !damageMult
+  )
+    return 1;
   return favoredTags.some((t) => weaponTags.includes(t)) ? damageMult : 1;
 }

@@ -1,7 +1,7 @@
-import Phaser from 'phaser';
-import { GameConfig } from '../game/GameConfig';
-import type { InputManager } from '../systems/InputManager';
-import { Layers } from '../constants/Layers';
+import Phaser from "phaser";
+import { GameConfig } from "../game/GameConfig";
+import type { InputManager } from "../systems/InputManager";
+import { Layers } from "../constants/Layers";
 
 /**
  * 虚拟摇杆
@@ -33,7 +33,7 @@ export class VirtualJoystick {
   private knobRadius: number;
 
   // 模式
-  private mode: 'fixed' | 'dynamic';
+  private mode: "fixed" | "dynamic";
 
   // 状态
   private active: boolean = false;
@@ -45,7 +45,12 @@ export class VirtualJoystick {
   // 配置
   private readonly deadZone = GameConfig.INPUT.joystickDeadZone;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, mode: 'fixed' | 'dynamic' = 'dynamic') {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    mode: "fixed" | "dynamic" = "dynamic",
+  ) {
     this.scene = scene;
     this.baseX = x;
     this.baseY = y;
@@ -60,11 +65,17 @@ export class VirtualJoystick {
 
   private create(): void {
     // 容器：统一控制深度、滚动因子、可见性、位置
-    this.container = this.scene.add.container(0, 0).setDepth(Layers.JOYSTICK).setScrollFactor(0);
+    this.container = this.scene.add
+      .container(0, 0)
+      .setDepth(Layers.JOYSTICK)
+      .setScrollFactor(0);
 
     // 摇杆底座（相对容器中心 0,0 绘制，整体跟随容器移动）
-    const baseImg = this.scene.add.image(0, 0, 'ui_joystick_base').setAlpha(0.5).setScrollFactor(0);
-    if (!baseImg.texture || baseImg.texture.key === '__MISSING') {
+    const baseImg = this.scene.add
+      .image(0, 0, "ui_joystick_base")
+      .setAlpha(0.5)
+      .setScrollFactor(0);
+    if (!baseImg.texture || baseImg.texture.key === "__MISSING") {
       baseImg.destroy();
       const baseGfx = this.scene.add.graphics().setScrollFactor(0);
       baseGfx.fillStyle(0x333344, 0.6);
@@ -77,8 +88,11 @@ export class VirtualJoystick {
     }
 
     // 摇杆旋钮
-    const knobImg = this.scene.add.image(0, 0, 'ui_joystick_knob').setAlpha(0.8).setScrollFactor(0);
-    if (!knobImg.texture || knobImg.texture.key === '__MISSING') {
+    const knobImg = this.scene.add
+      .image(0, 0, "ui_joystick_knob")
+      .setAlpha(0.8)
+      .setScrollFactor(0);
+    if (!knobImg.texture || knobImg.texture.key === "__MISSING") {
       knobImg.destroy();
       const knobGfx = this.scene.add.graphics().setScrollFactor(0);
       knobGfx.fillStyle(0xff6b35, 0.9);
@@ -96,14 +110,14 @@ export class VirtualJoystick {
     this.setPosition(this.baseX, this.baseY);
 
     // 动态模式：默认隐藏，左半屏触碰时才在按下处弹出
-    if (this.mode === 'dynamic') {
+    if (this.mode === "dynamic") {
       this.container.setVisible(false);
     }
   }
 
   private setupInput(): void {
     // 监听指针按下
-    this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+    this.scene.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       if (this.active) return;
       // 本次按下已被 UI（如 buff 说明）消费 → 不激活摇杆（吞掉该指针）
       if (this.consumedPointerId === pointer.id) {
@@ -115,7 +129,7 @@ export class VirtualJoystick {
       // 勿再过 toScreen（会把逻辑坐标当 world 再乘 zoom，导致弹出位置偏右下 zoom 倍）
       const sp = { x: pointer.x, y: pointer.y };
 
-      if (this.mode === 'dynamic') {
+      if (this.mode === "dynamic") {
         // 动态模式：左半屏任意位置触碰，即在按下位置弹出摇杆
         if (sp.x < this.scene.scale.width / 2) {
           this.setPosition(sp.x, sp.y);
@@ -123,7 +137,12 @@ export class VirtualJoystick {
         }
       } else {
         // 固定模式：仅在摇杆附近区域按下激活（同为屏幕逻辑坐标）
-        const dist = Phaser.Math.Distance.Between(sp.x, sp.y, this.baseX, this.baseY);
+        const dist = Phaser.Math.Distance.Between(
+          sp.x,
+          sp.y,
+          this.baseX,
+          this.baseY,
+        );
         if (dist < this.baseRadius * 2) {
           this.activate(pointer);
         }
@@ -131,19 +150,19 @@ export class VirtualJoystick {
     });
 
     // 监听指针移动
-    this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+    this.scene.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (!this.active || pointer.id !== this.pointerId) return;
       const sp = { x: pointer.x, y: pointer.y };
       this.updateKnob(sp.x, sp.y);
     });
 
     // 监听指针释放
-    this.scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+    this.scene.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
       if (!this.active || pointer.id !== this.pointerId) return;
       this.deactivate();
     });
 
-    this.scene.input.on('pointerupoutside', (pointer: Phaser.Input.Pointer) => {
+    this.scene.input.on("pointerupoutside", (pointer: Phaser.Input.Pointer) => {
       if (!this.active || pointer.id !== this.pointerId) return;
       this.deactivate();
     });
@@ -211,7 +230,7 @@ export class VirtualJoystick {
     (this.knob as any).setAlpha?.(0.8);
 
     // 动态模式：松开后隐藏摇杆，等待下一次左半屏触碰
-    if (this.mode === 'dynamic') {
+    if (this.mode === "dynamic") {
       this.container.setVisible(false);
     }
 

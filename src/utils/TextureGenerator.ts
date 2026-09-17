@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from "phaser";
 
 /**
  * 霓虹深渊 (Neon Abyss) 主题纹理生成器
@@ -59,22 +59,22 @@ export class TextureGenerator {
   // 像素风：玩家改为 16x16 像素飞船（scale=4 → 64x64，与原矢量版尺寸/物理/逻辑完全一致，
   // 仅替换观感，避免回炉）。运行时 setRotation 旋转，纹理尖端朝上，头尾分明（白尖/黄尾焰）。
   private static readonly PLAYER_PIXEL = [
-    '.....WWCCWW.....',
-    '....WCCCCCCW....',
-    '...WCCCCCCCCW...',
-    '..WCCCCCCCCCCW..',
-    '.WCCCCCCCCCCCCW.',
-    'CCCCCCCCCCCCCCCC',
-    'CCCCWWWWWWWWCCCC',
-    'CCCCWCCCCCCWCCCC',
-    'CCCCWCCCCCCWCCCC',
-    '.CCCCCCCCCCCCCC.',
-    '.CCCCCCCCCCCCCC.',
-    '..CCCCCCCCCCCC..',
-    '...CCCCCCCCCC...',
-    '....CCCCCCCC....',
-    '.....CCYYCC.....',
-    '......YYYY......',
+    ".....WWCCWW.....",
+    "....WCCCCCCW....",
+    "...WCCCCCCCCW...",
+    "..WCCCCCCCCCCW..",
+    ".WCCCCCCCCCCCCW.",
+    "CCCCCCCCCCCCCCCC",
+    "CCCCWWWWWWWWCCCC",
+    "CCCCWCCCCCCWCCCC",
+    "CCCCWCCCCCCWCCCC",
+    ".CCCCCCCCCCCCCC.",
+    ".CCCCCCCCCCCCCC.",
+    "..CCCCCCCCCCCC..",
+    "...CCCCCCCCCC...",
+    "....CCCCCCCC....",
+    ".....CCYYCC.....",
+    "......YYYY......",
   ];
   private static readonly PLAYER_PALETTE: Record<string, number> = {
     C: 0x00ccff, // 机身青色
@@ -86,7 +86,12 @@ export class TextureGenerator {
    * 像素矩阵绘制：grid 为等宽字符串行，每字符对应调色板颜色（'.'=透明），
    * 按 scale 放大每格生成小尺寸像素纹理。同一像素造型可复用于敌人/子弹等。
    */
-  private drawPixelTexture(key: string, grid: string[], palette: Record<string, number>, scale: number): void {
+  private drawPixelTexture(
+    key: string,
+    grid: string[],
+    palette: Record<string, number>,
+    scale: number,
+  ): void {
     const h = grid.length;
     const w = grid.reduce((max, row) => Math.max(max, row.length), 0);
     const size = Math.max(w, h) * scale;
@@ -95,7 +100,7 @@ export class TextureGenerator {
       const row = grid[y];
       for (let x = 0; x < row.length; x++) {
         const ch = row[x];
-        if (ch === '.' || ch === ' ') continue;
+        if (ch === "." || ch === " ") continue;
         const color = palette[ch];
         if (color === undefined) continue;
         g.fillStyle(color, 1);
@@ -107,264 +112,272 @@ export class TextureGenerator {
   }
 
   private generatePlayer(): void {
-    this.drawPixelTexture('player', TextureGenerator.PLAYER_PIXEL, TextureGenerator.PLAYER_PALETTE, 4);
+    this.drawPixelTexture(
+      "player",
+      TextureGenerator.PLAYER_PIXEL,
+      TextureGenerator.PLAYER_PALETTE,
+      4,
+    );
   }
 
   // ========== 敌人 ==========
   // 像素风：9 种敌人统一 16x16 像素网格造型，按各自原纹理尺寸缩放（浮点 scale），
   // 纹理尺寸与碰撞/逻辑保持完全一致（零回炉）。主体用白色（W）+ 深灰暗部（D），
   // 运行时由 Enemy.setTint(config.color) 上色——不同敌人靠形状区分，色板逻辑不变。
-  private static readonly ENEMY_PIXELS: Record<string, { grid: string[]; scale: number }> = {
+  private static readonly ENEMY_PIXELS: Record<
+    string,
+    { grid: string[]; scale: number }
+  > = {
     enemy_normal: {
       scale: 52 / 16,
       grid: [
-        '......WWWW......',
-        '....WWWWWWWW....',
-        '...WWWWWWWWWW...',
-        '..WWWWWWWWWWWW..',
-        '..WWWWWWWWWWWW..',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWDDWWWWDDWWW.',
-        '.WWWDDWWWWDDWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '..WWWWWWWWWWWW..',
-        '..WWWWWWWWWWWW..',
-        '...WWWWWWWWWW...',
-        '....WWWWWWWW....',
-        '......WWWW......',
-        '................',
+        "......WWWW......",
+        "....WWWWWWWW....",
+        "...WWWWWWWWWW...",
+        "..WWWWWWWWWWWW..",
+        "..WWWWWWWWWWWW..",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWDDWWWWDDWWW.",
+        ".WWWDDWWWWDDWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        "..WWWWWWWWWWWW..",
+        "..WWWWWWWWWWWW..",
+        "...WWWWWWWWWW...",
+        "....WWWWWWWW....",
+        "......WWWW......",
+        "................",
       ],
     },
     enemy_fast: {
       scale: 48 / 16,
       grid: [
-        '................',
-        '.......WW.......',
-        '.......WW.......',
-        '......WWWW......',
-        '......WWWW......',
-        '.....WWWWWW.....',
-        '.....WWWWWW.....',
-        '....WWWWWWWW....',
-        '....WWWWWWWW....',
-        '...WWWWWWWWWW...',
-        '...WWWWWWWWWW...',
-        '..WWWWWWWWWWWW..',
-        '..WWWWWWWWWWWW..',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.....DDDDDD.....',
+        "................",
+        ".......WW.......",
+        ".......WW.......",
+        "......WWWW......",
+        "......WWWW......",
+        ".....WWWWWW.....",
+        ".....WWWWWW.....",
+        "....WWWWWWWW....",
+        "....WWWWWWWW....",
+        "...WWWWWWWWWW...",
+        "...WWWWWWWWWW...",
+        "..WWWWWWWWWWWW..",
+        "..WWWWWWWWWWWW..",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".....DDDDDD.....",
       ],
     },
     enemy_tank: {
       scale: 38 / 16,
       grid: [
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWDDDDDDDDDDWW.',
-        '.WWDDWWWWWWDDWW.',
-        '.WWDDWWWWWWDDWW.',
-        '.WWDDWWWWWWDDWW.',
-        '.WWDDDDDDDDDDWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWDDDDDDDDDDWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWDDDDDDDDDDWW.",
+        ".WWDDWWWWWWDDWW.",
+        ".WWDDWWWWWWDDWW.",
+        ".WWDDWWWWWWDDWW.",
+        ".WWDDDDDDDDDDWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWDDDDDDDDDDWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
       ],
     },
     enemy_ranged: {
       scale: 50 / 16,
       grid: [
-        '.......WW.......',
-        '.......WW.......',
-        '......WWWW......',
-        '.....WWWWWW.....',
-        '....WWWWWWWW....',
-        '...WWWWWWWWWW...',
-        '..WWWWWWWWWWWW..',
-        '...WWWWWWWWWW...',
-        '...WWWWWWWWWW...',
-        '..WWWWWWWWWWWW..',
-        '..WWDDWWWWDDWW..',
-        '..WWDDWWWWDDWW..',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '..WWWWWWWWWWWW..',
-        '.....DDDDDD.....',
+        ".......WW.......",
+        ".......WW.......",
+        "......WWWW......",
+        ".....WWWWWW.....",
+        "....WWWWWWWW....",
+        "...WWWWWWWWWW...",
+        "..WWWWWWWWWWWW..",
+        "...WWWWWWWWWW...",
+        "...WWWWWWWWWW...",
+        "..WWWWWWWWWWWW..",
+        "..WWDDWWWWDDWW..",
+        "..WWDDWWWWDDWW..",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        "..WWWWWWWWWWWW..",
+        ".....DDDDDD.....",
       ],
     },
     enemy_elite: {
       scale: 66 / 16,
       grid: [
-        '......WWWW......',
-        '....WWWWWWWW....',
-        '...WWWWWWWWWW...',
-        '..WWWWWWWWWWWW..',
-        '..WWDDWWWWDDWW..',
-        '..WWDDWWWWDDWW..',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '..WWWWWWWWWWWW..',
-        '..WWWWWWWWWWWW..',
-        '...WWWWWWWWWW...',
-        '....WWWWWWWW....',
-        '......WWWW......',
-        '................',
-        '................',
-        '................',
+        "......WWWW......",
+        "....WWWWWWWW....",
+        "...WWWWWWWWWW...",
+        "..WWWWWWWWWWWW..",
+        "..WWDDWWWWDDWW..",
+        "..WWDDWWWWDDWW..",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        "..WWWWWWWWWWWW..",
+        "..WWWWWWWWWWWW..",
+        "...WWWWWWWWWW...",
+        "....WWWWWWWW....",
+        "......WWWW......",
+        "................",
+        "................",
+        "................",
       ],
     },
     enemy_boss: {
       scale: 80 / 16,
       grid: [
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        'WWWWWWWWWWWWWWWW',
-        'WWWWDDWWWWDDWWWW',
-        'WWWWDDWWWWDDWWWW',
-        'WWWWWWWWWWWWWWWW',
-        'WWWWWWWWWWWWWWWW',
-        'WWWWWWWWWWWWWWWW',
-        'WWWWWWWWWWWWWWWW',
-        'WWWWWWWWWWWWWWWW',
-        'WWWWWWWWWWWWWWWW',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '................',
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        "WWWWWWWWWWWWWWWW",
+        "WWWWDDWWWWDDWWWW",
+        "WWWWDDWWWWDDWWWW",
+        "WWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWW",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        "................",
       ],
     },
     enemy_suicider: {
       scale: 52 / 16,
       grid: [
-        '......DDDD......',
-        '......WWWW......',
-        '.......WW.......',
-        '.......WW.......',
-        'W....WWWWWW....W',
-        'WW..WWWWWWWW..WW',
-        '..WWWWWWWWWWWW..',
-        '..WWWWWWWWWWWW..',
-        '.WWWDDWWWWDDWWW.',
-        '.WWWDDWWWWDDWWW.',
-        '..WWWWWWWWWWWW..',
-        '..WWWWWWWWWWWW..',
-        'WW..WWWWWWWW..WW',
-        'W....WWWWWW....W',
-        '.....WWWWWW.....',
-        '.....DDDDDD.....',
+        "......DDDD......",
+        "......WWWW......",
+        ".......WW.......",
+        ".......WW.......",
+        "W....WWWWWW....W",
+        "WW..WWWWWWWW..WW",
+        "..WWWWWWWWWWWW..",
+        "..WWWWWWWWWWWW..",
+        ".WWWDDWWWWDDWWW.",
+        ".WWWDDWWWWDDWWW.",
+        "..WWWWWWWWWWWW..",
+        "..WWWWWWWWWWWW..",
+        "WW..WWWWWWWW..WW",
+        "W....WWWWWW....W",
+        ".....WWWWWW.....",
+        ".....DDDDDD.....",
       ],
     },
     enemy_splitter: {
       scale: 60 / 16,
       grid: [
-        '................',
-        '..WWWW....WWWW..',
-        '.WWWWWW..WWWWWW.',
-        '.WWWWWW..WWWWWW.',
-        '.WWDDWW..WWDDWW.',
-        '.WWDDWW..WWDDWW.',
-        '.WWWWWW..WWWWWW.',
-        '.WWWWWW..WWWWWW.',
-        '..WWWW....WWWW..',
-        '................',
-        '................',
-        '................',
-        '................',
-        '................',
-        '................',
-        '................',
+        "................",
+        "..WWWW....WWWW..",
+        ".WWWWWW..WWWWWW.",
+        ".WWWWWW..WWWWWW.",
+        ".WWDDWW..WWDDWW.",
+        ".WWDDWW..WWDDWW.",
+        ".WWWWWW..WWWWWW.",
+        ".WWWWWW..WWWWWW.",
+        "..WWWW....WWWW..",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
       ],
     },
     enemy_shielded: {
       scale: 60 / 16,
       grid: [
-        '...DDDDDDDDDD...',
-        '..DWWWWWWWWWWD..',
-        '.DWWWWWWWWWWWWD.',
-        '.DWWWWWWWWWWWWD.',
-        '.DWWDDWWWWDDWWD.',
-        '.DWWDDWWWWDDWWD.',
-        '.DWWWWWWWWWWWWD.',
-        '.DWWWWWWWWWWWWD.',
-        '..DWWWWWWWWWWD..',
-        '...DDDDDDDDDD...',
-        '................',
-        '................',
-        '................',
-        '................',
-        '................',
-        '................',
+        "...DDDDDDDDDD...",
+        "..DWWWWWWWWWWD..",
+        ".DWWWWWWWWWWWWD.",
+        ".DWWWWWWWWWWWWD.",
+        ".DWWDDWWWWDDWWD.",
+        ".DWWDDWWWWDDWWD.",
+        ".DWWWWWWWWWWWWD.",
+        ".DWWWWWWWWWWWWD.",
+        "..DWWWWWWWWWWD..",
+        "...DDDDDDDDDD...",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
       ],
     },
     enemy_summoner: {
       scale: 62 / 16,
       grid: [
-        '................',
-        '.......WW.......',
-        '......WWWW......',
-        '.......WW.......',
-        '.......WW.......',
-        '......WWWW......',
-        '.....WWWWWW.....',
-        '....WWWWWWWW....',
-        '...WWWWWWWWWW...',
-        '..WWDDWWWWDDWW..',
-        '..WWDDWWWWDDWW..',
-        '...WWWWWWWWWW...',
-        '....WWWWWWWW....',
-        '.....WWWWWW.....',
-        '......WWWW......',
-        '................',
+        "................",
+        ".......WW.......",
+        "......WWWW......",
+        ".......WW.......",
+        ".......WW.......",
+        "......WWWW......",
+        ".....WWWWWW.....",
+        "....WWWWWWWW....",
+        "...WWWWWWWWWW...",
+        "..WWDDWWWWDDWW..",
+        "..WWDDWWWWDDWW..",
+        "...WWWWWWWWWW...",
+        "....WWWWWWWW....",
+        ".....WWWWWW.....",
+        "......WWWW......",
+        "................",
       ],
     },
     enemy_charger: {
       scale: 62 / 16,
       grid: [
-        '................',
-        '.......WW.......',
-        '......WWWW......',
-        '.....WWWWWW.....',
-        '....WWWWWWWW....',
-        '...WWWWWWWWWW...',
-        '..WWWWWWWWWWWW..',
-        '.WWWWWWWWWWWWWW.',
-        '.WWDDDDDDDDDDWW.',
-        '.WWWWWWWWWWWWWW.',
-        '..WWWWWWWWWWWW..',
-        '...WWWWWWWWWW...',
-        '....WWWWWWWW....',
-        '.....WWWWWW.....',
-        '......WWWW......',
-        '................',
+        "................",
+        ".......WW.......",
+        "......WWWW......",
+        ".....WWWWWW.....",
+        "....WWWWWWWW....",
+        "...WWWWWWWWWW...",
+        "..WWWWWWWWWWWW..",
+        ".WWWWWWWWWWWWWW.",
+        ".WWDDDDDDDDDDWW.",
+        ".WWWWWWWWWWWWWW.",
+        "..WWWWWWWWWWWW..",
+        "...WWWWWWWWWW...",
+        "....WWWWWWWW....",
+        ".....WWWWWW.....",
+        "......WWWW......",
+        "................",
       ],
     },
     enemy_healer: {
       scale: 52 / 16,
       grid: [
-        '......WWWW......',
-        '....WWWWWWWW....',
-        '...WWWWWWWWWW...',
-        '..WWWWWWWWWWWW..',
-        '..WWDDWWWWDDWW..',
-        '..WWDDWWWWDDWW..',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWWWWWWWWWWW.',
-        '.WWWWDDDDDDWWWW.',
-        '.WWWWDDWWDDWWWW.',
-        '..WWWWDDDDWWWW..',
-        '..WWWWWWWWWWWW..',
-        '...WWWWWWWWWW...',
-        '....WWWWWWWW....',
-        '......WWWW......',
-        '................',
+        "......WWWW......",
+        "....WWWWWWWW....",
+        "...WWWWWWWWWW...",
+        "..WWWWWWWWWWWW..",
+        "..WWDDWWWWDDWW..",
+        "..WWDDWWWWDDWW..",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWWWWWWWWWWW.",
+        ".WWWWDDDDDDWWWW.",
+        ".WWWWDDWWDDWWWW.",
+        "..WWWWDDDDWWWW..",
+        "..WWWWWWWWWWWW..",
+        "...WWWWWWWWWW...",
+        "....WWWWWWWW....",
+        "......WWWW......",
+        "................",
       ],
     },
   };
@@ -380,67 +393,67 @@ export class TextureGenerator {
   > = {
     obstacle_rock: {
       grid: [
-        '......WWWWWW......',
-        '....WWWWWWWWWW....',
-        '...WWWWWWWWWWWW...',
-        '..WWWWWMMWWWWWWW..',
-        '..WWWWMMMMWWWWWW..',
-        '.WWWWMMMMMMWWWWWW.',
-        '.WWWWMMMMMMMMWWWW.',
-        '.WWWMMMMMMMWWWWWW.',
-        '..WWWMMWWWWWWWW...',
-        '...WWWWWWWWWWWW...',
-        '....WWWWWWWW......',
-        '.....DDDDDD.......',
+        "......WWWWWW......",
+        "....WWWWWWWWWW....",
+        "...WWWWWWWWWWWW...",
+        "..WWWWWMMWWWWWWW..",
+        "..WWWWMMMMWWWWWW..",
+        ".WWWWMMMMMMWWWWWW.",
+        ".WWWWMMMMMMMMWWWW.",
+        ".WWWMMMMMMMWWWWWW.",
+        "..WWWMMWWWWWWWW...",
+        "...WWWWWWWWWWWW...",
+        "....WWWWWWWW......",
+        ".....DDDDDD.......",
       ],
       palette: { W: 0x6f8296, M: 0x9fb3c6, D: 0x14141f },
       scale: 4,
     },
     obstacle_wall: {
       grid: [
-        'BBBBBBBBBBBBBBBBB',
-        'BKKKKKKKKBKKKKKKK',
-        'BKKKKKKKKBKKKKKKK',
-        'BBBBBBBBBBBBBBBBB',
-        'KKKKBKKKKKKKKBKKK',
-        'KKKKBKKKKKKKKBKKK',
-        'BBBBBBBBBBBBBBBBB',
-        'BKKKKKKKKBKKKKKKK',
-        'BKKKKKKKKBKKKKKKK',
-        'BBBBBBBBBBBBBBBBB',
+        "BBBBBBBBBBBBBBBBB",
+        "BKKKKKKKKBKKKKKKK",
+        "BKKKKKKKKBKKKKKKK",
+        "BBBBBBBBBBBBBBBBB",
+        "KKKKBKKKKKKKKBKKK",
+        "KKKKBKKKKKKKKBKKK",
+        "BBBBBBBBBBBBBBBBB",
+        "BKKKKKKKKBKKKKKKK",
+        "BKKKKKKKKBKKKKKKK",
+        "BBBBBBBBBBBBBBBBB",
       ],
       palette: { B: 0x6b6b86, K: 0x20202e },
       scale: 4,
     },
     obstacle_crystal: {
       grid: [
-        '.......MM.......',
-        '......MWWM......',
-        '.....MWWWWM.....',
-        '....MWWWWWWM....',
-        '...MWWMMMMWWM...',
-        '..MWWMMDDMMWWM..',
-        '..MWMMDDDDMMWM..',
-        '.MWMMDDDDDDMMWM.',
-        '.MWMMDDDDDDMMWM.',
-        '.MWMMWDDDDWMMWM.',
-        '..MWMMWDDWMMWM..',
-        '...MWMMMMMMWM...',
-        '....MMMMMMMM....',
-        '.....MMMMMM.....',
+        ".......MM.......",
+        "......MWWM......",
+        ".....MWWWWM.....",
+        "....MWWWWWWM....",
+        "...MWWMMMMWWM...",
+        "..MWWMMDDMMWWM..",
+        "..MWMMDDDDMMWM..",
+        ".MWMMDDDDDDMMWM.",
+        ".MWMMDDDDDDMMWM.",
+        ".MWMMWDDDDWMMWM.",
+        "..MWMMWDDWMMWM..",
+        "...MWMMMMMMWM...",
+        "....MMMMMMMM....",
+        ".....MMMMMM.....",
       ],
       palette: { M: 0x9a6bff, W: 0xd8baff, D: 0x3d1a66 },
       scale: 4,
     },
     obstacle_crate: {
       grid: [
-        'BBBBBBBBBBBBBBBB',
-        'BHHWWWWWBWWWWWWB',
-        'BHWWWWWWBWWWWWWB',
-        'BBBBBBBBBBBBBBBB',
-        'BWWWWWWWBWWWWWWB',
-        'BWWWWWWWBWWWWWWB',
-        'BBBBBBBBBBBBBBBB',
+        "BBBBBBBBBBBBBBBB",
+        "BHHWWWWWBWWWWWWB",
+        "BHWWWWWWBWWWWWWB",
+        "BBBBBBBBBBBBBBBB",
+        "BWWWWWWWBWWWWWWB",
+        "BWWWWWWWBWWWWWWB",
+        "BBBBBBBBBBBBBBBB",
       ],
       palette: { B: 0x5a3d1f, W: 0xa97a3e, H: 0xd9b077 },
       scale: 4,
@@ -536,25 +549,61 @@ export class TextureGenerator {
     g.closePath();
     g.strokePath();
 
-    g.generateTexture('player_classic', size, size);
+    g.generateTexture("player_classic", size, size);
     g.destroy();
   }
 
   // ========== 敌人 ==========
   private generateEnemiesClassic(): void {
-    this.generateEnemyBlob('enemy_normal_classic', TextureGenerator.COLORS.enemyNormal, 20);
-    this.generateEnemyShard('enemy_fast_classic', TextureGenerator.COLORS.enemyFast, 18);
-    this.generateEnemyTank('enemy_tank_classic', TextureGenerator.COLORS.enemyTank, 24);
-    this.generateEnemyCaster('enemy_ranged_classic', TextureGenerator.COLORS.enemyRanged, 18);
-    this.generateEnemyElite('enemy_elite_classic', TextureGenerator.COLORS.enemyElite, 26);
-    this.generateEnemyBoss('enemy_boss_classic', TextureGenerator.COLORS.enemyBoss, 56);
-    this.generateEnemySuicider('enemy_suicider_classic', TextureGenerator.COLORS.enemySuicider, 20);
-    this.generateEnemySplitter('enemy_splitter_classic', TextureGenerator.COLORS.enemySplitter, 24);
-    this.generateEnemyShielded('enemy_shielded_classic', TextureGenerator.COLORS.enemyShielded, 24);
+    this.generateEnemyBlob(
+      "enemy_normal_classic",
+      TextureGenerator.COLORS.enemyNormal,
+      20,
+    );
+    this.generateEnemyShard(
+      "enemy_fast_classic",
+      TextureGenerator.COLORS.enemyFast,
+      18,
+    );
+    this.generateEnemyTank(
+      "enemy_tank_classic",
+      TextureGenerator.COLORS.enemyTank,
+      24,
+    );
+    this.generateEnemyCaster(
+      "enemy_ranged_classic",
+      TextureGenerator.COLORS.enemyRanged,
+      18,
+    );
+    this.generateEnemyElite(
+      "enemy_elite_classic",
+      TextureGenerator.COLORS.enemyElite,
+      26,
+    );
+    this.generateEnemyBoss(
+      "enemy_boss_classic",
+      TextureGenerator.COLORS.enemyBoss,
+      56,
+    );
+    this.generateEnemySuicider(
+      "enemy_suicider_classic",
+      TextureGenerator.COLORS.enemySuicider,
+      20,
+    );
+    this.generateEnemySplitter(
+      "enemy_splitter_classic",
+      TextureGenerator.COLORS.enemySplitter,
+      24,
+    );
+    this.generateEnemyShielded(
+      "enemy_shielded_classic",
+      TextureGenerator.COLORS.enemyShielded,
+      24,
+    );
     // 新三敌（召唤师/冲锋怪/治疗怪）：classic 主题缺失纹理会导致显示 Phaser 占位方块，必须补齐
-    this.generateEnemySummoner('enemy_summoner_classic', 0xcc66ff, 13);
-    this.generateEnemyCharger('enemy_charger_classic', 0xff8833, 13);
-    this.generateEnemyHealer('enemy_healer_classic', 0x44ee77, 11);
+    this.generateEnemySummoner("enemy_summoner_classic", 0xcc66ff, 13);
+    this.generateEnemyCharger("enemy_charger_classic", 0xff8833, 13);
+    this.generateEnemyHealer("enemy_healer_classic", 0x44ee77, 11);
   }
 
   /** 自爆怪：膨胀的不稳定球体 + 引线火花，危险感 */
@@ -584,8 +633,16 @@ export class TextureGenerator {
     g.fillStyle(color, 1);
     for (let i = 0; i < 4; i++) {
       const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
-      g.fillCircle(cx + Math.cos(a) * r * 1.15, cy + Math.sin(a) * r * 1.15, r * 0.22);
-      g.fillCircle(cx + Math.cos(a) * r * 1.32, cy + Math.sin(a) * r * 1.32, r * 0.13);
+      g.fillCircle(
+        cx + Math.cos(a) * r * 1.15,
+        cy + Math.sin(a) * r * 1.15,
+        r * 0.22,
+      );
+      g.fillCircle(
+        cx + Math.cos(a) * r * 1.32,
+        cy + Math.sin(a) * r * 1.32,
+        r * 0.13,
+      );
     }
 
     // 警示黑边
@@ -703,7 +760,11 @@ export class TextureGenerator {
     g.fillStyle(0xffffff, 0.9);
     for (let i = 0; i < 3; i++) {
       const a = (i / 3) * Math.PI * 2;
-      g.fillCircle(cx + Math.cos(a) * r * 0.45, cy + Math.sin(a) * r * 0.45, 1.8);
+      g.fillCircle(
+        cx + Math.cos(a) * r * 0.45,
+        cy + Math.sin(a) * r * 0.45,
+        1.8,
+      );
     }
     // 头顶召唤环（悬浮法阵）
     g.fillStyle(color, 0.9);
@@ -809,7 +870,12 @@ export class TextureGenerator {
 
     // 嘴（锯齿状）
     g.fillStyle(0x000000, 0.7);
-    g.fillRect(cx - radius * 0.3, cy + radius * 0.25, radius * 0.6, radius * 0.12);
+    g.fillRect(
+      cx - radius * 0.3,
+      cy + radius * 0.25,
+      radius * 0.6,
+      radius * 0.12,
+    );
 
     // 高光
     g.fillStyle(0xffffff, 0.35);
@@ -992,9 +1058,15 @@ export class TextureGenerator {
       const innerR = r * 0.85;
       const outerR = r * 1.15;
       g.beginPath();
-      g.moveTo(cx + Math.cos(angle - 0.2) * innerR, cy + Math.sin(angle - 0.2) * innerR);
+      g.moveTo(
+        cx + Math.cos(angle - 0.2) * innerR,
+        cy + Math.sin(angle - 0.2) * innerR,
+      );
       g.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
-      g.lineTo(cx + Math.cos(angle + 0.2) * innerR, cy + Math.sin(angle + 0.2) * innerR);
+      g.lineTo(
+        cx + Math.cos(angle + 0.2) * innerR,
+        cy + Math.sin(angle + 0.2) * innerR,
+      );
       g.closePath();
       g.fillPath();
     }
@@ -1058,9 +1130,15 @@ export class TextureGenerator {
       const innerR = r * 0.9;
       const outerR = r * 1.2;
       g.beginPath();
-      g.moveTo(cx + Math.cos(angle - 0.1) * innerR, cy + Math.sin(angle - 0.1) * innerR);
+      g.moveTo(
+        cx + Math.cos(angle - 0.1) * innerR,
+        cy + Math.sin(angle - 0.1) * innerR,
+      );
       g.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
-      g.lineTo(cx + Math.cos(angle + 0.1) * innerR, cy + Math.sin(angle + 0.1) * innerR);
+      g.lineTo(
+        cx + Math.cos(angle + 0.1) * innerR,
+        cy + Math.sin(angle + 0.1) * innerR,
+      );
       g.closePath();
       g.fillPath();
     }
@@ -1142,11 +1220,11 @@ export class TextureGenerator {
     g.fillStyle(0xffffff, 0.9);
     g.fillRect(cx - 2, cy - 2, 2, 2);
 
-    g.generateTexture('bullet', size, size);
+    g.generateTexture("bullet", size, size);
     g.destroy();
 
     // 无人机（对称机体，旋转自然）
-    this.generateDronePixel('drone', 26);
+    this.generateDronePixel("drone", 26);
 
     // 敌人子弹（紫红色方块）
     const size2 = 18;
@@ -1161,7 +1239,7 @@ export class TextureGenerator {
     g2.fillStyle(0xffffff, 1);
     g2.fillRect(cx2 - 1, cy2 - 1, 2, 2);
 
-    g2.generateTexture('enemy_bullet', size2, size2);
+    g2.generateTexture("enemy_bullet", size2, size2);
     g2.destroy();
   }
 
@@ -1230,7 +1308,7 @@ export class TextureGenerator {
     g.fillStyle(0xffffff, 0.9);
     g.fillCircle(cx - 0.5, cy - 0.5, 1.2);
 
-    g.generateTexture('bullet_classic', size, size);
+    g.generateTexture("bullet_classic", size, size);
     g.destroy();
 
     // 敌人子弹（紫红色能量弹）
@@ -1242,20 +1320,20 @@ export class TextureGenerator {
     g2.fillCircle(size2 / 2, size2 / 2, 4);
     g2.fillStyle(0xffffff, 1);
     g2.fillCircle(size2 / 2, size2 / 2, 2);
-    g2.generateTexture('enemy_bullet_classic', size2, size2);
+    g2.generateTexture("enemy_bullet_classic", size2, size2);
     g2.destroy();
 
     // 经典无人机
-    this.generateDrone('drone_classic', 26);
+    this.generateDrone("drone_classic", 26);
   }
 
   // ========== 拾取物 ==========
   /** 像素风拾取物（pixel 主题默认）：方块拼接，棱角分明 */
   private generatePickups(): void {
-    this.generateGemPixel('pickup_exp', TextureGenerator.COLORS.exp, 20);
-    this.generateHealthPixel('pickup_health', 22);
-    this.generateCoinPixel('pickup_coin', 18);
-    this.generateChestPixel('pickup_chest', 22);
+    this.generateGemPixel("pickup_exp", TextureGenerator.COLORS.exp, 20);
+    this.generateHealthPixel("pickup_health", 22);
+    this.generateCoinPixel("pickup_coin", 18);
+    this.generateChestPixel("pickup_chest", 22);
   }
 
   /** 像素宝箱：金色方块箱体 + 锁扣 + 高光 */
@@ -1285,10 +1363,10 @@ export class TextureGenerator {
 
   /** 经典矢量主题拾取物（霓虹菱形/十字/金币），key 加 _classic 后缀 */
   private generatePickupsClassic(): void {
-    this.generateGem('pickup_exp_classic', TextureGenerator.COLORS.exp, 20);
-    this.generateHealth('pickup_health_classic', 22);
-    this.generateCoin('pickup_coin_classic', 18);
-    this.generateChest('pickup_chest_classic', 22);
+    this.generateGem("pickup_exp_classic", TextureGenerator.COLORS.exp, 20);
+    this.generateHealth("pickup_health_classic", 22);
+    this.generateCoin("pickup_coin_classic", 18);
+    this.generateChest("pickup_chest_classic", 22);
   }
 
   /** 经典宝箱：圆角金色箱体 + 锁扣 */
@@ -1514,10 +1592,10 @@ export class TextureGenerator {
 
   // ========== 粒子 ==========
   private generateParticles(): void {
-    this.generateParticleDot('particle_hit', 0xffff00, 8);
-    this.generateParticleDot('particle_death', 0xff4444, 10);
-    this.generateParticleDot('particle_exp', 0x00ffff, 8);
-    this.generateParticleDot('particle_explosion', 0xff8800, 12);
+    this.generateParticleDot("particle_hit", 0xffff00, 8);
+    this.generateParticleDot("particle_death", 0xff4444, 10);
+    this.generateParticleDot("particle_exp", 0x00ffff, 8);
+    this.generateParticleDot("particle_explosion", 0xff8800, 12);
   }
 
   private generateParticleDot(key: string, color: number, size: number): void {
@@ -1541,7 +1619,7 @@ export class TextureGenerator {
     g.fillCircle(baseSize / 2, baseSize / 2, 50);
     g.lineStyle(3, TextureGenerator.COLORS.uiBorder, 0.5);
     g.strokeCircle(baseSize / 2, baseSize / 2, 50);
-    g.generateTexture('ui_joystick_base', baseSize, baseSize);
+    g.generateTexture("ui_joystick_base", baseSize, baseSize);
     g.destroy();
 
     // 摇杆旋钮
@@ -1553,7 +1631,7 @@ export class TextureGenerator {
     g.strokeCircle(knobSize / 2, knobSize / 2, 22);
     g.fillStyle(0xffffff, 0.4);
     g.fillCircle(knobSize / 2 - 4, knobSize / 2 - 4, 6);
-    g.generateTexture('ui_joystick_knob', knobSize, knobSize);
+    g.generateTexture("ui_joystick_knob", knobSize, knobSize);
     g.destroy();
 
     // 按钮
@@ -1564,7 +1642,7 @@ export class TextureGenerator {
     g.fillRoundedRect(0, 0, btnW, btnH, 8);
     g.lineStyle(2, TextureGenerator.COLORS.uiBorder, 0.6);
     g.strokeRoundedRect(1, 1, btnW - 2, btnH - 2, 7);
-    g.generateTexture('ui_button', btnW, btnH);
+    g.generateTexture("ui_button", btnW, btnH);
     g.destroy();
   }
 
@@ -1589,7 +1667,7 @@ export class TextureGenerator {
     g.fillStyle(0x8b4513, 1);
     g.fillRect(cx - 2, size - 10, 4, 8);
 
-    g.generateTexture('weapon_sword', size, size);
+    g.generateTexture("weapon_sword", size, size);
     g.destroy();
 
     // 全武器矢量图标（48px，颜色对齐弹道拖尾色系，供升级/商店卡片使用）
@@ -1611,7 +1689,7 @@ export class TextureGenerator {
 
     // 基础枪：手枪（灰身 + 橙扳机护圈 + 白高光）
     {
-      const a = mk('weapon_icon_default_gun');
+      const a = mk("weapon_icon_default_gun");
       a.g.fillStyle(0x999999, 1);
       a.g.fillRoundedRect(C - 14, C - 8, 22, 10, 3); // 枪管
       a.g.fillStyle(0x777777, 1);
@@ -1625,7 +1703,7 @@ export class TextureGenerator {
 
     // 机枪：长枪管 + 弹匣（黄）
     {
-      const a = mk('weapon_icon_machine_gun');
+      const a = mk("weapon_icon_machine_gun");
       a.g.fillStyle(0xffcc00, 1);
       a.g.fillRoundedRect(C - 17, C - 6, 30, 8, 3); // 长管
       a.g.fillStyle(0xcc9900, 1);
@@ -1639,7 +1717,7 @@ export class TextureGenerator {
 
     // 霰弹枪：双管宽身（红）
     {
-      const a = mk('weapon_icon_shotgun');
+      const a = mk("weapon_icon_shotgun");
       a.g.fillStyle(0xff5555, 1);
       a.g.fillRoundedRect(C - 16, C - 10, 26, 8, 3); // 上管
       a.g.fillStyle(0xcc4444, 1);
@@ -1653,7 +1731,7 @@ export class TextureGenerator {
 
     // 激光：细长光束 + 尾端光点（青）
     {
-      const a = mk('weapon_icon_laser');
+      const a = mk("weapon_icon_laser");
       a.g.fillStyle(0x00ffff, 1);
       a.g.fillRoundedRect(C - 18, C - 2, 30, 4, 2); // 光束
       a.g.fillStyle(0x66ffff, 1);
@@ -1667,7 +1745,7 @@ export class TextureGenerator {
 
     // 火箭筒：锥形弹体 + 尾焰（橙）
     {
-      const a = mk('weapon_icon_rocket');
+      const a = mk("weapon_icon_rocket");
       a.g.fillStyle(0xff6600, 1);
       a.g.fillRoundedRect(C - 12, C - 6, 20, 12, 4); // 弹体
       a.g.fillStyle(0xffcc33, 1);
@@ -1691,7 +1769,7 @@ export class TextureGenerator {
 
     // 回旋镖：V 形弯（绿）
     {
-      const a = mk('weapon_icon_boomerang');
+      const a = mk("weapon_icon_boomerang");
       a.g.lineStyle(6, 0x66ff66, 1);
       a.g.beginPath();
       a.g.moveTo(C - 4, C + 12);
@@ -1709,7 +1787,7 @@ export class TextureGenerator {
 
     // 无人机：圆体 + 十字旋翼（青蓝）
     {
-      const a = mk('weapon_icon_drone');
+      const a = mk("weapon_icon_drone");
       a.g.fillStyle(0x66ffff, 1);
       a.g.fillCircle(C, C, 10); // 机体
       a.g.fillStyle(0x226666, 1);
@@ -1724,7 +1802,7 @@ export class TextureGenerator {
 
     // 光剑：蓝色剑刃 + 金色护手（蓝）
     {
-      const a = mk('weapon_icon_lightsaber');
+      const a = mk("weapon_icon_lightsaber");
       a.g.fillStyle(0x33aaff, 1);
       a.g.fillRoundedRect(C - 3, C - 16, 6, 22, 3); // 剑刃
       a.g.fillStyle(0x99ddff, 0.9);
@@ -1738,7 +1816,7 @@ export class TextureGenerator {
 
     // 环形冲击波：同心双环 + 粒子（紫）
     {
-      const a = mk('weapon_icon_nova');
+      const a = mk("weapon_icon_nova");
       a.g.lineStyle(4, 0xcc88ff, 1);
       a.g.strokeCircle(C, C, 14); // 外环
       a.g.lineStyle(2, 0xeeccff, 0.9);
@@ -1759,18 +1837,23 @@ export class TextureGenerator {
     // ===== pixel 主题（默认）：像素块障碍物，风格与敌人/拾取物统一 =====
     const obsPixels = TextureGenerator.OBSTACLE_PIXELS;
     (Object.keys(obsPixels) as string[]).forEach((key) => {
-      this.drawPixelTexture(key, obsPixels[key].grid, obsPixels[key].palette, obsPixels[key].scale);
+      this.drawPixelTexture(
+        key,
+        obsPixels[key].grid,
+        obsPixels[key].palette,
+        obsPixels[key].scale,
+      );
     });
 
     // ===== classic 主题（_classic 后缀）：经典矢量霓虹障碍物 =====
     // 岩石障碍物
-    this.generateRock('obstacle_rock_classic', 0x556677, 120, 80);
+    this.generateRock("obstacle_rock_classic", 0x556677, 120, 80);
     // 墙体障碍物
-    this.generateWall('obstacle_wall_classic', 0x4a4a5e, 160, 40);
+    this.generateWall("obstacle_wall_classic", 0x4a4a5e, 160, 40);
     // 水晶障碍物
-    this.generateCrystal('obstacle_crystal_classic', 0x8844ff, 60, 90);
+    this.generateCrystal("obstacle_crystal_classic", 0x8844ff, 60, 90);
     // 木箱障碍物（可破坏，classic 主题）
-    this.generateCrate('obstacle_crate_classic', 0x8a6a3a, 90, 70);
+    this.generateCrate("obstacle_crate_classic", 0x8a6a3a, 90, 70);
   }
 
   private generateRock(key: string, color: number, w: number, h: number): void {
@@ -1861,7 +1944,12 @@ export class TextureGenerator {
     g.destroy();
   }
 
-  private generateCrystal(key: string, color: number, w: number, h: number): void {
+  private generateCrystal(
+    key: string,
+    color: number,
+    w: number,
+    h: number,
+  ): void {
     const pad = 8;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
     const cx = (w + pad * 2) / 2;
@@ -1904,7 +1992,12 @@ export class TextureGenerator {
     g.destroy();
   }
 
-  private generateCrate(key: string, color: number, w: number, h: number): void {
+  private generateCrate(
+    key: string,
+    color: number,
+    w: number,
+    h: number,
+  ): void {
     const pad = 6;
     const g = this.scene.make.graphics({ x: 0, y: 0 }, false);
     const cy = (h + pad * 2) / 2;
@@ -1971,7 +2064,7 @@ export class TextureGenerator {
       iy.forEach((y) => {
         g.fillStyle(0x00ffff, 0.12);
         g.fillCircle(x, y, 2);
-      })
+      }),
     );
 
     // 散落霓虹微粒（固定位置保证可平铺）
@@ -1991,7 +2084,7 @@ export class TextureGenerator {
       g.fillCircle(p.x, p.y, p.r);
     });
 
-    g.generateTexture('tile_grass', size, size);
+    g.generateTexture("tile_grass", size, size);
     g.destroy();
   }
 }

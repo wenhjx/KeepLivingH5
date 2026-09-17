@@ -1,10 +1,9 @@
-import Phaser from 'phaser';
-import { GameConfig } from '../game/GameConfig';
-import { Enemy } from '../entities/Enemy';
-import { Bullet } from '../entities/Bullet';
-import { Pickup } from '../entities/Pickup';
-import type { EnemyConfig, PickupConfig } from '../types';
-
+import Phaser from "phaser";
+import { GameConfig } from "../game/GameConfig";
+import { Enemy } from "../entities/Enemy";
+import { Bullet } from "../entities/Bullet";
+import { Pickup } from "../entities/Pickup";
+import type { EnemyConfig, PickupConfig } from "../types";
 /**
  * 对象池系统
  * 复用敌人、子弹、拾取物、粒子等高频创建销毁的对象
@@ -12,25 +11,21 @@ import type { EnemyConfig, PickupConfig } from '../types';
  */
 export class ObjectPool {
   private scene: Phaser.Scene;
-
   // 对象池
   private enemyPool: Enemy[] = [];
   private bulletPool: Bullet[] = [];
   private enemyBulletPool: Bullet[] = [];
   private pickupPool: Pickup[] = [];
-
   // 场景中的组（用于碰撞检测）
   private enemyGroup!: Phaser.Physics.Arcade.Group;
   private bulletGroup!: Phaser.Physics.Arcade.Group;
   private pickupGroup!: Phaser.Physics.Arcade.Group;
-
   // 统计
   private stats = {
     enemiesSpawned: 0,
     bulletsSpawned: 0,
     pickupsSpawned: 0,
   };
-
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.initializePools();
@@ -41,7 +36,7 @@ export class ObjectPool {
     enemies: Phaser.Physics.Arcade.Group,
     bullets: Phaser.Physics.Arcade.Group,
     pickups: Phaser.Physics.Arcade.Group,
-    particles: Phaser.GameObjects.Group
+    particles: Phaser.GameObjects.Group,
   ): void {
     this.enemyGroup = enemies;
     this.bulletGroup = bullets;
@@ -76,11 +71,14 @@ export class ObjectPool {
   }
 
   // ========== 敌人 ==========
-
   /** 从池中获取一个敌人 */
-  spawnEnemy(config: EnemyConfig, x: number, y: number, difficultyMultiplier: number = 1): Enemy | null {
+  spawnEnemy(
+    config: EnemyConfig,
+    x: number,
+    y: number,
+    difficultyMultiplier: number = 1,
+  ): Enemy | null {
     let enemy = this.enemyPool.find((e) => !e.active);
-
     // 池满时动态扩展
     if (!enemy) {
       if (this.enemyPool.length >= GameConfig.POOL.enemyMaxSize) {
@@ -100,7 +98,6 @@ export class ObjectPool {
     enemy.spawn(config, x, y, difficultyMultiplier, hpBoost, atkBoost);
     this.enemyGroup?.add(enemy);
     this.stats.enemiesSpawned++;
-
     return enemy;
   }
 
@@ -117,7 +114,6 @@ export class ObjectPool {
   }
 
   // ========== 玩家子弹 ==========
-
   spawnBullet(
     x: number,
     y: number,
@@ -125,7 +121,7 @@ export class ObjectPool {
     speed: number,
     damage: number,
     range: number,
-    texture: string = 'bullet',
+    texture: string = "bullet",
     options?: {
       pierce?: boolean;
       explosive?: boolean;
@@ -134,10 +130,9 @@ export class ObjectPool {
       color?: number;
       scaleX?: number;
       scaleY?: number;
-    }
+    },
   ): Bullet | null {
     let bullet = this.bulletPool.find((b) => !b.active);
-
     if (!bullet) {
       if (this.bulletPool.length >= GameConfig.POOL.bulletMaxSize) {
         bullet = this.bulletPool.find((b) => !b.active);
@@ -148,25 +143,36 @@ export class ObjectPool {
       }
     }
 
-    bullet.spawnPlayerBullet(x, y, angle, speed, damage, range, texture, options);
+    bullet.spawnPlayerBullet(
+      x,
+      y,
+      angle,
+      speed,
+      damage,
+      range,
+      texture,
+      options,
+    );
     this.bulletGroup?.add(bullet);
     this.stats.bulletsSpawned++;
-
     return bullet;
   }
 
   // ========== 敌人子弹 ==========
-
   spawnEnemyBullet(
     x: number,
     y: number,
     angle: number,
     speed: number,
     damage: number,
-    options?: { color?: number; homing?: boolean; homingTurnRate?: number; scale?: number }
+    options?: {
+      color?: number;
+      homing?: boolean;
+      homingTurnRate?: number;
+      scale?: number;
+    },
   ): Bullet | null {
     let bullet = this.enemyBulletPool.find((b) => !b.active);
-
     if (!bullet) {
       if (this.enemyBulletPool.length >= GameConfig.POOL.bulletMaxSize / 2) {
         bullet = this.enemyBulletPool.find((b) => !b.active);
@@ -179,15 +185,12 @@ export class ObjectPool {
 
     bullet.spawnEnemyBullet(x, y, angle, speed, damage, options);
     this.bulletGroup?.add(bullet);
-
     return bullet;
   }
 
   // ========== 拾取物 ==========
-
   spawnPickup(config: PickupConfig, x: number, y: number): Pickup | null {
     let pickup = this.pickupPool.find((p) => !p.active);
-
     if (!pickup) {
       if (this.pickupPool.length >= GameConfig.POOL.pickupMaxSize) {
         pickup = this.pickupPool.find((p) => !p.active);
@@ -201,15 +204,18 @@ export class ObjectPool {
     pickup.spawn(config, x, y);
     this.pickupGroup?.add(pickup);
     this.stats.pickupsSpawned++;
-
     return pickup;
   }
 
   // ========== 粒子特效 ==========
-
   /** 创建爆炸/命中粒子效果 */
-  spawnParticle(x: number, y: number, color: number = 0xffffff, count: number = 8): void {
-    const emitter = this.scene.add.particles(x, y, 'particle_hit', {
+  spawnParticle(
+    x: number,
+    y: number,
+    color: number = 0xffffff,
+    count: number = 8,
+  ): void {
+    const emitter = this.scene.add.particles(x, y, "particle_hit", {
       speed: { min: 50, max: 200 },
       angle: { min: 0, max: 360 },
       scale: { start: 0.5, end: 0 },
@@ -219,7 +225,6 @@ export class ObjectPool {
       tint: color,
       emitting: true,
     });
-
     // 自动销毁
     this.scene.time.delayedCall(500, () => {
       emitter.destroy();
@@ -237,7 +242,6 @@ export class ObjectPool {
   }
 
   // ========== 统计与调试 ==========
-
   getPoolStats() {
     return {
       enemyPoolSize: this.enemyPool.length,

@@ -1,4 +1,4 @@
-import type { WeaponTag } from '../types';
+import type { WeaponTag } from "../types";
 
 /**
  * 角色配置数据（选角系统）
@@ -35,33 +35,33 @@ export interface CharacterConfig {
 
 export const CHARACTERS: Record<string, CharacterConfig> = {
   default: {
-    id: 'default',
-    name: '拓荒者',
-    icon: '🪖',
-    description: '均衡型初始角色：任何武器都能平均发挥',
-    starterWeapon: 'default_gun',
-    passiveDesc: '双暴向：暴击率溢出按 1:2 转为暴击伤害',
+    id: "default",
+    name: "拓荒者",
+    icon: "🪖",
+    description: "均衡型初始角色：任何武器都能平均发挥",
+    starterWeapon: "default_gun",
+    passiveDesc: "双暴向：暴击率溢出按 1:2 转为暴击伤害",
   },
   mechanic: {
-    id: 'mechanic',
-    name: '机械师',
-    icon: '🔧',
-    description: '枪械专家：枪械系武器伤害 +20%',
-    starterWeapon: 'machine_gun',
+    id: "mechanic",
+    name: "机械师",
+    icon: "🔧",
+    description: "枪械专家：枪械系武器伤害 +20%",
+    starterWeapon: "machine_gun",
     statBonus: { critRate: 0.05 },
-    passiveDesc: '枪械熟练：机枪/激光/霰弹等枪械系武器伤害 +20%',
-    favoredTags: ['gun'],
+    passiveDesc: "枪械熟练：机枪/激光/霰弹等枪械系武器伤害 +20%",
+    favoredTags: ["gun"],
     favoredBonus: { damageMult: 1.2 },
   },
   paladin: {
-    id: 'paladin',
-    name: '圣骑士',
-    icon: '🛡️',
-    description: '圣盾近战：近战/范围系武器伤害 +20%，受击 -20%',
-    starterWeapon: 'lightsaber',
+    id: "paladin",
+    name: "圣骑士",
+    icon: "🛡️",
+    description: "圣盾近战：近战/范围系武器伤害 +20%，受击 -20%",
+    starterWeapon: "lightsaber",
     statBonus: { maxHealth: 80, moveSpeed: 10 },
-    passiveDesc: '圣盾：受击伤害 -20%；近战/范围系武器伤害 +20%',
-    favoredTags: ['melee', 'aoe'],
+    passiveDesc: "圣盾：受击伤害 -20%；近战/范围系武器伤害 +20%",
+    favoredTags: ["melee", "aoe"],
     favoredBonus: { damageMult: 1.2 },
     damageReduction: 0.2,
   },

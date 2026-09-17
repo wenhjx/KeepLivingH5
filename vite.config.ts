@@ -1,28 +1,28 @@
-import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { defineConfig } from "vite";
+import { resolve } from "path";
 
 export default defineConfig({
-  base: './',
+  base: "./",
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
+      "@": resolve(__dirname, "src"),
     },
   },
   server: {
-    host: '0.0.0.0',
+    host: "0.0.0.0",
     port: 5173,
     open: true,
   },
   build: {
-    target: 'es2020',
-    outDir: 'dist',
-    assetsDir: 'assets',
+    target: "es2020",
+    outDir: "dist",
+    assetsDir: "assets",
     sourcemap: false,
-    minify: 'esbuild',
+    minify: "esbuild",
     rollupOptions: {
       output: {
         manualChunks: {
-          phaser: ['phaser'],
+          phaser: ["phaser"],
         },
       },
     },

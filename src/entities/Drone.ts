@@ -1,11 +1,11 @@
-import Phaser from 'phaser';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import { MathUtils } from '../utils/MathUtils';
-import { GameConfig } from '../game/GameConfig';
-import type { Player } from './Player';
-import type { WeaponConfig } from '../types';
-import { Layers } from '../constants/Layers';
+import Phaser from "phaser";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import { MathUtils } from "../utils/MathUtils";
+import { GameConfig } from "../game/GameConfig";
+import type { Player } from "./Player";
+import type { WeaponConfig } from "../types";
+import { Layers } from "../constants/Layers";
 
 /**
  * 无人机实体（接触伤害型）
@@ -29,8 +29,15 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
   private absorbInterval: number = 400; // 每次吸收间隔（毫秒）
   private absorbRadius: number = 34; // 吸收半径（像素，随等级微增）
 
-  constructor(scene: Phaser.Scene, player: Player, config: WeaponConfig, level: number, index: number, total: number) {
-    super(scene, player.x, player.y, GameConfig.themeKey('drone'));
+  constructor(
+    scene: Phaser.Scene,
+    player: Player,
+    config: WeaponConfig,
+    level: number,
+    index: number,
+    total: number,
+  ) {
+    super(scene, player.x, player.y, GameConfig.themeKey("drone"));
     this.player = player;
     this.config = config;
     this.level = level;
@@ -53,11 +60,16 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
 
     // 环绕玩家运动
     this.orbitAngle += (this.orbitSpeed * delta) / 1000;
-    const targetX = this.player.x + Math.cos(this.orbitAngle) * this.orbitRadius;
-    const targetY = this.player.y + Math.sin(this.orbitAngle) * this.orbitRadius;
+    const targetX =
+      this.player.x + Math.cos(this.orbitAngle) * this.orbitRadius;
+    const targetY =
+      this.player.y + Math.sin(this.orbitAngle) * this.orbitRadius;
 
     // 平滑移动到目标位置
-    this.setPosition(this.x + (targetX - this.x) * 0.3, this.y + (targetY - this.y) * 0.3);
+    this.setPosition(
+      this.x + (targetX - this.x) * 0.3,
+      this.y + (targetY - this.y) * 0.3,
+    );
 
     // 旋转视觉效果
     this.setRotation(this.orbitAngle * 2);
@@ -127,13 +139,24 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
 
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_DRONE, 0.4);
 
-    scene.getObjectPool().spawnBullet(this.x, this.y, angle, 460, damage, 340, this.config.texture || 'bullet', {
-      color: 0x66ffff,
-      scaleX: 0.65,
-      scaleY: 0.65,
-      trailColor: 0x66ffff,
-      trailEvery: 3,
-    });
+    scene
+      .getObjectPool()
+      .spawnBullet(
+        this.x,
+        this.y,
+        angle,
+        460,
+        damage,
+        340,
+        this.config.texture || "bullet",
+        {
+          color: 0x66ffff,
+          scaleX: 0.65,
+          scaleY: 0.65,
+          trailColor: 0x66ffff,
+          trailEvery: 3,
+        },
+      );
   }
 
   /** 查找最近敌人 */
@@ -165,7 +188,12 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
 
     enemies.children.each((enemy: any) => {
       if (!enemy.active) return true;
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, enemy.x, enemy.y);
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        this.y,
+        enemy.x,
+        enemy.y,
+      );
       if (dist <= this.hitRadius + (enemy.config?.size || 20) / 2) {
         enemy.takeDamage(damage, false);
         // 命中粒子（统一走 FXManager）
@@ -181,8 +209,10 @@ export class Drone extends Phaser.Physics.Arcade.Sprite {
    */
   private calcDroneDamage(): number {
     const atk = Number(this.player.getStats().attackPower);
-    const attackPower = isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
-    const raw = (this.config.damage * (1 + this.level * 0.2) * attackPower) / 10;
+    const attackPower =
+      isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
+    const raw =
+      (this.config.damage * (1 + this.level * 0.2) * attackPower) / 10;
     return isFinite(raw) && raw > 0 ? raw : this.config.damage;
   }
 

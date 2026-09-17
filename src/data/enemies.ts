@@ -1,4 +1,4 @@
-import type { EnemyConfig, EnemyType } from '../types';
+import type { EnemyConfig, EnemyType } from "../types";
 
 /**
  * 敌人配置数据
@@ -6,9 +6,9 @@ import type { EnemyConfig, EnemyType } from '../types';
  */
 export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   normal: {
-    type: 'normal',
-    name: '普通僵尸',
-    texture: 'enemy_normal',
+    type: "normal",
+    name: "普通僵尸",
+    texture: "enemy_normal",
     maxHealth: 30,
     moveSpeed: 60,
     attackPower: 8,
@@ -20,9 +20,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     color: 0x66aa66,
   },
   frost_zombie: {
-    type: 'frost_zombie',
-    name: '霜冻僵尸',
-    texture: 'enemy_normal',
+    type: "frost_zombie",
+    name: "霜冻僵尸",
+    texture: "enemy_normal",
     maxHealth: 38,
     moveSpeed: 78,
     attackPower: 10,
@@ -34,9 +34,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     color: 0x88ccff,
   },
   corrupt_zombie: {
-    type: 'corrupt_zombie',
-    name: '腐化僵尸',
-    texture: 'enemy_normal',
+    type: "corrupt_zombie",
+    name: "腐化僵尸",
+    texture: "enemy_normal",
     maxHealth: 52,
     moveSpeed: 52,
     attackPower: 13,
@@ -48,9 +48,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     color: 0xcc4455,
   },
   fast: {
-    type: 'fast',
-    name: '疾速僵尸',
-    texture: 'enemy_fast',
+    type: "fast",
+    name: "疾速僵尸",
+    texture: "enemy_fast",
     maxHealth: 20,
     moveSpeed: 120,
     attackPower: 6,
@@ -62,9 +62,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     color: 0x6666ff,
   },
   tank: {
-    type: 'tank',
-    name: '重装僵尸',
-    texture: 'enemy_tank',
+    type: "tank",
+    name: "重装僵尸",
+    texture: "enemy_tank",
     maxHealth: 120,
     moveSpeed: 35,
     attackPower: 15,
@@ -76,9 +76,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     color: 0xaa6644,
   },
   ranged: {
-    type: 'ranged',
-    name: '远程僵尸',
-    texture: 'enemy_ranged',
+    type: "ranged",
+    name: "远程僵尸",
+    texture: "enemy_ranged",
     maxHealth: 25,
     moveSpeed: 50,
     attackPower: 10,
@@ -90,9 +90,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     color: 0xaa44aa,
   },
   elite: {
-    type: 'elite',
-    name: '精英僵尸',
-    texture: 'enemy_normal',
+    type: "elite",
+    name: "精英僵尸",
+    texture: "enemy_normal",
     maxHealth: 200,
     moveSpeed: 70,
     attackPower: 20,
@@ -104,9 +104,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     color: 0xffaa00,
   },
   suicider: {
-    type: 'suicider',
-    name: '自爆僵尸',
-    texture: 'enemy_suicider',
+    type: "suicider",
+    name: "自爆僵尸",
+    texture: "enemy_suicider",
     maxHealth: 40,
     moveSpeed: 110,
     attackPower: 25,
@@ -120,9 +120,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     explodeDamage: 30,
   },
   splitter: {
-    type: 'splitter',
-    name: '分裂僵尸',
-    texture: 'enemy_splitter',
+    type: "splitter",
+    name: "分裂僵尸",
+    texture: "enemy_splitter",
     maxHealth: 60,
     moveSpeed: 65,
     attackPower: 10,
@@ -132,12 +132,12 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     scoreReward: 25,
     size: 26,
     color: 0x55ddff,
-    splitInto: { type: 'normal', count: 2 },
+    splitInto: { type: "normal", count: 2 },
   },
   shielded: {
-    type: 'shielded',
-    name: '护盾僵尸',
-    texture: 'enemy_shielded',
+    type: "shielded",
+    name: "护盾僵尸",
+    texture: "enemy_shielded",
     maxHealth: 90,
     moveSpeed: 50,
     attackPower: 12,
@@ -151,9 +151,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   },
   // 召唤怪：保持距离持续召唤小怪，优先击杀断增援
   summoner: {
-    type: 'summoner',
-    name: '召唤师',
-    texture: 'enemy_summoner',
+    type: "summoner",
+    name: "召唤师",
+    texture: "enemy_summoner",
     maxHealth: 60,
     moveSpeed: 42,
     attackPower: 8,
@@ -166,9 +166,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   },
   // 冲锋怪：蓄力预警后高速直线冲撞，撞墙硬直；冲刺接触伤害高
   charger: {
-    type: 'charger',
-    name: '冲锋怪',
-    texture: 'enemy_charger',
+    type: "charger",
+    name: "冲锋怪",
+    texture: "enemy_charger",
     maxHealth: 45,
     moveSpeed: 55,
     attackPower: 18,
@@ -181,9 +181,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   },
   // 治疗怪：缓慢接近，周期性给周围敌人回血，优先击杀
   healer: {
-    type: 'healer',
-    name: '治疗怪',
-    texture: 'enemy_healer',
+    type: "healer",
+    name: "治疗怪",
+    texture: "enemy_healer",
     maxHealth: 35,
     moveSpeed: 46,
     attackPower: 6,
@@ -195,9 +195,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     color: 0x44ee77,
   },
   boss: {
-    type: 'boss',
-    name: '守门巨兽',
-    texture: 'enemy_boss',
+    type: "boss",
+    name: "守门巨兽",
+    texture: "enemy_boss",
     maxHealth: 2000,
     moveSpeed: 45,
     attackPower: 52,
@@ -210,9 +210,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   },
   // 召唤型 Boss（第 2 关）：召唤频繁且多，弹幕稀疏——持续增援压场
   boss_summoner: {
-    type: 'boss',
-    name: '召唤魔像',
-    texture: 'enemy_boss',
+    type: "boss",
+    name: "召唤魔像",
+    texture: "enemy_boss",
     maxHealth: 2600,
     moveSpeed: 40,
     attackPower: 58,
@@ -223,10 +223,10 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     size: 66,
     color: 0xff8800,
     bossTuning: {
-      style: 'summoner',
+      style: "summoner",
       summonCd: 4000,
       summonCount: 3,
-      summonTypes: ['normal', 'fast', 'suicider'],
+      summonTypes: ["normal", "fast", "suicider"],
       ringCd: 3800,
       fanCd: 3400,
       homingCd: 6000,
@@ -236,9 +236,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   },
   // 弹幕型 Boss（第 3 关）：弹幕技能极密、多阶段强化，召唤稀疏——覆盖全场火力网
   boss_barrage: {
-    type: 'boss',
-    name: '弹幕机械',
-    texture: 'enemy_boss',
+    type: "boss",
+    name: "弹幕机械",
+    texture: "enemy_boss",
     maxHealth: 2400,
     moveSpeed: 42,
     attackPower: 62,
@@ -249,7 +249,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
     size: 64,
     color: 0x44aaff,
     bossTuning: {
-      style: 'barrage',
+      style: "barrage",
       ringCd: 1800,
       fanCd: 1600,
       homingCd: 3000,
@@ -263,7 +263,9 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
 };
 
 /** 获取敌人配置 */
-export const getEnemyConfig = (type: EnemyType): EnemyConfig | undefined => ENEMY_CONFIGS[type];
+export const getEnemyConfig = (type: EnemyType): EnemyConfig | undefined =>
+  ENEMY_CONFIGS[type];
 
 /** 获取所有敌人类型 */
-export const getAllEnemyTypes = (): EnemyType[] => Object.keys(ENEMY_CONFIGS) as EnemyType[];
+export const getAllEnemyTypes = (): EnemyType[] =>
+  Object.keys(ENEMY_CONFIGS) as EnemyType[];

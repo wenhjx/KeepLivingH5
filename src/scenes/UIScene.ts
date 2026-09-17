@@ -1,17 +1,17 @@
-import { createUIText } from '../utils/UIText';
-import { UILayout } from '../utils/UILayout';
-import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
-import { GameConfig } from '../game/GameConfig';
-import { HUD } from '../ui/HUD';
-import { VirtualJoystick } from '../ui/VirtualJoystick';
-import { Minimap } from '../ui/Minimap';
-import { InventoryUI } from '../ui/InventoryUI';
-import { GuideManager } from '../systems/GuideManager';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import { Layers } from '../constants/Layers';
+import { createUIText } from "../utils/UIText";
+import { UILayout } from "../utils/UILayout";
+import Phaser from "phaser";
+import { GameManager } from "../game/GameManager";
+import { GameConfig } from "../game/GameConfig";
+import { HUD } from "../ui/HUD";
+import { VirtualJoystick } from "../ui/VirtualJoystick";
+import { Minimap } from "../ui/Minimap";
+import { InventoryUI } from "../ui/InventoryUI";
+import { GuideManager } from "../systems/GuideManager";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import { Layers } from "../constants/Layers";
 
 /**
  * UI 叠加场景
@@ -32,7 +32,7 @@ export class UIScene extends Phaser.Scene {
   private eventUnsubscribers: Array<() => void> = [];
 
   constructor() {
-    super('UIScene');
+    super("UIScene");
   }
 
   create(): void {
@@ -44,7 +44,10 @@ export class UIScene extends Phaser.Scene {
     this.cameras.main.setZoom(z);
     const u = GameConfig.uiScale;
     this.uiRoot = this.add
-      .container((this.scale.width / 2) * (1 - u / z), (this.scale.height / 2) * (1 - u / z))
+      .container(
+        (this.scale.width / 2) * (1 - u / z),
+        (this.scale.height / 2) * (1 - u / z),
+      )
       .setScale(u / z);
     const gm = GameManager.getInstance();
 
@@ -55,7 +58,7 @@ export class UIScene extends Phaser.Scene {
     this.hud = new HUD(this);
 
     // 小地图（左上角，数据驱动：以后新增区域/更大地图自动适配）
-    const gameScene = this.scene.get('GameScene') as any;
+    const gameScene = this.scene.get("GameScene") as any;
     const mapSize = gameScene?.getMapSize?.() || { width: 3000, height: 3000 };
     this.minimap = new Minimap(
       this,
@@ -64,7 +67,7 @@ export class UIScene extends Phaser.Scene {
       160,
       120,
       mapSize.width,
-      mapSize.height
+      mapSize.height,
     );
 
     // 物品栏（右下角，点击或按 1-4 使用消耗品）
@@ -72,9 +75,14 @@ export class UIScene extends Phaser.Scene {
 
     // 移动端显示虚拟摇杆（动态模式：左半屏触碰即在按下处弹出，避免固定位置误触）
     if (gm.isMobile) {
-      this.joystick = new VirtualJoystick(this, 100, this.scale.height - 100, 'dynamic');
+      this.joystick = new VirtualJoystick(
+        this,
+        100,
+        this.scale.height - 100,
+        "dynamic",
+      );
       // 绑定到 GameScene 的输入管理器
-      const gameScene = this.scene.get('GameScene') as any;
+      const gameScene = this.scene.get("GameScene") as any;
       if (gameScene && gameScene.getInputManager) {
         this.joystick.setInputManager(gameScene.getInputManager());
       }
@@ -85,17 +93,17 @@ export class UIScene extends Phaser.Scene {
       this,
       GameConfig.anchorX(this.scale.width - 16, this.scale.width),
       GameConfig.anchorY(16, this.scale.height),
-      '⏸️',
+      "⏸️",
       {
-        fontSize: '20px',
-        backgroundColor: '#1a1a25',
+        fontSize: "20px",
+        backgroundColor: "#1a1a25",
         padding: { left: 10, right: 10, top: 5, bottom: 5 },
-      }
+      },
     )
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true });
 
-    this.pauseButton.on('pointerdown', () => {
+    this.pauseButton.on("pointerdown", () => {
       const gm = GameManager.getInstance();
       const pausing = !gm.isPaused;
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_PAUSE, 0.6);
@@ -108,18 +116,18 @@ export class UIScene extends Phaser.Scene {
         this,
         GameConfig.anchorX(this.scale.width - 64, this.scale.width),
         GameConfig.anchorY(16, this.scale.height),
-        '🛠️',
+        "🛠️",
         {
-          fontSize: '20px',
-          backgroundColor: '#1a1a25',
+          fontSize: "20px",
+          backgroundColor: "#1a1a25",
           padding: { left: 10, right: 10, top: 5, bottom: 5 },
-        }
+        },
       )
         .setOrigin(1, 0)
         .setInteractive({ useHandCursor: true });
 
-      this.debugButton.on('pointerdown', () => {
-        const ds = this.scene.get('DebugScene') as any;
+      this.debugButton.on("pointerdown", () => {
+        const ds = this.scene.get("DebugScene") as any;
         ds?.getDebugPanel?.()?.toggle();
       });
     }
@@ -137,15 +145,16 @@ export class UIScene extends Phaser.Scene {
     // 例外：虚拟摇杆容器独立挂场景根（自身做 zoom 换算 + scrollFactor 0），
     // 移入 uiRoot 会被其 pos+scale 二次变换，导致摇杆渲染位置偏离手指。
     this.children.list.slice().forEach((child) => {
-      if (child !== this.uiRoot && child !== this.joystick?.getContainer()) this.uiRoot.add(child);
+      if (child !== this.uiRoot && child !== this.joystick?.getContainer())
+        this.uiRoot.add(child);
     });
 
     // 本场景晚于 GameScene 启动：开局波次的 wave:start 事件可能在订阅前已发出，
     // 从 GameScene 补取最近一次波次横幅信息显示，保证第 1 波 / 恢复波横幅不丢失
-    const gs = this.scene.get('GameScene') as any;
+    const gs = this.scene.get("GameScene") as any;
     if (gs?.lastWaveBanner) {
       const b = gs.lastWaveBanner as { wave: number; isBoss: boolean };
-      this.showBanner(b.isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${b.wave} 波`, b.isBoss);
+      this.showBanner(b.isBoss ? "⚠ BOSS 来袭 ⚠" : `第 ${b.wave} 波`, b.isBoss);
     }
   }
 
@@ -157,27 +166,30 @@ export class UIScene extends Phaser.Scene {
     this.pauseOverlay.setDepth(Layers.HUD);
 
     // 半透明背景
-    const bg = this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0).setInteractive();
+    const bg = this.add
+      .rectangle(0, 0, width, height, 0x000000, 0.7)
+      .setOrigin(0)
+      .setInteractive();
     this.pauseOverlay.add(bg);
 
     // 暂停文字
-    const title = createUIText(this, width / 2, height / 2 - 60, '游戏暂停', {
-      fontSize: '48px',
-      color: '#ffffff',
-      fontStyle: 'bold',
+    const title = createUIText(this, width / 2, height / 2 - 60, "游戏暂停", {
+      fontSize: "48px",
+      color: "#ffffff",
+      fontStyle: "bold",
     }).setOrigin(0.5);
     this.pauseOverlay.add(title);
 
     // 继续按钮
-    const resumeBtn = createUIText(this, width / 2, height / 2, '继续游戏', {
-      fontSize: '24px',
-      color: '#e0e0e0',
-      backgroundColor: '#1a1a25',
+    const resumeBtn = createUIText(this, width / 2, height / 2, "继续游戏", {
+      fontSize: "24px",
+      color: "#e0e0e0",
+      backgroundColor: "#1a1a25",
       padding: { left: 40, right: 40, top: 12, bottom: 12 },
     })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-    resumeBtn.on('pointerdown', () => {
+    resumeBtn.on("pointerdown", () => {
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
       GameManager.getInstance().setPaused(false);
     });
@@ -186,45 +198,58 @@ export class UIScene extends Phaser.Scene {
     // 玩家属性按钮（暂停时也可查看角色详情，方便移动端无键盘用户）
     // 与"返回主菜单"同级风格保持一致：纯文字、无 emoji、同字号同色
     // 间距由 UILayout 统一管理（60px 中心距，按钮间 20px 留白），新增按钮自动拓展
-    const infoBtn = createUIText(this, width / 2, height / 2 + 60, '玩家属性', {
-      fontSize: '20px',
-      color: '#aaaaaa',
-      backgroundColor: '#1a1a25',
+    const infoBtn = createUIText(this, width / 2, height / 2 + 60, "玩家属性", {
+      fontSize: "20px",
+      color: "#aaaaaa",
+      backgroundColor: "#1a1a25",
       padding: { left: 30, right: 30, top: 10, bottom: 10 },
     })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-    infoBtn.on('pointerdown', () => {
+    infoBtn.on("pointerdown", () => {
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
-      if (this.scene.isActive('PlayerInfoScene')) return;
+      if (this.scene.isActive("PlayerInfoScene")) return;
       // 暂停菜单中打开：prevPaused=true，关闭后回到暂停菜单
-      this.scene.launch('PlayerInfoScene', { prevPaused: GameManager.getInstance().isPaused });
+      this.scene.launch("PlayerInfoScene", {
+        prevPaused: GameManager.getInstance().isPaused,
+      });
     });
     this.pauseOverlay.add(infoBtn);
 
     // 返回主菜单按钮
-    const menuBtn = createUIText(this, width / 2, height / 2 + 120, '返回主菜单', {
-      fontSize: '20px',
-      color: '#aaaaaa',
-      backgroundColor: '#1a1a25',
-      padding: { left: 30, right: 30, top: 10, bottom: 10 },
-    })
+    const menuBtn = createUIText(
+      this,
+      width / 2,
+      height / 2 + 120,
+      "返回主菜单",
+      {
+        fontSize: "20px",
+        color: "#aaaaaa",
+        backgroundColor: "#1a1a25",
+        padding: { left: 30, right: 30, top: 10, bottom: 10 },
+      },
+    )
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-    menuBtn.on('pointerdown', () => {
+    menuBtn.on("pointerdown", () => {
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
       // 存档由 GameScene SHUTDOWN 统一处理（saveRun + exitRun，保留进行中对局）
       // 此处不调用 endRun，否则会 clearSavedRun 导致"继续游戏"失效
-      this.scene.stop('GameScene');
-      this.scene.stop('UIScene');
+      this.scene.stop("GameScene");
+      this.scene.stop("UIScene");
       GameConfig.OVERLAY_SCENES.forEach((k) => this.scene.stop(k));
-      this.scene.start('MainMenuScene', {});
+      this.scene.start("MainMenuScene", {});
     });
     this.pauseOverlay.add(menuBtn);
 
     // 用 UILayout 统一重排三按钮：center 起点 = 屏幕中心，垂直列、60px 中心距
     // 按钮顺序从"继续游戏"开始，逐一自动向下排布（自增长友好）
-    const menuLayout = new UILayout({ x: width / 2, y: height / 2, direction: 'column', spacing: 60 });
+    const menuLayout = new UILayout({
+      x: width / 2,
+      y: height / 2,
+      direction: "column",
+      spacing: 60,
+    });
     menuLayout.placeCentered(resumeBtn);
     menuLayout.placeCentered(infoBtn);
     menuLayout.placeCentered(menuBtn);
@@ -239,14 +264,25 @@ export class UIScene extends Phaser.Scene {
    */
   showBanner(text: string, isBoss: boolean): void {
     this.banner?.destroy();
-    const banner = createUIText(this, this.scale.width * 0.5, this.scale.height * 0.18, text, {
-      fontSize: (isBoss ? 44 : 34) * GameConfig.uiScale + 'px',
-      color: isBoss ? '#ff4444' : '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 4,
-      shadow: { color: isBoss ? '#ff0000' : '#000000', blur: 8, offsetX: 0, offsetY: 2 },
-    })
+    const banner = createUIText(
+      this,
+      this.scale.width * 0.5,
+      this.scale.height * 0.18,
+      text,
+      {
+        fontSize: (isBoss ? 44 : 34) * GameConfig.uiScale + "px",
+        color: isBoss ? "#ff4444" : "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 4,
+        shadow: {
+          color: isBoss ? "#ff0000" : "#000000",
+          blur: 8,
+          offsetX: 0,
+          offsetY: 2,
+        },
+      },
+    )
       .setOrigin(0.5)
       .setAlpha(0)
       .setScale(0.7);
@@ -257,7 +293,7 @@ export class UIScene extends Phaser.Scene {
       alpha: 1,
       scale: 1,
       duration: 260,
-      ease: 'Back.Out',
+      ease: "Back.Out",
       onComplete: () => {
         this.tweens.add({
           targets: banner,
@@ -280,15 +316,22 @@ export class UIScene extends Phaser.Scene {
     sub(
       EventBus.on(EventKeys.GAMESCENE_READY, () => {
         if (!this.joystick) return;
-        const gs = this.scene.get('GameScene') as any;
-        if (gs?.getInputManager) this.joystick.setInputManager(gs.getInputManager());
-      })
+        const gs = this.scene.get("GameScene") as any;
+        if (gs?.getInputManager)
+          this.joystick.setInputManager(gs.getInputManager());
+      }),
     );
 
     sub(
-      EventBus.on(EventKeys.WAVE_START, (d: { wave: number; isBoss: boolean }) => {
-        this.showBanner(d.isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${d.wave} 波`, d.isBoss);
-      })
+      EventBus.on(
+        EventKeys.WAVE_START,
+        (d: { wave: number; isBoss: boolean }) => {
+          this.showBanner(
+            d.isBoss ? "⚠ BOSS 来袭 ⚠" : `第 ${d.wave} 波`,
+            d.isBoss,
+          );
+        },
+      ),
     );
 
     sub(
@@ -296,49 +339,49 @@ export class UIScene extends Phaser.Scene {
         // 模态场景打开时（商店/武器强化/通关结算/突破奖励），暂停覆盖层不显示——
         // 这些场景自带半透明背景，否则会与"游戏暂停/继续游戏"文字重叠
         const modalOpen =
-          this.scene.isActive('ShopScene') ||
-          this.scene.isActive('WeaponSelectScene') ||
-          this.scene.isActive('EndlessChoiceScene') ||
-          this.scene.isActive('BreakthroughScene');
+          this.scene.isActive("ShopScene") ||
+          this.scene.isActive("WeaponSelectScene") ||
+          this.scene.isActive("EndlessChoiceScene") ||
+          this.scene.isActive("BreakthroughScene");
         this.pauseOverlay.setVisible(paused && !modalOpen);
         this.pauseButton.setVisible(!paused);
-      })
+      }),
     );
 
     sub(
       EventBus.on(EventKeys.RUN_KILL, () => {
         this.hud.update();
-      })
+      }),
     );
 
     sub(
       EventBus.on(EventKeys.RUN_WAVE, () => {
         this.hud.update();
-      })
+      }),
     );
 
     sub(
       EventBus.on(EventKeys.PLAYER_DAMAGE, () => {
         this.hud.updateHealth();
-      })
+      }),
     );
 
     sub(
       EventBus.on(EventKeys.PLAYER_HEAL, () => {
         this.hud.updateHealth();
-      })
+      }),
     );
 
     sub(
       EventBus.on(EventKeys.PLAYER_LEVELUP, () => {
         this.hud.updateLevel();
-      })
+      }),
     );
 
     sub(
       EventBus.on(EventKeys.PLAYER_OVERFLOW, () => {
         this.hud.updateLevel();
-      })
+      }),
     );
 
     // 场景关闭时清理所有 EventBus 监听器 + 销毁物品栏（其内部监听/Text 一并释放）
@@ -354,13 +397,13 @@ export class UIScene extends Phaser.Scene {
     this.hud.update();
 
     // 每帧更新小地图（玩家/敌人/Boss/地形）
-    const gameScene = this.scene.get('GameScene') as any;
+    const gameScene = this.scene.get("GameScene") as any;
     if (gameScene && this.minimap) {
       this.minimap.update(
         gameScene.getPlayer(),
         gameScene.getEnemies().getChildren(),
         gameScene.getActiveBoss(),
-        gameScene.getTerrainManager()
+        gameScene.getTerrainManager(),
       );
     }
   }

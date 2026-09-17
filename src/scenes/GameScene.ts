@@ -1,26 +1,30 @@
-import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
-import { GameConfig } from '../game/GameConfig';
-import { WEAPONS } from '../data/weapons';
-import { Player } from '../entities/Player';
-import type { Enemy } from '../entities/Enemy';
-import { ObjectPool } from '../systems/ObjectPool';
-import { WaveManager } from '../systems/WaveManager';
-import { InputManager } from '../systems/InputManager';
-import { CollisionSystem } from '../systems/CollisionSystem';
-import { AudioManager } from '../systems/AudioManager';
-import { GuideManager } from '../systems/GuideManager';
-import { DamageTextManager } from '../ui/DamageTextManager';
-import { TerrainManager } from '../systems/TerrainManager';
-import { ModifierSystem } from '../systems/ModifierSystem';
-import { FXManager } from '../systems/FXManager';
-import { getLevelByIndex, type LevelConfig, type QuickStartConfig } from '../data/levels';
-import { getBackgroundByLevelId } from '../data/backgrounds';
-import { UPGRADE_OPTIONS } from '../data/upgrades';
-import { GameFeedback } from '../systems/GameFeedback';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { SOUND_KEYS } from '../data/sounds';
-import type { EnemyConfig, PickupConfig } from '../types';
+import Phaser from "phaser";
+import { GameManager } from "../game/GameManager";
+import { GameConfig } from "../game/GameConfig";
+import { WEAPONS } from "../data/weapons";
+import { Player } from "../entities/Player";
+import type { Enemy } from "../entities/Enemy";
+import { ObjectPool } from "../systems/ObjectPool";
+import { WaveManager } from "../systems/WaveManager";
+import { InputManager } from "../systems/InputManager";
+import { CollisionSystem } from "../systems/CollisionSystem";
+import { AudioManager } from "../systems/AudioManager";
+import { GuideManager } from "../systems/GuideManager";
+import { DamageTextManager } from "../ui/DamageTextManager";
+import { TerrainManager } from "../systems/TerrainManager";
+import { ModifierSystem } from "../systems/ModifierSystem";
+import { FXManager } from "../systems/FXManager";
+import {
+  getLevelByIndex,
+  type LevelConfig,
+  type QuickStartConfig,
+} from "../data/levels";
+import { getBackgroundByLevelId } from "../data/backgrounds";
+import { UPGRADE_OPTIONS } from "../data/upgrades";
+import { GameFeedback } from "../systems/GameFeedback";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { SOUND_KEYS } from "../data/sounds";
+import type { EnemyConfig, PickupConfig } from "../types";
 
 /**
 
@@ -98,7 +102,7 @@ export class GameScene extends Phaser.Scene {
   private aiItemUseTimer = 0;
 
   constructor() {
-    super('GameScene');
+    super("GameScene");
   }
   init(): void {
     const gm = GameManager.getInstance();
@@ -122,8 +126,8 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     // 调试场景常驻保障：DebugScene 只在 BootScene 启动一次，若被意外 stop（如测试操作）
     // 则 ` 键热键与调试面板全部失效；每局开局自动拉起，保证管理员面板永远可用。
-    if (!this.scene.isActive('DebugScene')) {
-      this.scene.launch('DebugScene');
+    if (!this.scene.isActive("DebugScene")) {
+      this.scene.launch("DebugScene");
     }
     // 每局状态重置：Phaser 场景实例复用（scene.start 不重建对象，字段保留上次值），
     // 必须显式清空，否则同页面重开后 endlessMode/victoryTriggered/待弹队列会残留。
@@ -169,12 +173,14 @@ export class GameScene extends Phaser.Scene {
         gm.saveProgress();
       }
     };
-    window.addEventListener('beforeunload', this.beforeUnloadHandler);
+    window.addEventListener("beforeunload", this.beforeUnloadHandler);
     // 演出/反馈层必须先于 startWave 创建：wave:start 事件在 startWave 内发出，
     // 若 GameFeedback 尚未订阅，第 1 波（及继续游戏的恢复波）横幅会静默丢失
     this.gameFeedback = new GameFeedback(this);
     // 启动波次（继续游戏时恢复到存档波次，否则第 1 波）
-    const startWave = this.resumeMode ? (GameManager.getInstance().pendingRun?.wave ?? 1) : 1;
+    const startWave = this.resumeMode
+      ? (GameManager.getInstance().pendingRun?.wave ?? 1)
+      : 1;
     this.waveManager.startWave(startWave);
     // 延迟触发新手引导（等 UIScene 绑定 GuideManager 后）
     // 新手引导仅新游戏触发，恢复模式不弹
@@ -194,7 +200,7 @@ export class GameScene extends Phaser.Scene {
       this.gameFeedback?.destroy();
       // 移除页面卸载前的存档监听
       if (this.beforeUnloadHandler) {
-        window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+        window.removeEventListener("beforeunload", this.beforeUnloadHandler);
         this.beforeUnloadHandler = null;
       }
       const gm = GameManager.getInstance();
@@ -213,46 +219,51 @@ export class GameScene extends Phaser.Scene {
   private triggerTutorial(): void {
     const guide = GuideManager.getInstance();
     // 仅首次进入游戏提示基础操作：localStorage 持久化，之后刷新/重进/新对局都不再弹
-    const SEEN_KEY = 'kl_tutorial_seen_v1';
+    const SEEN_KEY = "kl_tutorial_seen_v1";
     try {
       if (localStorage.getItem(SEEN_KEY)) return;
-      localStorage.setItem(SEEN_KEY, '1');
+      localStorage.setItem(SEEN_KEY, "1");
     } catch {
       // 隐私模式等 localStorage 不可用时忽略持久化（本次仍照常显示）
     }
     const isMobile = GameManager.getInstance().isMobile;
-    const moveDesc = isMobile ? '拖动左侧虚拟摇杆控制角色移动' : '按 W A S D 或方向键控制角色移动';
+    const moveDesc = isMobile
+      ? "拖动左侧虚拟摇杆控制角色移动"
+      : "按 W A S D 或方向键控制角色移动";
     guide.queueAll([
       {
-        title: '移动',
+        title: "移动",
         description: moveDesc,
-        icon: '🎮',
+        icon: "🎮",
         color: 0x00ffff,
-        position: 'top-right',
+        position: "top-right",
         duration: 3500,
       },
       {
-        title: '自动攻击',
-        description: '武器会自动瞄准最近的敌人发射子弹\n你只需要走位躲避，无需手动攻击',
-        icon: '⚔️',
+        title: "自动攻击",
+        description:
+          "武器会自动瞄准最近的敌人发射子弹\n你只需要走位躲避，无需手动攻击",
+        icon: "⚔️",
         color: 0xff6b35,
-        position: 'top-right',
+        position: "top-right",
         duration: 3500,
       },
       {
-        title: '经验与升级',
-        description: '击杀敌人掉落经验宝石，走过去自动拾取\n升级后可选择新武器或属性强化',
-        icon: '⬆️',
+        title: "经验与升级",
+        description:
+          "击杀敌人掉落经验宝石，走过去自动拾取\n升级后可选择新武器或属性强化",
+        icon: "⬆️",
         color: 0xffb347,
-        position: 'top-right',
+        position: "top-right",
         duration: 3500,
       },
       {
-        title: '生存目标',
-        description: '波次每30秒推进，敌人越来越强\n每5波出现Boss，尽可能存活更久！\n按 ESC 可暂停游戏',
-        icon: '💀',
+        title: "生存目标",
+        description:
+          "波次每30秒推进，敌人越来越强\n每5波出现Boss，尽可能存活更久！\n按 ESC 可暂停游戏",
+        icon: "💀",
         color: 0xff4466,
-        position: 'top-right',
+        position: "top-right",
         duration: 6000,
       },
     ]);
@@ -264,7 +275,9 @@ export class GameScene extends Phaser.Scene {
     // 输入管理
     this.inputManager = new InputManager(this);
     // 当前关卡配置（数据驱动）
-    this.levelConfig = getLevelByIndex(GameManager.getInstance().currentLevelIndex);
+    this.levelConfig = getLevelByIndex(
+      GameManager.getInstance().currentLevelIndex,
+    );
     // 波次管理（消费关卡配置：敌人构成 / Boss 类型 / 数值倍率）
     this.waveManager = new WaveManager(this, this.objectPool, this.levelConfig);
     // 碰撞系统
@@ -302,14 +315,15 @@ export class GameScene extends Phaser.Scene {
 
   private drawBackground(): void {
     const cfg = getBackgroundByLevelId(this.levelConfig.id);
-    const isPixel = GameConfig.VISUAL_THEME === 'pixel';
+    const isPixel = GameConfig.VISUAL_THEME === "pixel";
     const graphics = this.add.graphics();
     // 底色
     graphics.fillStyle(cfg.baseColor, 1);
     graphics.fillRect(0, 0, this.mapWidth, this.mapHeight);
     // 固定种子（关卡 id 哈希）
     let seed = 0;
-    for (let i = 0; i < cfg.id.length; i++) seed = (seed * 31 + cfg.id.charCodeAt(i)) >>> 0;
+    for (let i = 0; i < cfg.id.length; i++)
+      seed = (seed * 31 + cfg.id.charCodeAt(i)) >>> 0;
     const rng = (): number => {
       seed = (seed * 1664525 + 1013904223) >>> 0;
       return seed / 4294967296;
@@ -319,7 +333,10 @@ export class GameScene extends Phaser.Scene {
       const { patchColors, cellSize, detail } = cfg.pixel;
       for (let y = 0; y < this.mapHeight; y += cellSize) {
         for (let x = 0; x < this.mapWidth; x += cellSize) {
-          graphics.fillStyle(patchColors[Math.floor(rng() * patchColors.length)], 1);
+          graphics.fillStyle(
+            patchColors[Math.floor(rng() * patchColors.length)],
+            1,
+          );
           graphics.fillRect(x, y, cellSize, cellSize);
         }
       }
@@ -327,9 +344,16 @@ export class GameScene extends Phaser.Scene {
       for (let i = 0; i < detail.detailCount; i++) {
         const x = Math.floor(rng() * (this.mapWidth / cellSize)) * cellSize;
         const y = Math.floor(rng() * (this.mapHeight / cellSize)) * cellSize;
-        const len = detail.detailLen[0] + rng() * (detail.detailLen[1] - detail.detailLen[0]);
+        const len =
+          detail.detailLen[0] +
+          rng() * (detail.detailLen[1] - detail.detailLen[0]);
         graphics.fillRect(x + cellSize * 0.25, y - len, cellSize * 0.2, len);
-        graphics.fillRect(x + cellSize * 0.55, y - len * 0.6, cellSize * 0.2, len * 0.6);
+        graphics.fillRect(
+          x + cellSize * 0.55,
+          y - len * 0.6,
+          cellSize * 0.2,
+          len * 0.6,
+        );
       }
       graphics.fillStyle(detail.sparkleColor, detail.sparkleAlpha);
       for (let i = 0; i < detail.sparkleCount; i++) {
@@ -344,7 +368,10 @@ export class GameScene extends Phaser.Scene {
     const alphaRange = patchAlpha[1] - patchAlpha[0];
     for (let y = 0; y < this.mapHeight; y += patchSize) {
       for (let x = 0; x < this.mapWidth; x += patchSize) {
-        graphics.fillStyle(patchColors[Math.floor(rng() * patchColors.length)], patchAlpha[0] + rng() * alphaRange);
+        graphics.fillStyle(
+          patchColors[Math.floor(rng() * patchColors.length)],
+          patchAlpha[0] + rng() * alphaRange,
+        );
         graphics.fillRect(x, y, patchSize, patchSize);
       }
     }
@@ -355,12 +382,20 @@ export class GameScene extends Phaser.Scene {
       const y = rng() * this.mapHeight;
       const len = detail.detailLen[0] + rng() * lenRange;
       const bend = (rng() - 0.5) * 3;
-      graphics.lineStyle(1.5, detail.detailColor, detail.detailAlpha[0] + rng() * alphaD);
+      graphics.lineStyle(
+        1.5,
+        detail.detailColor,
+        detail.detailAlpha[0] + rng() * alphaD,
+      );
       graphics.lineBetween(x, y, x + bend, y - len);
     }
     for (let i = 0; i < detail.sparkleCount; i++) {
       graphics.fillStyle(detail.sparkleColor, detail.sparkleAlpha);
-      graphics.fillCircle(rng() * this.mapWidth, rng() * this.mapHeight, detail.sparkleRadius);
+      graphics.fillCircle(
+        rng() * this.mapWidth,
+        rng() * this.mapHeight,
+        detail.sparkleRadius,
+      );
     }
   }
 
@@ -372,7 +407,7 @@ export class GameScene extends Phaser.Scene {
     // 角色配置预留：默认角色与 Player 默认行为一致；未来切换 activeCharacterId 后自动生效
     const charCfg = GameManager.getInstance().getActiveCharacter();
     if (charCfg) {
-      if (charCfg.starterWeapon && charCfg.starterWeapon !== 'default_gun') {
+      if (charCfg.starterWeapon && charCfg.starterWeapon !== "default_gun") {
         const wpn = WEAPONS[charCfg.starterWeapon];
         if (wpn) this.player.addWeapon(wpn);
       }
@@ -395,7 +430,12 @@ export class GameScene extends Phaser.Scene {
     this.pickups = this.physics.add.group();
     this.particles = this.add.group();
     // 将对象池与组关联
-    this.objectPool.setGroups(this.enemies, this.bullets, this.pickups, this.particles);
+    this.objectPool.setGroups(
+      this.enemies,
+      this.bullets,
+      this.pickups,
+      this.particles,
+    );
     // 继续游戏 / 跨关继承：恢复玩家状态（等级/武器/被动/属性）
     if (this.resumeMode) {
       const pending = GameManager.getInstance().pendingRun;
@@ -425,8 +465,16 @@ export class GameScene extends Phaser.Scene {
     p.applySavedState({
       stats,
       weapons: qs.weapons ?? [],
-      passives: (qs.passives ?? []).map((x) => ({ id: x.id, name: '', level: x.level })),
-      statUpgrades: (qs.statUpgrades ?? []).map((x) => ({ id: x.id, name: '', level: x.level })),
+      passives: (qs.passives ?? []).map((x) => ({
+        id: x.id,
+        name: "",
+        level: x.level,
+      })),
+      statUpgrades: (qs.statUpgrades ?? []).map((x) => ({
+        id: x.id,
+        name: "",
+        level: x.level,
+      })),
       breakthroughs: [],
       inventory: qs.inventory ?? [],
     });
@@ -437,7 +485,11 @@ export class GameScene extends Phaser.Scene {
         const opt = UPGRADE_OPTIONS.find((u) => u.id === su.id);
         if (opt?.effect?.stat) {
           for (let i = 0; i < su.level; i++) {
-            p.modifyStat(opt.effect.stat, opt.effect.value ?? 0, opt.effect.isPercent ?? false);
+            p.modifyStat(
+              opt.effect.stat,
+              opt.effect.value ?? 0,
+              opt.effect.isPercent ?? false,
+            );
           }
         }
       }
@@ -452,25 +504,28 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(
       this.player,
       this.enemies,
-      (player, enemy) => this.collisionSystem.playerEnemyCollision(player, enemy),
+      (player, enemy) =>
+        this.collisionSystem.playerEnemyCollision(player, enemy),
       undefined,
-      this
+      this,
     );
     // 子弹与敌人碰撞（伤害）
     this.physics.add.overlap(
       this.bullets,
       this.enemies,
-      (bullet, enemy) => this.collisionSystem.bulletEnemyCollision(bullet, enemy),
+      (bullet, enemy) =>
+        this.collisionSystem.bulletEnemyCollision(bullet, enemy),
       undefined,
-      this
+      this,
     );
     // 玩家与拾取物碰撞
     this.physics.add.overlap(
       this.player,
       this.pickups,
-      (player, pickup) => this.collisionSystem.playerPickupCollision(player, pickup),
+      (player, pickup) =>
+        this.collisionSystem.playerPickupCollision(player, pickup),
       undefined,
-      this
+      this,
     );
     // 敌人子弹与玩家碰撞（受伤）
     // 注意：Phaser overlap(sprite, group) 的回调参数顺序为 (sprite, groupChild)，
@@ -478,9 +533,10 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(
       this.player,
       this.bullets,
-      (player, bullet) => this.collisionSystem.enemyBulletPlayerCollision(bullet, player),
+      (player, bullet) =>
+        this.collisionSystem.enemyBulletPlayerCollision(bullet, player),
       undefined,
-      this
+      this,
     );
     // 敌人之间的分离（避免重叠）
     this.physics.add.collider(this.enemies, this.enemies);
@@ -490,34 +546,38 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, obstacleGroup);
     this.physics.add.collider(this.enemies, obstacleGroup);
     // 子弹碰到障碍物：可破坏木箱扣血（血空销毁并掉落），不可破坏的销毁（爆炸子弹先爆炸）
-    this.physics.add.overlap(this.bullets, obstacleGroup, (bullet, obstacle) => {
-      const b = bullet as any;
-      const obs = obstacle as Phaser.GameObjects.Image;
-      // 可破坏障碍物（木箱）：受击扣血，血空销毁并掉落奖励
-      if (obs.getData?.('destructible')) {
-        const dmg = b.getDamage?.() ?? b.damage ?? 1;
-        const destroyed = this.terrainManager.damageObstacle(obs, dmg);
-        if (destroyed) {
-          this.dropCrateLoot(obs.x, obs.y);
-        } else {
-          // 受击反馈：白闪
-          obs.setTintFill(0xffffff);
-          this.time.delayedCall(60, () => obs.clearTint());
+    this.physics.add.overlap(
+      this.bullets,
+      obstacleGroup,
+      (bullet, obstacle) => {
+        const b = bullet as any;
+        const obs = obstacle as Phaser.GameObjects.Image;
+        // 可破坏障碍物（木箱）：受击扣血，血空销毁并掉落奖励
+        if (obs.getData?.("destructible")) {
+          const dmg = b.getDamage?.() ?? b.damage ?? 1;
+          const destroyed = this.terrainManager.damageObstacle(obs, dmg);
+          if (destroyed) {
+            this.dropCrateLoot(obs.x, obs.y);
+          } else {
+            // 受击反馈：白闪
+            obs.setTintFill(0xffffff);
+            this.time.delayedCall(60, () => obs.clearTint());
+          }
+          b.despawn?.();
+          return;
+        }
+        // 不可破坏障碍物：原逻辑
+        if (b.explosive) {
+          EventBus.emit(EventKeys.BULLET_EXPLODE, {
+            x: b.x,
+            y: b.y,
+            damage: b.damage,
+            radius: b.aoeRadius || 80,
+          });
         }
         b.despawn?.();
-        return;
-      }
-      // 不可破坏障碍物：原逻辑
-      if (b.explosive) {
-        EventBus.emit(EventKeys.BULLET_EXPLODE, {
-          x: b.x,
-          y: b.y,
-          damage: b.damage,
-          radius: b.aoeRadius || 80,
-        });
-      }
-      b.despawn?.();
-    });
+      },
+    );
   }
 
   private setupCamera(): void {
@@ -536,16 +596,16 @@ export class GameScene extends Phaser.Scene {
       EventBus.on(EventKeys.PLAYER_REVIVE, () => {
         this.handleExplosion(this.player.x, this.player.y, 9999, 400);
         this.cameras.main.shake(200, 0.006);
-      })
+      }),
     );
     // 玩家升级：跨多级时排队逐个弹出三选一（避免一次性升级丢失选择机会）
     sub(
       EventBus.on(EventKeys.PLAYER_LEVELUP, (level: number) => {
-        this.audioManager.playSfx('sfx_levelup');
+        this.audioManager.playSfx("sfx_levelup");
         this.fxManager.levelUp(this.player.x, this.player.y);
         this.pendingLevelUps++;
         this.showNextUpgrade();
-      })
+      }),
     );
     // 一次升级选择完成，继续弹出剩余待选升级；全部选完后若 Boss 战前商店待开则弹出
     sub(
@@ -562,7 +622,7 @@ export class GameScene extends Phaser.Scene {
             this.tryOpenWeaponSelect();
           });
         }
-      })
+      }),
     );
     // 商店关闭：若还有武器强化排队则优先补开（防御并发），否则若之前是为 Boss 波
     // 开的（战前补给），则开始该 Boss 波
@@ -577,7 +637,7 @@ export class GameScene extends Phaser.Scene {
           this.pendingBossWave = 0;
           this.waveManager.startWave(wave);
         }
-      })
+      }),
     );
     // 武器强化选择完成：开始之前排队的下一波
     sub(
@@ -587,43 +647,46 @@ export class GameScene extends Phaser.Scene {
           this.pendingWeaponWave = 0;
           this.waveManager.startWave(wave);
         }
-      })
+      }),
     );
     // 通关结算：继续征战 → 进入无尽模式，波次继续增长
     sub(
       EventBus.on(EventKeys.ENDLESSCHOICE_CONTINUE, () => {
         const gm = GameManager.getInstance();
         gm.setPaused(false);
-        this.scene.stop('EndlessChoiceScene');
+        this.scene.stop("EndlessChoiceScene");
         this.enterEndlessMode();
         this.waveManager.startWave(this.waveManager.getCurrentWave() + 1);
-      })
+      }),
     );
     // 通关结算：结束征程 → 结算胜利
     sub(
       EventBus.on(EventKeys.ENDLESSCHOICE_END, () => {
         GameManager.getInstance().setPaused(false);
-        this.scene.stop('EndlessChoiceScene');
+        this.scene.stop("EndlessChoiceScene");
         this.triggerVictory();
-      })
+      }),
     );
     // 关卡化：进入下一关 → 跨关继承 build 并重启（地形/波次/规则全部按新关配置重建）
     sub(
       EventBus.on(EventKeys.ENDLESSCHOICE_NEXTLEVEL, () => {
         const gm = GameManager.getInstance();
         gm.setPaused(false);
-        this.scene.stop('EndlessChoiceScene');
+        this.scene.stop("EndlessChoiceScene");
         // 收纳全场未拾取战利品（等价自动拾取入账），避免掉落物随区域切换直接消失
         this.collectAllDrops();
         gm.advanceToNextLevel(this.player);
-        this.scene.start('GameScene');
-      })
+        this.scene.start("GameScene");
+      }),
     );
     // 子弹爆炸（火箭筒等）：范围伤害 + 视觉效果
     sub(
-      EventBus.on(EventKeys.BULLET_EXPLODE, (data: { x: number; y: number; damage: number; radius: number }) => {
-        this.handleExplosion(data.x, data.y, data.damage, data.radius);
-      })
+      EventBus.on(
+        EventKeys.BULLET_EXPLODE,
+        (data: { x: number; y: number; damage: number; radius: number }) => {
+          this.handleExplosion(data.x, data.y, data.damage, data.radius);
+        },
+      ),
     );
     // Boss 唯一引用（供 HUD 顶部大血条使用）
     sub(
@@ -632,18 +695,18 @@ export class GameScene extends Phaser.Scene {
           this.activeBoss = enemy;
           this.playBossEntrance(enemy);
         }
-      })
+      }),
     );
     sub(
       EventBus.on(EventKeys.ENEMY_DEATH, (config: EnemyConfig) => {
         // 关卡规则：嗜血（击杀回血）
         this.modifierSystem.onEnemyKilled(this.player);
-        if (config?.type === 'boss') {
+        if (config?.type === "boss") {
           this.activeBoss = null;
           // Boss 战利品：弹出突破奖励（已满级 stat 突破 +1 级）
           this.triggerBreakthrough();
         }
-      })
+      }),
     );
     // 暂停/恢复：同步暂停物理引擎和补间动画
     // （仅 update return 不够，Arcade 物理世界会独立继续运行）
@@ -656,43 +719,48 @@ export class GameScene extends Phaser.Scene {
           this.physics.resume();
           this.tweens.resumeAll();
         }
-      })
+      }),
     );
     // 切后台自动暂停：页面隐藏时若无暂停且未结束则暂停，避免后台空跑/击杀数不同步
-    document.addEventListener('visibilitychange', () => {
+    document.addEventListener("visibilitychange", () => {
       const gm = GameManager.getInstance();
       if (document.hidden && !gm.isPaused && !gm.isGameOver) {
         gm.setPaused(true);
       }
     });
     // 暂停切换
-    this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => {
-      const gm = GameManager.getInstance();
-      gm.setPaused(!gm.isPaused);
-    });
+    this.input.keyboard
+      ?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC)
+      .on("down", () => {
+        const gm = GameManager.getInstance();
+        gm.setPaused(!gm.isPaused);
+      });
     // 按 C 打开/关闭玩家属性面板（二游式角色详情）
     // 注意：UIScene/PlayerInfoScene 的键盘监听不生效，统一放在 GameScene（与 ESC 一致）
-    this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.C).on('down', () => {
-      const gm = GameManager.getInstance();
-      if (gm.isGameOver) return;
-      if (this.scene.isActive('PlayerInfoScene')) {
-        // 已打开 → 关闭（恢复打开前的暂停状态）
-        const pi = this.scene.get('PlayerInfoScene') as any;
-        pi?.closePanel?.();
-        return;
-      }
-      if (
-        this.scene.isActive('UpgradeScene') ||
-        this.scene.isActive('ShopScene') ||
-        this.scene.isActive('WeaponSelectScene') ||
-        this.scene.isActive('BreakthroughScene')
-      )
-        return;
-      AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
-      const prevPaused = gm.isPaused; // 记录打开前状态，供关闭时恢复
-      gm.setPaused(true);
-      this.scene.launch('PlayerInfoScene', { prevPaused });
-    });
+    this.input.keyboard
+      ?.addKey(Phaser.Input.Keyboard.KeyCodes.C)
+      .on("down", () => {
+        const gm = GameManager.getInstance();
+        if (gm.isGameOver) return;
+        if (this.scene.isActive("PlayerInfoScene")) {
+          // 已打开 → 关闭（恢复打开前的暂停状态）
+          const pi = this.scene.get("PlayerInfoScene") as any;
+          pi?.closePanel?.();
+          return;
+        }
+        if (
+          this.scene.isActive("UpgradeScene") ||
+          this.scene.isActive("ShopScene") ||
+          this.scene.isActive("WeaponSelectScene") ||
+          this.scene.isActive("BreakthroughScene")
+        ) {
+          return;
+        }
+        AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
+        const prevPaused = gm.isPaused; // 记录打开前状态，供关闭时恢复
+        gm.setPaused(true);
+        this.scene.launch("PlayerInfoScene", { prevPaused });
+      });
   }
   /** 查询某点移速系数（HUD 环境状态提示：冰面减速 / 风道加速） */
   getSpeedFactorAt(x: number, y: number): number {
@@ -715,7 +783,10 @@ export class GameScene extends Phaser.Scene {
       this.updateAIItems(d);
     }
     // 地形减速区：按玩家所在区域设置移动倍率（冰原减速区）
-    this.player.movementMultiplier = this.terrainManager.getSpeedFactorAt(this.player.x, this.player.y);
+    this.player.movementMultiplier = this.terrainManager.getSpeedFactorAt(
+      this.player.x,
+      this.player.y,
+    );
     // 关卡特殊规则（霜蚀持续掉血；内部每帧按秒结算）
     this.modifierSystem.update(d, this.player);
     // 更新玩家
@@ -746,8 +817,17 @@ export class GameScene extends Phaser.Scene {
       return true;
     });
     // 接近 Boss 时自动激活商店购买的待生效 buff（护盾/狂暴），避免赶路时浪费持续时间
-    if (this.activeBoss && this.activeBoss.active && this.player.hasPendingBossBuffs()) {
-      const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.activeBoss.x, this.activeBoss.y);
+    if (
+      this.activeBoss &&
+      this.activeBoss.active &&
+      this.player.hasPendingBossBuffs()
+    ) {
+      const dist = Phaser.Math.Distance.Between(
+        this.player.x,
+        this.player.y,
+        this.activeBoss.x,
+        this.activeBoss.y,
+      );
       if (dist < 450) {
         this.player.triggerPendingBossBuffs();
       }
@@ -796,8 +876,8 @@ export class GameScene extends Phaser.Scene {
     });
     // 延迟切换到结算场景（等消散动画播完）
     this.time.delayedCall(1500, () => {
-      this.scene.stop('UIScene');
-      this.scene.start('GameOverScene');
+      this.scene.stop("UIScene");
+      this.scene.start("GameOverScene");
     });
   }
   /** 训练场原地复活：满血 + 短无敌 + 复位到地图中心 + 清空半径 300 内敌人 */
@@ -832,8 +912,8 @@ export class GameScene extends Phaser.Scene {
     // 胜利庆祝特效：金色粒子向上升腾 + 双环扩散
     this.fxManager.victory(this.player.x, this.player.y);
     this.time.delayedCall(1500, () => {
-      this.scene.stop('UIScene');
-      this.scene.start('GameOverScene', { mode: 'victory' });
+      this.scene.stop("UIScene");
+      this.scene.start("GameOverScene", { mode: "victory" });
     });
   }
   /**
@@ -867,7 +947,12 @@ export class GameScene extends Phaser.Scene {
     const bodies = this.physics.world.bodies.entries;
     for (let i = 0; i < bodies.length; i++) {
       const b = bodies[i] as any;
-      if (b && b.enable && b.moves && (b.velocity.x !== 0 || b.velocity.y !== 0)) {
+      if (
+        b &&
+        b.enable &&
+        b.moves &&
+        (b.velocity.x !== 0 || b.velocity.y !== 0)
+      ) {
         b.velocity.x *= this.gameSpeed;
         b.velocity.y *= this.gameSpeed;
       }
@@ -901,11 +986,11 @@ export class GameScene extends Phaser.Scene {
     // 其他模态（如 15 波 Boss 死亡弹出的突破奖励/升级三选一/商店）正在打开 → 延迟重试，
     // 而不是直接 return 吞掉窗口：否则玩家会卡在无怪地图上永远等不到通关结算
     if (
-      this.scene.isActive('UpgradeScene') ||
-      this.scene.isActive('ShopScene') ||
-      this.scene.isActive('WeaponSelectScene') ||
-      this.scene.isActive('BreakthroughScene') ||
-      this.scene.isActive('EndlessChoiceScene')
+      this.scene.isActive("UpgradeScene") ||
+      this.scene.isActive("ShopScene") ||
+      this.scene.isActive("WeaponSelectScene") ||
+      this.scene.isActive("BreakthroughScene") ||
+      this.scene.isActive("EndlessChoiceScene")
     ) {
       if (!this._endlessChoiceRetry) {
         this._endlessChoiceRetry = true;
@@ -919,14 +1004,19 @@ export class GameScene extends Phaser.Scene {
     // 先启动结算场景，再延迟一帧暂停：scene.launch 的场景要到下一帧才真正 RUNNING
     //（isActive 才为 true）。若立即 setPaused(true)，run:pause 触发时 UIScene 识别不到
     // 模态场景，暂停覆盖层会与结算面板重叠显示"游戏暂停/继续游戏"。
-    this.scene.launch('EndlessChoiceScene');
+    this.scene.launch("EndlessChoiceScene");
     this.time.delayedCall(0, () => gm.setPaused(true));
   }
   /**
    * 处理爆炸：范围伤害 + 视觉效果
    */
 
-  private handleExplosion(x: number, y: number, damage: number, radius: number): void {
+  private handleExplosion(
+    x: number,
+    y: number,
+    damage: number,
+    radius: number,
+  ): void {
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_EXPLOSION, 1);
     // 对范围内敌人造成伤害
     this.enemies.children.each((enemy: any) => {
@@ -950,10 +1040,10 @@ export class GameScene extends Phaser.Scene {
 
   private showNextUpgrade(): void {
     if (this.pendingLevelUps <= 0 || this.upgradeQueued) return;
-    if (this.scene.isActive('UpgradeScene')) return;
+    if (this.scene.isActive("UpgradeScene")) return;
     this.upgradeQueued = true;
     GameManager.getInstance().setPaused(true);
-    this.scene.launch('UpgradeScene');
+    this.scene.launch("UpgradeScene");
   }
   /**
    * 弹出神秘商店（若 Boss 战前待开且当前无升级/商店在显示中）
@@ -964,23 +1054,24 @@ export class GameScene extends Phaser.Scene {
     if (!this.pendingShop) return;
     if (this.pendingLevelUps > 0 || this.upgradeQueued) return;
     if (
-      this.scene.isActive('UpgradeScene') ||
-      this.scene.isActive('ShopScene') ||
-      this.scene.isActive('WeaponSelectScene')
-    )
+      this.scene.isActive("UpgradeScene") ||
+      this.scene.isActive("ShopScene") ||
+      this.scene.isActive("WeaponSelectScene")
+    ) {
       return;
+    }
     const gm = GameManager.getInstance();
     if (gm.isGameOver) return;
     this.pendingShop = false;
     gm.setPaused(true);
-    this.scene.launch('ShopScene');
+    this.scene.launch("ShopScene");
   }
   /**
    * Boss 战前补给点：商店关闭后开始指定 Boss 波
    * 由 WaveManager 在进入 Boss 波前调用
    */
   openShopBeforeBoss(wave: number): void {
-    if (this.scene.isActive('ShopScene')) return;
+    if (this.scene.isActive("ShopScene")) return;
     this.pendingShop = true;
     this.pendingBossWave = wave;
     this.tryOpenShop();
@@ -990,7 +1081,9 @@ export class GameScene extends Phaser.Scene {
    * 由 WaveManager 在 Boss 波结束后调用；全部武器已满级则直接进入下一波。
    */
   openWeaponSelectAfterBoss(wave: number): void {
-    const anyLeft = Object.values(WEAPONS).some((w) => !this.player.isWeaponMaxLevel(w.id));
+    const anyLeft = Object.values(WEAPONS).some(
+      (w) => !this.player.isWeaponMaxLevel(w.id),
+    );
     if (!anyLeft) {
       this.waveManager.startWave(wave);
       return;
@@ -1005,17 +1098,18 @@ export class GameScene extends Phaser.Scene {
     if (!this.pendingWeaponSelect) return;
     if (this.pendingLevelUps > 0 || this.upgradeQueued) return;
     if (
-      this.scene.isActive('UpgradeScene') ||
-      this.scene.isActive('ShopScene') ||
-      this.scene.isActive('WeaponSelectScene') ||
-      this.scene.isActive('BreakthroughScene')
-    )
+      this.scene.isActive("UpgradeScene") ||
+      this.scene.isActive("ShopScene") ||
+      this.scene.isActive("WeaponSelectScene") ||
+      this.scene.isActive("BreakthroughScene")
+    ) {
       return;
+    }
     const gm = GameManager.getInstance();
     if (gm.isGameOver) return;
     this.pendingWeaponSelect = false;
     gm.setPaused(true);
-    this.scene.launch('WeaponSelectScene');
+    this.scene.launch("WeaponSelectScene");
   }
   /**
    * Boss 死亡 → 弹出突破奖励（从已满级 stat 中选一个突破 +1 级）。
@@ -1028,25 +1122,36 @@ export class GameScene extends Phaser.Scene {
       const gm = GameManager.getInstance();
       if (gm.isGameOver) return;
       if (
-        this.scene.isActive('UpgradeScene') ||
-        this.scene.isActive('ShopScene') ||
-        this.scene.isActive('WeaponSelectScene') ||
-        this.scene.isActive('BreakthroughScene')
-      )
+        this.scene.isActive("UpgradeScene") ||
+        this.scene.isActive("ShopScene") ||
+        this.scene.isActive("WeaponSelectScene") ||
+        this.scene.isActive("BreakthroughScene")
+      ) {
         return;
+      }
       if (this.pendingLevelUps > 0 || this.upgradeQueued) return;
       const available = this.player.getAvailableBreakthroughs?.();
       if (!available || available.length === 0) return;
       gm.setPaused(true);
-      this.scene.launch('BreakthroughScene');
+      this.scene.launch("BreakthroughScene");
     });
   }
   /** 弹出浮动伤害数字（供碰撞系统调用） */
-  spawnDamageText(x: number, y: number, damage: number, isCrit: boolean = false): void {
+  spawnDamageText(
+    x: number,
+    y: number,
+    damage: number,
+    isCrit: boolean = false,
+  ): void {
     this.damageTextManager?.show(x, y, damage, isCrit);
   }
   /** 事件飘字（宝箱/商店等文本提示），支持自定义颜色 */
-  spawnEventText(x: number, y: number, text: string, color: string = '#ffffff'): void {
+  spawnEventText(
+    x: number,
+    y: number,
+    text: string,
+    color: string = "#ffffff",
+  ): void {
     this.damageTextManager?.showText(x, y, text, color);
   }
   /**
@@ -1057,8 +1162,8 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.shake(300, 0.008);
     // Boss 来袭横幅交由 UIScene 显示（UIScene 场景根，任何窗口比例下稳定；GameScene 滚动相机下横幅渲染不可靠）
     const cfg = (boss as any).config as EnemyConfig | undefined;
-    const name = cfg?.name ?? 'BOSS';
-    (this.scene.get('UIScene') as any)?.showBanner?.(`⚠ ${name} 来袭`, true);
+    const name = cfg?.name ?? "BOSS";
+    (this.scene.get("UIScene") as any)?.showBanner?.(`⚠ ${name} 来袭`, true);
   }
   /** 当前唯一的 Boss（无则 null，供 HUD 顶部血条使用） */
   getActiveBoss(): Enemy | null {
@@ -1110,7 +1215,7 @@ export class GameScene extends Phaser.Scene {
       // 对当前已弹出的选择界面（升级/商店/武器强化/突破/无尽）即时广播托管开启。
       // 各选择场景只在 create 时检查一次托管状态，若"先弹出选择界面、后开托管"会卡住。
       this.scene.manager.getScenes(true).forEach((sc) => {
-        if (sc !== this && typeof (sc as any).triggerAutoPlay === 'function') {
+        if (sc !== this && typeof (sc as any).triggerAutoPlay === "function") {
           (sc as any).triggerAutoPlay();
         }
       });
@@ -1251,7 +1356,12 @@ export class GameScene extends Phaser.Scene {
    * 让 AI 沿墙滑动绕行而非顶着墙蹭。四周都被堵（被包围）时保持原方向交给物理系统处理。
    */
 
-  private avoidWall(px: number, py: number, nx: number, ny: number): { x: number; y: number } {
+  private avoidWall(
+    px: number,
+    py: number,
+    nx: number,
+    ny: number,
+  ): { x: number; y: number } {
     const PROBE = 56; // 探测距离：大于玩家半宽 + 余量，表示"前方这么远是否被挡"
     if (!this.isPositionBlocked(px + nx * PROBE, py + ny * PROBE)) {
       return { x: nx, y: ny };
@@ -1272,7 +1382,10 @@ export class GameScene extends Phaser.Scene {
 
   private isPositionBlocked(x: number, y: number): boolean {
     const R = 22;
-    return this.physics.overlapRect(x - R, y - R, R * 2, R * 2, false, true).length > 0;
+    return (
+      this.physics.overlapRect(x - R, y - R, R * 2, R * 2, false, true).length >
+      0
+    );
   }
   /** 获取最近敌人距离 */
   /** 获取最近敌人距离 */
@@ -1304,13 +1417,13 @@ export class GameScene extends Phaser.Scene {
     const hpRatio = this.player.getHealth() / this.player.getMaxHealth();
     const nearestDist = this.getNearestEnemyDist();
     // 1. 血量 < 40% 且有血包 → 回血
-    if (hpRatio < 0.4 && has('heal')) {
-      this.player.useItem('heal', this);
+    if (hpRatio < 0.4 && has("heal")) {
+      this.player.useItem("heal", this);
       return;
     }
     // 2. 敌人贴近（< 110px）且有护盾且未开盾 → 开盾
-    if (nearestDist < 110 && has('shield') && !this.player.isShieldActive()) {
-      this.player.useItem('shield', this);
+    if (nearestDist < 110 && has("shield") && !this.player.isShieldActive()) {
+      this.player.useItem("shield", this);
       return;
     }
     // 3. 被大量敌人包围（200px 内 ≥ 6 个）→ 炸弹清屏
@@ -1322,13 +1435,13 @@ export class GameScene extends Phaser.Scene {
       if (dx * dx + dy * dy < 200 * 200) nearbyCount++;
       return true;
     });
-    if (nearbyCount >= 6 && has('bomb')) {
-      this.player.useItem('bomb', this);
+    if (nearbyCount >= 6 && has("bomb")) {
+      this.player.useItem("bomb", this);
       return;
     }
     // 4. 战斗中（附近 400px 有敌）且有狂暴且未激活 → 开狂暴
-    if (nearestDist < 400 && has('rage') && !this.player.isRageActive()) {
-      this.player.useItem('rage', this);
+    if (nearestDist < 400 && has("rage") && !this.player.isRageActive()) {
+      this.player.useItem("rage", this);
       return;
     }
   }
@@ -1343,7 +1456,8 @@ export class GameScene extends Phaser.Scene {
     this.pickups.children.each((pickup: any) => {
       if (!pickup.active) return true;
       const t = pickup.getType?.();
-      if (t !== 'exp' && t !== 'coin' && t !== 'health' && t !== 'chest') return true;
+      if (t !== "exp" && t !== "coin" && t !== "health" && t !== "chest")
+        return true;
       const dx = pickup.x - this.player.x;
       const dy = pickup.y - this.player.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1381,17 +1495,20 @@ export class GameScene extends Phaser.Scene {
     const player = this.player;
     if (!player || !this.pickups) return;
     this.pickups.getChildren().forEach((p: any) => {
-      if (p?.active && typeof p.collect === 'function') {
+      if (p?.active && typeof p.collect === "function") {
         p.collect(player);
       }
     });
   }
   spawnPickup(config: PickupConfig, x: number, y: number): void {
     // 金币受幸运值影响（掉落量提升，幸运 +10 → 金币 +10%）
-    if (config.type === 'coin' && this.player) {
+    if (config.type === "coin" && this.player) {
       const luck = this.player.getStats().luck || 0;
       if (luck > 0) {
-        config = { ...config, value: Math.max(1, Math.round(config.value * (1 + luck / 100))) };
+        config = {
+          ...config,
+          value: Math.max(1, Math.round(config.value * (1 + luck / 100))),
+        };
       }
     }
     this.objectPool.spawnPickup(config, x, y);
@@ -1401,18 +1518,40 @@ export class GameScene extends Phaser.Scene {
   private dropCrateLoot(x: number, y: number): void {
     if (!this.objectPool) return;
     this.spawnPickup(
-      { type: 'coin', texture: 'pickup_coin', value: 2 + Math.floor(Math.random() * 4), magnetSpeed: 300 },
+      {
+        type: "coin",
+        texture: "pickup_coin",
+        value: 2 + Math.floor(Math.random() * 4),
+        magnetSpeed: 300,
+      },
       x,
-      y
+      y,
     );
     if (Math.random() < 0.4) {
-      this.spawnPickup({ type: 'exp', texture: 'pickup_exp', value: 4, magnetSpeed: 300 }, x + 12, y - 10);
+      this.spawnPickup(
+        { type: "exp", texture: "pickup_exp", value: 4, magnetSpeed: 300 },
+        x + 12,
+        y - 10,
+      );
     }
     if (Math.random() < 0.08) {
-      this.spawnPickup({ type: 'health', texture: 'pickup_health', value: 20, magnetSpeed: 300 }, x - 12, y + 8);
+      this.spawnPickup(
+        {
+          type: "health",
+          texture: "pickup_health",
+          value: 20,
+          magnetSpeed: 300,
+        },
+        x - 12,
+        y + 8,
+      );
     }
     if (Math.random() < 0.05) {
-      this.spawnPickup({ type: 'chest', texture: 'pickup_chest', value: 0, magnetSpeed: 200 }, x + 8, y + 10);
+      this.spawnPickup(
+        { type: "chest", texture: "pickup_chest", value: 0, magnetSpeed: 200 },
+        x + 8,
+        y + 10,
+      );
     }
   }
 }

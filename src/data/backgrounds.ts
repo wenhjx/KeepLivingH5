@@ -61,8 +61,8 @@ export interface BackgroundConfig {
 export const BACKGROUNDS: Record<string, BackgroundConfig> = {
   // ========== 草原：暗色霓虹草地（C 风格，夜晚新手村） ==========
   meadow: {
-    id: 'meadow',
-    name: '草原',
+    id: "meadow",
+    name: "草原",
     baseColor: 0x0e1410,
     classic: {
       patchColors: [0x162318, 0x1a2a1c, 0x13201a, 0x18251b],
@@ -97,8 +97,8 @@ export const BACKGROUNDS: Record<string, BackgroundConfig> = {
 
   // ========== 废墟：暗色碎石地（灰褐 + 暗红余烬光点） ==========
   ruins: {
-    id: 'ruins',
-    name: '废墟',
+    id: "ruins",
+    name: "废墟",
     baseColor: 0x141110,
     classic: {
       patchColors: [0x241c16, 0x1e1814, 0x2a2118, 0x1a1612],
@@ -133,8 +133,8 @@ export const BACKGROUNDS: Record<string, BackgroundConfig> = {
 
   // ========== 冰原：深蓝冰面（冰裂纹 + 蓝白光点） ==========
   tundra: {
-    id: 'tundra',
-    name: '冰原',
+    id: "tundra",
+    name: "冰原",
     baseColor: 0x0e141c,
     classic: {
       patchColors: [0x141f2b, 0x101a24, 0x182636, 0x12202e],
@@ -169,4 +169,5 @@ export const BACKGROUNDS: Record<string, BackgroundConfig> = {
 };
 
 /** 按关卡 id 取背景配置（缺失回退草原，保证新区域不白屏） */
-export const getBackgroundByLevelId = (levelId: string): BackgroundConfig => BACKGROUNDS[levelId] ?? BACKGROUNDS.meadow;
+export const getBackgroundByLevelId = (levelId: string): BackgroundConfig =>
+  BACKGROUNDS[levelId] ?? BACKGROUNDS.meadow;

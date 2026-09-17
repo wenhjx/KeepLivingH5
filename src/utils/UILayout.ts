@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from "phaser";
 
 /**
  * 轻量 UI 布局器（类 UGUI LayoutGroup 的极简版）
@@ -26,7 +26,7 @@ export interface UILayoutConfig {
   x: number;
   y: number;
   /** 主轴方向：'column' 垂直向下 | 'row' 水平向右 */
-  direction?: 'column' | 'row';
+  direction?: "column" | "row";
   /** 相邻子节点主轴间距（不含子节点自身尺寸） */
   spacing?: number;
   /** 固定主轴步长（用于 Container/Graphics 等无法自动测尺寸的对象）；缺省按子对象实际尺寸推进 */
@@ -41,14 +41,14 @@ export type UILayoutTarget = Phaser.GameObjects.GameObject & {
 export class UILayout {
   private cursorX: number;
   private cursorY: number;
-  private direction: 'column' | 'row';
+  private direction: "column" | "row";
   private spacing: number;
   private itemSize?: number;
 
   constructor(cfg: UILayoutConfig) {
     this.cursorX = cfg.x;
     this.cursorY = cfg.y;
-    this.direction = cfg.direction ?? 'column';
+    this.direction = cfg.direction ?? "column";
     this.spacing = cfg.spacing ?? 0;
     this.itemSize = cfg.itemSize;
   }
@@ -76,8 +76,11 @@ export class UILayout {
    * 居中放置：先把对象 origin 设为 (0.5, 0.5)（对象中心落在游标上），再 place。
    * 适合 Text/Sprite/Image 这类交互对象；Container 请用 place + itemSize 保持左上角语义。
    */
-  placeCentered(obj: UILayoutTarget, container?: Phaser.GameObjects.Container): this {
-    if (typeof (obj as any).setOrigin === 'function') {
+  placeCentered(
+    obj: UILayoutTarget,
+    container?: Phaser.GameObjects.Container,
+  ): this {
+    if (typeof (obj as any).setOrigin === "function") {
       (obj as any).setOrigin(0.5, 0.5);
     }
     return this.place(obj, container);
@@ -85,7 +88,7 @@ export class UILayout {
 
   /** 手动沿主轴推进 n 像素（用于分组留白） */
   step(n: number): this {
-    if (this.direction === 'column') this.cursorY += n;
+    if (this.direction === "column") this.cursorY += n;
     else this.cursorX += n;
     return this;
   }
@@ -100,8 +103,9 @@ export class UILayout {
   // ---- 内部 ----
 
   private advance(obj: UILayoutTarget): void {
-    const step = this.itemSize !== undefined ? this.itemSize : this.objMainSize(obj);
-    if (this.direction === 'column') {
+    const step =
+      this.itemSize !== undefined ? this.itemSize : this.objMainSize(obj);
+    if (this.direction === "column") {
       this.cursorY += step + this.spacing;
     } else {
       this.cursorX += step + this.spacing;
@@ -111,9 +115,10 @@ export class UILayout {
   /** 主轴尺寸：column 取高，row 取宽 */
   private objMainSize(obj: UILayoutTarget): number {
     const anyObj = obj as any;
-    const size = this.direction === 'column' ? anyObj.displayHeight : anyObj.displayWidth;
+    const size =
+      this.direction === "column" ? anyObj.displayHeight : anyObj.displayWidth;
     if (size !== undefined && size > 0) return size;
-    const raw = this.direction === 'column' ? anyObj.height : anyObj.width;
+    const raw = this.direction === "column" ? anyObj.height : anyObj.width;
     return raw !== undefined && raw > 0 ? raw : 0;
   }
 }

@@ -1,13 +1,13 @@
-import Phaser from 'phaser';
-import { MathUtils } from '../utils/MathUtils';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import { GameConfig } from '../game/GameConfig';
-import { UPGRADE_OPTIONS } from '../data/upgrades';
-import { applyUpgradeToPlayer } from '../utils/UpgradeApplier';
-import type { PickupConfig, PickupType } from '../types';
-import type { Player } from './Player';
-import { Layers } from '../constants/Layers';
+import Phaser from "phaser";
+import { MathUtils } from "../utils/MathUtils";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import { GameConfig } from "../game/GameConfig";
+import { UPGRADE_OPTIONS } from "../data/upgrades";
+import { applyUpgradeToPlayer } from "../utils/UpgradeApplier";
+import type { PickupConfig, PickupType } from "../types";
+import type { Player } from "./Player";
+import { Layers } from "../constants/Layers";
 
 /**
  * 拾取物实体
@@ -19,7 +19,7 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
   private bobOffset: number = 0;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 0, 0, GameConfig.themeKey('pickup_exp'));
+    super(scene, 0, 0, GameConfig.themeKey("pickup_exp"));
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setActive(false);
@@ -32,7 +32,7 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
     this.bobOffset = Math.random() * Math.PI * 2;
 
     // 拾取物纹理按当前主题解析（classic 用霓虹版）
-    this.setTexture(GameConfig.themeKey(config.texture || 'pickup_exp'));
+    this.setTexture(GameConfig.themeKey(config.texture || "pickup_exp"));
     // 先启用物理体并 reset 到正确位置
     if (this.body) {
       this.body.enable = true;
@@ -44,7 +44,10 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(Layers.PICKUP);
     this.setCircle(12);
     // 碰撞圆以贴图显示中心为圆心（拾取物纹理 26~30px，body 24px，避免偏左上）
-    this.body!.setOffset((this.displayWidth - 24) / 2, (this.displayHeight - 24) / 2);
+    this.body!.setOffset(
+      (this.displayWidth - 24) / 2,
+      (this.displayHeight - 24) / 2,
+    );
     this.setAlpha(1);
 
     // 初始随机散开
@@ -102,19 +105,19 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
     if (!this.active) return;
 
     switch (this.config.type) {
-      case 'exp':
+      case "exp":
         player.addExp(this.config.value);
         AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PICKUP_EXP, 0.5);
         break;
-      case 'health':
+      case "health":
         player.heal(this.config.value);
         AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PICKUP_HEALTH, 0.7);
         break;
-      case 'coin':
+      case "coin":
         player.addCoins(this.config.value);
         AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PICKUP_COIN, 0.6);
         break;
-      case 'chest':
+      case "chest":
         this.openChest(player);
         break;
     }
@@ -136,26 +139,41 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
       // 大金币堆
       const gold = Phaser.Math.Between(150, 400);
       player.addCoins(gold);
-      scene?.spawnEventText?.(player.x, player.y - 30, `+${gold} 金币`, '#ffd700');
+      scene?.spawnEventText?.(
+        player.x,
+        player.y - 30,
+        `+${gold} 金币`,
+        "#ffd700",
+      );
     } else if (roll < 0.6) {
       // 随机升级（未满级项直接应用）
       this.grantRandomUpgrade(player, scene);
     } else if (roll < 0.85) {
       // 消耗品礼包（1-2 个进物品栏）
-      const pool = ['bomb', 'shield', 'rage', 'heal', 'slow', 'magnet'];
+      const pool = ["bomb", "shield", "rage", "heal", "slow", "magnet"];
       const n = Math.random() < 0.5 ? 1 : 2;
-      let label = '';
+      let label = "";
       for (let i = 0; i < n; i++) {
         const id = pool[Math.floor(Math.random() * pool.length)];
         player.addItem(id, 1);
         label += `${id} `;
       }
-      scene?.spawnEventText?.(player.x, player.y - 30, `获得道具 ×${n}`, '#88ff88');
+      scene?.spawnEventText?.(
+        player.x,
+        player.y - 30,
+        `获得道具 ×${n}`,
+        "#88ff88",
+      );
     } else {
       // 大经验
       const exp = Phaser.Math.Between(200, 600);
       player.addExp(exp);
-      scene?.spawnEventText?.(player.x, player.y - 30, `经验 +${exp}`, '#66ccff');
+      scene?.spawnEventText?.(
+        player.x,
+        player.y - 30,
+        `经验 +${exp}`,
+        "#66ccff",
+      );
     }
 
     // 宝箱开启金色冲击波特效
@@ -166,15 +184,31 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
   private grantRandomUpgrade(player: Player, scene: any): void {
     const options = UPGRADE_OPTIONS.slice().sort(() => Math.random() - 0.5);
     for (const opt of options) {
-      if (opt.type === 'weapon' && opt.effect?.weaponId && player.isWeaponMaxLevel?.(opt.effect.weaponId)) continue;
-      if (opt.type === 'passive' && player.isPassiveMaxLevel?.(opt.id)) continue;
-      if (opt.type === 'stat' && opt.maxLevel && (player.getStatUpgradeLevel?.(opt.id) ?? 0) >= opt.maxLevel) continue;
+      if (
+        opt.type === "weapon" &&
+        opt.effect?.weaponId &&
+        player.isWeaponMaxLevel?.(opt.effect.weaponId)
+      )
+        continue;
+      if (opt.type === "passive" && player.isPassiveMaxLevel?.(opt.id))
+        continue;
+      if (
+        opt.type === "stat" &&
+        opt.maxLevel &&
+        (player.getStatUpgradeLevel?.(opt.id) ?? 0) >= opt.maxLevel
+      )
+        continue;
       applyUpgradeToPlayer(player, opt, scene);
-      scene?.spawnEventText?.(player.x, player.y - 30, `${opt.name} +1`, '#88ff88');
+      scene?.spawnEventText?.(
+        player.x,
+        player.y - 30,
+        `${opt.name} +1`,
+        "#88ff88",
+      );
       return;
     }
     player.addCoins(200);
-    scene?.spawnEventText?.(player.x, player.y - 30, '金币 +200', '#ffd700');
+    scene?.spawnEventText?.(player.x, player.y - 30, "金币 +200", "#ffd700");
   }
 
   despawn(): void {
@@ -190,7 +224,7 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
   // ========== Getters ==========
 
   getType(): PickupType {
-    return this.config?.type || 'exp';
+    return this.config?.type || "exp";
   }
 
   getValue(): number {

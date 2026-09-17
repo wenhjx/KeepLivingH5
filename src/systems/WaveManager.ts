@@ -1,16 +1,15 @@
-import Phaser from 'phaser';
-import { GameConfig } from '../game/GameConfig';
-import { GameManager } from '../game/GameManager';
-import { MathUtils } from '../utils/MathUtils';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import type { ObjectPool } from './ObjectPool';
-import type { EnemyConfig, EnemyType } from '../types';
-import { ENEMY_CONFIGS } from '../data/enemies';
-import { waveDifficulty, bossDifficulty } from '../logic/wave';
-import type { LevelConfig } from '../data/levels';
-
+import Phaser from "phaser";
+import { GameConfig } from "../game/GameConfig";
+import { GameManager } from "../game/GameManager";
+import { MathUtils } from "../utils/MathUtils";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import type { ObjectPool } from "./ObjectPool";
+import type { EnemyConfig, EnemyType } from "../types";
+import { ENEMY_CONFIGS } from "../data/enemies";
+import { waveDifficulty, bossDifficulty } from "../logic/wave";
+import type { LevelConfig } from "../data/levels";
 /**
  * 波次管理器
  * 控制怪物波次生成、难度递增、Boss 出现逻辑
@@ -19,7 +18,6 @@ export class WaveManager {
   private scene: Phaser.Scene;
   private objectPool: ObjectPool;
   private levelConfig: LevelConfig;
-
   private currentWave: number = 1;
   private waveTimer: number = 0;
   private spawnTimer: number = 0;
@@ -27,11 +25,13 @@ export class WaveManager {
   private bossActive: boolean = false;
   /** 训练场模式：屏蔽 Boss 波/战前商店/武器强化/通关结算，波次纯净推进（试玩场地使用） */
   trainingMode = false;
-
   // 当前波次的生成表
   private currentSpawnTable: { type: EnemyType; weight: number }[] = [];
-
-  constructor(scene: Phaser.Scene, objectPool: ObjectPool, levelConfig: LevelConfig) {
+  constructor(
+    scene: Phaser.Scene,
+    objectPool: ObjectPool,
+    levelConfig: LevelConfig,
+  ) {
     this.scene = scene;
     this.objectPool = objectPool;
     this.levelConfig = levelConfig;
@@ -49,18 +49,15 @@ export class WaveManager {
     this.spawnTimer = 0;
     this.waveActive = true;
     this.bossActive = false;
-
     GameManager.getInstance().setWave(wave);
-
     // 演出事件：波次开始（GameFeedback 订阅播横幅；纯表现，不影响玩法）
     EventBus.emit(EventKeys.WAVE_START, {
       wave,
-      isBoss: !this.trainingMode && wave % GameConfig.WAVE.bossWaveInterval === 0,
+      isBoss:
+        !this.trainingMode && wave % GameConfig.WAVE.bossWaveInterval === 0,
     });
-
     // 构建生成表
     this.buildSpawnTable(wave);
-
     // Boss 波（训练场屏蔽 Boss）
     if (!this.trainingMode && wave % GameConfig.WAVE.bossWaveInterval === 0) {
       this.spawnBoss();
@@ -71,66 +68,102 @@ export class WaveManager {
   private buildSpawnTable(wave: number): void {
     this.currentSpawnTable = [];
     // 关卡敌人构成覆盖：按敌人类型放大/缩小默认权重
-    const mult = (type: EnemyType): number => this.levelConfig.enemyOverrides?.[type]?.weightMult ?? 1;
-
+    const mult = (type: EnemyType): number =>
+      this.levelConfig.enemyOverrides?.[type]?.weightMult ?? 1;
     // 基础敌人始终出现
-    this.currentSpawnTable.push({ type: 'normal', weight: 100 * mult('normal') });
-
+    this.currentSpawnTable.push({
+      type: "normal",
+      weight: 100 * mult("normal"),
+    });
     // 第2波开始出现快速敌人
     if (wave >= 2) {
-      this.currentSpawnTable.push({ type: 'fast', weight: (30 + wave * 2) * mult('fast') });
+      this.currentSpawnTable.push({
+        type: "fast",
+        weight: (30 + wave * 2) * mult("fast"),
+      });
     }
 
     // 第3波开始出现坦克
     if (wave >= 3) {
-      this.currentSpawnTable.push({ type: 'tank', weight: (15 + wave) * mult('tank') });
+      this.currentSpawnTable.push({
+        type: "tank",
+        weight: (15 + wave) * mult("tank"),
+      });
     }
 
     // 第4波开始出现远程
     if (wave >= 4) {
-      this.currentSpawnTable.push({ type: 'ranged', weight: (10 + wave) * mult('ranged') });
+      this.currentSpawnTable.push({
+        type: "ranged",
+        weight: (10 + wave) * mult("ranged"),
+      });
     }
 
     // 第5波开始出现自爆怪
     if (wave >= 5) {
-      this.currentSpawnTable.push({ type: 'suicider', weight: (12 + wave) * mult('suicider') });
+      this.currentSpawnTable.push({
+        type: "suicider",
+        weight: (12 + wave) * mult("suicider"),
+      });
     }
 
     // 第5波开始出现冲锋怪
     if (wave >= 5) {
-      this.currentSpawnTable.push({ type: 'charger', weight: (8 + wave * 0.6) * mult('charger') });
+      this.currentSpawnTable.push({
+        type: "charger",
+        weight: (8 + wave * 0.6) * mult("charger"),
+      });
     }
 
     // 第6波开始出现召唤师
     if (wave >= 6) {
-      this.currentSpawnTable.push({ type: 'summoner', weight: (6 + wave * 0.5) * mult('summoner') });
+      this.currentSpawnTable.push({
+        type: "summoner",
+        weight: (6 + wave * 0.5) * mult("summoner"),
+      });
     }
 
     // 第7波开始出现治疗怪
     if (wave >= 7) {
-      this.currentSpawnTable.push({ type: 'healer', weight: (6 + wave * 0.4) * mult('healer') });
+      this.currentSpawnTable.push({
+        type: "healer",
+        weight: (6 + wave * 0.4) * mult("healer"),
+      });
     }
 
     // 第7波开始出现护盾怪
     if (wave >= 7) {
-      this.currentSpawnTable.push({ type: 'shielded', weight: (10 + wave * 0.8) * mult('shielded') });
+      this.currentSpawnTable.push({
+        type: "shielded",
+        weight: (10 + wave * 0.8) * mult("shielded"),
+      });
     }
 
     // 第8波开始出现分裂怪
     if (wave >= 8) {
-      this.currentSpawnTable.push({ type: 'splitter', weight: (8 + wave * 0.6) * mult('splitter') });
+      this.currentSpawnTable.push({
+        type: "splitter",
+        weight: (8 + wave * 0.6) * mult("splitter"),
+      });
     }
 
     // 第6波开始出现精英
     if (wave >= 6) {
-      this.currentSpawnTable.push({ type: 'elite', weight: (5 + wave * 0.5) * mult('elite') });
+      this.currentSpawnTable.push({
+        type: "elite",
+        weight: (5 + wave * 0.5) * mult("elite"),
+      });
     }
 
     // 本关独有怪（第 2 波起出现，恒定权重，关卡特色）
     const excl = this.levelConfig.exclusiveEnemies;
     if (excl) {
       for (const [etype, eweight] of Object.entries(excl)) {
-        if (wave >= 2) this.currentSpawnTable.push({ type: etype as EnemyType, weight: eweight });
+        if (wave >= 2)
+          this.currentSpawnTable.push({
+            type: etype as EnemyType,
+            weight: eweight,
+          });
       }
     }
   }
@@ -149,16 +182,13 @@ export class WaveManager {
 
   update(time: number, delta: number): void {
     if (!this.waveActive) return;
-
     this.waveTimer += delta;
     this.spawnTimer += delta;
-
     // 计算当前生成间隔（随波次递减）
     const spawnInterval = Math.max(
       GameConfig.WAVE.spawnIntervalMin,
-      GameConfig.WAVE.spawnIntervalBase - this.currentWave * 50
+      GameConfig.WAVE.spawnIntervalBase - this.currentWave * 50,
     );
-
     // 生成敌人
     if (this.spawnTimer >= spawnInterval) {
       this.spawnTimer = 0;
@@ -175,44 +205,43 @@ export class WaveManager {
   private trySpawnEnemy(): void {
     const gm = GameManager.getInstance();
     const maxEnemies = gm.qualitySettings.maxEnemies;
-
     // 达到同屏上限则不生成
     if (this.objectPool.getActiveEnemyCount() >= maxEnemies) return;
-
     // 选择敌人类型
     const types = this.currentSpawnTable.map((s) => s.type);
     const weights = this.currentSpawnTable.map((s) => s.weight);
     const enemyType = MathUtils.weightedRandom(types, weights);
-
     // 获取配置
     const baseConfig = ENEMY_CONFIGS[enemyType];
     if (!baseConfig) return;
     const config = this.applyLevelTuning(baseConfig);
-
     // 计算生成位置（玩家周围屏幕外）
     const gameScene = this.scene as any;
     const player = gameScene.getPlayer();
     if (!player) return;
-
     const spawnPos = this.getSpawnPosition(player.x, player.y);
     const difficultyMultiplier = waveDifficulty(this.currentWave);
-
-    this.objectPool.spawnEnemy(config, spawnPos.x, spawnPos.y, difficultyMultiplier);
+    this.objectPool.spawnEnemy(
+      config,
+      spawnPos.x,
+      spawnPos.y,
+      difficultyMultiplier,
+    );
   }
 
   /** 计算屏幕外的生成位置 */
-  private getSpawnPosition(playerX: number, playerY: number): { x: number; y: number } {
+  private getSpawnPosition(
+    playerX: number,
+    playerY: number,
+  ): { x: number; y: number } {
     const camera = this.scene.cameras.main;
     const halfW = camera.width / 2 + 100;
     const halfH = camera.height / 2 + 100;
-
     // 在玩家周围圆形区域外生成
     const angle = Math.random() * Math.PI * 2;
     const distance = Math.max(halfW, halfH) + MathUtils.randomRange(50, 150);
-
     let x = playerX + Math.cos(angle) * distance;
     let y = playerY + Math.sin(angle) * distance;
-
     // 限制在地图范围内
     const mapSize = (this.scene as any).getMapSize?.();
     if (mapSize) {
@@ -232,31 +261,39 @@ export class WaveManager {
 
   /** 生成 Boss（类型由关卡 bossType 决定，可做召唤型/弹幕型差异化） */
   private spawnBoss(): void {
-    const baseConfig = ENEMY_CONFIGS[this.levelConfig.bossType ?? 'boss'];
+    const baseConfig = ENEMY_CONFIGS[this.levelConfig.bossType ?? "boss"];
     if (!baseConfig) return;
     const config = this.applyLevelTuning(baseConfig);
-
     const gameScene = this.scene as any;
     const player = gameScene.getPlayer();
     if (!player) return;
-
     const spawnPos = this.getSpawnPosition(player.x, player.y);
     // Boss 按层级指数增长：第5波=×1.0, 第10波=×1.5, 第15波=×2.25...（Boss 波数值保持旧版一致）
     // 档内平滑：1.5^((wave-5)/5) 连续成长，非 Boss 波召唤不再原地踏步；
     // wave1-4 钳制下限 ×1.0（2026-09-10 调平，原 2.2 指数后期天文数字）
-    const difficultyMultiplier = bossDifficulty(this.currentWave, GameConfig.WAVE.bossWaveInterval);
-
-    this.objectPool.spawnEnemy(config, spawnPos.x, spawnPos.y, difficultyMultiplier);
+    const difficultyMultiplier = bossDifficulty(
+      this.currentWave,
+      GameConfig.WAVE.bossWaveInterval,
+    );
+    this.objectPool.spawnEnemy(
+      config,
+      spawnPos.x,
+      spawnPos.y,
+      difficultyMultiplier,
+    );
     this.bossActive = true;
     // 演出事件：Boss 实际生成（GameFeedback 订阅播警报演出；纯表现）
-    EventBus.emit(EventKeys.BOSS_SPAWN, { x: spawnPos.x, y: spawnPos.y, wave: this.currentWave });
+    EventBus.emit(EventKeys.BOSS_SPAWN, {
+      x: spawnPos.x,
+      y: spawnPos.y,
+      wave: this.currentWave,
+    });
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_BOSS_ALERT, 1);
   }
 
   /** 进入下一波 */
   private nextWave(): void {
     this.waveActive = false;
-
     // 通关判定：打完第 victoryWave 波且未进入无尽 → 弹通关结算（继续征战/结束征程）
     // 无尽模式下不拦截，波次继续无限增长，Boss 每 bossWaveInterval 波继续增强
     if (
@@ -279,11 +316,11 @@ export class WaveManager {
     const next = this.currentWave + 1;
     const isBossWave = next % GameConfig.WAVE.bossWaveInterval === 0;
     // 刚打完 Boss 波（当前波是 Boss 波）→ 弹武器强化三选一作为战力成长奖励
-    const justBeatBoss = this.currentWave % GameConfig.WAVE.bossWaveInterval === 0;
+    const justBeatBoss =
+      this.currentWave % GameConfig.WAVE.bossWaveInterval === 0;
     // 前期武器前置：非 Boss 波的第 3、7 波结束也发一次武器强化，
     // 避免玩家前期只有初始武器、干等到第 5/10 波商店/ Boss 才拿到武器（"前期太穷/到十波才有武器"）
     const justWeaponReward = this.currentWave === 3 || this.currentWave === 7;
-
     // 短暂间隔后：Boss 波后→武器强化；前期武器奖励波→武器强化；Boss 波前→战前商店；普通→直接下一波
     this.scene.time.delayedCall(2000, () => {
       // 训练场：跳过商店/武器强化，波次直接推进
@@ -302,7 +339,6 @@ export class WaveManager {
   }
 
   // ========== Getters ==========
-
   getCurrentWave(): number {
     return this.currentWave;
   }

@@ -1,11 +1,11 @@
-import { createUIText } from '../utils/UIText';
-import Phaser from 'phaser';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { USABLE_ITEMS, INVENTORY_ORDER } from '../data/items';
-import { GameManager } from '../game/GameManager';
-import { GameConfig } from '../game/GameConfig';
-import type { Player } from '../entities/Player';
-import { Layers } from '../constants/Layers';
+import { createUIText } from "../utils/UIText";
+import Phaser from "phaser";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { USABLE_ITEMS, INVENTORY_ORDER } from "../data/items";
+import { GameManager } from "../game/GameManager";
+import { GameConfig } from "../game/GameConfig";
+import type { Player } from "../entities/Player";
+import { Layers } from "../constants/Layers";
 
 /**
  * 物品栏 UI
@@ -17,9 +17,9 @@ export class InventoryUI {
   private container: Phaser.GameObjects.Container;
   private slotSize = 46;
   private slotSpacing = 8;
-  private iconSize = '22px';
-  private countSize = '12px';
-  private keySize = '10px';
+  private iconSize = "22px";
+  private countSize = "12px";
+  private keySize = "10px";
   private slots: Array<{
     bg: Phaser.GameObjects.Graphics;
     icon: Phaser.GameObjects.Text;
@@ -33,7 +33,8 @@ export class InventoryUI {
   private reviveCount: Phaser.GameObjects.Text | null = null;
   // 槽位命中矩形（uiRoot 局部坐标 = pointer.x/y），手动坐标判定用
   private slotHitRects: Array<{ index: number; x: number; y: number }> = [];
-  private pointerDownHandler: ((pointer: Phaser.Input.Pointer) => void) | null = null;
+  private pointerDownHandler: ((pointer: Phaser.Input.Pointer) => void) | null =
+    null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -42,9 +43,9 @@ export class InventoryUI {
     if (gm.isMobile) {
       this.slotSize = 62;
       this.slotSpacing = 10;
-      this.iconSize = '30px';
-      this.countSize = '16px';
-      this.keySize = '13px';
+      this.iconSize = "30px";
+      this.countSize = "16px";
+      this.keySize = "13px";
     }
 
     // 加入 UIScene 的反向缩放根容器（uiRoot），保证 960x640 逻辑坐标下视觉位置正确，
@@ -64,14 +65,22 @@ export class InventoryUI {
     //   公式再减 (S/2)(z-1) 属双重补偿，导致槽位整体偏左上 150x100px（2026-09-17 实测）。
     const { width, height } = this.scene.scale;
     const us = GameConfig.uiScale;
-    const totalWidth = (INVENTORY_ORDER.length * this.slotSize + (INVENTORY_ORDER.length - 1) * this.slotSpacing) * us;
-    const startX = GameConfig.anchorX(width - 12 - totalWidth + (this.slotSize * us) / 2, width);
+    const totalWidth =
+      (INVENTORY_ORDER.length * this.slotSize +
+        (INVENTORY_ORDER.length - 1) * this.slotSpacing) *
+      us;
+    const startX = GameConfig.anchorX(
+      width - 12 - totalWidth + (this.slotSize * us) / 2,
+      width,
+    );
     // 移动端：底部被血条+经验条+buff 栏占据（血条中心=height-40、buff 栏在其上），
     // 道具栏上移至 buff 栏上方避免与血条重叠；桌面端血条不伸入右下角，保持贴底 12px。
     // 上移量 124（视觉像素）= 血条半高 15 + buff 栏高 43 + buff 间距 16 + 槽半高 42 + 安全距 8
     // （HUD 底部垂直布局联动，若调整 HUD 需同步此值；2026-09-17 移动端实测血条宽伸至 x≈856 与槽位重叠）。
     const isM = GameManager.getInstance().isMobile;
-    const bottomTargetY = isM ? height - 40 - 124 : height - 12 - (this.slotSize * us) / 2;
+    const bottomTargetY = isM
+      ? height - 40 - 124
+      : height - 12 - (this.slotSize * us) / 2;
     const y = GameConfig.anchorY(bottomTargetY, height);
 
     // 点击判定采用手动坐标检测：先把指针世界坐标转成容器局部坐标再比对，
@@ -82,7 +91,9 @@ export class InventoryUI {
     this.pointerDownHandler = (pointer: Phaser.Input.Pointer) => {
       // 指针世界坐标 → 容器局部坐标（考虑 uiRoot 位置/scale 与相机变换）
       const out = new Phaser.Math.Vector2();
-      this.container.getWorldTransformMatrix().applyInverse(pointer.worldX, pointer.worldY, out);
+      this.container
+        .getWorldTransformMatrix()
+        .applyInverse(pointer.worldX, pointer.worldY, out);
       for (const r of this.slotHitRects) {
         if (
           out.x >= r.x &&
@@ -95,7 +106,7 @@ export class InventoryUI {
         }
       }
     };
-    scene.input.on('pointerdown', this.pointerDownHandler);
+    scene.input.on("pointerdown", this.pointerDownHandler);
 
     INVENTORY_ORDER.forEach((itemId, index) => {
       const x = startX + index * (this.slotSize + this.slotSpacing);
@@ -106,53 +117,92 @@ export class InventoryUI {
     this.createReviveIndicator(startX, y);
 
     // 监听物品栏变化（保存退订函数，场景关闭时移除，避免残留监听访问已销毁对象导致 texture null 崩溃）
-    this.unsubscribe = EventBus.on(EventKeys.PLAYER_INVENTORY_CHANGED, () => this.refresh());
+    this.unsubscribe = EventBus.on(EventKeys.PLAYER_INVENTORY_CHANGED, () =>
+      this.refresh(),
+    );
     // 创建时同步一次玩家当前状态：继续游戏/跨关继承的恢复发生在 UIScene 创建前，
     // 那时的 INVENTORY_CHANGED 事件无人接收会丢失，这里兜底保证物品栏与复活币指示器首帧即正确。
     this.refresh();
 
     // 快捷键 1-6（物品栏槽位数）
-    const keys = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];
+    const keys = ["ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"];
     keys.forEach((key, index) => {
       if (index >= INVENTORY_ORDER.length) return;
       scene.input.keyboard?.on(`keydown-${key}`, () => this.useSlot(index));
     });
   }
 
-  private createSlot(x: number, y: number, itemId: string, index: number): void {
+  private createSlot(
+    x: number,
+    y: number,
+    itemId: string,
+    index: number,
+  ): void {
     const item = USABLE_ITEMS[itemId];
 
     // 槽位背景
     const bg = this.scene.add.graphics();
     bg.fillStyle(0x1a1a25, 0.7);
-    bg.fillRoundedRect(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize, 6);
+    bg.fillRoundedRect(
+      -this.slotSize / 2,
+      -this.slotSize / 2,
+      this.slotSize,
+      this.slotSize,
+      6,
+    );
     bg.lineStyle(2, item.color, 0.5);
-    bg.strokeRoundedRect(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize, 6);
+    bg.strokeRoundedRect(
+      -this.slotSize / 2,
+      -this.slotSize / 2,
+      this.slotSize,
+      this.slotSize,
+      6,
+    );
 
     // 图标（空时灰色）
-    const icon = createUIText(this.scene, 0, 0, item.icon, { fontSize: this.iconSize }).setOrigin(0.5).setAlpha(0.3);
+    const icon = createUIText(this.scene, 0, 0, item.icon, {
+      fontSize: this.iconSize,
+    })
+      .setOrigin(0.5)
+      .setAlpha(0.3);
 
     // 数量角标
-    const count = createUIText(this.scene, this.slotSize / 2 - 4, -this.slotSize / 2 + 4, '', {
-      fontSize: this.countSize,
-      color: '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 3,
-    }).setOrigin(1, 0);
+    const count = createUIText(
+      this.scene,
+      this.slotSize / 2 - 4,
+      -this.slotSize / 2 + 4,
+      "",
+      {
+        fontSize: this.countSize,
+        color: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 3,
+      },
+    ).setOrigin(1, 0);
 
     // 快捷键提示
-    const key = createUIText(this.scene, -this.slotSize / 2 + 4, -this.slotSize / 2 + 2, `${index + 1}`, {
-      fontSize: this.keySize,
-      color: '#888888',
-    }).setOrigin(0, 0);
+    const key = createUIText(
+      this.scene,
+      -this.slotSize / 2 + 4,
+      -this.slotSize / 2 + 2,
+      `${index + 1}`,
+      {
+        fontSize: this.keySize,
+        color: "#888888",
+      },
+    ).setOrigin(0, 0);
 
     const slotContainer = this.scene.add.container(x, y);
     slotContainer.add([bg, icon, count, key]);
     // 注意：不再对槽位 Container setInteractive——嵌套 Container + 父级 scale（uiRoot）
     // 的 hitArea 会命中偏移，点击区域整体偏上。改为全局 pointerdown 手动坐标判定
     // （见 constructor 的 pointerDownHandler / slotHitRects）。
-    this.slotHitRects.push({ index, x: x - this.slotSize / 2, y: y - this.slotSize / 2 });
+    this.slotHitRects.push({
+      index,
+      x: x - this.slotSize / 2,
+      y: y - this.slotSize / 2,
+    });
 
     this.container.add(slotContainer);
     this.slots.push({ bg, icon, count, key, itemId });
@@ -162,19 +212,27 @@ export class InventoryUI {
   private createReviveIndicator(anchorX: number, anchorY: number): void {
     const isM = GameManager.getInstance().isMobile;
     const barH = isM ? 26 : 22;
-    const iconSize = isM ? '16px' : '15px';
+    const iconSize = isM ? "16px" : "15px";
     const y = anchorY - this.slotSize - 8;
     const rbg = this.scene.add.graphics();
     rbg.fillStyle(0x1a1a25, 0.8);
     rbg.fillRoundedRect(-this.slotSize / 2, -barH / 2, this.slotSize, barH, 6);
     rbg.lineStyle(1, 0xffd700, 0.9);
-    rbg.strokeRoundedRect(-this.slotSize / 2, -barH / 2, this.slotSize, barH, 6);
-    const icon = createUIText(this.scene, -this.slotSize / 2 + 14, 0, '🌟', { fontSize: iconSize }).setOrigin(0.5);
-    const count = createUIText(this.scene, this.slotSize / 2 - 6, 0, '', {
+    rbg.strokeRoundedRect(
+      -this.slotSize / 2,
+      -barH / 2,
+      this.slotSize,
+      barH,
+      6,
+    );
+    const icon = createUIText(this.scene, -this.slotSize / 2 + 14, 0, "🌟", {
+      fontSize: iconSize,
+    }).setOrigin(0.5);
+    const count = createUIText(this.scene, this.slotSize / 2 - 6, 0, "", {
       fontSize: this.countSize,
-      color: '#ffd700',
-      fontStyle: 'bold',
-      stroke: '#000000',
+      color: "#ffd700",
+      fontStyle: "bold",
+      stroke: "#000000",
       strokeThickness: 3,
     }).setOrigin(1, 0.5);
     const group = this.scene.add.container(anchorX, y);
@@ -191,11 +249,12 @@ export class InventoryUI {
     if (!slot) return;
     const player = this.getPlayer();
     if (!player) return;
-    player.useItem(slot.itemId, this.scene.scene.get('GameScene'));
+    player.useItem(slot.itemId, this.scene.scene.get("GameScene"));
   }
 
   private getPlayer(): Player | undefined {
-    return (this.scene.scene.get('GameScene') as any)?.getPlayer?.() as Player | undefined;
+    return (this.scene.scene.get("GameScene") as any)?.getPlayer?.() as
+      Player | undefined;
   }
 
   /** 刷新所有槽位显示 */
@@ -203,37 +262,72 @@ export class InventoryUI {
     const player = this.getPlayer();
     this.slots.forEach((slot) => {
       // 场景已关闭/Text 已销毁时不再刷新（texture 可能已释放为 null，setText 会崩溃）
-      if (!slot.icon.scene || !slot.icon.active || !slot.count.scene || !slot.count.active) return;
+      if (
+        !slot.icon.scene ||
+        !slot.icon.active ||
+        !slot.count.scene ||
+        !slot.count.active
+      )
+        return;
       const count = player?.getItemCount(slot.itemId) ?? 0;
       if (count > 0) {
         slot.icon.setAlpha(1);
-        slot.count.setText(count > 1 ? `${count}` : '');
+        slot.count.setText(count > 1 ? `${count}` : "");
         // 高亮边框
         slot.bg.clear();
         const item = USABLE_ITEMS[slot.itemId];
         slot.bg.fillStyle(0x1a1a25, 0.9);
-        slot.bg.fillRoundedRect(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize, 6);
+        slot.bg.fillRoundedRect(
+          -this.slotSize / 2,
+          -this.slotSize / 2,
+          this.slotSize,
+          this.slotSize,
+          6,
+        );
         slot.bg.lineStyle(2, item.color, 1);
-        slot.bg.strokeRoundedRect(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize, 6);
+        slot.bg.strokeRoundedRect(
+          -this.slotSize / 2,
+          -this.slotSize / 2,
+          this.slotSize,
+          this.slotSize,
+          6,
+        );
       } else {
         slot.icon.setAlpha(0.25);
-        slot.count.setText('');
+        slot.count.setText("");
         // 灰色边框
         slot.bg.clear();
         const item = USABLE_ITEMS[slot.itemId];
         slot.bg.fillStyle(0x1a1a25, 0.5);
-        slot.bg.fillRoundedRect(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize, 6);
+        slot.bg.fillRoundedRect(
+          -this.slotSize / 2,
+          -this.slotSize / 2,
+          this.slotSize,
+          this.slotSize,
+          6,
+        );
         slot.bg.lineStyle(2, item.color, 0.3);
-        slot.bg.strokeRoundedRect(-this.slotSize / 2, -this.slotSize / 2, this.slotSize, this.slotSize, 6);
+        slot.bg.strokeRoundedRect(
+          -this.slotSize / 2,
+          -this.slotSize / 2,
+          this.slotSize,
+          this.slotSize,
+          6,
+        );
       }
     });
 
     // 复活币剩余数量（0 隐藏；复用物品栏刷新事件）
-    if (this.reviveGroup && this.reviveCount && this.reviveGroup.scene && this.reviveGroup.active) {
+    if (
+      this.reviveGroup &&
+      this.reviveCount &&
+      this.reviveGroup.scene &&
+      this.reviveGroup.active
+    ) {
       const rt = player?.getReviveTokens() ?? 0;
       if (rt > 0) {
         this.reviveGroup.setVisible(true);
-        this.reviveCount.setText('×' + rt);
+        this.reviveCount.setText("×" + rt);
       } else {
         this.reviveGroup.setVisible(false);
       }
@@ -243,7 +337,7 @@ export class InventoryUI {
   destroy(): void {
     this.unsubscribe();
     if (this.pointerDownHandler) {
-      this.scene.input.off('pointerdown', this.pointerDownHandler);
+      this.scene.input.off("pointerdown", this.pointerDownHandler);
       this.pointerDownHandler = null;
     }
     this.slotHitRects = [];

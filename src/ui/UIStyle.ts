@@ -1,7 +1,7 @@
-import Phaser from 'phaser';
-import { createUIText } from '../utils/UIText';
-import { AudioManager } from '../systems/AudioManager';
-import { SOUND_KEYS } from '../data/sounds';
+import Phaser from "phaser";
+import { createUIText } from "../utils/UIText";
+import { AudioManager } from "../systems/AudioManager";
+import { SOUND_KEYS } from "../data/sounds";
 
 /**
  * 全局 UI 风格令牌（2026-09-13 定稿）
@@ -27,34 +27,34 @@ export const UIColors = {
   cardBorder: 0x333355, // 卡片描边
   accentDim: 0xff6b35, // 强调橙（十六进制）
   btnBgHex: 0x1a1a25, // 按钮底（十六进制）
-  btnPanelBg: '#252530', // 面板内按钮亮底（选关/设置行按钮）
-  btnLockedBg: '#1a1a22', // 锁定按钮底
-  btnBlueBg: '#1a1a35', // 图鉴/信息类入口蓝调深底
+  btnPanelBg: "#252530", // 面板内按钮亮底（选关/设置行按钮）
+  btnLockedBg: "#1a1a22", // 锁定按钮底
+  btnBlueBg: "#1a1a35", // 图鉴/信息类入口蓝调深底
   // 文字/按钮（CSS 字符串，用于 Text style）
-  accent: '#ff6b35', // 强调橙
-  accentSoft: '#ff9a6b', // 强调橙浅（被动描述等）
-  accentBg: 'rgba(255,107,53,0.15)', // 强调色淡底
-  text: '#e0e0e0', // 主文字
-  textBright: '#ffffff', // 亮文字（标题/数值强调）
-  textDim: '#8a8a99', // 次级文字
-  textFaint: '#666677', // 弱化文字（版权/版本）
-  green: '#7ee0a0', // 增益/正数值
-  blue: '#6bd5ff', // 信息/系别
-  gold: '#ffd700', // 徽章/Boss 标签
-  red: '#ff6b6b', // 减益/危险
+  accent: "#ff6b35", // 强调橙
+  accentSoft: "#ff9a6b", // 强调橙浅（被动描述等）
+  accentBg: "rgba(255,107,53,0.15)", // 强调色淡底
+  text: "#e0e0e0", // 主文字
+  textBright: "#ffffff", // 亮文字（标题/数值强调）
+  textDim: "#8a8a99", // 次级文字
+  textFaint: "#666677", // 弱化文字（版权/版本）
+  green: "#7ee0a0", // 增益/正数值
+  blue: "#6bd5ff", // 信息/系别
+  gold: "#ffd700", // 徽章/Boss 标签
+  red: "#ff6b6b", // 减益/危险
 } as const;
 
 /** 字号令牌 */
 export const UIFonts = {
-  titleXL: '56px', // 主菜单大标题
-  titleL: '34px', // 场景标题
-  titleM: '28px', // 面板标题
-  titleS: '22px', // 次级标题
-  body: '18px', // 按钮/正文
-  label: '16px', // 行标签/设置项/小型按钮
-  desc: '15px', // 说明文字
-  small: '13px', // 小字
-  tiny: '12px', // 微字
+  titleXL: "56px", // 主菜单大标题
+  titleL: "34px", // 场景标题
+  titleM: "28px", // 面板标题
+  titleS: "22px", // 次级标题
+  body: "18px", // 按钮/正文
+  label: "16px", // 行标签/设置项/小型按钮
+  desc: "15px", // 说明文字
+  small: "13px", // 小字
+  tiny: "12px", // 微字
 } as const;
 
 /** 通用按钮配置（可选覆盖） */
@@ -74,13 +74,13 @@ export function createSceneTitle(
   scene: Phaser.Scene,
   x: number,
   y: number,
-  text: string
+  text: string,
 ): Phaser.GameObjects.Text {
   return createUIText(scene, x, y, text, {
     fontSize: UIFonts.titleL,
     color: UIColors.accent,
-    fontStyle: 'bold',
-    stroke: '#000000',
+    fontStyle: "bold",
+    stroke: "#000000",
     strokeThickness: 4,
   }).setOrigin(0.5);
 }
@@ -92,9 +92,9 @@ export function createBackButton(
   scene: Phaser.Scene,
   x: number,
   y: number,
-  onBack: () => void
+  onBack: () => void,
 ): Phaser.GameObjects.Text {
-  const btn = createUIButton(scene, x, y, '← 返回', onBack, {
+  const btn = createUIButton(scene, x, y, "← 返回", onBack, {
     fontSize: UIFonts.body,
     padding: { left: 16, right: 16, top: 8, bottom: 8 },
   });
@@ -112,12 +112,12 @@ export function createUIButton(
   y: number,
   text: string,
   callback: () => void,
-  options: UIButtonOptions = {}
+  options: UIButtonOptions = {},
 ): Phaser.GameObjects.Text {
   const {
     fontSize = UIFonts.body,
-    bg = '#1a1a25',
-    bgHover = '#2a2a35',
+    bg = "#1a1a25",
+    bgHover = "#2a2a35",
     color = UIColors.text,
     colorHover = UIColors.accent,
     padding = { left: 40, right: 40, top: 12, bottom: 12 },
@@ -129,12 +129,20 @@ export function createUIButton(
     padding,
   }).setOrigin(0.5);
   btn.setInteractive({ useHandCursor: true });
-  btn.on('pointerdown', () => {
-    scene.tweens.add({ targets: btn, scaleX: 0.94, scaleY: 0.94, duration: 70, yoyo: true });
+  btn.on("pointerdown", () => {
+    scene.tweens.add({
+      targets: btn,
+      scaleX: 0.94,
+      scaleY: 0.94,
+      duration: 70,
+      yoyo: true,
+    });
   });
-  btn.on('pointerover', () => btn.setStyle({ color: colorHover, backgroundColor: bgHover }));
-  btn.on('pointerout', () => btn.setStyle({ color, backgroundColor: bg }));
-  btn.on('pointerdown', () => {
+  btn.on("pointerover", () =>
+    btn.setStyle({ color: colorHover, backgroundColor: bgHover }),
+  );
+  btn.on("pointerout", () => btn.setStyle({ color, backgroundColor: bg }));
+  btn.on("pointerdown", () => {
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
     callback();
   });
@@ -151,7 +159,7 @@ export function createUIPanel(
   y: number,
   w: number,
   h: number,
-  radius = 14
+  radius = 14,
 ): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
   g.fillStyle(UIColors.panel, 0.98);
@@ -163,5 +171,9 @@ export function createUIPanel(
 
 /** 标准选项卡文本（active 橙色加粗 / inactive 灰） */
 export function styleTab(btn: Phaser.GameObjects.Text, active: boolean): void {
-  btn.setStyle(active ? { color: UIColors.accent, fontStyle: 'bold' } : { color: '#8a8a99', fontStyle: 'normal' });
+  btn.setStyle(
+    active
+      ? { color: UIColors.accent, fontStyle: "bold" }
+      : { color: "#8a8a99", fontStyle: "normal" },
+  );
 }

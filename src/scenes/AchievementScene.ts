@@ -1,13 +1,17 @@
-import { createUIText } from '../utils/UIText';
-import { createBackButton } from '../ui/UIStyle';
-import Phaser from 'phaser';
-import { setupUICamera } from '../utils/CameraHelper';
-import { UILayout } from '../utils/UILayout';
-import { UIScrollBar } from '../utils/UIScrollBar';
-import { ACHIEVEMENTS, type AchievementDef, type AchievementSeries } from '../data/achievements';
-import { AchievementManager } from '../systems/AchievementManager';
-import { GameConfig } from '../game/GameConfig';
-import { Layers } from '../constants/Layers';
+import { createUIText } from "../utils/UIText";
+import { createBackButton } from "../ui/UIStyle";
+import Phaser from "phaser";
+import { setupUICamera } from "../utils/CameraHelper";
+import { UILayout } from "../utils/UILayout";
+import { UIScrollBar } from "../utils/UIScrollBar";
+import {
+  ACHIEVEMENTS,
+  type AchievementDef,
+  type AchievementSeries,
+} from "../data/achievements";
+import { AchievementManager } from "../systems/AchievementManager";
+import { GameConfig } from "../game/GameConfig";
+import { Layers } from "../constants/Layers";
 
 /**
  * 成就系统面板（独立叠加场景）
@@ -17,7 +21,7 @@ import { Layers } from '../constants/Layers';
  * 从主菜单进入；返回时重建主菜单。
  */
 export class AchievementScene extends Phaser.Scene {
-  private selectedSeries: AchievementSeries | 'all' | null = null;
+  private selectedSeries: AchievementSeries | "all" | null = null;
   private scrollContent!: Phaser.GameObjects.Container;
   private scrollH = 0;
   private maxScroll = 0;
@@ -26,7 +30,7 @@ export class AchievementScene extends Phaser.Scene {
   private tabTexts: Record<string, Phaser.GameObjects.Text> = {};
 
   constructor() {
-    super('AchievementScene');
+    super("AchievementScene");
   }
 
   create(): void {
@@ -46,54 +50,68 @@ export class AchievementScene extends Phaser.Scene {
     topBar.fillRect(0, 0, width, 110);
 
     // 标题
-    createUIText(this, cx, 42, '🏅 成就', {
-      fontSize: '32px',
-      color: '#ffd700',
-      fontStyle: 'bold',
-      stroke: '#000000',
+    createUIText(this, cx, 42, "🏅 成就", {
+      fontSize: "32px",
+      color: "#ffd700",
+      fontStyle: "bold",
+      stroke: "#000000",
       strokeThickness: 4,
     }).setOrigin(0.5);
 
     // 解锁统计
-    createUIText(this, cx, 82, `已解锁 ${ach.unlockedCount} / ${ACHIEVEMENTS.length}`, {
-      fontSize: '15px',
-      color: '#cccccc',
-    }).setOrigin(0.5);
+    createUIText(
+      this,
+      cx,
+      82,
+      `已解锁 ${ach.unlockedCount} / ${ACHIEVEMENTS.length}`,
+      {
+        fontSize: "15px",
+        color: "#cccccc",
+      },
+    ).setOrigin(0.5);
 
     // 返回按钮（统一左上角标准组件）
-    const backBtn = createBackButton(this, 60, 44, () => this.scene.start('MainMenuScene', {}));
+    const backBtn = createBackButton(this, 60, 44, () =>
+      this.scene.start("MainMenuScene", {}),
+    );
 
     // Tab 行（7 个 Tab 总宽 7×128+6×6=932 < 960，居中不溢出）
-    const tabLayout = new UILayout({ x: cx - 466, y: 128, direction: 'row', spacing: 6, itemSize: 128 });
-    const seriesKeys: Array<AchievementSeries | 'all'> = [
-      'all',
-      'survival',
-      'hunt',
-      'weapon',
-      'wealth',
-      'hidden',
-      'meta',
+    const tabLayout = new UILayout({
+      x: cx - 466,
+      y: 128,
+      direction: "row",
+      spacing: 6,
+      itemSize: 128,
+    });
+    const seriesKeys: Array<AchievementSeries | "all"> = [
+      "all",
+      "survival",
+      "hunt",
+      "weapon",
+      "wealth",
+      "hidden",
+      "meta",
     ];
     const seriesLabel: Record<string, string> = {
-      all: '全部',
-      survival: '生存',
-      hunt: '猎杀',
-      weapon: '武器大师',
-      wealth: '财迷',
-      hidden: '隐藏',
-      meta: '里程碑',
+      all: "全部",
+      survival: "生存",
+      hunt: "猎杀",
+      weapon: "武器大师",
+      wealth: "财迷",
+      hidden: "隐藏",
+      meta: "里程碑",
     };
     for (const key of seriesKeys) {
       const t = createUIText(this, 0, 0, seriesLabel[key], {
-        fontSize: '15px',
-        color: '#cccccc',
-        backgroundColor: '#1a1a25',
+        fontSize: "15px",
+        color: "#cccccc",
+        backgroundColor: "#1a1a25",
         padding: { left: 12, right: 12, top: 6, bottom: 6 },
       })
         .setOrigin(0, 0)
         .setInteractive({ useHandCursor: true });
       tabLayout.place(t);
-      t.on('pointerdown', () => this.setSeries(key));
+      t.on("pointerdown", () => this.setSeries(key));
       this.tabTexts[key] = t;
     }
 
@@ -107,20 +125,32 @@ export class AchievementScene extends Phaser.Scene {
     maskG.fillRect(scrollX, scrollY, listW, listH);
     const mask = maskG.createGeometryMask();
 
-    this.scrollContent = this.add.container(scrollX, scrollY).setDepth(Layers.SCROLL_CONTENT);
+    this.scrollContent = this.add
+      .container(scrollX, scrollY)
+      .setDepth(Layers.SCROLL_CONTENT);
     this.scrollContent.setMask(mask);
 
     // 滚动条（统一组件：轨道+滑块一体，无可滚动内容时不显示）
-    this.scrollBar = new UIScrollBar(this, scrollX + listW + 4, scrollY, 5, listH);
+    this.scrollBar = new UIScrollBar(
+      this,
+      scrollX + listW + 4,
+      scrollY,
+      5,
+      listH,
+    );
 
     // 点击 Tab 重绘列表（初始为"全部"）
-    this.setSeries('all');
+    this.setSeries("all");
 
     // 滚轮 / 拖拽滚动
     const zoom = this.cameras.main.zoom;
-    this.input.on('wheel', (_p: any, _o: any, _dx: number, dy: number) => {
+    this.input.on("wheel", (_p: any, _o: any, _dx: number, dy: number) => {
       if (this.maxScroll <= 0) return;
-      this.scrollOff = Phaser.Math.Clamp(this.scrollOff + dy / zoom, 0, this.maxScroll);
+      this.scrollOff = Phaser.Math.Clamp(
+        this.scrollOff + dy / zoom,
+        0,
+        this.maxScroll,
+      );
       this.applyScroll();
     });
     let dragging = false;
@@ -128,21 +158,26 @@ export class AchievementScene extends Phaser.Scene {
     let dragStartY = 0;
     let dragStartOff = 0;
     const DRAG_THRESHOLD = 10;
-    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
       dragging = true;
       dragMoved = false;
       dragStartY = p.y;
       dragStartOff = this.scrollOff;
     });
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+    this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
       if (!dragging || this.maxScroll <= 0) return;
-      if (!dragMoved && Math.abs(p.y - dragStartY) > DRAG_THRESHOLD) dragMoved = true;
+      if (!dragMoved && Math.abs(p.y - dragStartY) > DRAG_THRESHOLD)
+        dragMoved = true;
       if (dragMoved) {
-        this.scrollOff = Phaser.Math.Clamp(dragStartOff + (dragStartY - p.y) / zoom, 0, this.maxScroll);
+        this.scrollOff = Phaser.Math.Clamp(
+          dragStartOff + (dragStartY - p.y) / zoom,
+          0,
+          this.maxScroll,
+        );
         this.applyScroll();
       }
     });
-    this.input.on('pointerup', () => {
+    this.input.on("pointerup", () => {
       dragging = false;
     });
 
@@ -151,7 +186,7 @@ export class AchievementScene extends Phaser.Scene {
   }
 
   /** 切换系列并重绘列表 */
-  private setSeries(key: AchievementSeries | 'all'): void {
+  private setSeries(key: AchievementSeries | "all"): void {
     if (this.selectedSeries === key) return;
     this.selectedSeries = key;
 
@@ -159,15 +194,15 @@ export class AchievementScene extends Phaser.Scene {
     for (const [k, t] of Object.entries(this.tabTexts)) {
       const active = k === key;
       t.setStyle({
-        color: active ? '#ffd700' : '#cccccc',
-        backgroundColor: active ? '#2a2a45' : '#1a1a25',
+        color: active ? "#ffd700" : "#cccccc",
+        backgroundColor: active ? "#2a2a45" : "#1a1a25",
       });
     }
 
     // 重绘列表
     this.scrollContent.removeAll(true);
     const ach = AchievementManager.getInstance();
-    const defs = ACHIEVEMENTS.filter((d) => key === 'all' || d.series === key);
+    const defs = ACHIEVEMENTS.filter((d) => key === "all" || d.series === key);
     const rowH = 64;
     defs.forEach((def, i) => {
       const row = this.renderRow(def, ach, i);
@@ -182,31 +217,41 @@ export class AchievementScene extends Phaser.Scene {
   }
 
   /** 渲染一行成就 */
-  private renderRow(def: AchievementDef, ach: AchievementManager, index: number): Phaser.GameObjects.Container {
+  private renderRow(
+    def: AchievementDef,
+    ach: AchievementManager,
+    index: number,
+  ): Phaser.GameObjects.Container {
     const row = this.add.container(0, 0);
     const unlocked = ach.isUnlocked(def.id);
     const isHidden = !!def.hidden && !unlocked;
 
-    const icon = createUIText(this, 14, 16, isHidden ? '❓' : def.icon, {
-      fontSize: '28px',
+    const icon = createUIText(this, 14, 16, isHidden ? "❓" : def.icon, {
+      fontSize: "28px",
     }).setOrigin(0.5);
 
-    const name = createUIText(this, 55, 8, isHidden ? '？？？' : def.name, {
-      fontSize: '16px',
-      color: unlocked ? '#ffd700' : '#e0e0e0',
-      fontStyle: unlocked ? 'bold' : 'normal',
+    const name = createUIText(this, 55, 8, isHidden ? "？？？" : def.name, {
+      fontSize: "16px",
+      color: unlocked ? "#ffd700" : "#e0e0e0",
+      fontStyle: unlocked ? "bold" : "normal",
     }).setOrigin(0, 0);
 
-    const desc = createUIText(this, 55, 34, isHidden ? (def.hint ?? '达成条件保密，继续探索吧') : def.description, {
-      fontSize: '13px',
-      color: '#8888aa',
-    }).setOrigin(0, 0);
+    const desc = createUIText(
+      this,
+      55,
+      34,
+      isHidden ? (def.hint ?? "达成条件保密，继续探索吧") : def.description,
+      {
+        fontSize: "13px",
+        color: "#8888aa",
+      },
+    ).setOrigin(0, 0);
 
     // 状态徽标
-    const status = createUIText(this, 800, 20, unlocked ? '✔ 已解锁' : '🔒', {
-      fontSize: '14px',
-      color: unlocked ? '#ffd700' : '#555577',
-      fontStyle: unlocked ? 'bold' : 'normal',
+    const status = createUIText(this, 800, 20, unlocked ? "✔ 已解锁" : "🔒", {
+      fontSize: "14px",
+      color: unlocked ? "#ffd700" : "#555577",
+      fontStyle: unlocked ? "bold" : "normal",
     }).setOrigin(0.5);
 
     // 进度条（累计型显示进度；单局判定型显示"条件型"）
@@ -227,18 +272,24 @@ export class AchievementScene extends Phaser.Scene {
         }
         row.add(bar);
         row.add(
-          createUIText(this, barX + barW / 2, barY + 18, `${Math.min(prog.current, prog.target)} / ${prog.target}`, {
-            fontSize: '11px',
-            color: '#8888aa',
-          }).setOrigin(0.5)
+          createUIText(
+            this,
+            barX + barW / 2,
+            barY + 18,
+            `${Math.min(prog.current, prog.target)} / ${prog.target}`,
+            {
+              fontSize: "11px",
+              color: "#8888aa",
+            },
+          ).setOrigin(0.5),
         );
       } else {
         // 单局判定型
         row.add(
-          createUIText(this, 700, 20, '单局达成', {
-            fontSize: '12px',
-            color: '#666688',
-          }).setOrigin(0.5)
+          createUIText(this, 700, 20, "单局达成", {
+            fontSize: "12px",
+            color: "#666688",
+          }).setOrigin(0.5),
         );
       }
     }
@@ -258,24 +309,33 @@ export class AchievementScene extends Phaser.Scene {
     const ach = AchievementManager.getInstance();
     const parts: string[] = [];
     const labels: Record<string, string> = {
-      maxHealth: '生命',
-      attackPower: '攻击',
-      critRate: '暴击率',
-      critDamage: '爆伤',
-      pickupRadius: '拾取范围',
-      luck: '幸运',
+      maxHealth: "生命",
+      attackPower: "攻击",
+      critRate: "暴击率",
+      critDamage: "爆伤",
+      pickupRadius: "拾取范围",
+      luck: "幸运",
     };
     for (const [stat, v] of Object.entries(ach.getBonusSummary())) {
       const label = labels[stat] ?? stat;
-      const fmt = stat === 'critRate' || stat === 'critDamage' ? `${(v * 100).toFixed(0)}%` : `${v}`;
+      const fmt =
+        stat === "critRate" || stat === "critDamage"
+          ? `${(v * 100).toFixed(0)}%`
+          : `${v}`;
       parts.push(`${label}+${fmt}`);
     }
     const titles = ach.titles;
-    const titleStr = titles.length > 0 ? `  称号: ${titles.join(' · ')}` : '';
-    createUIText(this, cx, y, `永久加成: ${parts.length ? parts.join('  ') : '暂无'}${titleStr}`, {
-      fontSize: '13px',
-      color: '#666688',
-    }).setOrigin(0.5);
+    const titleStr = titles.length > 0 ? `  称号: ${titles.join(" · ")}` : "";
+    createUIText(
+      this,
+      cx,
+      y,
+      `永久加成: ${parts.length ? parts.join("  ") : "暂无"}${titleStr}`,
+      {
+        fontSize: "13px",
+        color: "#666688",
+      },
+    ).setOrigin(0.5);
   }
 
   private applyScroll(): void {

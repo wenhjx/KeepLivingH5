@@ -1,23 +1,28 @@
-import Phaser from 'phaser';
-import { MathUtils } from '../utils/MathUtils';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import { GameConfig } from '../game/GameConfig';
-import { GameManager } from '../game/GameManager';
-import { ENEMY_CONFIGS } from '../data/enemies';
-import type { EnemyConfig, EnemyType } from '../types';
-import type { Player } from './Player';
-import { TextSmoothing } from '../utils/UIText';
-import { Layers } from '../constants/Layers';
-import { AFFIXES, COMMON_AFFIX_POOL, ELITE_AFFIX_POOL, type EnemyAffixId } from '../data/affixes';
+import Phaser from "phaser";
+import { MathUtils } from "../utils/MathUtils";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import { GameConfig } from "../game/GameConfig";
+import { GameManager } from "../game/GameManager";
+import { ENEMY_CONFIGS } from "../data/enemies";
+import type { EnemyConfig, EnemyType } from "../types";
+import type { Player } from "./Player";
+import { TextSmoothing } from "../utils/UIText";
+import { Layers } from "../constants/Layers";
+import {
+  AFFIXES,
+  COMMON_AFFIX_POOL,
+  ELITE_AFFIX_POOL,
+  type EnemyAffixId,
+} from "../data/affixes";
 import {
   calcPoisonDps,
   calcExplodeBase,
   calcExplodePlayerDamage,
   calcLifestealHeal,
   calcAttackDamage,
-} from '../logic/affix';
+} from "../logic/affix";
 
 /**
 
@@ -38,17 +43,17 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   /** 有朝向特征的敌人（眼睛/尖角/非对称造型）：随移动方向旋转；tank/blob 对称不可见、shielded 自有朝向，均排除 */
   private static readonly FACING_TYPES = new Set<string>([
-    'normal',
-    'fast',
-    'ranged',
-    'elite',
-    'suicider',
-    'splitter',
-    'summoner',
-    'healer',
-    'caster',
-    'charger',
-    'boss',
+    "normal",
+    "fast",
+    "ranged",
+    "elite",
+    "suicider",
+    "splitter",
+    "summoner",
+    "healer",
+    "caster",
+    "charger",
+    "boss",
   ]);
   private atkBoost: number = 1;
   /** 击退（环形冲击波等推离效果）：速度分量 + 剩余时长（ms） */
@@ -69,7 +74,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private hpBar!: Phaser.GameObjects.Graphics;
   private hpBarTimer = 0;
   /** 词缀 id：普通怪低概率 / 精英必挂 / 可按配置固定（查 AFFIXES 表） */
-  private affix: EnemyAffixId | '' = '';
+  private affix: EnemyAffixId | "" = "";
   /** Boss 类型标识色（区分 基础/召唤魔像/弹幕机械），阶段色在其上加深 */
   private bossTypeColor = 0xff2222;
   /** Boss 脚下呼吸光环（跟随敌人，despawn 时销毁） */
@@ -101,7 +106,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private healerLast = 0; // 治疗怪治疗 CD（时间戳）
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 0, 0, GameConfig.themeKey('enemy_normal'));
+    super(scene, 0, 0, GameConfig.themeKey("enemy_normal"));
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setActive(false);
@@ -114,20 +119,27 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     y: number,
     difficultyMultiplier: number = 1,
     hpBoost: number = 1,
-    atkBoost: number = 1
+    atkBoost: number = 1,
   ): void {
     this.config = config;
     this.difficultyMultiplier = difficultyMultiplier;
     this.atkBoost = isFinite(atkBoost) && atkBoost > 0 ? atkBoost : 1;
     // 防御：难度系数非法（NaN/Infinity）时回退为 1，血量永远用有效正数，
     // 避免 maxHealth/health 变成 NaN 导致怪物永久无敌（health -= NaN 永远不死）
-    const safeMult = isFinite(difficultyMultiplier) && difficultyMultiplier > 0 ? difficultyMultiplier : 1;
+    const safeMult =
+      isFinite(difficultyMultiplier) && difficultyMultiplier > 0
+        ? difficultyMultiplier
+        : 1;
     const safeHpBoost = isFinite(hpBoost) && hpBoost > 0 ? hpBoost : 1;
     const baseHp = Number(config.maxHealth);
     // 全局耐久系数 1.3：怪物整体更扛揍，给吸血/灼烧/闪电链等新被动发挥空间
     this.maxHealth = Math.max(
       1,
-      Math.floor(isFinite(baseHp) && baseHp > 0 ? baseHp * safeMult * safeHpBoost * 1.3 : 1)
+      Math.floor(
+        isFinite(baseHp) && baseHp > 0
+          ? baseHp * safeMult * safeHpBoost * 1.3
+          : 1,
+      ),
     );
     this.health = this.maxHealth;
     this.attackCooldown = 0;
@@ -139,13 +151,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.clearStatusIcons();
     this.avoidSide = Math.random() > 0.5 ? 1 : -1;
     // 头顶小血条（Boss 用顶部大血条，不显示小血条）
-    if (!this.hpBarBg && config.type !== 'boss') {
+    if (!this.hpBarBg && config.type !== "boss") {
       this.hpBarBg = this.scene.add.graphics().setDepth(Layers.HP_BAR_BG);
       this.hpBar = this.scene.add.graphics().setDepth(Layers.HP_BAR_FILL);
       this.hpBarBg.setVisible(false);
       this.hpBar.setVisible(false);
     }
-    this.setTexture(GameConfig.themeKey(config.texture || 'enemy_normal'));
+    this.setTexture(GameConfig.themeKey(config.texture || "enemy_normal"));
     // 先启用物理体并 reset 到正确位置
     if (this.body) {
       this.body.enable = true;
@@ -156,12 +168,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setVisible(true);
     this.setCircle(config.size / 2 || 16);
     // 非 Boss：恢复纹理原始显示尺寸（防止对象池复用 Boss 实例时残留放大 scale/displaySize → 出现"特别大的敌人"）
-    if (config.type !== 'boss') {
+    if (config.type !== "boss") {
       this.setScale(1);
       this.setSizeToFrame();
     }
     // Boss 视觉尺寸对齐碰撞直径：贴图固定 56px，Boss 改大后必须按 size 放大显示
-    if (config.type === 'boss') {
+    if (config.type === "boss") {
       this.setDisplaySize(config.size * 2, config.size * 2);
     }
     this.setDepth(Layers.ENEMY);
@@ -170,24 +182,27 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 根据类型设置颜色：像素主题（白色像素主体）需 tint 上色；
     // 经典矢量主题纹理自带颜色，无需 tint（避免双重染色）
     // 变体怪（霜冻/腐化）在任何主题下 tint，保证关卡特色可见
-    const isVariant = config.type === 'frost_zombie' || config.type === 'corrupt_zombie';
-    if (config.color && (GameConfig.VISUAL_THEME === 'pixel' || isVariant)) {
+    const isVariant =
+      config.type === "frost_zombie" || config.type === "corrupt_zombie";
+    if (config.color && (GameConfig.VISUAL_THEME === "pixel" || isVariant)) {
       this.setTint(config.color);
     }
     // ===== 词缀系统：普通怪低概率 / 精英必挂（可按配置固定，查 AFFIXES 表） =====
-    if (config.type === 'boss') {
+    if (config.type === "boss") {
       // Boss 不挂词缀（已有阶段机制，避免叠加过载）
-      this.affix = '';
+      this.affix = "";
     } else if (config.affix) {
       this.affix = config.affix as EnemyAffixId;
-    } else if (config.type === 'elite') {
+    } else if (config.type === "elite") {
       // 精英必挂 1 个词缀（全池，含 epic）
-      this.affix = ELITE_AFFIX_POOL[Math.floor(Math.random() * ELITE_AFFIX_POOL.length)];
+      this.affix =
+        ELITE_AFFIX_POOL[Math.floor(Math.random() * ELITE_AFFIX_POOL.length)];
     } else if (Math.random() < 0.06) {
       // 普通怪 6% 概率挂词缀（仅 common/rare 池，保持稀有度节奏）
-      this.affix = COMMON_AFFIX_POOL[Math.floor(Math.random() * COMMON_AFFIX_POOL.length)];
+      this.affix =
+        COMMON_AFFIX_POOL[Math.floor(Math.random() * COMMON_AFFIX_POOL.length)];
     } else {
-      this.affix = '';
+      this.affix = "";
     }
     // 词缀效果：查表应用（数值乘区 + 机制标记 + 视觉 tint）
     this.shieldPool = 0;
@@ -204,7 +219,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.affixDmgReduction = affixDef.dmgReduction ?? 0;
       if (affixDef.hpMult) {
         // 厚皮：生命×1.5 并回满（在基础血量计算之后应用）
-        this.maxHealth = Math.max(1, Math.floor(this.maxHealth * affixDef.hpMult));
+        this.maxHealth = Math.max(
+          1,
+          Math.floor(this.maxHealth * affixDef.hpMult),
+        );
         this.health = this.maxHealth;
       }
       if (affixDef.shieldPercent) {
@@ -218,7 +236,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.setTint(affixDef.color);
     }
     // Boss 专属状态重置（对象池复用，必须重置以免残留上一只的状态）
-    if (config.type === 'boss') {
+    if (config.type === "boss") {
       this.bossPhase = 1;
       this.bossSkillLast = {};
       this.bossChargeState = 0;
@@ -230,7 +248,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.setTint(this.bossTypeColor);
       // 脚下呼吸光环（类型色）
       const fx = (this.scene as any).getFXManager?.();
-      this.bossAuraRing = fx?.bossAura?.(this.x, this.y, config.size || 48, this.bossTypeColor);
+      this.bossAuraRing = fx?.bossAura?.(
+        this.x,
+        this.y,
+        config.size || 48,
+        this.bossTypeColor,
+      );
     }
     // 新三敌状态重置（普通召唤师/冲锋怪/治疗怪，非 Boss；对象池复用必须清干净）
     this.chargerState = 0;
@@ -241,13 +264,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 词缀图标（跟随头顶，查 AFFIXES 表）
     if (!this.affixText) {
       this.affixText = this.scene.add
-        .text(0, 0, '', { fontSize: '12px', fontFamily: 'Arial' })
+        .text(0, 0, "", { fontSize: "12px", fontFamily: "Arial" })
         .setDepth(Layers.ENTITY_TAG)
         .setOrigin(0.5)
         .setResolution(Math.max(1, Math.ceil(GameConfig.renderScale)));
       TextSmoothing.apply(this.affixText);
     }
-    const affixIcon = this.affix ? AFFIXES[this.affix].icon : '';
+    const affixIcon = this.affix ? AFFIXES[this.affix].icon : "";
     this.affixText
       .setText(affixIcon)
       .setPosition(this.x, this.y - (config.size || 32) / 2 - 22)
@@ -261,7 +284,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.burnTimer = 0;
     this.burnDamage = 0;
     this.clearStatusIcons();
-    this.affix = '';
+    this.affix = "";
     this.bossTypeColor = 0xff2222;
     if (this.bossAuraRing) {
       this.bossAuraRing.destroy();
@@ -310,7 +333,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.isDead) return;
     this.freezeTimer = Math.max(this.freezeTimer, duration);
     this.setTint(0x88ddff);
-    this.setStatusIcon('❄️', duration);
+    this.setStatusIcon("❄️", duration);
   }
   /** 灼烧（灼烧被动）：持续火焰伤害，命中首跳即时结算（小怪也有即时反馈） */
   applyBurn(damage: number, duration: number): void {
@@ -318,7 +341,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.burnDamage = Math.max(this.burnDamage, damage);
     this.burnTimer = Math.max(this.burnTimer, duration);
     this.burnTick = 500;
-    this.setStatusIcon('🔥', duration);
+    this.setStatusIcon("🔥", duration);
     this.takeDamage(this.burnDamage, false);
     (this.scene as any).getFXManager?.()?.burn?.(this.x, this.y - 10);
   }
@@ -333,13 +356,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
     const text = this.scene.add
       .text(this.x, this.y - (this.config?.size || 32) / 2 - 30, emoji, {
-        fontSize: '14px',
-        stroke: '#000000',
+        fontSize: "14px",
+        stroke: "#000000",
         strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setDepth(Layers.ENTITY_STATUS);
-    this.statusIcons.push({ icon: text, until: this.scene.time.now + duration });
+    this.statusIcons.push({
+      icon: text,
+      until: this.scene.time.now + duration,
+    });
   }
   /** 清空状态图标（对象池回收 / 敌人销毁时调用） */
 
@@ -351,39 +377,50 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
    * 玩家攻击命中时触发被动效果（吸血/冰冻/灼烧/闪电链/弹射）
    * 由 CollisionSystem（子弹）/ Player.fireMelee / Player.fireNova 调用
    */
-  applyPlayerEffects(amount: number, player: Player, sourceX: number, sourceY: number): void {
+  applyPlayerEffects(
+    amount: number,
+    player: Player,
+    sourceX: number,
+    sourceY: number,
+  ): void {
     if (this.isDead || !player) return;
     const getLv = (id: string) => player.getPassiveLevel(id);
     // 吸血：回复造成伤害的一定比例
-    const ls = getLv('passive_lifesteal');
+    const ls = getLv("passive_lifesteal");
     if (ls > 0) {
       player.heal(amount * 0.03 * ls);
     }
     // 冰冻：概率冰冻减速
-    const frz = getLv('passive_freeze');
+    const frz = getLv("passive_freeze");
     if (frz > 0 && Math.random() < 0.08 * frz) {
       this.applyFreeze(2000);
       (this.scene as any).getFXManager?.()?.frost?.(this.x, this.y);
     }
     // 灼烧：概率施加 DOT（命中首跳即时结算，小怪也有反馈）
-    const brn = getLv('passive_burn');
+    const brn = getLv("passive_burn");
     if (brn > 0 && Math.random() < 0.15 * brn) {
       this.applyBurn(Math.max(1, amount * 0.15 * brn), 3000);
     }
     // 闪电链：概率连锁伤害附近敌人（不递归触发其他被动）
-    const chn = getLv('passive_chain');
+    const chn = getLv("passive_chain");
     if (chn > 0 && Math.random() < 0.1 * chn) {
       this.chainLightning(player, amount * 0.6, chn, sourceX, sourceY);
     }
     // 弹射：伤害弹射到附近敌人（不递归触发其他被动）
-    const bnc = getLv('passive_bounce');
+    const bnc = getLv("passive_bounce");
     if (bnc > 0) {
       this.bounceHit(player, amount * 0.7, bnc, sourceX, sourceY);
     }
   }
   /** 弹射：从源敌人跳到附近最近的敌人，逐跳递减伤害 */
 
-  private bounceHit(player: Player, damage: number, jumps: number, sourceX: number, sourceY: number): void {
+  private bounceHit(
+    player: Player,
+    damage: number,
+    jumps: number,
+    sourceX: number,
+    sourceY: number,
+  ): void {
     const scene = this.scene as any;
     let source: any = this;
     for (let i = 0; i < jumps; i++) {
@@ -396,14 +433,22 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
   /** 闪电链：连锁伤害附近敌人，每跳 60% 伤害 */
 
-  private chainLightning(player: Player, damage: number, jumps: number, sourceX: number, sourceY: number): void {
+  private chainLightning(
+    player: Player,
+    damage: number,
+    jumps: number,
+    sourceX: number,
+    sourceY: number,
+  ): void {
     const scene = this.scene as any;
     let source: any = this;
     for (let i = 0; i < jumps; i++) {
       const target = this.findNearbyEnemy(source, 220);
       if (!target) break;
       target.takeDamage(damage, false);
-      scene?.getFXManager?.()?.chainLightning?.(source.x, source.y, target.x, target.y);
+      scene
+        ?.getFXManager?.()
+        ?.chainLightning?.(source.x, source.y, target.x, target.y);
       source = target;
     }
   }
@@ -460,7 +505,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.hitFlashTimer -= delta;
       if (this.hitFlashTimer <= 0) {
         this.clearTint();
-        if (this.config?.type === 'boss') {
+        if (this.config?.type === "boss") {
           this.setTint(this.getBossTint());
         } else if (this.config?.color) {
           this.setTint(this.config.color);
@@ -469,14 +514,22 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
     // 词缀图标跟随敌人
     if (this.affixText && this.affixText.visible) {
-      this.affixText.setPosition(this.x, this.y - (this.config?.size || 32) / 2 - 22);
+      this.affixText.setPosition(
+        this.x,
+        this.y - (this.config?.size || 32) / 2 - 22,
+      );
     }
     // 头顶状态图标跟随与到期清理（灼烧🔥/冰冻❄️）
     for (let i = this.statusIcons.length - 1; i >= 0; i--) {
       const s = this.statusIcons[i];
       s.icon.setPosition(this.x, this.y - (this.config?.size || 32) / 2 - 30);
       if (this.scene.time.now >= s.until) {
-        this.scene.tweens.add({ targets: s.icon, alpha: 0, duration: 200, onComplete: () => s.icon.destroy() });
+        this.scene.tweens.add({
+          targets: s.icon,
+          alpha: 0,
+          duration: 200,
+          onComplete: () => s.icon.destroy(),
+        });
         this.statusIcons.splice(i, 1);
       }
     }
@@ -520,7 +573,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
       }
       if (slow !== 1 && this.body) {
-        this.setVelocity(this.body.velocity.x * slow, this.body.velocity.y * slow);
+        this.setVelocity(
+          this.body.velocity.x * slow,
+          this.body.velocity.y * slow,
+        );
       }
     }
     // 攻击冷却
@@ -558,31 +614,31 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private updateAI(time: number, delta: number, player: Player): void {
     const dist = MathUtils.distance(this.x, this.y, player.x, player.y);
     switch (this.config.type) {
-      case 'ranged':
+      case "ranged":
         this.rangedAI(delta, player, dist);
         break;
-      case 'boss':
+      case "boss":
         this.bossAI(delta, player, dist);
         break;
-      case 'fast':
+      case "fast":
         this.fastAI(delta, player, dist);
         break;
-      case 'suicider':
+      case "suicider":
         this.suiciderAI(delta, player, dist);
         break;
-      case 'splitter':
+      case "splitter":
         this.normalAI(delta, player, dist);
         break;
-      case 'shielded':
+      case "shielded":
         this.shieldedAI(delta, player, dist);
         break;
-      case 'summoner':
+      case "summoner":
         this.summonerAI(delta, player, dist);
         break;
-      case 'charger':
+      case "charger":
         this.chargerAI(delta, player, dist);
         break;
-      case 'healer':
+      case "healer":
         this.healerAI(delta, player, dist);
         break;
       default:
@@ -597,7 +653,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
    */
 
   private getTrackSpeed(): number {
-    const raw = this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
+    const raw =
+      this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult;
     return Math.min(raw, 140);
   }
   /** 自爆怪：高速冲向玩家，进入爆炸半径后自爆 */
@@ -618,7 +675,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private explode(player: Player): void {
     if (this.isDead) return;
     const radius = this.config.explodeRadius ?? 60;
-    const damage = calcExplodeBase(this.config.explodeDamage ?? 30, this.difficultyMultiplier, this.atkBoost);
+    const damage = calcExplodeBase(
+      this.config.explodeDamage ?? 30,
+      this.difficultyMultiplier,
+      this.atkBoost,
+    );
     // 对范围内的敌人也造成伤害（连锁爆炸的爽感）
     const scene = this.scene as any;
     const enemies = scene?.getEnemies?.();
@@ -634,7 +695,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 对玩家造成伤害（范围衰减）
     const pDist = MathUtils.distance(this.x, this.y, player.x, player.y);
     player.takeDamage(
-      calcExplodePlayerDamage(this.config.explodeDamage ?? 30, this.difficultyMultiplier, this.atkBoost, pDist, radius)
+      calcExplodePlayerDamage(
+        this.config.explodeDamage ?? 30,
+        this.difficultyMultiplier,
+        this.atkBoost,
+        pDist,
+        radius,
+      ),
     );
     // 自爆视觉：双环 + 橙色粒子 + 轻震屏（统一走 FXManager）+ 爆炸音效
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.8);
@@ -669,7 +736,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.setVelocity(v.vx, v.vy);
     } else {
       const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-      const strafe = angle + (Math.PI / 2) * (Math.sin(this.scene.time.now / 900 + this.x * 0.01) > 0 ? 1 : -1);
+      const strafe =
+        angle +
+        (Math.PI / 2) *
+          (Math.sin(this.scene.time.now / 900 + this.x * 0.01) > 0 ? 1 : -1);
       const speed = this.config.moveSpeed * 0.5 * this.difficultyMultiplier;
       const v = this.avoidObstacles(strafe, speed);
       this.setVelocity(v.vx, v.vy);
@@ -683,10 +753,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       const gm = GameManager.getInstance();
       const maxEnemies = gm.qualitySettings.maxEnemies;
       if (!pool || pool.getActiveEnemyCount() >= maxEnemies * 0.6) return;
-      scene?.getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size + 14, 500, 0xcc66ff);
+      scene
+        ?.getFXManager?.()
+        ?.telegraph?.(this.x, this.y, this.config.size + 14, 500, 0xcc66ff);
       this.scene.time.delayedCall(500, () => {
         if (this.isDead || !this.active) return;
-        const cfg = ENEMY_CONFIGS['normal'];
+        const cfg = ENEMY_CONFIGS["normal"];
         if (!cfg) return;
         for (let i = 0; i < 2; i++) {
           const ang = Math.random() * Math.PI * 2;
@@ -695,7 +767,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
             cfg,
             this.x + Math.cos(ang) * off,
             this.y + Math.sin(ang) * off,
-            this.difficultyMultiplier * 0.8
+            this.difficultyMultiplier * 0.8,
           );
         }
       });
@@ -715,7 +787,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       return;
     }
     if (this.chargerState === 2) {
-      this.setVelocity(Math.cos(this.chargerAngle) * 430, Math.sin(this.chargerAngle) * 430);
+      this.setVelocity(
+        Math.cos(this.chargerAngle) * 430,
+        Math.sin(this.chargerAngle) * 430,
+      );
       this.setRotation(this.chargerAngle + Math.PI / 2);
       this.chargerTimer -= delta;
       if (this.chargerTimer <= 0) {
@@ -735,7 +810,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
     // 踱步：缓慢接近玩家
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * 0.55 * this.difficultyMultiplier * this.affixSpeedMult;
+    const speed =
+      this.config.moveSpeed *
+      0.55 *
+      this.difficultyMultiplier *
+      this.affixSpeedMult;
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
     // 周期进入蓄力（3.5s）
@@ -748,7 +827,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.chargerAngle = angle;
         this.setVelocity(0, 0);
         this.setTint(0xffffff); // 蓄力闪白
-        (this.scene as any).getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size + 8, 450, 0xff8833);
+        (this.scene as any)
+          .getFXManager?.()
+          ?.telegraph?.(this.x, this.y, this.config.size + 8, 450, 0xff8833);
       }
     }
   }
@@ -756,7 +837,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   private healerAI(delta: number, player: Player, dist: number): void {
     const angle = MathUtils.angle(this.x, this.y, player.x, player.y);
-    const speed = this.config.moveSpeed * 0.7 * this.difficultyMultiplier * this.affixSpeedMult;
+    const speed =
+      this.config.moveSpeed *
+      0.7 *
+      this.difficultyMultiplier *
+      this.affixSpeedMult;
     const v = this.avoidObstacles(angle, speed);
     this.setVelocity(v.vx, v.vy);
     if (dist < this.config.attackRange && this.attackCooldown <= 0) {
@@ -771,15 +856,20 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (!enemies) return;
       const radius = 180;
       let healed = 0;
-      const healAmount = Math.max(3, Math.round(this.config.attackPower * 0.9 * this.difficultyMultiplier));
+      const healAmount = Math.max(
+        3,
+        Math.round(this.config.attackPower * 0.9 * this.difficultyMultiplier),
+      );
       enemies.getChildren().forEach((e: any) => {
         if (!e.active || e === this || e.isDead || healed >= 4) return;
         const d = MathUtils.distance(this.x, this.y, e.x, e.y);
         if (d <= radius && e.maxHealth && e.health < e.maxHealth) {
           e.health = Math.min(e.maxHealth, e.health + healAmount);
           healed++;
-          scene?.spawnEventText?.(e.x, e.y - 24, `+${healAmount}`, '#44ff88');
-          scene?.getFXManager?.()?.telegraph?.(e.x, e.y, e.config?.size ?? 20, 300, 0x44ff88);
+          scene?.spawnEventText?.(e.x, e.y - 24, `+${healAmount}`, "#44ff88");
+          scene
+            ?.getFXManager?.()
+            ?.telegraph?.(e.x, e.y, e.config?.size ?? 20, 300, 0x44ff88);
         }
       });
     }
@@ -854,7 +944,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     } else if (this.bossChargeState === 2) {
       this.setVelocity(
         Math.cos(this.bossChargeAngle) * this.bossChargeSpeed,
-        Math.sin(this.bossChargeAngle) * this.bossChargeSpeed
+        Math.sin(this.bossChargeAngle) * this.bossChargeSpeed,
       );
       this.bossChargeTimer -= delta;
       if (this.bossChargeTimer <= 0) {
@@ -864,50 +954,63 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     } else {
       // 正常追踪玩家（移速带阶段加成；Boss 封顶 130，慢速压迫、技能施压为主）
       const rawSpeed =
-        this.config.moveSpeed * this.difficultyMultiplier * this.affixSpeedMult * this.getBossPhaseSpeed();
-      const speed = this.config.type === 'boss' ? Math.min(rawSpeed, 130) : rawSpeed;
+        this.config.moveSpeed *
+        this.difficultyMultiplier *
+        this.affixSpeedMult *
+        this.getBossPhaseSpeed();
+      const speed =
+        this.config.type === "boss" ? Math.min(rawSpeed, 130) : rawSpeed;
       const v = this.avoidObstacles(angle, speed);
       this.setVelocity(v.vx, v.vy);
     }
     // 接触伤害（蓄力时不出手）
-    if (dist < this.config.attackRange && this.attackCooldown <= 0 && this.bossChargeState !== 1) {
+    if (
+      dist < this.config.attackRange &&
+      this.attackCooldown <= 0 &&
+      this.bossChargeState !== 1
+    ) {
       this.attackPlayer(player);
     }
     // 技能轮转：各技能独立CD，随阶段缩短；技能 CD 可被 bossTuning 覆盖（关卡差异化 Boss）
     const t = this.config.bossTuning;
-    const cd = (key: string, base: number) => now - (this.bossSkillLast[key] || 0) >= this.getBossCD(base);
+    const cd = (key: string, base: number) =>
+      now - (this.bossSkillLast[key] || 0) >= this.getBossCD(base);
     const mark = (key: string) => {
       this.bossSkillLast[key] = now;
     };
     // 环形弹幕（全阶段）
-    if (cd('ring', t?.ringCd ?? 3000)) {
+    if (cd("ring", t?.ringCd ?? 3000)) {
       this.bossBarrage();
-      mark('ring');
+      mark("ring");
     }
     // 扇形弹幕（阶段2+）
-    if (this.bossPhase >= 2 && cd('fan', t?.fanCd ?? 2600)) {
+    if (this.bossPhase >= 2 && cd("fan", t?.fanCd ?? 2600)) {
       this.bossFan(player);
-      mark('fan');
+      mark("fan");
     }
     // 追踪弹（阶段2+）
-    if (this.bossPhase >= 2 && cd('homing', t?.homingCd ?? 4500)) {
+    if (this.bossPhase >= 2 && cd("homing", t?.homingCd ?? 4500)) {
       this.bossHoming(player);
-      mark('homing');
+      mark("homing");
     }
     // 冲锋（阶段2+，破除放风筝）
-    if (this.bossPhase >= 2 && this.bossChargeState === 0 && cd('charge', t?.chargeCd ?? 5000)) {
+    if (
+      this.bossPhase >= 2 &&
+      this.bossChargeState === 0 &&
+      cd("charge", t?.chargeCd ?? 5000)
+    ) {
       this.bossChargeStart(player);
-      mark('charge');
+      mark("charge");
     }
     // 召唤小怪（Boss战持续压力）
-    if (cd('summon', t?.summonCd ?? 7000)) {
+    if (cd("summon", t?.summonCd ?? 7000)) {
       this.bossSummon();
-      mark('summon');
+      mark("summon");
     }
     // 地面AOE（阶段3狂暴）
-    if (this.bossPhase >= 3 && cd('aoe', t?.aoeCd ?? 3500)) {
+    if (this.bossPhase >= 3 && cd("aoe", t?.aoeCd ?? 3500)) {
       this.bossAOE(player);
-      mark('aoe');
+      mark("aoe");
     }
   }
   /** Boss 当前阶段（1/2/3，血量阈值 66%/33%） */
@@ -923,9 +1026,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 阶段切换特效：冲击波 + 狂暴大红圈
     (this.scene as any)
       .getFXManager?.()
-      ?.shockwave?.(this.x, this.y, this.config.size * 2, target === 3 ? 0xff2222 : 0xff8844);
+      ?.shockwave?.(
+        this.x,
+        this.y,
+        this.config.size * 2,
+        target === 3 ? 0xff2222 : 0xff8844,
+      );
     if (target === 3) {
-      (this.scene as any).getFXManager?.()?.telegraph?.(this.x, this.y, 130, 1000, 0xff2222);
+      (this.scene as any)
+        .getFXManager?.()
+        ?.telegraph?.(this.x, this.y, 130, 1000, 0xff2222);
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_BOSS_ALERT, 1);
     }
   }
@@ -987,14 +1097,18 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const spread = Math.PI / 6;
     const dmg = this.getBossSkillDamage(0.55);
     // 预警 500ms：橙色预警圈，玩家横向闪避扇形
-    (sceneRef as any).getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size * 1.1, 500, 0xffaa44);
+    (sceneRef as any)
+      .getFXManager?.()
+      ?.telegraph?.(this.x, this.y, this.config.size * 1.1, 500, 0xffaa44);
     this.scene.time.delayedCall(500, () => {
       if (this.isDead || !this.active) return;
       const baseAngle = MathUtils.angle(this.x, this.y, player.x, player.y);
       for (let i = 0; i < count; i++) {
         const t = i / (count - 1);
         const angle = baseAngle + (t - 0.5) * 2 * spread;
-        poolRef.spawnEnemyBullet(this.x, this.y, angle, 250, dmg, { color: 0xffaa44 });
+        poolRef.spawnEnemyBullet(this.x, this.y, angle, 250, dmg, {
+          color: 0xffaa44,
+        });
       }
     });
   }
@@ -1007,13 +1121,19 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const count = this.bossPhase >= 3 ? 5 : 3;
     const dmg = this.getBossSkillDamage(0.55);
     // 预警 500ms：绿色预警圈；弹速与转向下调，玩家保持移动可甩开
-    scene.getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size * 1.1, 500, 0x66ff66);
+    scene
+      .getFXManager?.()
+      ?.telegraph?.(this.x, this.y, this.config.size * 1.1, 500, 0x66ff66);
     this.scene.time.delayedCall(500, () => {
       if (this.isDead || !this.active) return;
       const baseAngle = MathUtils.angle(this.x, this.y, player.x, player.y);
       for (let i = 0; i < count; i++) {
         const angle = baseAngle + (i - (count - 1) / 2) * 0.25;
-        pool.spawnEnemyBullet(this.x, this.y, angle, 200, dmg, { color: 0x66ff66, homing: true, homingTurnRate: 2.6 });
+        pool.spawnEnemyBullet(this.x, this.y, angle, 200, dmg, {
+          color: 0x66ff66,
+          homing: true,
+          homingTurnRate: 2.6,
+        });
       }
     });
   }
@@ -1025,7 +1145,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.bossChargeTimer = 500; // 蓄力 0.5s（玩家有反应时间）
     this.bossChargeSpeed = 380 + this.difficultyMultiplier * 12;
     this.setTint(0xffffff); // 蓄力闪白警示
-    (this.scene as any).getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size, 500, 0xffaa00);
+    (this.scene as any)
+      .getFXManager?.()
+      ?.telegraph?.(this.x, this.y, this.config.size, 500, 0xffaa00);
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_BOSS_ALERT, 0.8);
   }
 
@@ -1042,7 +1164,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const maxEnemies = gm.qualitySettings.maxEnemies;
     if (pool.getActiveEnemyCount() >= maxEnemies * 0.6) return;
     const t = this.config.bossTuning;
-    const types: EnemyType[] = t?.summonTypes ?? ['normal', 'fast', 'elite'];
+    const types: EnemyType[] = t?.summonTypes ?? ["normal", "fast", "elite"];
     const count = t?.summonCount ?? 2;
     for (let i = 0; i < count; i++) {
       const type = types[Math.floor(Math.random() * types.length)];
@@ -1050,9 +1172,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (!cfg) continue;
       const ang = Math.random() * Math.PI * 2;
       const off = this.config.size + 40;
-      pool.spawnEnemy(cfg, this.x + Math.cos(ang) * off, this.y + Math.sin(ang) * off, this.difficultyMultiplier * 0.7);
+      pool.spawnEnemy(
+        cfg,
+        this.x + Math.cos(ang) * off,
+        this.y + Math.sin(ang) * off,
+        this.difficultyMultiplier * 0.7,
+      );
     }
-    (this.scene as any).getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size + 30, 400, 0xcc44ff);
+    (this.scene as any)
+      .getFXManager?.()
+      ?.telegraph?.(this.x, this.y, this.config.size + 30, 400, 0xcc44ff);
   }
   /** 地面AOE：锁定玩家当前位置预警后爆炸（阶段3） */
 
@@ -1079,10 +1208,17 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
    * 每个敌人有固定的 avoidSide，避免全部往同一边蹭
    */
 
-  private avoidObstacles(targetAngle: number, speed: number): { vx: number; vy: number } {
+  private avoidObstacles(
+    targetAngle: number,
+    speed: number,
+  ): { vx: number; vy: number } {
     const gs = this.scene as any;
     const tm = gs?.getTerrainManager?.();
-    if (!tm) return { vx: Math.cos(targetAngle) * speed, vy: Math.sin(targetAngle) * speed };
+    if (!tm)
+      return {
+        vx: Math.cos(targetAngle) * speed,
+        vy: Math.sin(targetAngle) * speed,
+      };
     const obstacles = tm.getObstacles();
     const lookAhead = 55; // 前方探测距离
     const fx = this.x + Math.cos(targetAngle) * lookAhead;
@@ -1100,12 +1236,17 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       }
     }
     if (!blocked) {
-      return { vx: Math.cos(targetAngle) * speed, vy: Math.sin(targetAngle) * speed };
+      return {
+        vx: Math.cos(targetAngle) * speed,
+        vy: Math.sin(targetAngle) * speed,
+      };
     }
     // 被阻挡：侧向避让（约72度），混合目标方向30% + 避让方向70%
     const avoidAngle = targetAngle + this.avoidSide * (Math.PI / 2.5);
-    const vx = Math.cos(targetAngle) * speed * 0.3 + Math.cos(avoidAngle) * speed * 0.7;
-    const vy = Math.sin(targetAngle) * speed * 0.3 + Math.sin(avoidAngle) * speed * 0.7;
+    const vx =
+      Math.cos(targetAngle) * speed * 0.3 + Math.cos(avoidAngle) * speed * 0.7;
+    const vy =
+      Math.sin(targetAngle) * speed * 0.3 + Math.sin(avoidAngle) * speed * 0.7;
     return { vx, vy };
   }
   /** 环形弹幕（密度/速度随阶段提升，轻微旋转增加观赏性） */
@@ -1118,25 +1259,33 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const speed = this.bossPhase >= 3 ? 225 : this.bossPhase === 2 ? 195 : 165;
     const dmg = this.getBossSkillDamage(0.65);
     // 预警 650ms：红光圈提示弹幕即将覆盖，玩家借旋转间隙走位
-    scene.getFXManager?.()?.telegraph?.(this.x, this.y, this.config.size * 1.15, 650, 0xff4444);
+    scene
+      .getFXManager?.()
+      ?.telegraph?.(this.x, this.y, this.config.size * 1.15, 650, 0xff4444);
     this.scene.time.delayedCall(650, () => {
       if (this.isDead || !this.active) return;
       for (let i = 0; i < count; i++) {
         const angle = (i / count) * Math.PI * 2 + this.scene.time.now * 0.00025;
-        pool.spawnEnemyBullet(this.x, this.y, angle, speed, dmg, { color: 0xff4444 });
+        pool.spawnEnemyBullet(this.x, this.y, angle, speed, dmg, {
+          color: 0xff4444,
+        });
       }
     });
   }
 
   private attackPlayer(player: Player): void {
-    const bossMult = this.config.type === 'boss' ? 1.3 : 1;
+    const bossMult = this.config.type === "boss" ? 1.3 : 1;
     const chargeMult = this.chargerState === 2 ? 1.6 : 1;
-    const dmg = calcAttackDamage(this.config.attackPower, this.difficultyMultiplier, {
-      bossMult,
-      chargeMult,
-      atkBoost: this.atkBoost,
-      affixAtkBoost: this.affixAtkBoost,
-    });
+    const dmg = calcAttackDamage(
+      this.config.attackPower,
+      this.difficultyMultiplier,
+      {
+        bossMult,
+        chargeMult,
+        atkBoost: this.atkBoost,
+        affixAtkBoost: this.affixAtkBoost,
+      },
+    );
     player.takeDamage(dmg);
     // 攻击反馈：身体瞬间闪白 + 轻微放大脉冲（纯表现，不改时序；复用池 despawn 时 setScale(1) 兜底复位）
     const origTint = this.tintTopLeft;
@@ -1154,13 +1303,22 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     });
     // 吸血词缀：命中回复造成伤害的 lifestealMult 生命
     if (this.lifestealMult > 0) {
-      this.health = calcLifestealHeal(this.health, this.maxHealth, dmg, this.lifestealMult);
+      this.health = calcLifestealHeal(
+        this.health,
+        this.maxHealth,
+        dmg,
+        this.lifestealMult,
+      );
     }
     // 剧毒词缀：命中玩家附加持续中毒（每秒 = 攻击力 × dpsMult，绕过无敌帧；applyPoison 内部有存活检查）
     if (this.affixPoison && player) {
       player.applyPoison(
-        calcPoisonDps(this.config.attackPower, this.difficultyMultiplier, this.affixPoison.dpsMult),
-        this.affixPoison.duration
+        calcPoisonDps(
+          this.config.attackPower,
+          this.difficultyMultiplier,
+          this.affixPoison.dpsMult,
+        ),
+        this.affixPoison.duration,
       );
     }
     // 冰冻词缀：命中玩家施加减速（applySlow 内部有存活检查）
@@ -1185,15 +1343,23 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.y,
       angle,
       300,
-      this.config.attackPower * this.difficultyMultiplier * this.atkBoost * this.affixAtkBoost
+      this.config.attackPower *
+        this.difficultyMultiplier *
+        this.atkBoost *
+        this.affixAtkBoost,
     );
     this.attackCooldown = this.config.attackCooldown;
   }
   // ========== 受伤与死亡 ==========
-  takeDamage(amount: number, isCrit: boolean = false, fromX?: number, fromY?: number): void {
+  takeDamage(
+    amount: number,
+    isCrit: boolean = false,
+    fromX?: number,
+    fromY?: number,
+  ): void {
     if (this.isDead) return;
     // 受伤后短暂显示头顶小血条（Boss 用顶部大血条，不显示）
-    if (this.config?.type !== 'boss' && this.hpBarBg) {
+    if (this.config?.type !== "boss" && this.hpBarBg) {
       this.hpBarTimer = 2000;
       this.hpBarBg.setVisible(true);
       this.hpBar.setVisible(true);
@@ -1261,7 +1427,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
               productConfig,
               this.x + offsetX,
               this.y + (i % 2 === 0 ? 15 : -15),
-              this.difficultyMultiplier * 0.6
+              this.difficultyMultiplier * 0.6,
             );
         }
       }
@@ -1280,7 +1446,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
               productConfig,
               this.x + offsetX,
               this.y + (i % 2 === 0 ? 15 : -15),
-              this.difficultyMultiplier * 0.6
+              this.difficultyMultiplier * 0.6,
             );
         }
       }
@@ -1299,8 +1465,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
               this.difficultyMultiplier,
               explodeDef.explodeOnDeath.dmgMult,
               dist,
-              explodeDef.explodeOnDeath.radius
-            )
+              explodeDef.explodeOnDeath.radius,
+            ),
           );
         }
       }
@@ -1308,7 +1474,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // 召唤词缀：死亡时召唤小怪（查 AFFIXES 表，与分裂词缀同模式）
     const summonDef = this.affix ? AFFIXES[this.affix] : undefined;
     if (summonDef?.summonOnDeath) {
-      const productConfig = ENEMY_CONFIGS[summonDef.summonOnDeath.type as keyof typeof ENEMY_CONFIGS];
+      const productConfig =
+        ENEMY_CONFIGS[
+          summonDef.summonOnDeath.type as keyof typeof ENEMY_CONFIGS
+        ];
       if (productConfig && scene?.getObjectPool?.()) {
         for (let i = 0; i < summonDef.summonOnDeath.count; i++) {
           const offsetX = (i % 2 === 0 ? -1 : 1) * 20;
@@ -1318,7 +1487,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
               productConfig,
               this.x + offsetX,
               this.y + (i % 2 === 0 ? 15 : -15),
-              this.difficultyMultiplier * 0.6
+              this.difficultyMultiplier * 0.6,
             );
         }
       }
@@ -1327,26 +1496,33 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (scene && scene.spawnPickup) {
       scene.spawnPickup(
         {
-          type: 'exp',
-          texture: 'pickup_exp',
-          value: Math.max(1, Math.floor(this.config.expReward * this.difficultyMultiplier * this.getAffixBonus())),
+          type: "exp",
+          texture: "pickup_exp",
+          value: Math.max(
+            1,
+            Math.floor(
+              this.config.expReward *
+                this.difficultyMultiplier *
+                this.getAffixBonus(),
+            ),
+          ),
           magnetSpeed: 300,
         },
         this.x,
-        this.y
+        this.y,
       );
     }
     // 概率掉落血包
     if (MathUtils.chance(0.05)) {
       scene?.spawnPickup?.(
         {
-          type: 'health',
-          texture: 'pickup_health',
+          type: "health",
+          texture: "pickup_health",
           value: 20,
           magnetSpeed: 300,
         },
         this.x + 20,
-        this.y
+        this.y,
       );
     }
     // 金币掉落（按敌人类型配置掉率与数量）
@@ -1354,35 +1530,50 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (coinDrop && MathUtils.chance(coinDrop.chance)) {
       scene?.spawnPickup?.(
         {
-          type: 'coin',
-          texture: 'pickup_coin',
-          value: Math.max(1, Math.round(MathUtils.randomInt(coinDrop.min, coinDrop.max) * this.getAffixBonus())),
+          type: "coin",
+          texture: "pickup_coin",
+          value: Math.max(
+            1,
+            Math.round(
+              MathUtils.randomInt(coinDrop.min, coinDrop.max) *
+                this.getAffixBonus(),
+            ),
+          ),
           magnetSpeed: 300,
         },
         this.x - 20,
-        this.y
+        this.y,
       );
     }
     // 宝箱掉落（爽点）：普通怪小概率，精英高概率，Boss 必掉
-    const chestChance = this.config.type === 'boss' ? 1 : this.config.type === 'elite' ? 0.15 : 0.03;
+    const chestChance =
+      this.config.type === "boss"
+        ? 1
+        : this.config.type === "elite"
+          ? 0.15
+          : 0.03;
     if (MathUtils.chance(chestChance)) {
       scene?.spawnPickup?.(
         {
-          type: 'chest',
-          texture: 'pickup_chest',
+          type: "chest",
+          texture: "pickup_chest",
           value: 0,
           magnetSpeed: 200,
         },
         this.x + 15,
-        this.y + 20
+        this.y + 20,
       );
     }
     // 死亡消散特效（统一入口：子弹击杀 / killAll / 连锁伤害均触发）
-    scene?.getFXManager?.()?.enemyDeath(this.x, this.y, this.config?.color || 0xff4444);
+    scene
+      ?.getFXManager?.()
+      ?.enemyDeath(this.x, this.y, this.config?.color || 0xff4444);
     // 死亡音效（Boss 用专属死亡音效）
     AudioManager.getInstance().playSfx(
-      this.config.type === 'boss' ? SOUND_KEYS.SFX_BOSS_DIE : SOUND_KEYS.SFX_ENEMY_DIE,
-      this.config.type === 'boss' ? 1 : 0.5
+      this.config.type === "boss"
+        ? SOUND_KEYS.SFX_BOSS_DIE
+        : SOUND_KEYS.SFX_ENEMY_DIE,
+      this.config.type === "boss" ? 1 : 0.5,
     );
     EventBus.emit(EventKeys.ENEMY_DEATH, this.config);
     this.despawn();
@@ -1396,7 +1587,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     return this.config;
   }
   getEnemyType(): EnemyType {
-    return this.config?.type || 'normal';
+    return this.config?.type || "normal";
   }
   getHealth(): number {
     return this.health;
@@ -1411,7 +1602,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   getAffixBonus(): number {
     if (!this.affix) return 1;
     const r = AFFIXES[this.affix]?.rarity;
-    return r === 'epic' ? 2 : r === 'rare' ? 1.5 : 1.2;
+    return r === "epic" ? 2 : r === "rare" ? 1.5 : 1.2;
   }
   getScoreReward(): number {
     return Math.round((this.config?.scoreReward || 10) * this.getAffixBonus());
@@ -1420,24 +1611,24 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   private getCoinDrop(): { chance: number; min: number; max: number } | null {
     switch (this.config?.type) {
-      case 'normal':
+      case "normal":
         // 前期经济：普通怪掉率/数量上调，缓解第一个商店（wave5 前）太穷买不起
         return { chance: 0.45, min: 3, max: 6 };
-      case 'fast':
+      case "fast":
         return { chance: 0.4, min: 3, max: 5 };
-      case 'tank':
+      case "tank":
         return { chance: 0.5, min: 4, max: 7 };
-      case 'ranged':
+      case "ranged":
         return { chance: 0.35, min: 3, max: 5 };
-      case 'elite':
+      case "elite":
         return { chance: 1, min: 15, max: 25 };
-      case 'boss':
+      case "boss":
         return { chance: 1, min: 80, max: 150 };
       default:
         return { chance: 0.3, min: 2, max: 5 };
     }
   }
   isBoss(): boolean {
-    return this.config?.type === 'boss';
+    return this.config?.type === "boss";
   }
 }

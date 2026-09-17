@@ -1,7 +1,6 @@
-import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
-import type { Vector2 } from '../types';
-
+import Phaser from "phaser";
+import { GameManager } from "../game/GameManager";
+import type { Vector2 } from "../types";
 /**
  * 输入管理器
  * 统一处理 PC 键鼠和移动端触屏输入，对外提供一致的输入接口
@@ -19,20 +18,16 @@ export class InputManager {
   };
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private eKey!: Phaser.Input.Keyboard.Key;
-
   // 移动端虚拟摇杆状态（由 UIScene 的 VirtualJoystick 设置）
   private joystickVector: Vector2 = { x: 0, y: 0 };
   // AI 自动玩方向覆盖（非零时优先于键盘/摇杆）
   private aiVector: Vector2 = { x: 0, y: 0 };
   private isMobile: boolean;
-
   // 鼠标/触摸瞄准
   private aimPointer: Vector2 = { x: 0, y: 0 };
-
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.isMobile = GameManager.getInstance().isMobile;
-
     if (!this.isMobile) {
       this.setupKeyboard();
       this.setupMouse();
@@ -42,7 +37,6 @@ export class InputManager {
   private setupKeyboard(): void {
     const keyboard = this.scene.input.keyboard;
     if (!keyboard) return;
-
     this.cursors = keyboard.createCursorKeys();
     this.wasdKeys = {
       W: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
@@ -55,9 +49,12 @@ export class InputManager {
   }
 
   private setupMouse(): void {
-    this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+    this.scene.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       // 转换为世界坐标
-      const worldPoint = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      const worldPoint = this.scene.cameras.main.getWorldPoint(
+        pointer.x,
+        pointer.y,
+      );
       this.aimPointer = { x: worldPoint.x, y: worldPoint.y };
     });
   }
@@ -74,7 +71,6 @@ export class InputManager {
 
     let x = 0;
     let y = 0;
-
     if (this.isMobile) {
       // 移动端使用虚拟摇杆
       return { ...this.joystickVector };
@@ -122,7 +118,11 @@ export class InputManager {
   /** 是否按下攻击键（PC） */
   isAttackPressed(): boolean {
     if (this.isMobile) return false;
-    return this.scene.input.activePointer.leftButtonDown() || this.spaceKey?.isDown || false;
+    return (
+      this.scene.input.activePointer.leftButtonDown() ||
+      this.spaceKey?.isDown ||
+      false
+    );
   }
 
   /** 是否按下交互键 */
@@ -132,7 +132,6 @@ export class InputManager {
   }
 
   // ========== 移动端接口（由 VirtualJoystick 调用） ==========
-
   /** 设置虚拟摇杆向量 */
   setJoystickVector(x: number, y: number): void {
     this.joystickVector = { x, y };
@@ -144,7 +143,6 @@ export class InputManager {
   }
 
   // ========== 工具方法 ==========
-
   /** 是否有移动输入 */
   isMoving(): boolean {
     const dir = this.getMoveDirection();

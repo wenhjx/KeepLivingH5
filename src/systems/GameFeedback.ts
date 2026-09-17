@@ -1,6 +1,5 @@
-import Phaser from 'phaser';
-import { EventBus, EventKeys } from '../utils/EventBus';
-
+import Phaser from "phaser";
+import { EventBus, EventKeys } from "../utils/EventBus";
 /**
  * 游戏演出 / 反馈层（纯表现，与玩法解耦）
  *
@@ -18,11 +17,14 @@ export class GameFeedback {
   private scene: Phaser.Scene;
   private unsubs: Array<() => void> = [];
   private lastCritAt = 0;
-
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.unsubs.push(EventBus.on(EventKeys.BOSS_SPAWN, (d: any) => this.onBossSpawn(d)));
-    this.unsubs.push(EventBus.on(EventKeys.COMBAT_CRIT, (d: any) => this.onCrit(d)));
+    this.unsubs.push(
+      EventBus.on(EventKeys.BOSS_SPAWN, (d: any) => this.onBossSpawn(d)),
+    );
+    this.unsubs.push(
+      EventBus.on(EventKeys.COMBAT_CRIT, (d: any) => this.onCrit(d)),
+    );
   }
 
   /** 销毁：取消全部订阅并清理横幅（场景 SHUTDOWN 时调用） */
@@ -32,7 +34,6 @@ export class GameFeedback {
   }
 
   // ========== Boss 出场演出 ==========
-
   private onBossSpawn(_d: { x: number; y: number; wave: number }): void {
     const cam = this.scene.cameras.main;
     // 红闪 + 震屏 + 短顿帧：制造 Boss 出场的压迫感
@@ -42,31 +43,26 @@ export class GameFeedback {
   }
 
   // ========== 暴击反馈（震屏 + 重击顿帧） ==========
-
   private onCrit(d: { x: number; y: number; damage: number }): void {
     const now = this.scene.time.now;
     // 节流：每 140ms 最多触发一次，避免高暴击率时镜头持续抖动
     if (now - this.lastCritAt < 140) return;
     this.lastCritAt = now;
-
     // 伤害越高震屏越强（轻量，封顶 0.004）
     const strength = Math.min(0.004, 0.001 + d.damage * 0.00001);
     this.scene.cameras.main.shake(60, strength);
-
     // 重击（≥200 伤害）附带短顿帧，强化"沉"感
     if (d.damage >= 200) this.hitStop(45);
   }
 
   // ========== 基础工具 ==========
-
   /** 是否有挂起的顿帧恢复（防止连续暴击反复刷新 pause，把物理世界永久卡在暂停态） */
   private hitStopPending = false;
-
   /** 短顿帧：暂停物理世界一小段时间后恢复（hit-stop 打击感） */
   private hitStop(ms: number): void {
     const scene = this.scene as any;
     // 用 ArcadePhysics 公开的 pause()/resume()（world 属性运行时不可靠）
-    if (!scene.physics || typeof scene.physics.pause !== 'function') return;
+    if (!scene.physics || typeof scene.physics.pause !== "function") return;
     // 已有挂起恢复时直接忽略：物理本来就在顿帧中，恢复定时器已排定，不重复暂停，
     // 否则高攻速高暴击（伤害 ≥200）会让 pause/resume 竞态刷新，物理永远暂停
     if (this.hitStopPending) return;

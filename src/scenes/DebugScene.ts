@@ -1,8 +1,8 @@
-import Phaser from 'phaser';
-import { GameConfig } from '../game/GameConfig';
-import { GameManager } from '../game/GameManager';
-import { createUIText } from '../utils/UIText';
-import { DebugPanel } from '../ui/DebugPanel';
+import Phaser from "phaser";
+import { GameConfig } from "../game/GameConfig";
+import { GameManager } from "../game/GameManager";
+import { createUIText } from "../utils/UIText";
+import { DebugPanel } from "../ui/DebugPanel";
 
 /**
  * 调试叠加场景
@@ -22,7 +22,7 @@ export class DebugScene extends Phaser.Scene {
   private fpsTimer = 0;
 
   constructor() {
-    super('DebugScene');
+    super("DebugScene");
   }
 
   create(): void {
@@ -31,7 +31,10 @@ export class DebugScene extends Phaser.Scene {
     const u = GameConfig.uiScale;
     this.cameras.main.setZoom(z);
     this.uiRoot = this.add
-      .container((this.scale.width / 2) * (1 - u / z), (this.scale.height / 2) * (1 - u / z))
+      .container(
+        (this.scale.width / 2) * (1 - u / z),
+        (this.scale.height / 2) * (1 - u / z),
+      )
       .setScale(u / z);
 
     // 调试面板（按 ` 键切换）；传入 uiRoot 供滚动遮罩做 world 坐标换算
@@ -42,13 +45,13 @@ export class DebugScene extends Phaser.Scene {
       this,
       GameConfig.anchorX(12, this.scale.width),
       GameConfig.anchorY(this.scale.height - 12, this.scale.height),
-      '',
+      "",
       {
-        fontSize: '12px',
-        color: '#ffffff',
-        backgroundColor: 'rgba(0,0,0,0.35)',
+        fontSize: "12px",
+        color: "#ffffff",
+        backgroundColor: "rgba(0,0,0,0.35)",
         padding: { left: 6, right: 6, top: 2, bottom: 2 },
-      }
+      },
     ).setOrigin(0, 1);
     this.uiRoot.add(this.fpsText);
     this.fpsText.setVisible(GameManager.getInstance().showFps);

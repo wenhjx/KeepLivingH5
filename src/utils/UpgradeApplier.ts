@@ -1,6 +1,6 @@
-import { WEAPONS } from '../data/weapons';
-import type { Player } from '../entities/Player';
-import type { UpgradeOption } from '../types';
+import { WEAPONS } from "../data/weapons";
+import type { Player } from "../entities/Player";
+import type { UpgradeOption } from "../types";
 
 /**
  * 应用升级选项到玩家（统一入口）
@@ -14,7 +14,11 @@ import type { UpgradeOption } from '../types';
  *
  * 兜底项（FALLBACK_UPGRADES）走 onApply 自定义逻辑（金币/治疗/狂暴/清屏）。
  */
-export function applyUpgradeToPlayer(player: Player, option: UpgradeOption, scene?: any): void {
+export function applyUpgradeToPlayer(
+  player: Player,
+  option: UpgradeOption,
+  scene?: any,
+): void {
   // 兜底项/特殊项：自定义应用逻辑优先
   if (option.onApply) {
     option.onApply(player, scene);
@@ -44,7 +48,7 @@ export function applyUpgradeToPlayer(player: Player, option: UpgradeOption, scen
   }
 
   // 被动技能
-  if (option.type === 'passive') {
+  if (option.type === "passive") {
     player.addPassive(option.id, option.name, 5);
   }
 }

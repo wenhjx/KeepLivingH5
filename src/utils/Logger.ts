@@ -12,33 +12,32 @@ export enum LogLevel {
 
 class LoggerClass {
   private level: LogLevel = LogLevel.INFO;
-  private prefix = '[KeepLiving]';
-
+  private prefix = "[KeepLiving]";
   setLevel(level: LogLevel): void {
     this.level = level;
   }
 
   debug(...args: any[]): void {
     if (this.level <= LogLevel.DEBUG) {
-      console.debug(this.prefix, '[DEBUG]', ...args);
+      console.debug(this.prefix, "[DEBUG]", ...args);
     }
   }
 
   info(...args: any[]): void {
     if (this.level <= LogLevel.INFO) {
-      console.info(this.prefix, '[INFO]', ...args);
+      console.info(this.prefix, "[INFO]", ...args);
     }
   }
 
   warn(...args: any[]): void {
     if (this.level <= LogLevel.WARN) {
-      console.warn(this.prefix, '[WARN]', ...args);
+      console.warn(this.prefix, "[WARN]", ...args);
     }
   }
 
   error(...args: any[]): void {
     if (this.level <= LogLevel.ERROR) {
-      console.error(this.prefix, '[ERROR]', ...args);
+      console.error(this.prefix, "[ERROR]", ...args);
     }
   }
 

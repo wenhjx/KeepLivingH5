@@ -22,7 +22,7 @@ export class GameConfig {
     return y / k + (h / 2) * (1 - 1 / k);
   }
   /** 背景色 */
-  static readonly BG_COLOR = '#0a0a0f';
+  static readonly BG_COLOR = "#0a0a0f";
   /** 是否像素风模式（开启后：最近邻采样 + 像素对齐，边缘锐利不模糊） */
   static readonly PIXEL_ART = true;
   /**
@@ -30,10 +30,10 @@ export class GameConfig {
    * 两套纹理并存于 TextureGenerator，实体按当前主题解析纹理 key，
    * 可运行时切换（DebugAPI.setTheme），切换后新实体生效、已有实体即时 setTexture。
    */
-  static VISUAL_THEME: 'pixel' | 'classic' = 'classic';
+  static VISUAL_THEME: "pixel" | "classic" = "classic";
   /** 按当前主题解析纹理 key：classic 使用 `_classic` 后缀的矢量纹理，pixel 使用原像素纹理 */
   static themeKey(base: string): string {
-    return GameConfig.VISUAL_THEME === 'classic' ? `${base}_classic` : base;
+    return GameConfig.VISUAL_THEME === "classic" ? `${base}_classic` : base;
   }
   /** 物理调试模式 */
   static readonly DEBUG_PHYSICS = false;
@@ -124,7 +124,7 @@ export class GameConfig {
 
   // ========== 存档 ==========
   static readonly SAVE = {
-    localStorageKey: 'keep_living_save_v1',
+    localStorageKey: "keep_living_save_v1",
     autoSaveInterval: 30000,
     cloudSyncEnabled: false,
   };
@@ -132,13 +132,13 @@ export class GameConfig {
   // ========== 场景 ==========
   /** 游戏内覆盖模态场景（升级/商店/突破/结算/属性/武器选择等）；返回主菜单时统一清理，防止残留覆盖层挡住菜单 */
   static readonly OVERLAY_SCENES = [
-    'UpgradeScene',
-    'WeaponSelectScene',
-    'EndlessChoiceScene',
-    'ShopScene',
-    'BreakthroughScene',
-    'PlayerInfoScene',
-    'AchievementScene',
+    "UpgradeScene",
+    "WeaponSelectScene",
+    "EndlessChoiceScene",
+    "ShopScene",
+    "BreakthroughScene",
+    "PlayerInfoScene",
+    "AchievementScene",
   ];
 
   // ========== 输入 ==========
@@ -157,4 +157,4 @@ export class GameConfig {
 }
 
 /** 画质等级枚举 */
-export type QualityLevel = 'low' | 'medium' | 'high';
+export type QualityLevel = "low" | "medium" | "high";

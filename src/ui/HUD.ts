@@ -1,10 +1,14 @@
-import { createUIText } from '../utils/UIText';
-import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
-import { UPGRADE_OPTIONS, passiveDescForLevel, passiveLevelTexts } from '../data/upgrades';
-import { UILayout } from '../utils/UILayout';
-import { GameConfig } from '../game/GameConfig';
-import { Layers } from '../constants/Layers';
+import { createUIText } from "../utils/UIText";
+import Phaser from "phaser";
+import { GameManager } from "../game/GameManager";
+import {
+  UPGRADE_OPTIONS,
+  passiveDescForLevel,
+  passiveLevelTexts,
+} from "../data/upgrades";
+import { UILayout } from "../utils/UILayout";
+import { GameConfig } from "../game/GameConfig";
+import { Layers } from "../constants/Layers";
 
 /**
  * HUD 抬头显示
@@ -44,8 +48,8 @@ export class HUD {
   // 增益列表（被动）
   private buffContainer!: Phaser.GameObjects.Container;
   private buffIcons: Map<string, Phaser.GameObjects.Container> = new Map();
-  private lastBuffPersistKey: string = '';
-  private lastBuffTimedKey: string = '';
+  private lastBuffPersistKey: string = "";
+  private lastBuffTimedKey: string = "";
   /** 环境状态提示文本（冰面减速 / 风道加速；位置状态不进 buff 栏，独立显示） */
   private envStateText!: Phaser.GameObjects.Text;
 
@@ -60,29 +64,35 @@ export class HUD {
 
   // 武器视觉映射（图标 + 背景色）
   // 注意：图标与 UPGRADE_OPTIONS（升级三选一/商店/解锁提示）保持一致，避免同一武器多处图标不一致
-  private readonly weaponVisuals: Record<string, { icon: string; color: number }> = {
-    default_gun: { icon: '🔫', color: 0x444466 },
-    machine_gun: { icon: '🔫', color: 0x886600 },
-    shotgun: { icon: '🔫', color: 0x882222 },
-    laser: { icon: '🔆', color: 0x006666 },
-    rocket: { icon: '🚀', color: 0x884400 },
-    boomerang: { icon: '🪃', color: 0x226622 },
-    lightsaber: { icon: '🗡️', color: 0x006688 },
-    drone: { icon: '🤖', color: 0x004466 },
-    nova: { icon: '💥', color: 0x883355 },
+  private readonly weaponVisuals: Record<
+    string,
+    { icon: string; color: number }
+  > = {
+    default_gun: { icon: "🔫", color: 0x444466 },
+    machine_gun: { icon: "🔫", color: 0x886600 },
+    shotgun: { icon: "🔫", color: 0x882222 },
+    laser: { icon: "🔆", color: 0x006666 },
+    rocket: { icon: "🚀", color: 0x884400 },
+    boomerang: { icon: "🪃", color: 0x226622 },
+    lightsaber: { icon: "🗡️", color: 0x006688 },
+    drone: { icon: "🤖", color: 0x004466 },
+    nova: { icon: "💥", color: 0x883355 },
   };
 
   // 被动技能视觉映射（图标 + 背景色）
-  private readonly passiveVisuals: Record<string, { icon: string; color: number }> = {
-    passive_regen: { icon: '💚', color: 0x226622 },
-    passive_thorns: { icon: '🌵', color: 0x664422 },
-    passive_exp_boost: { icon: '📈', color: 0x224466 },
-    passive_gold_boost: { icon: '💰', color: 0x665500 },
-    passive_lifesteal: { icon: '🩸', color: 0x662244 },
-    passive_bounce: { icon: '🪩', color: 0x664466 },
-    passive_freeze: { icon: '❄️', color: 0x226688 },
-    passive_burn: { icon: '🔥', color: 0x883322 },
-    passive_chain: { icon: '⚡', color: 0x886600 },
+  private readonly passiveVisuals: Record<
+    string,
+    { icon: string; color: number }
+  > = {
+    passive_regen: { icon: "💚", color: 0x226622 },
+    passive_thorns: { icon: "🌵", color: 0x664422 },
+    passive_exp_boost: { icon: "📈", color: 0x224466 },
+    passive_gold_boost: { icon: "💰", color: 0x665500 },
+    passive_lifesteal: { icon: "🩸", color: 0x662244 },
+    passive_bounce: { icon: "🪩", color: 0x664466 },
+    passive_freeze: { icon: "❄️", color: 0x226688 },
+    passive_burn: { icon: "🔥", color: 0x883322 },
+    passive_chain: { icon: "⚡", color: 0x886600 },
   };
 
   // 尺寸常量
@@ -117,31 +127,49 @@ export class HUD {
     this.expBarY = bottomY + this.barHeight / 2 + 6;
 
     // 环境状态提示（冰面减速 / 风道加速）：位于 buff 栏上方居中
-    this.envStateText = createUIText(this.scene, centerX, barTop - this.buffSize - 12 - 18, '', {
-      fontSize: '13px',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 3,
-    })
+    this.envStateText = createUIText(
+      this.scene,
+      centerX,
+      barTop - this.buffSize - 12 - 18,
+      "",
+      {
+        fontSize: "13px",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 3,
+      },
+    )
       .setOrigin(0.5)
       .setVisible(false);
 
     // 血量条背景
     this.healthBarBg = this.scene.add.graphics();
     this.healthBarBg.fillStyle(0x1a1a25, 0.9);
-    this.healthBarBg.fillRoundedRect(barLeft, barTop, this.barWidth, this.barHeight, 6);
+    this.healthBarBg.fillRoundedRect(
+      barLeft,
+      barTop,
+      this.barWidth,
+      this.barHeight,
+      6,
+    );
     this.healthBarBg.lineStyle(2, 0x44ff44, 0.4);
-    this.healthBarBg.strokeRoundedRect(barLeft, barTop, this.barWidth, this.barHeight, 6);
+    this.healthBarBg.strokeRoundedRect(
+      barLeft,
+      barTop,
+      this.barWidth,
+      this.barHeight,
+      6,
+    );
 
     // 血量条
     this.healthBar = this.scene.add.graphics();
 
     // 血量文字
-    this.healthText = createUIText(this.scene, centerX, bottomY, '100/100', {
-      fontSize: '14px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#000000',
+    this.healthText = createUIText(this.scene, centerX, bottomY, "100/100", {
+      fontSize: "14px",
+      color: "#ffffff",
+      fontStyle: "bold",
+      stroke: "#000000",
       strokeThickness: 3,
     }).setOrigin(0.5);
 
@@ -157,11 +185,11 @@ export class HUD {
     this.expBar = this.scene.add.graphics();
 
     // 等级文字（血条左侧，放大）
-    this.levelText = createUIText(this.scene, barLeft - 12, bottomY, 'Lv.1', {
-      fontSize: '20px',
-      color: '#ffb347',
-      fontStyle: 'bold',
-      stroke: '#000000',
+    this.levelText = createUIText(this.scene, barLeft - 12, bottomY, "Lv.1", {
+      fontSize: "20px",
+      color: "#ffb347",
+      fontStyle: "bold",
+      stroke: "#000000",
       strokeThickness: 4,
     }).setOrigin(1, 0.5);
 
@@ -170,64 +198,99 @@ export class HUD {
     const infoLeft = GameConfig.anchorX(this.padding, width);
     // 小地图位于 (10, 10, 160, 120)，底部 y = 130；信息区从地图下方开始排布
     const minimapBottomY = 10 + 120;
-    const infoTop = GameConfig.anchorY(minimapBottomY + 120 * (GameConfig.uiScale - 1) + 10, height);
+    const infoTop = GameConfig.anchorY(
+      minimapBottomY + 120 * (GameConfig.uiScale - 1) + 10,
+      height,
+    );
 
-    this.waveText = createUIText(this.scene, infoLeft, infoTop, '波次: 1', {
-      fontSize: '16px',
-      color: '#ff6b35',
-      fontStyle: 'bold',
+    this.waveText = createUIText(this.scene, infoLeft, infoTop, "波次: 1", {
+      fontSize: "16px",
+      color: "#ff6b35",
+      fontStyle: "bold",
     }).setOrigin(0, 0);
 
-    this.killsText = createUIText(this.scene, infoLeft, infoTop + 24, '击杀: 0', {
-      fontSize: '14px',
-      color: '#cccccc',
-    }).setOrigin(0, 0);
+    this.killsText = createUIText(
+      this.scene,
+      infoLeft,
+      infoTop + 24,
+      "击杀: 0",
+      {
+        fontSize: "14px",
+        color: "#cccccc",
+      },
+    ).setOrigin(0, 0);
 
-    this.scoreText = createUIText(this.scene, infoLeft, infoTop + 46, '分数: 0', {
-      fontSize: '14px',
-      color: '#ffb347',
-    }).setOrigin(0, 0);
+    this.scoreText = createUIText(
+      this.scene,
+      infoLeft,
+      infoTop + 46,
+      "分数: 0",
+      {
+        fontSize: "14px",
+        color: "#ffb347",
+      },
+    ).setOrigin(0, 0);
 
     // 金币
-    this.coinText = createUIText(this.scene, infoLeft, infoTop + 68, '💰 0', {
-      fontSize: '14px',
-      color: '#ffcc00',
-      fontStyle: 'bold',
+    this.coinText = createUIText(this.scene, infoLeft, infoTop + 68, "💰 0", {
+      fontSize: "14px",
+      color: "#ffcc00",
+      fontStyle: "bold",
     }).setOrigin(0, 0);
 
     // 波次预告：距下个 Boss 波还有几波（给玩家战前节奏预期）
-    this.bossWarnText = createUIText(this.scene, infoLeft, infoTop + 88, '', {
-      fontSize: '13px',
-      color: '#ff6b6b',
+    this.bossWarnText = createUIText(this.scene, infoLeft, infoTop + 88, "", {
+      fontSize: "13px",
+      color: "#ff6b6b",
     }).setOrigin(0, 0);
 
     // ========== 顶部中间：存活时间 ==========
-    this.timeText = createUIText(this.scene, width / 2, topY, '00:00', {
-      fontSize: '20px',
-      color: '#ffffff',
-      fontStyle: 'bold',
+    this.timeText = createUIText(this.scene, width / 2, topY, "00:00", {
+      fontSize: "20px",
+      color: "#ffffff",
+      fontStyle: "bold",
     }).setOrigin(0.5, 0);
 
     // ========== Boss 血条（唯一 Boss 出现时显示） ==========
-    this.bossContainer = this.scene.add.container(width / 2, topY + 40).setDepth(Layers.HUD_BOSS);
+    this.bossContainer = this.scene.add
+      .container(width / 2, topY + 40)
+      .setDepth(Layers.HUD_BOSS);
     this.bossContainer.setVisible(false);
 
     // Boss 名称
-    this.bossNameText = createUIText(this.scene, 0, -this.bossBarHeight - 6, 'BOSS', {
-      fontSize: '20px',
-      color: '#ff3344',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 4,
-    }).setOrigin(0.5, 0);
+    this.bossNameText = createUIText(
+      this.scene,
+      0,
+      -this.bossBarHeight - 6,
+      "BOSS",
+      {
+        fontSize: "20px",
+        color: "#ff3344",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 4,
+      },
+    ).setOrigin(0.5, 0);
     this.bossContainer.add(this.bossNameText);
 
     // 血条背景
     this.bossBarBg = this.scene.add.graphics();
     this.bossBarBg.fillStyle(0x1a1a25, 0.95);
-    this.bossBarBg.fillRoundedRect(-this.bossBarWidth / 2, 0, this.bossBarWidth, this.bossBarHeight, 5);
+    this.bossBarBg.fillRoundedRect(
+      -this.bossBarWidth / 2,
+      0,
+      this.bossBarWidth,
+      this.bossBarHeight,
+      5,
+    );
     this.bossBarBg.lineStyle(2, 0xff3344, 0.8);
-    this.bossBarBg.strokeRoundedRect(-this.bossBarWidth / 2, 0, this.bossBarWidth, this.bossBarHeight, 5);
+    this.bossBarBg.strokeRoundedRect(
+      -this.bossBarWidth / 2,
+      0,
+      this.bossBarWidth,
+      this.bossBarHeight,
+      5,
+    );
     this.bossContainer.add(this.bossBarBg);
 
     // 血量填充
@@ -235,17 +298,25 @@ export class HUD {
     this.bossContainer.add(this.bossBar);
 
     // 血量数值
-    this.bossValueText = createUIText(this.scene, 0, this.bossBarHeight / 2, '', {
-      fontSize: '12px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 3,
-    }).setOrigin(0.5);
+    this.bossValueText = createUIText(
+      this.scene,
+      0,
+      this.bossBarHeight / 2,
+      "",
+      {
+        fontSize: "12px",
+        color: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 3,
+      },
+    ).setOrigin(0.5);
     this.bossContainer.add(this.bossValueText);
 
     // ========== 左下角：增益列表（武器/被动） ==========
-    this.buffContainer = this.scene.add.container(0, 0).setDepth(Layers.HUD_BUFF);
+    this.buffContainer = this.scene.add
+      .container(0, 0)
+      .setDepth(Layers.HUD_BUFF);
 
     // buff 点击提示
     this.initTooltip();
@@ -253,14 +324,17 @@ export class HUD {
 
   /** 初始化 buff 点击提示（按下增益图标显示详情，松开延迟消失，无需再点一次关闭） */
   private initTooltip(): void {
-    this.tooltipContainer = this.scene.add.container(0, 0).setDepth(Layers.TOOLTIP).setVisible(false);
+    this.tooltipContainer = this.scene.add
+      .container(0, 0)
+      .setDepth(Layers.TOOLTIP)
+      .setVisible(false);
 
     // 采用手动坐标判定（uiRoot 局部坐标 = pointer.x/y），彻底规避 Phaser Container
     // 嵌套 + 父级 scale 时 setInteractive hitArea 命中偏移的问题。
     // 交互：pointerdown 命中 buff 图标 → 显示详情（tooltip 悬浮于图标上方，避开手指遮挡）；
     //      pointerup（松开）→ 延迟 1.5s 消失，移动端移开手指后仍有时间读完；
     //      点击空白处 → 立即关闭。
-    this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+    this.scene.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       // 命中检测：图标 32x32，±4px 宽容便于点中
       for (const r of this.buffHitRects) {
         if (
@@ -286,7 +360,7 @@ export class HUD {
 
     // 松开鼠标/手指 → 延迟消失：给移动端玩家移开手指阅读的时间，
     // 不再"移开即消失"（手指遮挡 ↔ 移开消失的死锁）
-    this.scene.input.on('pointerup', () => {
+    this.scene.input.on("pointerup", () => {
       if (this.tooltipContainer.visible) {
         this.scheduleHideTooltip(1500);
       }
@@ -309,10 +383,12 @@ export class HUD {
   update(): void {
     const gm = GameManager.getInstance();
     const runData = gm.runData;
-    const gameScene = this.scene.scene.get('GameScene') as any;
+    const gameScene = this.scene.scene.get("GameScene") as any;
 
     // 更新波次、击杀、分数（无尽模式追加 ∞ 标记）
-    this.waveText.setText(`波次: ${runData.wave}${gameScene?.isEndlessMode?.() ? ' ∞' : ''}`);
+    this.waveText.setText(
+      `波次: ${runData.wave}${gameScene?.isEndlessMode?.() ? " ∞" : ""}`,
+    );
     this.killsText.setText(`击杀: ${runData.kills}`);
     // 波次预告：距下个 Boss 波还有几波
     this.updateBossWarning(runData.wave);
@@ -341,9 +417,11 @@ export class HUD {
     const interval = GameConfig.WAVE.bossWaveInterval || 5;
     const rem = wave % interval;
     if (rem === 0) {
-      this.bossWarnText.setText('⚑ BOSS 波！').setColor('#ff4444');
+      this.bossWarnText.setText("⚑ BOSS 波！").setColor("#ff4444");
     } else {
-      this.bossWarnText.setText(`⚑ 距 Boss ${interval - rem} 波`).setColor('#ff6b6b');
+      this.bossWarnText
+        .setText(`⚑ 距 Boss ${interval - rem} 波`)
+        .setColor("#ff6b6b");
     }
   }
 
@@ -353,12 +431,12 @@ export class HUD {
     if (f < 1) {
       this.envStateText
         .setText(`❄ 减速中 -${Math.round((1 - f) * 100)}%`)
-        .setColor('#8ec9f0')
+        .setColor("#8ec9f0")
         .setVisible(true);
     } else if (f > 1) {
       this.envStateText
         .setText(`💨 加速中 +${Math.round((f - 1) * 100)}%`)
-        .setColor('#7fe3a5')
+        .setColor("#7fe3a5")
         .setVisible(true);
     } else {
       this.envStateText.setVisible(false);
@@ -390,13 +468,15 @@ export class HUD {
         name: p.name,
         level: p.level,
         maxLevel: p.maxLevel,
-        desc: passiveDescForLevel(p.id, p.level, opt?.description || ''),
+        desc: passiveDescForLevel(p.id, p.level, opt?.description || ""),
         icon: vis.icon,
         color: vis.color,
       });
     });
     weapons.forEach((w: any) => {
-      const opt = UPGRADE_OPTIONS.find((u) => u.type === 'weapon' && u.effect?.weaponId === w.id);
+      const opt = UPGRADE_OPTIONS.find(
+        (u) => u.type === "weapon" && u.effect?.weaponId === w.id,
+      );
       const vis = this.weaponVisuals[w.id];
       if (!vis?.icon) return;
       allBuffs.push({
@@ -404,7 +484,7 @@ export class HUD {
         name: opt?.name || w.name || w.id,
         level: w.level,
         maxLevel: w.maxLevel,
-        desc: opt?.description || '',
+        desc: opt?.description || "",
         icon: vis.icon,
         color: vis.color,
       });
@@ -414,11 +494,11 @@ export class HUD {
     const poisonRem = player.getPoisonRemaining?.() ?? 0;
     if (poisonRem > 0) {
       allBuffs.push({
-        id: 'poison',
-        name: '剧毒',
+        id: "poison",
+        name: "剧毒",
         level: Math.max(1, Math.ceil(poisonRem / 1000)),
-        desc: '持续中毒：每秒受到剧毒攻击力 8% 的伤害，无视无敌帧',
-        icon: '☠️',
+        desc: "持续中毒：每秒受到剧毒攻击力 8% 的伤害，无视无敌帧",
+        icon: "☠️",
         color: 0xe74c3c,
       });
     }
@@ -427,22 +507,22 @@ export class HUD {
     const shieldRem = player.getShieldRemaining?.() ?? 0;
     if (shieldRem > 0) {
       allBuffs.push({
-        id: 'shield',
-        name: '能量护盾',
+        id: "shield",
+        name: "能量护盾",
         level: Math.max(1, Math.ceil(shieldRem / 1000)),
-        desc: '免疫伤害（无敌护盾）',
-        icon: '🛡️',
+        desc: "免疫伤害（无敌护盾）",
+        icon: "🛡️",
         color: 0x4a9de8,
       });
     }
     const rageRem = player.getRageRemaining?.() ?? 0;
     if (rageRem > 0) {
       allBuffs.push({
-        id: 'rage',
-        name: '狂暴药水',
+        id: "rage",
+        name: "狂暴药水",
         level: Math.max(1, Math.ceil(rageRem / 1000)),
-        desc: '攻速与攻击力 +50%',
-        icon: '⚡',
+        desc: "攻速与攻击力 +50%",
+        icon: "⚡",
         color: 0xffa040,
       });
     }
@@ -452,11 +532,11 @@ export class HUD {
     if (slowRem > 0) {
       const slowPct = Math.round((1 - (player.getSlowFactor?.() ?? 1)) * 100);
       allBuffs.push({
-        id: 'slow',
-        name: '冰冻减速',
+        id: "slow",
+        name: "冰冻减速",
         level: Math.max(1, Math.ceil(slowRem / 1000)),
         desc: `移动速度 -${slowPct}%（${Math.ceil(slowRem / 1000)} 秒）`,
-        icon: '❄️',
+        icon: "❄️",
         color: 0x66ccff,
       });
     }
@@ -465,15 +545,30 @@ export class HUD {
     // 限时状态（剧毒/护盾/狂暴/减速）：出现/消失（存在性键变化）→ 重建；
     // 秒数变化不重建——角标实时更新（下方），tooltip 秒数为进入快照可接受。
     const persistKey = allBuffs
-      .filter((b) => b.id !== 'poison' && b.id !== 'shield' && b.id !== 'rage' && b.id !== 'slow')
+      .filter(
+        (b) =>
+          b.id !== "poison" &&
+          b.id !== "shield" &&
+          b.id !== "rage" &&
+          b.id !== "slow",
+      )
       .map((b) => `${b.id}:${b.level}`)
-      .join('|');
+      .join("|");
     const timedKey = allBuffs
-      .filter((b) => b.id === 'poison' || b.id === 'shield' || b.id === 'rage' || b.id === 'slow')
+      .filter(
+        (b) =>
+          b.id === "poison" ||
+          b.id === "shield" ||
+          b.id === "rage" ||
+          b.id === "slow",
+      )
       .map((b) => b.id)
       .sort()
-      .join('|');
-    if (persistKey !== this.lastBuffPersistKey || timedKey !== this.lastBuffTimedKey) {
+      .join("|");
+    if (
+      persistKey !== this.lastBuffPersistKey ||
+      timedKey !== this.lastBuffTimedKey
+    ) {
       this.rebuildBuffList(allBuffs);
       this.lastBuffPersistKey = persistKey;
       this.lastBuffTimedKey = timedKey;
@@ -492,14 +587,15 @@ export class HUD {
 
     // 限时状态到期前闪烁（剧毒/护盾/狂暴，剩余 <=3s 时 150ms 周期闪烁）
     const timedStates: Array<[string, number]> = [
-      ['poison', poisonRem],
-      ['shield', shieldRem],
-      ['rage', rageRem],
+      ["poison", poisonRem],
+      ["shield", shieldRem],
+      ["rage", rageRem],
     ];
     for (const [id, rem] of timedStates) {
       if (rem > 0 && rem <= this.statusFlashBefore) {
         const icon = this.buffIcons.get(id);
-        if (icon) icon.setVisible(Math.floor(this.scene.time.now / 150) % 2 === 0);
+        if (icon)
+          icon.setVisible(Math.floor(this.scene.time.now / 150) % 2 === 0);
       }
     }
   }
@@ -515,7 +611,7 @@ export class HUD {
       desc?: string;
       maxLevel?: number;
       bt?: number;
-    }>
+    }>,
   ): void {
     // 清除旧图标
     this.buffIcons.forEach((icon) => icon.destroy());
@@ -525,15 +621,19 @@ export class HUD {
     // 位置：血条（barTopY）上方居中。居中基准为血条中心（scale.width/2），
     // 保证无论 buff 多少，列表都以屏幕中心对称铺开，不会向左/右单向延伸。
     const buffTop = this.barTopY - this.buffSize - 12; // 血条上方 12px
-    const totalW = buffs.length * (this.buffSize + this.buffSpacing) - this.buffSpacing;
-    const startX = Math.max(this.padding, (this.scene.scale.width - totalW) / 2);
+    const totalW =
+      buffs.length * (this.buffSize + this.buffSpacing) - this.buffSpacing;
+    const startX = Math.max(
+      this.padding,
+      (this.scene.scale.width - totalW) / 2,
+    );
 
     // 用 UILayout 水平排布：固定步长 = buffSize，间距 = buffSpacing，
     // 每个图标自动接在上一个右侧（自增长友好，新增 buff 无需重算坐标）
     const buffRow = new UILayout({
       x: startX,
       y: buffTop,
-      direction: 'row',
+      direction: "row",
       itemSize: this.buffSize,
       spacing: this.buffSpacing,
     });
@@ -542,7 +642,9 @@ export class HUD {
       // 记录命中区（uiRoot 局部坐标：buffContainer 位于 (0,0)，图标在 (x,buffTop)）
       this.buffHitRects.push({ b, x: buffRow.x, y: buffTop });
 
-      const container = this.scene.add.container(buffRow.x, buffTop).setDepth(Layers.HUD_BUFF_ICON);
+      const container = this.scene.add
+        .container(buffRow.x, buffTop)
+        .setDepth(Layers.HUD_BUFF_ICON);
       buffRow.place(container, this.buffContainer);
       // 注：container 保持默认 origin(0,0)，左上角贴齐游标，hitRect 左上角语义不变
 
@@ -555,19 +657,31 @@ export class HUD {
       container.add(bg);
 
       // 图标
-      const iconText = createUIText(this.scene, this.buffSize / 2, this.buffSize / 2 - 2, b.icon, {
-        fontSize: '16px',
-      }).setOrigin(0.5);
+      const iconText = createUIText(
+        this.scene,
+        this.buffSize / 2,
+        this.buffSize / 2 - 2,
+        b.icon,
+        {
+          fontSize: "16px",
+        },
+      ).setOrigin(0.5);
       container.add(iconText);
 
       // 等级
-      const levelText = createUIText(this.scene, this.buffSize - 2, this.buffSize - 1, `${b.level}`, {
-        fontSize: '10px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 2,
-      }).setOrigin(1, 1);
+      const levelText = createUIText(
+        this.scene,
+        this.buffSize - 2,
+        this.buffSize - 1,
+        `${b.level}`,
+        {
+          fontSize: "10px",
+          color: "#ffffff",
+          fontStyle: "bold",
+          stroke: "#000000",
+          strokeThickness: 2,
+        },
+      ).setOrigin(1, 1);
       container.add(levelText);
 
       // 注意：此处不再对图标 Container setInteractive——Phaser 嵌套 Container（uiRoot scale=1/z
@@ -591,7 +705,7 @@ export class HUD {
       maxLevel?: number;
       bt?: number;
     },
-    rect: { b: any; x: number; y: number }
+    rect: { b: any; x: number; y: number },
   ): void {
     // 已在显示同一 buff 的提示 → 关闭
     if (this.tooltipContainer.visible && this.activeTooltipId === b.id) {
@@ -615,12 +729,15 @@ export class HUD {
 
     // 描述 + 下一级预览（被动按等级生成；其余用原 desc）
     const lvTexts = passiveLevelTexts(b.id, b.level);
-    const descRaw = lvTexts ? lvTexts.current : b.desc || '';
+    const descRaw = lvTexts ? lvTexts.current : b.desc || "";
     const nextRaw = lvTexts ? lvTexts.next : null;
     const descLineCount = Math.ceil(descRaw.length / 16);
-    const nextLineCount = nextRaw ? Math.ceil(`下一级：${nextRaw}`.length / 16) : 0;
+    const nextLineCount = nextRaw
+      ? Math.ceil(`下一级：${nextRaw}`.length / 16)
+      : 0;
     // 描述换行高度自适应：描述超过一行时按行数抬高 tooltip
-    const boxHTotal = boxH + Math.max(0, descLineCount + nextLineCount - 1) * 16;
+    const boxHTotal =
+      boxH + Math.max(0, descLineCount + nextLineCount - 1) * 16;
 
     // 锚定到 buff 图标中心（而非手指位置）：手指按在图标上时，tooltip 悬浮于图标上方，
     // 不在手指覆盖区内 → 移动端不再遮挡内容。水平居中于图标，垂直位于图标上方 10px。
@@ -634,33 +751,63 @@ export class HUD {
     // 背景
     const bg = this.scene.add.graphics();
     bg.fillStyle(0x0e0e18, 0.96);
-    bg.fillRoundedRect(boxX - boxW / 2, boxY - boxHTotal / 2, boxW, boxHTotal, 10);
+    bg.fillRoundedRect(
+      boxX - boxW / 2,
+      boxY - boxHTotal / 2,
+      boxW,
+      boxHTotal,
+      10,
+    );
     bg.lineStyle(2, b.color, 1);
-    bg.strokeRoundedRect(boxX - boxW / 2, boxY - boxHTotal / 2, boxW, boxHTotal, 10);
+    bg.strokeRoundedRect(
+      boxX - boxW / 2,
+      boxY - boxHTotal / 2,
+      boxW,
+      boxHTotal,
+      10,
+    );
     this.tooltipContainer.add(bg);
 
     // 标题行：图标 + 名称 + 等级
-    const titleText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxHTotal / 2 + 8, `${b.icon}  ${title}`, {
-      fontSize: '16px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-    }).setOrigin(0, 0);
+    const titleText = createUIText(
+      this.scene,
+      boxX - boxW / 2 + 12,
+      boxY - boxHTotal / 2 + 8,
+      `${b.icon}  ${title}`,
+      {
+        fontSize: "16px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      },
+    ).setOrigin(0, 0);
     this.tooltipContainer.add(titleText);
 
-    const lvTextObj = createUIText(this.scene, boxX + boxW / 2 - 12, boxY - boxHTotal / 2 + 8, lvText, {
-      fontSize: '13px',
-      color: '#ffd54f',
-      fontStyle: 'bold',
-    }).setOrigin(1, 0);
+    const lvTextObj = createUIText(
+      this.scene,
+      boxX + boxW / 2 - 12,
+      boxY - boxHTotal / 2 + 8,
+      lvText,
+      {
+        fontSize: "13px",
+        color: "#ffd54f",
+        fontStyle: "bold",
+      },
+    ).setOrigin(1, 0);
     this.tooltipContainer.add(lvTextObj);
 
     // 描述
-    const descText = createUIText(this.scene, boxX - boxW / 2 + 12, boxY - boxHTotal / 2 + 34, descRaw, {
-      fontSize: '13px',
-      color: '#bbbbbb',
-      wordWrap: { width: boxW - 24 },
-      lineSpacing: 4,
-    }).setOrigin(0, 0);
+    const descText = createUIText(
+      this.scene,
+      boxX - boxW / 2 + 12,
+      boxY - boxHTotal / 2 + 34,
+      descRaw,
+      {
+        fontSize: "13px",
+        color: "#bbbbbb",
+        wordWrap: { width: boxW - 24 },
+        lineSpacing: 4,
+      },
+    ).setOrigin(0, 0);
     this.tooltipContainer.add(descText);
 
     // 下一级预览（金色，紧随描述下方）
@@ -671,11 +818,11 @@ export class HUD {
         boxY - boxHTotal / 2 + 34 + descLineCount * 16 + 2,
         `下一级：${nextRaw}`,
         {
-          fontSize: '12px',
-          color: '#ffd54f',
+          fontSize: "12px",
+          color: "#ffd54f",
           wordWrap: { width: boxW - 24 },
           lineSpacing: 4,
-        }
+        },
       ).setOrigin(0, 0);
       this.tooltipContainer.add(nextText);
     }
@@ -699,7 +846,7 @@ export class HUD {
   }
 
   updateHealth(): void {
-    const gameScene = this.scene.scene.get('GameScene') as any;
+    const gameScene = this.scene.scene.get("GameScene") as any;
     if (gameScene && gameScene.getPlayer) {
       const player = gameScene.getPlayer();
       if (player) {
@@ -709,7 +856,7 @@ export class HUD {
   }
 
   updateLevel(): void {
-    const gameScene = this.scene.scene.get('GameScene') as any;
+    const gameScene = this.scene.scene.get("GameScene") as any;
     if (gameScene && gameScene.getPlayer) {
       const player = gameScene.getPlayer();
       if (player) {
@@ -717,8 +864,12 @@ export class HUD {
         if (lv >= GameConfig.LEVEL.maxLevel) {
           // 满级：经验条转金色超限强化条
           const oc = player.getOverflowCount?.() ?? 0;
-          this.levelText.setText(oc > 0 ? `MAX ♾${oc}` : 'MAX');
-          this.updateExpBar(player.getExp(), player.getOverflowThreshold ?? player.getExpToNext(), true);
+          this.levelText.setText(oc > 0 ? `MAX ♾${oc}` : "MAX");
+          this.updateExpBar(
+            player.getExp(),
+            player.getOverflowThreshold ?? player.getExpToNext(),
+            true,
+          );
         } else {
           this.levelText.setText(`Lv.${lv}`);
           this.updateExpBar(player.getExp(), player.getExpToNext(), false);
@@ -741,7 +892,7 @@ export class HUD {
     const percent = Math.max(0, health / max);
 
     // 名称
-    this.bossNameText.setText(boss.getConfig()?.name || 'BOSS');
+    this.bossNameText.setText(boss.getConfig()?.name || "BOSS");
 
     // 血条颜色：高血量橙红，低血量暗红
     let color = 0xff5544;
@@ -756,7 +907,7 @@ export class HUD {
         2,
         (this.bossBarWidth - 4) * percent,
         this.bossBarHeight - 4,
-        3
+        3,
       );
     }
 
@@ -781,7 +932,7 @@ export class HUD {
       this.barTopY + 3,
       (this.barWidth - 6) * percent,
       this.barHeight - 6,
-      4
+      4,
     );
 
     this.healthText.setText(`${Math.ceil(current)}/${max}`);
@@ -791,14 +942,20 @@ export class HUD {
     const percent = Math.max(0, Math.min(1, current / max));
     this.expBar.clear();
     this.expBar.fillStyle(overflow ? 0xffcc44 : 0x4488ff, 1);
-    this.expBar.fillRoundedRect(this.barLeftX + 3, this.expBarY + 2, (this.barWidth - 6) * percent, 4, 2);
+    this.expBar.fillRoundedRect(
+      this.barLeftX + 3,
+      this.expBarY + 2,
+      (this.barWidth - 6) * percent,
+      4,
+      2,
+    );
   }
 
   private formatTime(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 
   /** 显示/隐藏 */

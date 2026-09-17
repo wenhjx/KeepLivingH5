@@ -1,15 +1,15 @@
-import { createUIText } from '../utils/UIText';
-import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
-import { setupUICamera } from '../utils/CameraHelper';
-import { UIScrollBar } from '../utils/UIScrollBar';
-import { WEAPONS } from '../data/weapons';
-import { UPGRADE_OPTIONS } from '../data/upgrades';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import type { Player } from '../entities/Player';
-import { GameConfig } from '../game/GameConfig';
-import { Layers } from '../constants/Layers';
+import { createUIText } from "../utils/UIText";
+import Phaser from "phaser";
+import { GameManager } from "../game/GameManager";
+import { setupUICamera } from "../utils/CameraHelper";
+import { UIScrollBar } from "../utils/UIScrollBar";
+import { WEAPONS } from "../data/weapons";
+import { UPGRADE_OPTIONS } from "../data/upgrades";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import type { Player } from "../entities/Player";
+import { GameConfig } from "../game/GameConfig";
+import { Layers } from "../constants/Layers";
 
 /**
  * 玩家属性面板（二游式：按 C 打开的角色详情）
@@ -30,8 +30,14 @@ export class PlayerInfoScene extends Phaser.Scene {
   private player?: Player;
 
   // 属性值文本引用（每行最多两段：白字基础 + 暗金溢出，复用对象 setText 无闪烁）
-  private leftValues: Array<{ base: Phaser.GameObjects.Text; extra: Phaser.GameObjects.Text }> = [];
-  private rightValues: Array<{ base: Phaser.GameObjects.Text; extra: Phaser.GameObjects.Text }> = [];
+  private leftValues: Array<{
+    base: Phaser.GameObjects.Text;
+    extra: Phaser.GameObjects.Text;
+  }> = [];
+  private rightValues: Array<{
+    base: Phaser.GameObjects.Text;
+    extra: Phaser.GameObjects.Text;
+  }> = [];
 
   // 持有列表（可滚动区）
   private holdingsContainer?: Phaser.GameObjects.Container;
@@ -40,7 +46,7 @@ export class PlayerInfoScene extends Phaser.Scene {
   private scrollY = 0;
   private scrollOff = 0;
   private maxScroll = 0;
-  private holdingsSig = '';
+  private holdingsSig = "";
   private hintText?: Phaser.GameObjects.Text;
 
   // 轮询
@@ -48,7 +54,7 @@ export class PlayerInfoScene extends Phaser.Scene {
   private readonly REFRESH_INTERVAL = 200;
 
   constructor() {
-    super('PlayerInfoScene');
+    super("PlayerInfoScene");
   }
 
   create(data?: { prevPaused?: boolean }): void {
@@ -63,7 +69,7 @@ export class PlayerInfoScene extends Phaser.Scene {
     this.scrollY = 0;
     this.scrollOff = 0;
     this.maxScroll = 0;
-    this.holdingsSig = '';
+    this.holdingsSig = "";
     this.hintText = undefined;
     this.refreshTimer = 0;
 
@@ -73,7 +79,7 @@ export class PlayerInfoScene extends Phaser.Scene {
     // UI 相机统一设置
     const { width, height } = setupUICamera(this);
 
-    const gameScene = this.scene.get('GameScene') as any;
+    const gameScene = this.scene.get("GameScene") as any;
     const player = gameScene?.getPlayer?.() as Player | undefined;
     if (!player) {
       this.closePanel();
@@ -82,7 +88,10 @@ export class PlayerInfoScene extends Phaser.Scene {
     this.player = player;
 
     // 半透明背景（盖住暂停遮罩与游戏画面）
-    this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0).setInteractive();
+    this.add
+      .rectangle(0, 0, width, height, 0x000000, 0.7)
+      .setOrigin(0)
+      .setInteractive();
 
     // 中央面板尺寸
     const panelW = 700;
@@ -99,24 +108,30 @@ export class PlayerInfoScene extends Phaser.Scene {
     this.add.existing(bg);
 
     // 标题
-    createUIText(this, cx, cy - panelH / 2 + 32, '🎮 玩家属性', {
-      fontSize: '26px',
-      color: '#ffd54f',
-      fontStyle: 'bold',
-      stroke: '#000000',
+    createUIText(this, cx, cy - panelH / 2 + 32, "🎮 玩家属性", {
+      fontSize: "26px",
+      color: "#ffd54f",
+      fontStyle: "bold",
+      stroke: "#000000",
       strokeThickness: 4,
     }).setOrigin(0.5);
 
     // 关闭按钮（右上角 ×）
-    const closeBtn = createUIText(this, cx + panelW / 2 - 20, cy - panelH / 2 + 28, '✕', {
-      fontSize: '22px',
-      color: '#aaaaaa',
-      backgroundColor: '#222233',
-      padding: { left: 8, right: 8, top: 2, bottom: 2 },
-    })
+    const closeBtn = createUIText(
+      this,
+      cx + panelW / 2 - 20,
+      cy - panelH / 2 + 28,
+      "✕",
+      {
+        fontSize: "22px",
+        color: "#aaaaaa",
+        backgroundColor: "#222233",
+        padding: { left: 8, right: 8, top: 2, bottom: 2 },
+      },
+    )
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => {
+    closeBtn.on("pointerdown", () => {
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_UI_CLICK, 0.6);
       this.closePanel();
     });
@@ -129,36 +144,48 @@ export class PlayerInfoScene extends Phaser.Scene {
     const valueX = 150;
 
     const createValuePair = (x: number, y: number) => {
-      const base = createUIText(this, x + valueX, y, '', {
-        fontSize: '16px',
-        color: '#ffffff',
-        fontStyle: 'bold',
+      const base = createUIText(this, x + valueX, y, "", {
+        fontSize: "16px",
+        color: "#ffffff",
+        fontStyle: "bold",
       }).setOrigin(0, 0);
-      const extra = createUIText(this, x + valueX, y, '', {
-        fontSize: '16px',
-        color: '#c9a227',
-        fontStyle: 'bold',
-      }).setOrigin(0, 0).setVisible(false);
+      const extra = createUIText(this, x + valueX, y, "", {
+        fontSize: "16px",
+        color: "#c9a227",
+        fontStyle: "bold",
+      })
+        .setOrigin(0, 0)
+        .setVisible(false);
       return { base, extra };
     };
 
-    ['⚔️ 攻击力', '⚡ 攻速', '🎯 暴击率', '💥 暴击伤害', '👟 移速'].forEach((label, i) => {
-      createUIText(this, colX, startY + i * rowGap, label, { fontSize: '16px', color: '#bbbbbb' }).setOrigin(0, 0);
-      this.leftValues.push(createValuePair(colX, startY + i * rowGap));
-    });
-    ['❤️ 生命', '🛡️ 防御', '🍀 幸运', '🧲 拾取范围', '💰 金币'].forEach((label, i) => {
-      createUIText(this, colX2, startY + i * rowGap, label, { fontSize: '16px', color: '#bbbbbb' }).setOrigin(0, 0);
-      this.rightValues.push(createValuePair(colX2, startY + i * rowGap));
-    });
+    ["⚔️ 攻击力", "⚡ 攻速", "🎯 暴击率", "💥 暴击伤害", "👟 移速"].forEach(
+      (label, i) => {
+        createUIText(this, colX, startY + i * rowGap, label, {
+          fontSize: "16px",
+          color: "#bbbbbb",
+        }).setOrigin(0, 0);
+        this.leftValues.push(createValuePair(colX, startY + i * rowGap));
+      },
+    );
+    ["❤️ 生命", "🛡️ 防御", "🍀 幸运", "🧲 拾取范围", "💰 金币"].forEach(
+      (label, i) => {
+        createUIText(this, colX2, startY + i * rowGap, label, {
+          fontSize: "16px",
+          color: "#bbbbbb",
+        }).setOrigin(0, 0);
+        this.rightValues.push(createValuePair(colX2, startY + i * rowGap));
+      },
+    );
 
     // ===== 底部：武器 / 被动 / stat =====
     // 持有区整体上移，滚动区固定 4 行可视高度（更美观，也避免与底部提示重叠）
     const bottomY = cy + panelH / 2 - 198;
 
-    createUIText(this, cx - panelW / 2 + 30, bottomY, '📦 持有', {
-      fontSize: '15px',
-      color: '#ffd54f',
-      fontStyle: 'bold',
+    createUIText(this, cx - panelW / 2 + 30, bottomY, "📦 持有", {
+      fontSize: "15px",
+      color: "#ffd54f",
+      fontStyle: "bold",
     }).setOrigin(0, 0);
 
     // ===== 持有列表（可滚动区域：GeometryMask 遮罩 + 滚轮/拖拽滚动 + 滚动条） =====
@@ -181,7 +208,9 @@ export class PlayerInfoScene extends Phaser.Scene {
     const mask = maskG.createGeometryMask();
 
     // 内容容器（遮罩内滚动）
-    this.scrollContent = this.add.container(scrollX, scrollY).setDepth(Layers.SCROLL_CONTENT);
+    this.scrollContent = this.add
+      .container(scrollX, scrollY)
+      .setDepth(Layers.SCROLL_CONTENT);
     this.scrollContent.setMask(mask);
     this.scrollY = scrollY;
 
@@ -195,9 +224,13 @@ export class PlayerInfoScene extends Phaser.Scene {
 
     // 滚轮滚动（deltaY 除以相机 zoom 换算为逻辑像素，与布局坐标系一致）
     const zoom = this.cameras.main.zoom;
-    this.input.on('wheel', (_p: any, _o: any, _dx: number, dy: number) => {
+    this.input.on("wheel", (_p: any, _o: any, _dx: number, dy: number) => {
       if (this.maxScroll <= 0) return;
-      this.scrollOff = Phaser.Math.Clamp(this.scrollOff + dy / zoom, 0, this.maxScroll);
+      this.scrollOff = Phaser.Math.Clamp(
+        this.scrollOff + dy / zoom,
+        0,
+        this.maxScroll,
+      );
       applyScroll();
     });
 
@@ -208,28 +241,33 @@ export class PlayerInfoScene extends Phaser.Scene {
     let dragStartY = 0;
     let dragStartOff = 0;
     const DRAG_THRESHOLD = 12;
-    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
       dragging = true;
       dragMoved = false;
       dragStartY = p.y;
       dragStartOff = this.scrollOff;
     });
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+    this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
       if (!dragging || this.maxScroll <= 0) return;
-      if (!dragMoved && Math.abs(p.y - dragStartY) > DRAG_THRESHOLD) dragMoved = true;
+      if (!dragMoved && Math.abs(p.y - dragStartY) > DRAG_THRESHOLD)
+        dragMoved = true;
       if (dragMoved) {
-        this.scrollOff = Phaser.Math.Clamp(dragStartOff + (dragStartY - p.y) / zoom, 0, this.maxScroll);
+        this.scrollOff = Phaser.Math.Clamp(
+          dragStartOff + (dragStartY - p.y) / zoom,
+          0,
+          this.maxScroll,
+        );
         applyScroll();
       }
     });
-    this.input.on('pointerup', () => {
+    this.input.on("pointerup", () => {
       dragging = false;
     });
 
     // 底部提示
-    this.hintText = createUIText(this, cx, cy + panelH / 2 - 20, '', {
-      fontSize: '13px',
-      color: '#666688',
+    this.hintText = createUIText(this, cx, cy + panelH / 2 - 20, "", {
+      fontSize: "13px",
+      color: "#666688",
     }).setOrigin(0.5);
 
     // 首次渲染
@@ -256,7 +294,7 @@ export class PlayerInfoScene extends Phaser.Scene {
 
     // 暴击溢出：直接封顶 100%（不附说明文字），多出部分按 1:2 转暴击伤害
     const critOverflow = Math.max(0, crit - 1);
-    const critDisplay = crit >= 1 ? '100%' : `${(crit * 100).toFixed(0)}%`;
+    const critDisplay = crit >= 1 ? "100%" : `${(crit * 100).toFixed(0)}%`;
     // 暴击伤害：隐藏基础 100%（二游惯例，只显示额外加成），溢出转化部分暗金色标注
     const critDmgBase = `${Math.max(0, (critDmg - 1) * 100).toFixed(0)}%`;
 
@@ -264,7 +302,9 @@ export class PlayerInfoScene extends Phaser.Scene {
       atk.toFixed(1),
       `${spd.toFixed(2)}/s`,
       critDisplay,
-      critOverflow > 0 ? { base: critDmgBase, extra: `+${(critOverflow * 200).toFixed(0)}%` } : critDmgBase,
+      critOverflow > 0
+        ? { base: critDmgBase, extra: `+${(critOverflow * 200).toFixed(0)}%` }
+        : critDmgBase,
       mspd.toFixed(0),
     ];
     const right: Array<string | { base: string; extra: string }> = [
@@ -277,9 +317,9 @@ export class PlayerInfoScene extends Phaser.Scene {
 
     const applyPair = (
       pair: { base: Phaser.GameObjects.Text; extra: Phaser.GameObjects.Text },
-      v: string | { base: string; extra: string }
+      v: string | { base: string; extra: string },
     ) => {
-      if (typeof v === 'string') {
+      if (typeof v === "string") {
         pair.base.setText(v);
         pair.extra.setVisible(false);
       } else {
@@ -288,8 +328,12 @@ export class PlayerInfoScene extends Phaser.Scene {
         pair.extra.setVisible(true).setX(pair.base.x + pair.base.width + 6);
       }
     };
-    left.forEach((v, i) => this.leftValues[i] && applyPair(this.leftValues[i], v));
-    right.forEach((v, i) => this.rightValues[i] && applyPair(this.rightValues[i], v));
+    left.forEach(
+      (v, i) => this.leftValues[i] && applyPair(this.leftValues[i], v),
+    );
+    right.forEach(
+      (v, i) => this.rightValues[i] && applyPair(this.rightValues[i], v),
+    );
   }
 
   /** 刷新持有区：签名变化才重建（清空 container 重绘，滚动位置归零） */
@@ -300,28 +344,28 @@ export class PlayerInfoScene extends Phaser.Scene {
     // 收集武器/被动/stat 展示项（过滤异常空项，避免显示 "undefined"）
     const weapons = (player.getWeapons?.() || [])
       .map((w: any) => ({
-        icon: (WEAPONS[w.id] && this.getWeaponIcon(w.id)) || '🔫',
+        icon: (WEAPONS[w.id] && this.getWeaponIcon(w.id)) || "🔫",
         name: w.name,
         lv: w.level,
       }))
       .filter((w: any) => w && w.name);
     const passives = (player.getPassives?.() || [])
       .map((p: any) => ({
-        icon: UPGRADE_OPTIONS.find((u) => u.id === p.id)?.icon || '✨',
+        icon: UPGRADE_OPTIONS.find((u) => u.id === p.id)?.icon || "✨",
         name: p.name,
         lv: p.level,
       }))
       .filter((p: any) => p && p.name);
     const stats = (player.getStatUpgrades?.() || [])
       .map((st: any) => ({
-        icon: UPGRADE_OPTIONS.find((u) => u.id === st.id)?.icon || '✨',
+        icon: UPGRADE_OPTIONS.find((u) => u.id === st.id)?.icon || "✨",
         name: st.name,
         lv: st.level + (player.getBreakthroughLevel?.(st.id) ?? 0), // 升级+突破总等级
       }))
       .filter((s: any) => s && s.name);
 
     const holdings = [...weapons, ...passives, ...stats];
-    const sig = holdings.map((h) => `${h.icon}|${h.name}|${h.lv}`).join(';');
+    const sig = holdings.map((h) => `${h.icon}|${h.name}|${h.lv}`).join(";");
     if (sig === this.holdingsSig) return;
     this.holdingsSig = sig;
 
@@ -334,10 +378,16 @@ export class PlayerInfoScene extends Phaser.Scene {
       const col = i % itemPerRow;
       const row = Math.floor(i / itemPerRow);
       this.scrollContent!.add(
-        createUIText(this, col * itemColW, row * rowH, `${h.icon} ${h.name}  Lv.${h.lv}`, {
-          fontSize: '14px',
-          color: '#e0e0e0',
-        }).setOrigin(0, 0)
+        createUIText(
+          this,
+          col * itemColW,
+          row * rowH,
+          `${h.icon} ${h.name}  Lv.${h.lv}`,
+          {
+            fontSize: "14px",
+            color: "#e0e0e0",
+          },
+        ).setOrigin(0, 0),
       );
     });
 
@@ -349,7 +399,11 @@ export class PlayerInfoScene extends Phaser.Scene {
     this.scrollBar?.setRange(contentH, 4 * rowH);
     this.scrollBar?.update(0);
     if (this.hintText) {
-      this.hintText.setText(this.maxScroll > 0 ? '滚轮 / 拖动滚动 · 按 C 或点击 ✕ 关闭' : '按 C 或点击 ✕ 关闭');
+      this.hintText.setText(
+        this.maxScroll > 0
+          ? "滚轮 / 拖动滚动 · 按 C 或点击 ✕ 关闭"
+          : "按 C 或点击 ✕ 关闭",
+      );
     }
   }
 
@@ -366,21 +420,21 @@ export class PlayerInfoScene extends Phaser.Scene {
   private getWeaponIcon(id: string): string {
     // 与 HUD weaponVisuals 保持一致
     const map: Record<string, string> = {
-      default_gun: '🔫',
-      machine_gun: '🔫',
-      shotgun: '🔫',
-      laser: '🔆',
-      rocket: '🚀',
-      boomerang: '🪃',
-      lightsaber: '🗡️',
-      drone: '🤖',
+      default_gun: "🔫",
+      machine_gun: "🔫",
+      shotgun: "🔫",
+      laser: "🔆",
+      rocket: "🚀",
+      boomerang: "🪃",
+      lightsaber: "🗡️",
+      drone: "🤖",
     };
-    return map[id] || '🔫';
+    return map[id] || "🔫";
   }
 
   /** 关闭属性面板：恢复打开前的暂停状态（供 GameScene 的 C 键调用） */
   closePanel(): void {
     GameManager.getInstance().setPaused(this.prevPaused);
-    this.scene.stop('PlayerInfoScene');
+    this.scene.stop("PlayerInfoScene");
   }
 }

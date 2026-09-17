@@ -1,5 +1,4 @@
-import type { Vector2 } from '../types';
-
+import type { Vector2 } from "../types";
 /**
  * 数学工具类
  * 游戏中常用的数学计算
@@ -86,14 +85,23 @@ export class MathUtils {
   }
 
   /** 平滑朝向目标角度 */
-  static rotateTowards(current: number, target: number, maxDelta: number): number {
+  static rotateTowards(
+    current: number,
+    target: number,
+    maxDelta: number,
+  ): number {
     const diff = this.angleDiff(current, target);
     if (Math.abs(diff) <= maxDelta) return target;
     return current + Math.sign(diff) * maxDelta;
   }
 
   /** 圆周上的点 */
-  static pointOnCircle(cx: number, cy: number, radius: number, angle: number): Vector2 {
+  static pointOnCircle(
+    cx: number,
+    cy: number,
+    radius: number,
+    angle: number,
+  ): Vector2 {
     return {
       x: cx + Math.cos(angle) * radius,
       y: cy + Math.sin(angle) * radius,

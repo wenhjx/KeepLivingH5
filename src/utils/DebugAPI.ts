@@ -1,12 +1,12 @@
-import type Phaser from 'phaser';
-import { GameConfig } from '../game/GameConfig';
-import { GameManager } from '../game/GameManager';
-import { USABLE_ITEMS } from '../data/items';
-import { UPGRADE_OPTIONS } from '../data/upgrades';
-import { applyUpgradeToPlayer } from './UpgradeApplier';
-import { GuideManager } from '../systems/GuideManager';
-import { ENEMY_CONFIGS } from '../data/enemies';
-import type { EnemyConfig } from '../types';
+import type Phaser from "phaser";
+import { GameConfig } from "../game/GameConfig";
+import { GameManager } from "../game/GameManager";
+import { USABLE_ITEMS } from "../data/items";
+import { UPGRADE_OPTIONS } from "../data/upgrades";
+import { applyUpgradeToPlayer } from "./UpgradeApplier";
+import { GuideManager } from "../systems/GuideManager";
+import { ENEMY_CONFIGS } from "../data/enemies";
+import type { EnemyConfig } from "../types";
 
 /**
  * 全局调试 API（仅开发环境使用，挂在 window.__debug 上）
@@ -31,7 +31,11 @@ export interface DebugAPI {
   /** 进入试玩场地（复用主场景全部战斗逻辑，不存档/不计统计/不触发成就；默认稳定态：无敌+锁升级） */
   enterTestField: () => void;
   /** 试玩场地自定义刷怪：按敌人配置类型生成 N 只环绕玩家（数据驱动，新敌人进配置表即可刷） */
-  spawnTestEnemies: (type: string, count?: number, opts?: TestSpawnOptions) => string;
+  spawnTestEnemies: (
+    type: string,
+    count?: number,
+    opts?: TestSpawnOptions,
+  ) => string;
   /** 强制生成当前关卡 Boss（完整血条/演出） */
   spawnBoss: () => string;
   /** 继续游戏（有存档时） */
@@ -73,7 +77,7 @@ export interface DebugAPI {
   /** 稳定测试态：无敌 + 不升级 + 关闭所有覆盖面板（避免升级/商店弹窗干扰 UI 点击测试） */
   testStable: () => string;
   /** 切换视觉主题（皮肤）：'pixel' 像素风 | 'classic' 经典矢量霓虹（已有实体即时生效） */
-  setTheme: (theme: 'pixel' | 'classic') => string;
+  setTheme: (theme: "pixel" | "classic") => string;
   /** 为玩家添加当前所有可获得 buff（武器/被动/属性），默认各 1 级；跳过兜底项与初始武器 */
   giveAllBuffs: (level?: number) => string;
   /** 触发一次武器强化三选一（击败 Boss 奖励；调试用） */
@@ -105,7 +109,7 @@ export function initDebugAPI(game: Phaser.Game): void {
   };
 
   const getScene = (key: string) => game.scene.getScene(key) as any;
-  const getGameScene = () => getScene('GameScene');
+  const getGameScene = () => getScene("GameScene");
   const getPlayer = () => getGameScene()?.getPlayer?.();
 
   /** 试玩稳定态：仅锁升级 + 关闭覆盖面板。不掉血无敌——测试场地需正常受击（测新敌人/受击反馈），死亡走原地重召唤 */
@@ -121,7 +125,13 @@ export function initDebugAPI(game: Phaser.Game): void {
     if (gs) gs.pendingLevelUps = 0;
     const sc = plugin();
     if (sc) {
-      ['UpgradeScene', 'ShopScene', 'BreakthroughScene', 'PlayerInfoScene', 'GameOverScene'].forEach((k) => {
+      [
+        "UpgradeScene",
+        "ShopScene",
+        "BreakthroughScene",
+        "PlayerInfoScene",
+        "GameOverScene",
+      ].forEach((k) => {
         try {
           if (sc.isActive(k)) sc.stop(k);
         } catch (e) {
@@ -136,45 +146,45 @@ export function initDebugAPI(game: Phaser.Game): void {
       gm.startNewRun();
       const sc = plugin();
       if (!sc) return;
-      sc.stop('UIScene');
-      sc.stop('GameOverScene');
-      sc.start('GameScene');
-      sc.launch('UIScene');
+      sc.stop("UIScene");
+      sc.stop("GameOverScene");
+      sc.start("GameScene");
+      sc.launch("UIScene");
     },
 
     enterTestField: () => {
       gm.startTestRun();
       const sc = plugin();
       if (!sc) return;
-      sc.stop('UIScene');
-      sc.stop('GameOverScene');
-      sc.stop('MainMenuScene'); // 主菜单入口进入时关闭主菜单，避免场景叠层
-      sc.start('GameScene');
-      sc.launch('UIScene');
+      sc.stop("UIScene");
+      sc.stop("GameOverScene");
+      sc.stop("MainMenuScene"); // 主菜单入口进入时关闭主菜单，避免场景叠层
+      sc.start("GameScene");
+      sc.launch("UIScene");
       // 试玩默认稳定态：锁升级+关面板（不无敌——正常掉血，被打死自动原地重召唤，可测受击）
       setTimeout(applyStable, 600);
     },
 
     continueGame: () => {
       if (!gm.hasSavedRun()) {
-        console.warn('[debug] 无存档，无法继续游戏');
+        console.warn("[debug] 无存档，无法继续游戏");
         return;
       }
       const sc = plugin();
       if (!sc) return;
-      sc.stop('UIScene');
-      sc.start('GameScene');
-      sc.launch('UIScene');
+      sc.stop("UIScene");
+      sc.start("GameScene");
+      sc.launch("UIScene");
     },
 
     backToMenu: () => {
       const sc = plugin();
       if (!sc) return;
-      sc.stop('UIScene');
-      sc.stop('GameScene');
-      sc.stop('GameOverScene');
+      sc.stop("UIScene");
+      sc.stop("GameScene");
+      sc.stop("GameOverScene");
       GameConfig.OVERLAY_SCENES.forEach((k) => sc.stop(k));
-      sc.start('MainMenuScene', {});
+      sc.start("MainMenuScene", {});
     },
 
     pause: () => gm.setPaused(true),
@@ -188,11 +198,13 @@ export function initDebugAPI(game: Phaser.Game): void {
     giveItem: (id: string, count = 1) => {
       const player = getPlayer();
       if (!player) {
-        console.warn('[debug] 玩家不存在');
+        console.warn("[debug] 玩家不存在");
         return;
       }
       if (!USABLE_ITEMS[id]) {
-        console.warn(`[debug] 未知物品 id: ${id}，可用: ${Object.keys(USABLE_ITEMS).join(', ')}`);
+        console.warn(
+          `[debug] 未知物品 id: ${id}，可用: ${Object.keys(USABLE_ITEMS).join(", ")}`,
+        );
         return;
       }
       player.addItem(id, count);
@@ -209,16 +221,16 @@ export function initDebugAPI(game: Phaser.Game): void {
 
     setLevel: (level: number) => {
       const player = getPlayer();
-      if (!player) return 'no player';
+      if (!player) return "no player";
       player.forceLevel?.(level);
       return `level -> ${player.getLevel()} / ${player.getMaxHealth()}hp`;
     },
 
     addOverflow: (n = 1) => {
       const player = getPlayer();
-      if (!player) return 'no player';
+      if (!player) return "no player";
       player.addOverflow?.(n);
-      return `overflow +${n} => ${player.getOverflowCount?.() ?? '?'}`;
+      return `overflow +${n} => ${player.getOverflowCount?.() ?? "?"}`;
     },
 
     killAll: () => {
@@ -226,7 +238,7 @@ export function initDebugAPI(game: Phaser.Game): void {
       const enemies = gs?.getEnemies?.();
       if (!enemies) return;
       enemies.getChildren().forEach((e: any) => {
-        if (e.active && typeof e.takeDamage === 'function') {
+        if (e.active && typeof e.takeDamage === "function") {
           e.takeDamage(99999, true);
         }
       });
@@ -238,62 +250,74 @@ export function initDebugAPI(game: Phaser.Game): void {
 
     getSave: () => {
       const SaveSystem = (gm as any)._saveSystem;
-      return SaveSystem ? JSON.stringify(SaveSystem.load(), null, 2) : 'no save system';
+      return SaveSystem
+        ? JSON.stringify(SaveSystem.load(), null, 2)
+        : "no save system";
     },
 
     clearSave: () => {
       gm.clearSavedRun();
-      console.log('[debug] 存档已清除');
+      console.log("[debug] 存档已清除");
     },
 
     /** 清空成就（解锁/加成/称号 + 成就统计），保留最高分等展示数据；刷新生效 */
     resetAchievements: () => {
       gm.resetAchievements();
-      console.log('[debug] 成就已清空，1 秒后刷新页面生效');
+      console.log("[debug] 成就已清空，1 秒后刷新页面生效");
       setTimeout(() => window.location.reload(), 800);
-      return 'achievements cleared';
+      return "achievements cleared";
     },
 
     /** 彻底清空全部存档（成就/统计/最高分/对局），刷新生效 */
     resetAllData: () => {
       gm.resetAllData();
-      console.log('[debug] 全部存档已清空，1 秒后刷新页面生效');
+      console.log("[debug] 全部存档已清空，1 秒后刷新页面生效");
       setTimeout(() => window.location.reload(), 800);
-      return 'all data cleared';
+      return "all data cleared";
     },
 
     /** 解锁全部关卡（调试用） */
     unlockAllLevels: () => {
       gm.unlockAllLevels();
-      console.log('[debug] 全部关卡已解锁，回主菜单可选冰原等地图');
-      return 'all levels unlocked';
+      console.log("[debug] 全部关卡已解锁，回主菜单可选冰原等地图");
+      return "all levels unlocked";
     },
 
     autoPlay: (enabled?: boolean) => {
       const gs = getGameScene();
       if (!gs) {
-        console.warn('[debug] GameScene 未运行');
+        console.warn("[debug] GameScene 未运行");
         return false;
       }
       const state = enabled ?? !gs.isAutoPlay?.();
       gs.setAutoPlay?.(state);
-      console.log(`[debug] 自动玩: ${state ? '开启' : '关闭'}`);
+      console.log(`[debug] 自动玩: ${state ? "开启" : "关闭"}`);
       return state;
     },
 
     testStable: () => {
       applyStable();
-      console.log('[debug] 试玩稳定态已启用（锁升级+关面板，不无敌）');
-      return 'testStable active';
+      console.log("[debug] 试玩稳定态已启用（锁升级+关面板，不无敌）");
+      return "testStable active";
     },
 
-    spawnTestEnemies: (type: string, count = 5, opts: TestSpawnOptions = {}) => {
+    spawnTestEnemies: (
+      type: string,
+      count = 5,
+      opts: TestSpawnOptions = {},
+    ) => {
       const gs = getGameScene();
       const player = getPlayer();
-      if (!gs || !player) return '需要先进入试玩场地（调试面板 → 🎯 试玩场地）';
+      if (!gs || !player) return "需要先进入试玩场地（调试面板 → 🎯 试玩场地）";
       const cfg = (ENEMY_CONFIGS as Record<string, EnemyConfig>)[type];
       if (!cfg) {
-        return '未知敌人类型: ' + type + '（可用: ' + Object.keys(ENEMY_CONFIGS).join('/') + '）';
+        return (
+          "未知敌人类型: " +
+          type +
+          "（可用: " +
+          Object.keys(ENEMY_CONFIGS).join("/") +
+          "）"
+        );
       }
       const n = Math.max(1, Math.min(50, Math.round(count) || 1));
       const hpMult = opts.hpMult ?? 1;
@@ -308,48 +332,54 @@ export function initDebugAPI(game: Phaser.Game): void {
           attackPower: Math.max(0, Math.round(cfg.attackPower * atkMult)),
           moveSpeed: Math.max(5, Math.round(cfg.moveSpeed * spdMult)),
         };
-        gs.spawnEnemy(c, player.x + Math.cos(ang) * radius, player.y + Math.sin(ang) * radius);
+        gs.spawnEnemy(
+          c,
+          player.x + Math.cos(ang) * radius,
+          player.y + Math.sin(ang) * radius,
+        );
       }
       return (
-        '已生成 ' +
+        "已生成 " +
         n +
-        ' × ' +
+        " × " +
         cfg.name +
-        '（hp×' +
+        "（hp×" +
         hpMult +
-        ' atk×' +
+        " atk×" +
         atkMult +
-        ' spd×' +
+        " spd×" +
         spdMult +
-        '，环绕半径 ' +
+        "，环绕半径 " +
         radius +
-        'px）'
+        "px）"
       );
     },
 
     spawnBoss: () => {
       const gs = getGameScene();
-      if (!gs || !gs.waveManager) return '需要先进入游戏（调试面板 → 开始游戏/试玩场地）';
+      if (!gs || !gs.waveManager)
+        return "需要先进入游戏（调试面板 → 开始游戏/试玩场地）";
       // 场上残留 Boss（清空敌人/Boss 死亡后标记未重置）先清除，保证调试召唤永远生效
       const enemies = gs.getEnemies?.();
       if (enemies) {
         enemies.children.each((e: any) => {
-          if (e?.active && e.config?.type?.startsWith?.('boss')) e.takeDamage?.(999999, false);
+          if (e?.active && e.config?.type?.startsWith?.("boss"))
+            e.takeDamage?.(999999, false);
         });
       }
       (gs.waveManager as any).resetBossState?.();
       const ok = (gs.waveManager as any).forceSpawnBoss?.();
       return ok
-        ? 'Boss 已生成（当前关卡 Boss 类型，完整血条/演出）'
-        : 'Boss 已在场或生成失败（waveManager.forceSpawnBoss）';
+        ? "Boss 已生成（当前关卡 Boss 类型，完整血条/演出）"
+        : "Boss 已在场或生成失败（waveManager.forceSpawnBoss）";
     },
-    setTheme: (theme: 'pixel' | 'classic') => {
+    setTheme: (theme: "pixel" | "classic") => {
       GameConfig.VISUAL_THEME = theme;
       // 渲染器抗锯齿跟随主题：classic 矢量平滑、pixel 像素锐利
       const renderer = game.renderer as any;
       try {
-        if (renderer && typeof renderer.setAntialias === 'function') {
-          renderer.setAntialias(theme === 'classic');
+        if (renderer && typeof renderer.setAntialias === "function") {
+          renderer.setAntialias(theme === "classic");
         }
       } catch (e) {
         /* 渲染器不支持运行时切换则忽略 */
@@ -358,13 +388,13 @@ export function initDebugAPI(game: Phaser.Game): void {
       const gs = getGameScene();
       const player = gs?.getPlayer?.();
       if (player && player.setTexture) {
-        player.setTexture(GameConfig.themeKey('player'));
+        player.setTexture(GameConfig.themeKey("player"));
       }
       gs?.enemies?.children?.each?.((enemy: any) => {
         if (!enemy || !enemy.setTexture || !enemy.config?.texture) return true;
         enemy.setTexture(GameConfig.themeKey(enemy.config.texture));
         // 主题切换后重设染色：pixel 白色主体需 tint；classic 矢量自带色需 clear
-        if (theme === 'pixel') {
+        if (theme === "pixel") {
           if (enemy.config.color) enemy.setTint(enemy.config.color);
         } else {
           enemy.clearTint();
@@ -372,17 +402,25 @@ export function initDebugAPI(game: Phaser.Game): void {
         return true;
       });
       // 场上已有子弹/掉落物即时更新（仅双套纹理的 key）
-      const themedBulletKeys = ['bullet', 'bullet_classic'];
-      const themedPickupBase = ['pickup_exp', 'pickup_health', 'pickup_coin', 'pickup_chest'];
+      const themedBulletKeys = ["bullet", "bullet_classic"];
+      const themedPickupBase = [
+        "pickup_exp",
+        "pickup_health",
+        "pickup_coin",
+        "pickup_chest",
+      ];
       gs?.bullets?.children?.each?.((b: any) => {
         if (!b || !b.setTexture || !b.active) return true;
-        if (themedBulletKeys.includes(b.texture?.key)) b.setTexture(GameConfig.themeKey('bullet'));
+        if (themedBulletKeys.includes(b.texture?.key))
+          b.setTexture(GameConfig.themeKey("bullet"));
         return true;
       });
       gs?.pickups?.children?.each?.((p: any) => {
         if (!p || !p.setTexture || !p.active) return true;
         const k = p.texture?.key;
-        const base = themedPickupBase.find((b) => k === b || k === `${b}_classic`);
+        const base = themedPickupBase.find(
+          (b) => k === b || k === `${b}_classic`,
+        );
         if (base) p.setTexture(GameConfig.themeKey(base));
         return true;
       });
@@ -391,14 +429,14 @@ export function initDebugAPI(game: Phaser.Game): void {
       if (terrain?.getObstacleGroup?.()) {
         terrain.getObstacleGroup().children.each((o: any) => {
           if (!o || !o.setTexture) return true;
-          const k = o.texture?.key || '';
-          o.setTexture(GameConfig.themeKey(k.replace(/_classic$/, '')));
+          const k = o.texture?.key || "";
+          o.setTexture(GameConfig.themeKey(k.replace(/_classic$/, "")));
           return true;
         });
       }
       // 场上已有无人机即时更新
       player?.drones?.forEach?.((d: any) => {
-        if (d && d.setTexture) d.setTexture(GameConfig.themeKey('drone'));
+        if (d && d.setTexture) d.setTexture(GameConfig.themeKey("drone"));
       });
       console.log(`[debug] 视觉主题已切换: ${theme}`);
       return `主题已切换: ${theme}`;
@@ -406,24 +444,26 @@ export function initDebugAPI(game: Phaser.Game): void {
 
     giveAllBuffs: (level = 1) => {
       const player = getPlayer();
-      if (!player) return 'player not found';
+      if (!player) return "player not found";
       const gs = getGameScene();
       const applied: string[] = [];
       for (const opt of UPGRADE_OPTIONS) {
         // 跳过兜底项（金币/治疗/狂暴/清屏即时效果）与初始武器（玩家开局自带，保持 Lv1）
-        if (opt.id.startsWith('fallback_')) continue;
-        if (opt.id === 'weapon_default_gun') continue;
+        if (opt.id.startsWith("fallback_")) continue;
+        if (opt.id === "weapon_default_gun") continue;
         for (let i = 0; i < level; i++) {
           applyUpgradeToPlayer(player, opt, gs);
         }
         applied.push(opt.name);
       }
-      console.log(`[debug] 已为玩家添加 ${applied.length} 个 buff（${level} 级）: ${applied.join(', ')}`);
+      console.log(
+        `[debug] 已为玩家添加 ${applied.length} 个 buff（${level} 级）: ${applied.join(", ")}`,
+      );
       return `${applied.length} buffs applied (${level} 级)`;
     },
     openWeaponSelect: () => {
       const gs = getGameScene();
-      if (!gs) return 'no game scene';
+      if (!gs) return "no game scene";
       const wave = (gs.waveManager?.getCurrentWave?.() || 0) + 1;
       gs.openWeaponSelectAfterBoss?.(wave);
       return `open weapon select before wave ${wave}`;
@@ -438,7 +478,12 @@ export function initDebugAPI(game: Phaser.Game): void {
       if (!enemies) return -1;
       let count = 0;
       enemies.getChildren().forEach((e: any) => {
-        if (e?.active && typeof e.size === 'number' && typeof e.takeDamage === 'function') count++;
+        if (
+          e?.active &&
+          typeof e.size === "number" &&
+          typeof e.takeDamage === "function"
+        )
+          count++;
       });
       return count;
     },
@@ -447,10 +492,10 @@ export function initDebugAPI(game: Phaser.Game): void {
     // 注意：会跳过中间波次的商店/武器强化/突破奖励，仅用于快速定位特定波次玩法。
     jumpToWave: (n: number) => {
       const gs = getGameScene();
-      if (!gs?.waveManager) return 'no game scene';
+      if (!gs?.waveManager) return "no game scene";
       gs.waveManager.waveActive = false;
       gs.waveManager.startWave(n);
-      return `jumped to wave ${n}${n % GameConfig.WAVE.bossWaveInterval === 0 ? '（Boss 波）' : ''}`;
+      return `jumped to wave ${n}${n % GameConfig.WAVE.bossWaveInterval === 0 ? "（Boss 波）" : ""}`;
     },
 
     // 波次为计时制（waveDuration 到即 nextWave）：把 waveTimer 拨满，
@@ -458,21 +503,21 @@ export function initDebugAPI(game: Phaser.Game): void {
     completeWave: () => {
       const gs = getGameScene();
       const wm = gs?.waveManager;
-      if (!wm) return 'no game scene';
+      if (!wm) return "no game scene";
       wm.waveTimer = GameConfig.WAVE.waveDuration;
       return `wave ${wm.getCurrentWave()} timer -> end (2s 后进入下一波/通关结算)`;
     },
 
     openEndlessChoice: () => {
       const gs = getGameScene();
-      if (!gs) return 'no game scene';
+      if (!gs) return "no game scene";
       gs.openEndlessChoice?.();
-      return 'opened endless choice';
+      return "opened endless choice";
     },
 
     setGameSpeed: (speed: number) => {
       const gs = getGameScene();
-      if (!gs?.setGameSpeed) return 'no game scene';
+      if (!gs?.setGameSpeed) return "no game scene";
       gs.setGameSpeed(speed);
       return `game speed -> ${gs.getGameSpeed?.() ?? gs.gameSpeed}×`;
     },
@@ -481,5 +526,5 @@ export function initDebugAPI(game: Phaser.Game): void {
   };
 
   (window as any).__debug = api;
-  console.log('%c[DebugAPI] 已挂载到 window.__debug', 'color: #ffb347');
+  console.log("%c[DebugAPI] 已挂载到 window.__debug", "color: #ffb347");
 }

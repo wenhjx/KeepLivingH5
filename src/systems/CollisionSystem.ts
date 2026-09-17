@@ -1,14 +1,13 @@
-import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import { calcCritStats } from '../logic/player';
-import type { Player } from '../entities/Player';
-import type { Enemy } from '../entities/Enemy';
-import type { Bullet } from '../entities/Bullet';
-import type { Pickup } from '../entities/Pickup';
-
+import Phaser from "phaser";
+import { GameManager } from "../game/GameManager";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import { calcCritStats } from "../logic/player";
+import type { Player } from "../entities/Player";
+import type { Enemy } from "../entities/Enemy";
+import type { Bullet } from "../entities/Bullet";
+import type { Pickup } from "../entities/Pickup";
 /**
  * 碰撞系统
  * 处理游戏中所有实体间的碰撞和重叠事件
@@ -16,7 +15,6 @@ import type { Pickup } from '../entities/Pickup';
  */
 export class CollisionSystem {
   private scene: Phaser.Scene;
-
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
   }
@@ -27,18 +25,22 @@ export class CollisionSystem {
   playerEnemyCollision(playerObj: any, enemyObj: any): void {
     const player = playerObj as Player;
     const enemy = enemyObj as Enemy;
-
     if (!player.active || !enemy.active) return;
     if (player.isInvincible()) return;
-
     // 接触伤害随波次成长（乘难度系数）：修复后期小怪贴脸无威胁
-    const mult = enemy.getDifficultyMultiplier ? enemy.getDifficultyMultiplier() : 1;
+    const mult = enemy.getDifficultyMultiplier
+      ? enemy.getDifficultyMultiplier()
+      : 1;
     const damage = (enemy.getConfig()?.attackPower || 10) * mult;
     player.takeDamage(damage);
     AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_PLAYER_HURT, 1);
-
     // 击退玩家
-    const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+    const angle = Phaser.Math.Angle.Between(
+      enemy.x,
+      enemy.y,
+      player.x,
+      player.y,
+    );
     player.setVelocity(Math.cos(angle) * 200, Math.sin(angle) * 200);
   }
 
@@ -48,13 +50,10 @@ export class CollisionSystem {
   bulletEnemyCollision(bulletObj: any, enemyObj: any): void {
     const bullet = bulletObj as Bullet;
     const enemy = enemyObj as Enemy;
-
     if (!bullet.active || !enemy.active) return;
     if (bullet.isFromEnemy()) return;
-
     // 检查是否已命中过该敌人（穿透子弹）
     if (!bullet.hitEnemy(enemy)) return;
-
     const damage = bullet.getDamage();
     // 暴击判定读取玩家属性（暴击精通/致命一击升级生效），而非硬编码
     const gameScene = this.scene as any;
@@ -64,14 +63,16 @@ export class CollisionSystem {
     const { critRate, critDamageMult } = calcCritStats(playerStats as any);
     const isCrit = Math.random() < critRate;
     const finalDamage = isCrit ? damage * critDamageMult : damage;
-
     // 演出事件：玩家暴击命中（GameFeedback 订阅播震屏/顿帧；纯表现）
     if (isCrit) {
-      EventBus.emit(EventKeys.COMBAT_CRIT, { x: bullet.x, y: bullet.y, damage: finalDamage });
+      EventBus.emit(EventKeys.COMBAT_CRIT, {
+        x: bullet.x,
+        y: bullet.y,
+        damage: finalDamage,
+      });
     }
 
     enemy.takeDamage(finalDamage, isCrit, bullet.x, bullet.y);
-
     // 霰弹枪等武器：命中击退（近身轰开敌人制造安全距离）
     const knockback = bullet.getKnockback?.();
     if (knockback && enemy.applyKnockback) {
@@ -80,17 +81,17 @@ export class CollisionSystem {
 
     // 玩家被动效果触发（吸血/冰冻/灼烧/闪电链/弹射）
     const player = gameScene?.getPlayer?.();
-    if (player) enemy.applyPlayerEffects?.(finalDamage, player, bullet.x, bullet.y);
-
+    if (player)
+      enemy.applyPlayerEffects?.(finalDamage, player, bullet.x, bullet.y);
     // 命中音效（暴击更响）
-    AudioManager.getInstance().playSfx(isCrit ? SOUND_KEYS.SFX_HIT_CRIT : SOUND_KEYS.SFX_HIT, isCrit ? 1 : 0.5);
-
+    AudioManager.getInstance().playSfx(
+      isCrit ? SOUND_KEYS.SFX_HIT_CRIT : SOUND_KEYS.SFX_HIT,
+      isCrit ? 1 : 0.5,
+    );
     // 浮动伤害数字（暴击金色大字，普通白色）
     gameScene?.spawnDamageText?.(bullet.x, bullet.y, finalDamage, isCrit);
-
     // 命中粒子（暴击金色更多更大）
     gameScene.getFXManager?.()?.hit(bullet.x, bullet.y, isCrit);
-
     // 击杀统计（敌人死亡消散特效由 Enemy.die() 统一触发，避免重复）
     if (enemy.getHealth() <= 0) {
       GameManager.getInstance().addKill(enemy.getScoreReward());
@@ -103,11 +104,9 @@ export class CollisionSystem {
   enemyBulletPlayerCollision(bulletObj: any, playerObj: any): void {
     const bullet = bulletObj as Bullet;
     const player = playerObj as Player;
-
     if (!bullet.active || !player.active) return;
     if (!bullet.isFromEnemy()) return;
     if (player.isInvincible()) return;
-
     if (bullet.hitPlayer()) {
       player.takeDamage(bullet.getDamage());
     }
@@ -119,11 +118,8 @@ export class CollisionSystem {
   playerPickupCollision(playerObj: any, pickupObj: any): void {
     const player = playerObj as Player;
     const pickup = pickupObj as Pickup;
-
     if (!player.active || !pickup.active) return;
-
     pickup.collect(player);
-
     // 拾取光点（经验青 / 金币金 / 其他白）
     const gameScene = this.scene as any;
     gameScene.getFXManager?.()?.pickup(pickup.x, pickup.y, pickup.getType());

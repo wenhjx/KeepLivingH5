@@ -1,9 +1,9 @@
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { GameManager } from '../game/GameManager';
-import { GuideManager } from './GuideManager';
-import { ACHIEVEMENTS, type AchievementDef } from '../data/achievements';
-import { WEAPONS } from '../data/weapons';
-import type { AchievementSaveData, SaveStats } from '../types';
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { GameManager } from "../game/GameManager";
+import { GuideManager } from "./GuideManager";
+import { ACHIEVEMENTS, type AchievementDef } from "../data/achievements";
+import { WEAPONS } from "../data/weapons";
+import type { AchievementSaveData, SaveStats } from "../types";
 
 /**
  * 成就系统管理器（单例）
@@ -62,39 +62,39 @@ export class AchievementManager {
       };
     EventBus.on(
       EventKeys.ENEMY_DEATH,
-      guard((c) => this.handleEnemyDeath(c))
+      guard((c) => this.handleEnemyDeath(c)),
     );
     EventBus.on(
       EventKeys.COIN_EARNED,
-      guard((a) => this.handleCoinEarned(a))
+      guard((a) => this.handleCoinEarned(a)),
     );
     EventBus.on(
       EventKeys.SHOP_PURCHASE,
-      guard((p) => this.handleShopPurchase(p))
+      guard((p) => this.handleShopPurchase(p)),
     );
     EventBus.on(
       EventKeys.RUN_WAVE,
-      guard((w) => this.handleWave(w))
+      guard((w) => this.handleWave(w)),
     );
     EventBus.on(
       EventKeys.PLAYER_COINS,
-      guard((c) => this.handleCoins(c))
+      guard((c) => this.handleCoins(c)),
     );
     EventBus.on(
       EventKeys.PLAYER_HIT,
-      guard(() => this.handlePlayerHit())
+      guard(() => this.handlePlayerHit()),
     );
     EventBus.on(
       EventKeys.RUN_END,
-      guard((r) => this.handleRunEnd(r))
+      guard((r) => this.handleRunEnd(r)),
     );
     EventBus.on(
       EventKeys.RUN_START,
-      guard(() => this.handleRunStart())
+      guard(() => this.handleRunStart()),
     );
     EventBus.on(
       EventKeys.LEVEL_CLEAR,
-      guard(() => this.checkAll())
+      guard(() => this.checkAll()),
     );
 
     // 旧存档/历史统计达标 → 立即补解锁（如已 1000 杀的存档）
@@ -104,7 +104,7 @@ export class AchievementManager {
   // ========== 事件处理 ==========
 
   private handleEnemyDeath(config: any): void {
-    if (config?.type === 'boss') {
+    if (config?.type === "boss") {
       this.mutateStats((s) => {
         s.bossesKilled = (s.bossesKilled ?? 0) + 1;
       });
@@ -156,9 +156,11 @@ export class AchievementManager {
       s.maxWaveReached = Math.max(s.maxWaveReached ?? 0, runData?.wave ?? 0);
 
       // 跨局武器收集（去重）：从 GameScene 玩家读取（endRun 时场景仍在）
-      const gs = (window as any).__game?.scene?.getScene?.('GameScene');
+      const gs = (window as any).__game?.scene?.getScene?.("GameScene");
       const player = gs?.getPlayer?.();
-      const weaponIds = (player?.getWeapons?.() ?? []).map((w: any) => w.id) as string[];
+      const weaponIds = (player?.getWeapons?.() ?? []).map(
+        (w: any) => w.id,
+      ) as string[];
       const collected = new Set(s.weaponsCollected ?? []);
       weaponIds.forEach((id) => collected.add(id));
       s.weaponsCollected = [...collected];
@@ -174,7 +176,7 @@ export class AchievementManager {
       const enemies = gs?.getEnemies?.();
       if (enemies?.getChildren) {
         enemies.getChildren().forEach((e: any) => {
-          if (e?.active && e?.config?.type === 'boss') bossAlive = true;
+          if (e?.active && e?.config?.type === "boss") bossAlive = true;
         });
       }
       this.checkAll({
@@ -281,19 +283,19 @@ export class AchievementManager {
         const desc = def.reward.title
           ? `获得称号「${def.reward.title}」`
           : def.reward.bonuses
-            ? '永久属性加成已生效'
-            : '达成条件已记录';
+            ? "永久属性加成已生效"
+            : "达成条件已记录";
         GuideManager.getInstance().show({
           title,
           description: desc,
-          icon: def.icon || '🏅',
+          icon: def.icon || "🏅",
           color: 0xffd700,
-          position: 'top-right',
+          position: "top-right",
           duration: 3200,
           showButton: false,
         });
       } catch (e) {
-        console.warn('[成就] 解锁提示显示失败', e);
+        console.warn("[成就] 解锁提示显示失败", e);
       }
       // 顺手存档（成就已持久化，这里确保统计字段也落盘）
       GameManager.getInstance().saveProgress();

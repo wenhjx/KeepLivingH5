@@ -1,5 +1,5 @@
-import Phaser from 'phaser';
-import { Layers } from '../constants/Layers';
+import Phaser from "phaser";
+import { Layers } from "../constants/Layers";
 
 /**
  * FXManager - 视觉特效统一入口
@@ -55,7 +55,7 @@ export class FXManager {
       scaleStart?: number;
       scaleEnd?: number;
       gravityY?: number;
-    } = {}
+    } = {},
   ): void {
     const lifespan = opts.lifespan ?? 400;
     const emitter = this.scene.add.particles(x, y, texture, {
@@ -80,9 +80,11 @@ export class FXManager {
     color: number,
     duration: number,
     scaleFrom: number,
-    scaleTo: number
+    scaleTo: number,
   ): void {
-    const circle = this.scene.add.circle(x, y, radius, color, 0.5).setDepth(Layers.FX);
+    const circle = this.scene.add
+      .circle(x, y, radius, color, 0.5)
+      .setDepth(Layers.FX);
     this.scene.tweens.add({
       targets: circle,
       scale: { from: scaleFrom, to: scaleTo },
@@ -100,7 +102,7 @@ export class FXManager {
     color: number,
     duration: number,
     scaleFrom: number,
-    scaleTo: number
+    scaleTo: number,
   ): void {
     const g = this.scene.add.graphics();
     g.lineStyle(4, color, 1);
@@ -121,8 +123,15 @@ export class FXManager {
    * Boss 专属光环：脚下常驻呼吸圆环（类型标识色），帮助区分不同 Boss。
    * 返回圆环对象，由调用方随敌人销毁；位置需调用方每帧同步到敌人坐标。
    */
-  bossAura(x: number, y: number, size: number, color: number): Phaser.GameObjects.Arc {
-    const ring = this.scene.add.circle(x, y, Math.max(18, size * 0.62), color, 0).setDepth(Layers.FX_GROUND);
+  bossAura(
+    x: number,
+    y: number,
+    size: number,
+    color: number,
+  ): Phaser.GameObjects.Arc {
+    const ring = this.scene.add
+      .circle(x, y, Math.max(18, size * 0.62), color, 0)
+      .setDepth(Layers.FX_GROUND);
     ring.setStrokeStyle(4, color, 0.9);
     this.scene.tweens.add({
       targets: ring,
@@ -139,8 +148,16 @@ export class FXManager {
    * 弹道拖尾：子弹飞行留下的渐隐光带（沿弹道方向拉伸的短矩形，快速淡出）
    * 轻量短命对象（tween 后自毁），供各武器弹道按节流频率调用
    */
-  bulletTrail(x: number, y: number, angle: number, color: number = 0xffffff, width: number = 4): void {
-    const r = this.scene.add.rectangle(x, y, 22, width, color, 0.75).setDepth(Layers.PROJECTILE);
+  bulletTrail(
+    x: number,
+    y: number,
+    angle: number,
+    color: number = 0xffffff,
+    width: number = 4,
+  ): void {
+    const r = this.scene.add
+      .rectangle(x, y, 22, width, color, 0.75)
+      .setDepth(Layers.PROJECTILE);
     r.setRotation(angle);
     this.scene.tweens.add({
       targets: r,
@@ -153,10 +170,15 @@ export class FXManager {
   }
 
   /** 环形冲击波：空心双环扩散 + 粒子迸发（环形冲击波武器等全向范围攻击） */
-  shockwave(x: number, y: number, radius: number, color: number = 0x00ffff): void {
+  shockwave(
+    x: number,
+    y: number,
+    radius: number,
+    color: number = 0x00ffff,
+  ): void {
     this.ringStroke(x, y, radius, color, 380, 0.2, 1.6);
     this.ringStroke(x, y, radius * 0.65, color, 300, 0.3, 1.3);
-    this.emit(x, y, 'particle_death', color, 16, {
+    this.emit(x, y, "particle_death", color, 16, {
       lifespan: 350,
       speedMin: 120,
       speedMax: 300,
@@ -168,7 +190,13 @@ export class FXManager {
    * 地面AOE预警圈（Boss 技能）：红色实心淡圈 + 描边，闪烁警示，duration 后自动消失。
    * 用于"蓄力后爆炸"类技能，给玩家走位反应时间。
    */
-  telegraph(x: number, y: number, radius: number, duration: number = 800, color: number = 0xff4444): void {
+  telegraph(
+    x: number,
+    y: number,
+    radius: number,
+    duration: number = 800,
+    color: number = 0xff4444,
+  ): void {
     const g = this.scene.add.graphics().setDepth(Layers.FX_TELEGRAPH);
     g.fillStyle(color, 0.16);
     g.fillCircle(x, y, radius);
@@ -188,7 +216,7 @@ export class FXManager {
 
   /** 灼烧火焰（灼烧 DOT 持续伤害）：橙红火苗上飘（更旺，首跳与每跳都有反馈） */
   burn(x: number, y: number): void {
-    this.emit(x, y, 'particle_hit', 0xff7722, 8, {
+    this.emit(x, y, "particle_hit", 0xff7722, 8, {
       lifespan: 450,
       speedMin: 25,
       speedMax: 90,
@@ -199,7 +227,7 @@ export class FXManager {
 
   /** 冰冻霜花（冰冻命中）：淡蓝冰晶迸发 */
   frost(x: number, y: number): void {
-    this.emit(x, y, 'particle_hit', 0x88ddff, 6, {
+    this.emit(x, y, "particle_hit", 0x88ddff, 6, {
       lifespan: 300,
       speedMin: 30,
       speedMax: 90,
@@ -210,7 +238,7 @@ export class FXManager {
   /** 弹射轨迹（亮蓝连线 + 目标受击火花）：链式收割看得见 */
   bounce(x1: number, y1: number, x2: number, y2: number): void {
     this.ray(x1, y1, x2, y2, 0x66ccff, 4, 220);
-    this.emit(x2, y2, 'particle_hit', 0x88ccff, 5, {
+    this.emit(x2, y2, "particle_hit", 0x88ccff, 5, {
       lifespan: 250,
       speedMin: 40,
       speedMax: 110,
@@ -221,7 +249,7 @@ export class FXManager {
   /** 闪电链（金黄折线 + 目标电花） */
   chainLightning(x1: number, y1: number, x2: number, y2: number): void {
     this.ray(x1, y1, x2, y2, 0xffee55, 4, 200);
-    this.emit(x2, y2, 'particle_hit', 0xfff176, 6, {
+    this.emit(x2, y2, "particle_hit", 0xfff176, 6, {
       lifespan: 220,
       speedMin: 50,
       speedMax: 130,
@@ -237,7 +265,7 @@ export class FXManager {
     y2: number,
     color: number,
     width: number = 2,
-    duration: number = 160
+    duration: number = 160,
   ): void {
     const g = this.scene.add.graphics();
     g.lineStyle(width, color, 0.9);
@@ -256,20 +284,20 @@ export class FXManager {
   /** 子弹命中：普通黄点小爆，暴击金色更多更大（配合暴击数字） */
   hit(x: number, y: number, isCrit: boolean = false): void {
     if (isCrit) {
-      this.emit(x, y, 'particle_hit', 0xffd700, 8, {
+      this.emit(x, y, "particle_hit", 0xffd700, 8, {
         lifespan: 450,
         speedMin: 70,
         speedMax: 240,
         scaleStart: 0.7,
       });
     } else {
-      this.emit(x, y, 'particle_hit', 0xffff00, 4, { lifespan: 300 });
+      this.emit(x, y, "particle_hit", 0xffff00, 4, { lifespan: 300 });
     }
   }
 
   /** 敌人死亡：敌人主题色粒子爆开，轻微上浮 */
   enemyDeath(x: number, y: number, color: number = 0xff4444): void {
-    this.emit(x, y, 'particle_death', color, 12, {
+    this.emit(x, y, "particle_death", color, 12, {
       lifespan: 420,
       speedMin: 60,
       speedMax: 200,
@@ -278,9 +306,14 @@ export class FXManager {
   }
 
   /** 拾取光点：经验青 / 金币金 / 其他白 */
-  pickup(x: number, y: number, type: string = 'exp'): void {
-    const color = type === 'exp' ? 0x00ffff : type === 'coin' ? 0xffd700 : 0xffffff;
-    this.emit(x, y, 'particle_exp', color, 5, { lifespan: 350, speedMin: 40, speedMax: 150 });
+  pickup(x: number, y: number, type: string = "exp"): void {
+    const color =
+      type === "exp" ? 0x00ffff : type === "coin" ? 0xffd700 : 0xffffff;
+    this.emit(x, y, "particle_exp", color, 5, {
+      lifespan: 350,
+      speedMin: 40,
+      speedMax: 150,
+    });
   }
 
   /**
@@ -290,7 +323,7 @@ export class FXManager {
   explosion(x: number, y: number, radius: number): void {
     this.ring(x, y, radius, 0xff6600, 300, 0.3, 1.2);
     this.ring(x, y, radius * 0.5, 0xffff00, 200, 0.5, 1);
-    this.emit(x, y, 'particle_explosion', 0xff8800, 12, {
+    this.emit(x, y, "particle_explosion", 0xff8800, 12, {
       lifespan: 420,
       speedMin: 80,
       speedMax: 260,
@@ -301,7 +334,7 @@ export class FXManager {
 
   /** 玩家死亡消散：青色粒子上升消散（玩家主题色），无震屏 */
   playerDeath(x: number, y: number): void {
-    this.emit(x, y, 'particle_death', 0x00ffff, 15, {
+    this.emit(x, y, "particle_death", 0x00ffff, 15, {
       lifespan: 700,
       speedMin: 60,
       speedMax: 180,
@@ -312,7 +345,7 @@ export class FXManager {
 
   /** 升级：金色粒子向上 + 轻量光环扩散 */
   levelUp(x: number, y: number): void {
-    this.emit(x, y, 'particle_hit', 0xffd700, 10, {
+    this.emit(x, y, "particle_hit", 0xffd700, 10, {
       lifespan: 500,
       speedMin: 80,
       speedMax: 200,
@@ -326,7 +359,7 @@ export class FXManager {
 
   /** 通关胜利：金色粒子向上升腾 + 双环扩散庆祝（克制不夸张） */
   victory(x: number, y: number): void {
-    this.emit(x, y, 'particle_hit', 0xffd700, 24, {
+    this.emit(x, y, "particle_hit", 0xffd700, 24, {
       lifespan: 700,
       speedMin: 80,
       speedMax: 260,
@@ -340,8 +373,15 @@ export class FXManager {
   }
 
   /** 枪口闪光：极短小圆闪光（颜色随武器） */
-  muzzleFlash(x: number, y: number, angle: number, color: number = 0xffffff): void {
-    const flash = this.scene.add.circle(x, y, 8, color, 0.8).setDepth(Layers.FX);
+  muzzleFlash(
+    x: number,
+    y: number,
+    angle: number,
+    color: number = 0xffffff,
+  ): void {
+    const flash = this.scene.add
+      .circle(x, y, 8, color, 0.8)
+      .setDepth(Layers.FX);
     this.scene.tweens.add({
       targets: flash,
       alpha: { from: 0.8, to: 0 },

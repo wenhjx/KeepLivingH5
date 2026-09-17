@@ -1,5 +1,5 @@
-import Phaser from 'phaser';
-import { GameConfig } from '../game/GameConfig';
+import Phaser from "phaser";
+import { GameConfig } from "../game/GameConfig";
 
 /**
  * UI 场景统一相机设置。
@@ -30,11 +30,17 @@ import { GameConfig } from '../game/GameConfig';
  * 并用返回的 width/height 布局。GameScene 相机跟随玩家，不适用；
  * UIScene 采用反向缩放根容器方案，保持独立。
  */
-export function setupUICamera(scene: Phaser.Scene): { width: number; height: number } {
+export function setupUICamera(scene: Phaser.Scene): {
+  width: number;
+  height: number;
+} {
   const zoom = GameConfig.renderScale;
   const cam = scene.cameras.main;
   cam.setZoom(zoom);
   // zoom 缩放中心偏移（画布宽-逻辑宽)/2，用负 scroll 抵消，使世界 (0,0) 对齐画布左上。
-  cam.setScroll(-(cam.width - cam.width / zoom) / 2, -(cam.height - cam.height / zoom) / 2);
+  cam.setScroll(
+    -(cam.width - cam.width / zoom) / 2,
+    -(cam.height - cam.height / zoom) / 2,
+  );
   return { width: GameConfig.GAME_WIDTH, height: GameConfig.GAME_HEIGHT };
 }

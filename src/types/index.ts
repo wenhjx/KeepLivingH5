@@ -37,22 +37,22 @@ export interface PlayerStats extends EntityStats {
 }
 
 export type EnemyType =
-  | 'normal'
-  | 'fast'
-  | 'tank'
-  | 'ranged'
-  | 'elite'
-  | 'boss'
-  | 'suicider'
-  | 'splitter'
-  | 'shielded'
-  | 'summoner'
-  | 'charger'
-  | 'healer'
-  | 'frost_zombie'
-  | 'corrupt_zombie'
-  | 'boss_summoner'
-  | 'boss_barrage';
+  | "normal"
+  | "fast"
+  | "tank"
+  | "ranged"
+  | "elite"
+  | "boss"
+  | "suicider"
+  | "splitter"
+  | "shielded"
+  | "summoner"
+  | "charger"
+  | "healer"
+  | "frost_zombie"
+  | "corrupt_zombie"
+  | "boss_summoner"
+  | "boss_barrage";
 
 export interface EnemyConfig {
   type: EnemyType;
@@ -85,7 +85,7 @@ export interface EnemyConfig {
 /** Boss 行为调参（关卡差异化：召唤型 / 弹幕型 / 均衡型） */
 export interface BossTuning {
   /** 行为风格标识（信息性） */
-  style?: 'generic' | 'summoner' | 'barrage';
+  style?: "generic" | "summoner" | "barrage";
   /** 各技能基础 CD（ms），覆盖默认值 */
   ringCd?: number;
   fanCd?: number;
@@ -103,9 +103,9 @@ export interface BossTuning {
 
 // ========== 武器与技能 ==========
 
-export type WeaponType = 'melee' | 'ranged' | 'aoe' | 'summon';
+export type WeaponType = "melee" | "ranged" | "aoe" | "summon";
 
-export type WeaponTag = 'gun' | 'melee' | 'aoe' | 'summon' | 'heavy';
+export type WeaponTag = "gun" | "melee" | "aoe" | "summon" | "heavy";
 
 export interface WeaponConfig {
   id: string;
@@ -134,7 +134,7 @@ export interface WeaponConfig {
   knockback?: number; // 子弹命中击退力（霰弹枪近身轰开敌人制造安全距离）
 }
 
-export type UpgradeType = 'weapon' | 'passive' | 'stat';
+export type UpgradeType = "weapon" | "passive" | "stat";
 
 export interface UpgradeOption {
   id: string;
@@ -144,7 +144,7 @@ export interface UpgradeOption {
   icon: string;
   /** 矢量图标贴图（武器类升级项用，缺省回退 emoji icon） */
   iconTexture?: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  rarity: "common" | "rare" | "epic" | "legendary";
   effect: UpgradeEffect;
   /** 该升级项最多可选次数（stat 类满级后不再出现在升级/商店候选池，防止无限叠加数值爆炸） */
   maxLevel?: number;
@@ -178,7 +178,7 @@ export interface SpawnEntry {
 
 // ========== 拾取物 ==========
 
-export type PickupType = 'exp' | 'health' | 'coin' | 'item' | 'chest';
+export type PickupType = "exp" | "health" | "coin" | "item" | "chest";
 
 export interface PickupConfig {
   type: PickupType;
@@ -231,7 +231,7 @@ export interface SaveStats {
 }
 
 export interface SaveSettings {
-  quality: 'low' | 'medium' | 'high';
+  quality: "low" | "medium" | "high";
   soundVolume: number;
   musicVolume: number;
   muted: boolean;

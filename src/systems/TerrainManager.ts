@@ -1,13 +1,13 @@
-import Phaser from 'phaser';
+import Phaser from "phaser";
 import {
   type TerrainConfig,
   type ObstacleConfig,
   type SlowZoneConfig,
   type BoostZoneConfig,
   type FireZoneConfig,
-} from '../data/terrain';
-import { GameConfig } from '../game/GameConfig';
-import { Layers } from '../constants/Layers';
+} from "../data/terrain";
+import { GameConfig } from "../game/GameConfig";
+import { Layers } from "../constants/Layers";
 
 /**
  * 地形管理器
@@ -34,7 +34,9 @@ export class TerrainManager {
   private firePitLayer!: Phaser.GameObjects.Graphics;
 
   /** 可破坏物被击碎后的默认恢复随机区间 [min, max]（ms）：20~40 秒，防蹲守且保留偶遇感 */
-  private static readonly DEFAULT_RESPAWN_RANGE: [number, number] = [20000, 40000];
+  private static readonly DEFAULT_RESPAWN_RANGE: [number, number] = [
+    20000, 40000,
+  ];
   /** 待恢复的可破坏物定时任务（切图时统一清理，防止旧关木箱复活到新地图） */
   private pendingRespawns: Phaser.Time.TimerEvent[] = [];
 
@@ -45,10 +47,10 @@ export class TerrainManager {
 
   /** 障碍物类型 → 纹理 key 映射 */
   private static readonly TEXTURE_MAP: Record<string, string> = {
-    rock: 'obstacle_rock',
-    wall: 'obstacle_wall',
-    crate: 'obstacle_crate',
-    crystal: 'obstacle_crystal',
+    rock: "obstacle_rock",
+    wall: "obstacle_wall",
+    crate: "obstacle_crate",
+    crystal: "obstacle_crystal",
   };
 
   /** 创建所有障碍物 + 减速区（在 GameScene.create 中调用） */
@@ -65,7 +67,9 @@ export class TerrainManager {
 
   /** 创建单个障碍物（初始创建与击碎后恢复共用） */
   private spawnObstacle(obs: ObstacleConfig): void {
-    const textureKey = GameConfig.themeKey(TerrainManager.TEXTURE_MAP[obs.type] || 'obstacle_rock');
+    const textureKey = GameConfig.themeKey(
+      TerrainManager.TEXTURE_MAP[obs.type] || "obstacle_rock",
+    );
     const img = this.scene.add
       .image(obs.x, obs.y, textureKey)
       .setDisplaySize(obs.width, obs.height)
@@ -73,9 +77,9 @@ export class TerrainManager {
 
     // 可破坏物标记（木箱）
     if (obs.destructible) {
-      img.setData('destructible', true);
-      img.setData('health', obs.health ?? 30);
-      img.setData('obstacleId', obs.id);
+      img.setData("destructible", true);
+      img.setData("health", obs.health ?? 30);
+      img.setData("obstacleId", obs.id);
     }
 
     // 加入静态物理组
@@ -92,28 +96,58 @@ export class TerrainManager {
   /** 创建减速区：半透明色块视觉 + 数据存储（不参与物理，逻辑在 GameScene 每帧查询） */
   private createSlowZones(): void {
     this.slowZoneList = [...(this.config.slowZones ?? [])];
-    this.slowZoneLayer = this.scene.add.graphics().setDepth(Layers.TERRAIN_ZONE);
+    this.slowZoneLayer = this.scene.add
+      .graphics()
+      .setDepth(Layers.TERRAIN_ZONE);
     for (const z of this.slowZoneList) {
       this.slowZoneLayer.fillStyle(z.color ?? 0x3aa6dd, 0.18);
-      this.slowZoneLayer.fillRect(z.x - z.width / 2, z.y - z.height / 2, z.width, z.height);
+      this.slowZoneLayer.fillRect(
+        z.x - z.width / 2,
+        z.y - z.height / 2,
+        z.width,
+        z.height,
+      );
       this.slowZoneLayer.lineStyle(1, z.color ?? 0x3aa6dd, 0.4);
-      this.slowZoneLayer.strokeRect(z.x - z.width / 2, z.y - z.height / 2, z.width, z.height);
+      this.slowZoneLayer.strokeRect(
+        z.x - z.width / 2,
+        z.y - z.height / 2,
+        z.width,
+        z.height,
+      );
     }
   }
 
   /** 创建加速区：半透明青色块 + 内部流动线条视觉（不参与物理，逻辑在 GameScene 每帧查询） */
   private createBoostZones(): void {
     this.boostZoneList = [...(this.config.boostZones ?? [])];
-    this.boostZoneLayer = this.scene.add.graphics().setDepth(Layers.TERRAIN_ZONE);
+    this.boostZoneLayer = this.scene.add
+      .graphics()
+      .setDepth(Layers.TERRAIN_ZONE);
     for (const z of this.boostZoneList) {
       const c = z.color ?? 0x55e6a0;
       this.boostZoneLayer.fillStyle(c, 0.28);
-      this.boostZoneLayer.fillRect(z.x - z.width / 2, z.y - z.height / 2, z.width, z.height);
+      this.boostZoneLayer.fillRect(
+        z.x - z.width / 2,
+        z.y - z.height / 2,
+        z.width,
+        z.height,
+      );
       this.boostZoneLayer.lineStyle(2, c, 0.7);
-      this.boostZoneLayer.strokeRect(z.x - z.width / 2, z.y - z.height / 2, z.width, z.height);
+      this.boostZoneLayer.strokeRect(
+        z.x - z.width / 2,
+        z.y - z.height / 2,
+        z.width,
+        z.height,
+      );
       // 内部流动线 + 箭头（沿长边方向，暗示风道方向）
       this.boostZoneLayer.lineStyle(2, c, 0.55);
-      const drawFlow = (x1: number, y1: number, x2: number, y2: number, horiz: boolean) => {
+      const drawFlow = (
+        x1: number,
+        y1: number,
+        x2: number,
+        y2: number,
+        horiz: boolean,
+      ) => {
         this.boostZoneLayer.lineBetween(x1, y1, x2, y2);
         // 箭头尖端（向移动方向）
         const dir = horiz ? 1 : 1;
@@ -137,8 +171,20 @@ export class TerrainManager {
       } else {
         const x1 = z.x - z.width * 0.15,
           x2 = z.x + z.width * 0.15;
-        drawFlow(x1, z.y - z.height / 2 + 10, x1, z.y + z.height / 2 - 10, false);
-        drawFlow(x2, z.y - z.height / 2 + 10, x2, z.y + z.height / 2 - 10, false);
+        drawFlow(
+          x1,
+          z.y - z.height / 2 + 10,
+          x1,
+          z.y + z.height / 2 - 10,
+          false,
+        );
+        drawFlow(
+          x2,
+          z.y - z.height / 2 + 10,
+          x2,
+          z.y + z.height / 2 - 10,
+          false,
+        );
       }
     }
   }
@@ -148,12 +194,22 @@ export class TerrainManager {
    */
   getSpeedFactorAt(x: number, y: number): number {
     for (const z of this.slowZoneList) {
-      if (x > z.x - z.width / 2 && x < z.x + z.width / 2 && y > z.y - z.height / 2 && y < z.y + z.height / 2) {
+      if (
+        x > z.x - z.width / 2 &&
+        x < z.x + z.width / 2 &&
+        y > z.y - z.height / 2 &&
+        y < z.y + z.height / 2
+      ) {
         return z.slowFactor;
       }
     }
     for (const z of this.boostZoneList) {
-      if (x > z.x - z.width / 2 && x < z.x + z.width / 2 && y > z.y - z.height / 2 && y < z.y + z.height / 2) {
+      if (
+        x > z.x - z.width / 2 &&
+        x < z.x + z.width / 2 &&
+        y > z.y - z.height / 2 &&
+        y < z.y + z.height / 2
+      ) {
         return z.speedFactor;
       }
     }
@@ -163,8 +219,12 @@ export class TerrainManager {
   /** 创建火盆安全区：暖色光晕（闪烁）+ 火盆本体（石圈+火焰），不参与物理 */
   private createFireZones(): void {
     this.fireZoneList = [...(this.config.fireZones ?? [])];
-    this.fireGlowLayer = this.scene.add.graphics().setDepth(Layers.TERRAIN_ZONE);
-    this.firePitLayer = this.scene.add.graphics().setDepth(Layers.TERRAIN_ZONE + 1);
+    this.fireGlowLayer = this.scene.add
+      .graphics()
+      .setDepth(Layers.TERRAIN_ZONE);
+    this.firePitLayer = this.scene.add
+      .graphics()
+      .setDepth(Layers.TERRAIN_ZONE + 1);
 
     for (const z of this.fireZoneList) {
       // 光晕：半径铺满安全区，提示"站这里不掉血"；双层圆环让边界更清晰
@@ -193,8 +253,9 @@ export class TerrainManager {
       duration: 1400,
       yoyo: true,
       repeat: -1,
-      ease: 'Sine.InOut',
-    });  }
+      ease: "Sine.InOut",
+    });
+  }
 
   /** 火盆安全区列表（供霜蚀等规则查询玩家是否处于安全区） */
   getFireZones(): FireZoneConfig[] {
@@ -231,12 +292,12 @@ export class TerrainManager {
    * @returns 是否被破坏（血空）
    */
   damageObstacle(img: Phaser.GameObjects.Image, damage: number): boolean {
-    if (!img.getData?.('destructible')) return false;
-    const hp = (img.getData('health') as number) - damage;
-    img.setData('health', hp);
+    if (!img.getData?.("destructible")) return false;
+    const hp = (img.getData("health") as number) - damage;
+    img.setData("health", hp);
     if (hp > 0) return false;
     // 血空：先取 id（销毁后 data 会被清空），再从列表移除（小地图同步消失）
-    const id = img.getData('obstacleId') as string;
+    const id = img.getData("obstacleId") as string;
     this.obstacleGroup.remove(img, true, true);
     if (id) {
       this.obstacleList = this.obstacleList.filter((o) => o.id !== id);
@@ -251,7 +312,9 @@ export class TerrainManager {
   private scheduleRespawn(obs: ObstacleConfig): void {
     const [min, max] = obs.respawnRange ?? TerrainManager.DEFAULT_RESPAWN_RANGE;
     const delay = min + Math.random() * (max - min);
-    const timer = this.scene.time.delayedCall(delay, () => this.respawnObstacle(obs));
+    const timer = this.scene.time.delayedCall(delay, () =>
+      this.respawnObstacle(obs),
+    );
     this.pendingRespawns.push(timer);
   }
 

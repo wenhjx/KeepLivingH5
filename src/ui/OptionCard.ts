@@ -1,5 +1,5 @@
-import { createUIText } from '../utils/UIText';
-import Phaser from 'phaser';
+import { createUIText } from "../utils/UIText";
+import Phaser from "phaser";
 
 /**
  * 通用选项卡片（升级三选一 / 神秘商店共用）
@@ -13,7 +13,7 @@ export interface OptionCardConfig {
   /** 矢量图标贴图（优先于 emoji icon 渲染） */
   iconTexture?: string;
   desc: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  rarity: "common" | "rare" | "epic" | "legendary";
   /** 底部附加文字（如价格），不传则不显示 */
   footerText?: string;
   footerColor?: string;
@@ -34,12 +34,12 @@ function chineseTextStyle(
   fontSize: string,
   color: string,
   wrapWidth: number,
-  extra?: Partial<Phaser.Types.GameObjects.Text.TextStyle>
+  extra?: Partial<Phaser.Types.GameObjects.Text.TextStyle>,
 ): Phaser.Types.GameObjects.Text.TextStyle {
   return {
     fontSize,
     color,
-    align: 'center',
+    align: "center",
     wordWrap: { width: wrapWidth, useAdvancedWrap: true },
     ...extra,
   };
@@ -53,12 +53,12 @@ export function createOptionCard(
   scene: Phaser.Scene,
   x: number,
   y: number,
-  config: OptionCardConfig
+  config: OptionCardConfig,
 ): Phaser.GameObjects.Container {
   const cardWidth = config.cardWidth ?? 200;
   const cardHeight = config.cardHeight ?? 280;
   const borderColor = RARITY_COLORS[config.rarity] ?? RARITY_COLORS.common;
-  const borderColorHex = `#${borderColor.toString(16).padStart(6, '0')}`;
+  const borderColorHex = `#${borderColor.toString(16).padStart(6, "0")}`;
 
   const card = scene.add.container(x, y);
 
@@ -67,19 +67,37 @@ export function createOptionCard(
   const drawBg = (fillColor: number) => {
     bg.clear();
     bg.fillStyle(fillColor, 1);
-    bg.fillRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 12);
+    bg.fillRoundedRect(
+      -cardWidth / 2,
+      -cardHeight / 2,
+      cardWidth,
+      cardHeight,
+      12,
+    );
     bg.lineStyle(3, borderColor, 1);
-    bg.strokeRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 12);
+    bg.strokeRoundedRect(
+      -cardWidth / 2,
+      -cardHeight / 2,
+      cardWidth,
+      cardHeight,
+      12,
+    );
   };
   drawBg(0x1a1a25);
   card.add(bg);
 
   // 稀有度标签
-  const rarityLabel = createUIText(scene, 0, -cardHeight / 2 + 20, config.rarity.toUpperCase(), {
-    fontSize: '11px',
-    color: borderColorHex,
-    fontStyle: 'bold',
-  }).setOrigin(0.5);
+  const rarityLabel = createUIText(
+    scene,
+    0,
+    -cardHeight / 2 + 20,
+    config.rarity.toUpperCase(),
+    {
+      fontSize: "11px",
+      color: borderColorHex,
+      fontStyle: "bold",
+    },
+  ).setOrigin(0.5);
   card.add(rarityLabel);
 
   // 图标圆底
@@ -97,7 +115,7 @@ export function createOptionCard(
     card.add(iconImg);
   } else {
     const iconText = createUIText(scene, 0, -cardHeight / 2 + 78, config.icon, {
-      fontSize: '28px',
+      fontSize: "28px",
     }).setOrigin(0.5);
     card.add(iconText);
   }
@@ -108,7 +126,7 @@ export function createOptionCard(
     0,
     -cardHeight / 2 + 130,
     config.name,
-    chineseTextStyle('18px', '#ffffff', cardWidth - 24, { fontStyle: 'bold' })
+    chineseTextStyle("18px", "#ffffff", cardWidth - 24, { fontStyle: "bold" }),
   ).setOrigin(0.5);
   card.add(nameText);
 
@@ -118,7 +136,13 @@ export function createOptionCard(
   const descBoxY = -cardHeight / 2 + 178;
   const descBg = scene.add.graphics();
   descBg.fillStyle(0x000000, 0.35);
-  descBg.fillRoundedRect(-descBoxW / 2, descBoxY - descBoxH / 2, descBoxW, descBoxH, 6);
+  descBg.fillRoundedRect(
+    -descBoxW / 2,
+    descBoxY - descBoxH / 2,
+    descBoxW,
+    descBoxH,
+    6,
+  );
   card.add(descBg);
 
   // 描述文字（背景条内垂直居中）
@@ -127,17 +151,23 @@ export function createOptionCard(
     0,
     descBoxY,
     config.desc,
-    chineseTextStyle('12px', '#cccccc', descBoxW - 16)
+    chineseTextStyle("12px", "#cccccc", descBoxW - 16),
   ).setOrigin(0.5);
   card.add(descText);
 
   // 底部附加文字（价格等）
   if (config.footerText) {
-    const footerText = createUIText(scene, 0, cardHeight / 2 - 34, config.footerText, {
-      fontSize: '20px',
-      color: config.footerColor ?? '#ffcc00',
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
+    const footerText = createUIText(
+      scene,
+      0,
+      cardHeight / 2 - 34,
+      config.footerText,
+      {
+        fontSize: "20px",
+        color: config.footerColor ?? "#ffcc00",
+        fontStyle: "bold",
+      },
+    ).setOrigin(0.5);
     card.add(footerText);
   }
 
@@ -148,10 +178,10 @@ export function createOptionCard(
     .setInteractive({ useHandCursor: true });
   card.add(hitArea);
 
-  hitArea.on('pointerover', () => drawBg(0x2a2a40));
-  hitArea.on('pointerout', () => drawBg(0x1a1a25));
+  hitArea.on("pointerover", () => drawBg(0x2a2a40));
+  hitArea.on("pointerout", () => drawBg(0x1a1a25));
   if (config.onClick) {
-    hitArea.on('pointerdown', config.onClick);
+    hitArea.on("pointerdown", config.onClick);
   }
 
   return card;

@@ -1,7 +1,7 @@
-import type { Player } from '../entities/Player';
-import { SOUND_KEYS } from './sounds';
-import { AudioManager } from '../systems/AudioManager';
-import { waveDifficulty } from '../logic/wave';
+import type { Player } from "../entities/Player";
+import { SOUND_KEYS } from "./sounds";
+import { AudioManager } from "../systems/AudioManager";
+import { waveDifficulty } from "../logic/wave";
 
 /**
  * 可主动使用的物品定义（物品栏系统）
@@ -21,10 +21,10 @@ export interface UsableItemDef {
 
 export const USABLE_ITEMS: Record<string, UsableItemDef> = {
   shield: {
-    id: 'shield',
-    name: '能量护盾',
-    icon: '🛡️',
-    description: '8 秒无敌护盾',
+    id: "shield",
+    name: "能量护盾",
+    icon: "🛡️",
+    description: "8 秒无敌护盾",
     color: 0x33ccff,
     use: (player) => {
       player.applyShield(8000);
@@ -32,10 +32,10 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
     },
   },
   rage: {
-    id: 'rage',
-    name: '狂暴药水',
-    icon: '⚗️',
-    description: '15 秒攻速与攻击力 +50%',
+    id: "rage",
+    name: "狂暴药水",
+    icon: "⚗️",
+    description: "15 秒攻速与攻击力 +50%",
     color: 0xff4444,
     use: (player) => {
       player.applyRage(15000);
@@ -43,10 +43,10 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
     },
   },
   bomb: {
-    id: 'bomb',
-    name: '全屏炸弹',
-    icon: '💣',
-    description: '对全场敌人造成 500 点伤害',
+    id: "bomb",
+    name: "全屏炸弹",
+    icon: "💣",
+    description: "对全场敌人造成 500 点伤害",
     color: 0xffaa00,
     use: (_player, gameScene) => {
       const enemies = gameScene?.getEnemies?.();
@@ -56,7 +56,7 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
       const wave = (gameScene as any)?.waveManager?.getCurrentWave?.() ?? 1;
       const waveFactor = waveDifficulty(wave);
       list.forEach((e: any) => {
-        if (e.active && typeof e.takeDamage === 'function') {
+        if (e.active && typeof e.takeDamage === "function") {
           e.takeDamage(500 * waveFactor, true);
         }
       });
@@ -64,10 +64,10 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
     },
   },
   heal: {
-    id: 'heal',
-    name: '大血包',
-    icon: '🍗',
-    description: '恢复 50% 最大生命值',
+    id: "heal",
+    name: "大血包",
+    icon: "🍗",
+    description: "恢复 50% 最大生命值",
     color: 0x44ff88,
     use: (player) => {
       player.heal(player.getMaxHealth() * 0.5);
@@ -75,10 +75,10 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
     },
   },
   slow: {
-    id: 'slow',
-    name: '时间减速',
-    icon: '⏳',
-    description: '8 秒内敌人速度减半',
+    id: "slow",
+    name: "时间减速",
+    icon: "⏳",
+    description: "8 秒内敌人速度减半",
     color: 0x88ccff,
     use: (_player, gameScene) => {
       gameScene?.setSlowFactor?.(0.5);
@@ -87,10 +87,10 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
     },
   },
   magnet: {
-    id: 'magnet',
-    name: '大磁铁',
-    icon: '🧲',
-    description: '8 秒内全屏吸附金币与经验',
+    id: "magnet",
+    name: "大磁铁",
+    icon: "🧲",
+    description: "8 秒内全屏吸附金币与经验",
     color: 0xffaa44,
     use: (player, gameScene) => {
       player.setPickupRadiusTemporary(99999, 8000);
@@ -101,4 +101,11 @@ export const USABLE_ITEMS: Record<string, UsableItemDef> = {
 };
 
 /** 物品栏显示顺序 */
-export const INVENTORY_ORDER = ['heal', 'shield', 'rage', 'bomb', 'slow', 'magnet'];
+export const INVENTORY_ORDER = [
+  "heal",
+  "shield",
+  "rage",
+  "bomb",
+  "slow",
+  "magnet",
+];

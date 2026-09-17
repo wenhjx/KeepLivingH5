@@ -10,10 +10,19 @@
  *   - Boss 不挂词缀（已有阶段机制，避免叠加过载）
  *   - 词缀怪掉落/分数加成（在 Enemy 死亡结算中按词缀稀有度加成）
  */
-export type AffixRarity = 'common' | 'rare' | 'epic';
+export type AffixRarity = "common" | "rare" | "epic";
 
 export type EnemyAffixId =
-  'enrage' | 'shield' | 'swift' | 'thick' | 'split' | 'venom' | 'lifesteal' | 'explosive' | 'frost' | 'summon';
+  | "enrage"
+  | "shield"
+  | "swift"
+  | "thick"
+  | "split"
+  | "venom"
+  | "lifesteal"
+  | "explosive"
+  | "frost"
+  | "summon";
 
 export interface AffixDef {
   id: EnemyAffixId;
@@ -54,121 +63,129 @@ export interface AffixDef {
 
 export const AFFIXES: Record<EnemyAffixId, AffixDef> = {
   enrage: {
-    id: 'enrage',
-    name: '狂暴',
-    icon: '🔥',
+    id: "enrage",
+    name: "狂暴",
+    icon: "🔥",
     color: 0xff8844,
-    rarity: 'common',
-    description: '攻击 ×1.2、移速 ×1.3，横冲直撞的危险分子',
-    counter: '攻速移速双高，别贪刀贴身，保持距离风筝',
+    rarity: "common",
+    description: "攻击 ×1.2、移速 ×1.3，横冲直撞的危险分子",
+    counter: "攻速移速双高，别贪刀贴身，保持距离风筝",
     atkMult: 1.2,
     speedMult: 1.3,
   },
   shield: {
-    id: 'shield',
-    name: '护盾',
-    icon: '🛡️',
+    id: "shield",
+    name: "护盾",
+    icon: "🛡️",
     color: 0x44aaff,
-    rarity: 'common',
-    description: '额外护盾吸收 60% 最大生命值的伤害',
-    counter: '先破护盾再打本体，穿透类高伤武器最划算',
+    rarity: "common",
+    description: "额外护盾吸收 60% 最大生命值的伤害",
+    counter: "先破护盾再打本体，穿透类高伤武器最划算",
     shieldPercent: 0.6,
   },
   swift: {
-    id: 'swift',
-    name: '迅捷',
-    icon: '⚡',
+    id: "swift",
+    name: "迅捷",
+    icon: "⚡",
     color: 0x88ff44,
-    rarity: 'rare',
-    description: '移速 ×1.4，难以甩开',
-    counter: '移速飞快难拉开，用范围/追踪武器覆盖',
+    rarity: "rare",
+    description: "移速 ×1.4，难以甩开",
+    counter: "移速飞快难拉开，用范围/追踪武器覆盖",
     speedMult: 1.4,
   },
   thick: {
-    id: 'thick',
-    name: '厚皮',
-    icon: '💪',
+    id: "thick",
+    name: "厚皮",
+    icon: "💪",
     color: 0xddaa44,
-    rarity: 'rare',
-    description: '生命 ×1.5、受到伤害 -20%',
-    counter: '血厚又减伤，高伤单发武器更有效',
+    rarity: "rare",
+    description: "生命 ×1.5、受到伤害 -20%",
+    counter: "血厚又减伤，高伤单发武器更有效",
     hpMult: 1.5,
     dmgReduction: 0.2,
   },
   split: {
-    id: 'split',
-    name: '分裂',
-    icon: '💥',
+    id: "split",
+    name: "分裂",
+    icon: "💥",
     color: 0xcc88ff,
-    rarity: 'epic',
-    description: '死亡时分裂成 2 只小怪',
-    counter: '死亡会裂成小怪，优先击杀别让它死在怪堆里',
-    splitOnDeath: { type: 'normal', count: 2 },
+    rarity: "epic",
+    description: "死亡时分裂成 2 只小怪",
+    counter: "死亡会裂成小怪，优先击杀别让它死在怪堆里",
+    splitOnDeath: { type: "normal", count: 2 },
   },
   venom: {
-    id: 'venom',
-    name: '剧毒',
-    icon: '☠️',
+    id: "venom",
+    name: "剧毒",
+    icon: "☠️",
     color: 0x66ff66,
-    rarity: 'epic',
-    description: '命中玩家施加持续中毒（3 秒，每秒造成攻击力 8% 的伤害，无视无敌帧）',
-    counter: '被打中会持续中毒掉血，注意躲避并及时回血',
+    rarity: "epic",
+    description:
+      "命中玩家施加持续中毒（3 秒，每秒造成攻击力 8% 的伤害，无视无敌帧）",
+    counter: "被打中会持续中毒掉血，注意躲避并及时回血",
     poison: { dpsMult: 0.08, duration: 3000 },
   },
   lifesteal: {
-    id: 'lifesteal',
-    name: '吸血',
-    icon: '🩸',
+    id: "lifesteal",
+    name: "吸血",
+    icon: "🩸",
     color: 0xdd4466,
-    rarity: 'rare',
-    description: '命中玩家时回复造成伤害 25% 的生命，越打越难缠',
-    counter: '越打越回血，持续压制别给它喘息',
+    rarity: "rare",
+    description: "命中玩家时回复造成伤害 25% 的生命，越打越难缠",
+    counter: "越打越回血，持续压制别给它喘息",
     lifestealMult: 0.25,
   },
   explosive: {
-    id: 'explosive',
-    name: '爆炸',
-    icon: '💣',
+    id: "explosive",
+    name: "爆炸",
+    icon: "💣",
     color: 0xffaa44,
-    rarity: 'rare',
-    description: '死亡时爆炸，对约 5 个身位内的玩家造成攻击力 60% 的伤害',
-    counter: '死亡会爆炸，保持距离再击杀',
+    rarity: "rare",
+    description: "死亡时爆炸，对约 5 个身位内的玩家造成攻击力 60% 的伤害",
+    counter: "死亡会爆炸，保持距离再击杀",
     explodeOnDeath: { radius: 130, dmgMult: 0.6 },
   },
   frost: {
-    id: 'frost',
-    name: '冰冻',
-    icon: '❄️',
+    id: "frost",
+    name: "冰冻",
+    icon: "❄️",
     color: 0x88ddff,
-    rarity: 'epic',
-    description: '命中玩家减速 30%（2 秒），被黏上就难甩开',
-    counter: '被打中减速 2 秒，注意走位别被黏上',
+    rarity: "epic",
+    description: "命中玩家减速 30%（2 秒），被黏上就难甩开",
+    counter: "被打中减速 2 秒，注意走位别被黏上",
     slowOnHit: { factor: 0.7, duration: 2000 },
   },
   summon: {
-    id: 'summon',
-    name: '增援',
-    icon: '🌀',
+    id: "summon",
+    name: "增援",
+    icon: "🌀",
     color: 0xcc88aa,
-    rarity: 'epic',
-    description: '死亡时召来 1 只冲锋怪增援，死了也不消停',
-    counter: '死亡召冲锋怪，优先集火本体',
-    summonOnDeath: { type: 'charger', count: 1 },
+    rarity: "epic",
+    description: "死亡时召来 1 只冲锋怪增援，死了也不消停",
+    counter: "死亡召冲锋怪，优先集火本体",
+    summonOnDeath: { type: "charger", count: 1 },
   },
 };
 
 /** 普通怪词缀抽取池（epic 留给精英怪，保持稀有度节奏） */
-export const COMMON_AFFIX_POOL: EnemyAffixId[] = ['enrage', 'shield', 'swift', 'thick', 'lifesteal', 'explosive'];
+export const COMMON_AFFIX_POOL: EnemyAffixId[] = [
+  "enrage",
+  "shield",
+  "swift",
+  "thick",
+  "lifesteal",
+  "explosive",
+];
 /** 精英怪词缀池（全部，含 epic） */
 export const ELITE_AFFIX_POOL: EnemyAffixId[] = [
-  'enrage',
-  'shield',
-  'swift',
-  'thick',
-  'split',
-  'venom',
-  'lifesteal',
-  'explosive',
-  'frost',
-  'summon',
+  "enrage",
+  "shield",
+  "swift",
+  "thick",
+  "split",
+  "venom",
+  "lifesteal",
+  "explosive",
+  "frost",
+  "summon",
 ];

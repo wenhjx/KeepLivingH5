@@ -1,14 +1,14 @@
-import { createUIText } from '../utils/UIText';
-import Phaser from 'phaser';
-import { GameManager } from '../game/GameManager';
-import { UpgradePanel } from '../ui/UpgradePanel';
-import { GuideManager } from '../systems/GuideManager';
-import { setupUICamera } from '../utils/CameraHelper';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import type { UpgradeOption } from '../types';
-import type { Player } from '../entities/Player';
-import { GameConfig } from '../game/GameConfig';
+import { createUIText } from "../utils/UIText";
+import Phaser from "phaser";
+import { GameManager } from "../game/GameManager";
+import { UpgradePanel } from "../ui/UpgradePanel";
+import { GuideManager } from "../systems/GuideManager";
+import { setupUICamera } from "../utils/CameraHelper";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import type { UpgradeOption } from "../types";
+import type { Player } from "../entities/Player";
+import { GameConfig } from "../game/GameConfig";
 
 /**
  * Boss 突破奖励场景
@@ -22,7 +22,7 @@ export class BreakthroughScene extends Phaser.Scene {
   private upgradePanel!: UpgradePanel;
 
   constructor() {
-    super('BreakthroughScene');
+    super("BreakthroughScene");
   }
 
   create(): void {
@@ -34,24 +34,27 @@ export class BreakthroughScene extends Phaser.Scene {
     this.autoTriggered = false;
 
     // 半透明背景
-    this.add.rectangle(0, 0, width, height, 0x000000, 0.75).setOrigin(0).setInteractive();
+    this.add
+      .rectangle(0, 0, width, height, 0x000000, 0.75)
+      .setOrigin(0)
+      .setInteractive();
 
     // 标题
-    createUIText(this, width / 2, 62, '✨ BOSS 突破奖励 ✨', {
-      fontSize: '34px',
-      color: '#ffd54f',
-      fontStyle: 'bold',
-      stroke: '#000000',
+    createUIText(this, width / 2, 62, "✨ BOSS 突破奖励 ✨", {
+      fontSize: "34px",
+      color: "#ffd54f",
+      fontStyle: "bold",
+      stroke: "#000000",
       strokeThickness: 4,
     }).setOrigin(0.5);
 
     // 副标题
-    createUIText(this, width / 2, 105, '选择一项战斗属性，突破其极限', {
-      fontSize: '15px',
-      color: '#cccccc',
+    createUIText(this, width / 2, 105, "选择一项战斗属性，突破其极限", {
+      fontSize: "15px",
+      color: "#cccccc",
     }).setOrigin(0.5);
 
-    const gameScene = this.scene.get('GameScene') as any;
+    const gameScene = this.scene.get("GameScene") as any;
     const player = gameScene?.getPlayer() as Player | undefined;
     const available = player?.getAvailableBreakthroughs?.() ?? [];
 
@@ -63,7 +66,10 @@ export class BreakthroughScene extends Phaser.Scene {
 
     this.upgradePanel = new UpgradePanel(this);
     // 传入候选即"已满级 stat"列表；UpgradePanel 内部随机取最多 3 个，不足则只显示已有的
-    this.upgradePanel.show((option: UpgradeOption) => this.onSelect(option), available);
+    this.upgradePanel.show(
+      (option: UpgradeOption) => this.onSelect(option),
+      available,
+    );
 
     // AI 自动玩：突破选择策略简单（选第一个可突破项即可），延迟 0.8s 选中 + 1s 后确认
     if (gameScene?.isAutoPlay?.()) {
@@ -83,7 +89,10 @@ export class BreakthroughScene extends Phaser.Scene {
       if (shown.length > 0 && this.upgradePanel.isVisible()) {
         this.upgradePanel.setSelectedIndex(0, true);
         this.time.delayedCall(1000, () => {
-          if (this.upgradePanel.isVisible() && this.upgradePanel.getSelectedIndex() === 0) {
+          if (
+            this.upgradePanel.isVisible() &&
+            this.upgradePanel.getSelectedIndex() === 0
+          ) {
             this.upgradePanel.confirmSelection();
           }
         });
@@ -93,7 +102,7 @@ export class BreakthroughScene extends Phaser.Scene {
 
   /** 选择突破项：应用突破 + 顶部提示 + 关闭面板 */
   private onSelect(option: UpgradeOption): void {
-    const gameScene = this.scene.get('GameScene') as any;
+    const gameScene = this.scene.get("GameScene") as any;
     const player = gameScene?.getPlayer() as Player | undefined;
     if (player) {
       const ok = player.breakthroughStat(option);
@@ -103,9 +112,9 @@ export class BreakthroughScene extends Phaser.Scene {
         GuideManager.getInstance().show({
           title: `突破成功: ${option.name}`,
           description: `${option.name} 突破至 Lv.${level}（已突破原上限）`,
-          icon: option.icon || '✨',
+          icon: option.icon || "✨",
           color: 0xffd54f,
-          position: 'top-right',
+          position: "top-right",
           duration: 3500,
           showButton: false,
         });
@@ -117,6 +126,6 @@ export class BreakthroughScene extends Phaser.Scene {
   /** 关闭突破面板并恢复游戏 */
   private closePanel(): void {
     GameManager.getInstance().setPaused(false);
-    this.scene.stop('BreakthroughScene');
+    this.scene.stop("BreakthroughScene");
   }
 }

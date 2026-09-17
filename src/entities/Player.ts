@@ -1,19 +1,26 @@
-import Phaser from 'phaser';
-import { GameConfig } from '../game/GameConfig';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { MathUtils } from '../utils/MathUtils';
-import { Drone } from './Drone';
-import { WEAPONS } from '../data/weapons';
-import { GameManager } from '../game/GameManager';
-import { UPGRADE_OPTIONS } from '../data/upgrades';
-import { USABLE_ITEMS } from '../data/items';
-import { SOUND_KEYS } from '../data/sounds';
-import { AudioManager } from '../systems/AudioManager';
-import { AchievementManager } from '../systems/AchievementManager';
-import type { PlayerStats, WeaponConfig, UpgradeOption } from '../types';
-import { calcThornsReflect, calcOverflowAttack, calcOverflowCritRate, calcOverflowCritDamage, calcOverflowMaxHealth, calcFavoredDamageMult } from '../logic/player';
-import type { InputManager } from '../systems/InputManager';
-import { Layers } from '../constants/Layers';
+import Phaser from "phaser";
+import { GameConfig } from "../game/GameConfig";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { MathUtils } from "../utils/MathUtils";
+import { Drone } from "./Drone";
+import { WEAPONS } from "../data/weapons";
+import { GameManager } from "../game/GameManager";
+import { UPGRADE_OPTIONS } from "../data/upgrades";
+import { USABLE_ITEMS } from "../data/items";
+import { SOUND_KEYS } from "../data/sounds";
+import { AudioManager } from "../systems/AudioManager";
+import { AchievementManager } from "../systems/AchievementManager";
+import type { PlayerStats, WeaponConfig, UpgradeOption } from "../types";
+import {
+  calcThornsReflect,
+  calcOverflowAttack,
+  calcOverflowCritRate,
+  calcOverflowCritDamage,
+  calcOverflowMaxHealth,
+  calcFavoredDamageMult,
+} from "../logic/player";
+import type { InputManager } from "../systems/InputManager";
+import { Layers } from "../constants/Layers";
 
 /**
  * 可突破的 stat 属性（Boss 突破奖励候选）。
@@ -23,10 +30,10 @@ import { Layers } from '../constants/Layers';
  * 后续新增战斗向 stat 时把 id 加进此列表即可。
  */
 export const BREAKTHROUGH_STATS: string[] = [
-  'attack_power', // 力量强化：攻击力 +20%/级
-  'attack_speed', // 急速：攻速 +15%/级
-  'crit_rate', // 暴击精通：暴击率 +10%/级（突破可到100%+，溢出转爆伤）
-  'crit_damage', // 致命一击：暴击伤害 +50%/级
+  "attack_power", // 力量强化：攻击力 +20%/级
+  "attack_speed", // 急速：攻速 +15%/级
+  "crit_rate", // 暴击精通：暴击率 +10%/级（突破可到100%+，溢出转爆伤）
+  "crit_damage", // 致命一击：暴击伤害 +50%/级
 ];
 
 /**
@@ -38,18 +45,30 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private stats: PlayerStats;
   /** percent stat 的基准值快照（构造/读档时记录，含成就加成）：percent 加算以它为底，杜绝乘算指数爆炸 */
   private _baseStats: PlayerStats = {} as PlayerStats; // 武器列表
-  private weapons: Map<string, { config: WeaponConfig; level: number; cooldown: number }> = new Map();
+  private weapons: Map<
+    string,
+    { config: WeaponConfig; level: number; cooldown: number }
+  > = new Map();
   /** 环形冲击波爆发计数：每 5s 周期内快速 3 连发 */
   private novaBurstCount = 0;
   /** 临时拾取半径（大磁铁效果），到期自动恢复 */
   private tempPickupRadius = 0;
   private tempPickupRadiusTimer = 0;
   // 被动技能列表
-  private passives: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
+  private passives: Map<
+    string,
+    { id: string; name: string; level: number; maxLevel: number }
+  > = new Map();
   // stat 类升级次数（满级后不再出现在升级/商店候选池；用于防止无限叠加数值爆炸）
-  private statUpgrades: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
+  private statUpgrades: Map<
+    string,
+    { id: string; name: string; level: number; maxLevel: number }
+  > = new Map();
   // Boss 突破奖励记录（对已满级 stat 突破 +1 级，突破上限=原 maxLevel，受 Boss 数量硬限制）
-  private breakthroughs: Map<string, { id: string; name: string; level: number; maxLevel: number }> = new Map();
+  private breakthroughs: Map<
+    string,
+    { id: string; name: string; level: number; maxLevel: number }
+  > = new Map();
   // 无人机列表（summon 类型武器）
   private drones: Drone[] = [];
   /** 稳定测试态标记（testStable）：持续无敌不闪烁，避免干扰观察 */
@@ -100,24 +119,26 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // 按当前视觉主题解析玩家纹理（classic 矢量 / pixel 像素）
-    super(scene, x, y, GameConfig.themeKey('player'));
+    super(scene, x, y, GameConfig.themeKey("player"));
 
     // 初始化属性（叠加成就系统永久加成：温和数值，见 data/achievements.ts 说明）
     const ach = AchievementManager.getInstance();
     this.stats = {
-      maxHealth: GameConfig.PLAYER.maxHealth + ach.getBonus('maxHealth'),
-      health: GameConfig.PLAYER.maxHealth + ach.getBonus('maxHealth'),
+      maxHealth: GameConfig.PLAYER.maxHealth + ach.getBonus("maxHealth"),
+      health: GameConfig.PLAYER.maxHealth + ach.getBonus("maxHealth"),
       moveSpeed: GameConfig.PLAYER.moveSpeed,
-      attackPower: GameConfig.PLAYER.baseAttackPower + ach.getBonus('attackPower'),
+      attackPower:
+        GameConfig.PLAYER.baseAttackPower + ach.getBonus("attackPower"),
       attackSpeed: GameConfig.PLAYER.baseAttackSpeed,
       defense: 0,
       level: 1,
       exp: 0,
       expToNext: GameConfig.LEVEL.baseExp,
-      critRate: GameConfig.PLAYER.baseCritRate + ach.getBonus('critRate'),
-      critDamage: GameConfig.PLAYER.baseCritDamage + ach.getBonus('critDamage'),
-      pickupRadius: GameConfig.PLAYER.pickupRadius + ach.getBonus('pickupRadius'),
-      luck: ach.getBonus('luck'),
+      critRate: GameConfig.PLAYER.baseCritRate + ach.getBonus("critRate"),
+      critDamage: GameConfig.PLAYER.baseCritDamage + ach.getBonus("critDamage"),
+      pickupRadius:
+        GameConfig.PLAYER.pickupRadius + ach.getBonus("pickupRadius"),
+      luck: ach.getBonus("luck"),
       coins: 30,
       overflowCount: 0,
     };
@@ -143,11 +164,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setCircle(16);
     // 确保碰撞圆以贴图显示中心为圆心（某些情况下 setCircle 的 offset 会落到 0,0）
-    this.body!.setOffset((this.displayWidth - 32) / 2, (this.displayHeight - 32) / 2);
+    this.body!.setOffset(
+      (this.displayWidth - 32) / 2,
+      (this.displayHeight - 32) / 2,
+    );
     this.setDepth(Layers.PLAYER);
 
     // 初始武器：角色 starterWeapon（缺省回退 default_gun；配置来自 src/data/weapons.ts）
-    this.addWeapon(WEAPONS[character.starterWeapon] ?? WEAPONS['default_gun']);
+    this.addWeapon(WEAPONS[character.starterWeapon] ?? WEAPONS["default_gun"]);
   }
 
   update(time: number, delta: number, input: InputManager): void {
@@ -217,8 +241,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 移动
     const moveDir = input.getMoveDirection();
     this.setVelocity(
-      moveDir.x * this.stats.moveSpeed * this.movementMultiplier * this.getSlowFactor(),
-      moveDir.y * this.stats.moveSpeed * this.movementMultiplier * this.getSlowFactor()
+      moveDir.x *
+        this.stats.moveSpeed *
+        this.movementMultiplier *
+        this.getSlowFactor(),
+      moveDir.y *
+        this.stats.moveSpeed *
+        this.movementMultiplier *
+        this.getSlowFactor(),
     );
 
     // 更新朝向（朝移动方向），并旋转箭头指向移动方向
@@ -243,7 +273,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // 被动：生命恢复（每秒恢复 1+level 点）
-    const regenLevel = this.getPassiveLevel('passive_regen');
+    const regenLevel = this.getPassiveLevel("passive_regen");
     if (regenLevel > 0 && this.stats.health < this.stats.maxHealth) {
       this.regenTimer += delta;
       if (this.regenTimer >= 1000) {
@@ -256,7 +286,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private updateWeapons(time: number, delta: number): void {
     this.weapons.forEach((weapon) => {
       // summon 类型（无人机）由独立实体管理，不走冷却射击
-      if (weapon.config.type === 'summon') return;
+      if (weapon.config.type === "summon") return;
 
       // 环形冲击波：5s 爆发周期，周期内快速 3 连发（救急脱困武器，节奏感强）
       if (weapon.config.nova) {
@@ -277,7 +307,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       weapon.cooldown -= delta;
       if (weapon.cooldown <= 0) {
         this.fireWeapon(weapon.config, weapon.level);
-        weapon.cooldown = 1000 / (weapon.config.attackSpeed * this.getStats().attackSpeed);
+        weapon.cooldown =
+          1000 / (weapon.config.attackSpeed * this.getStats().attackSpeed);
       }
     });
   }
@@ -289,22 +320,27 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
    */
   private calcWeaponDamage(config: WeaponConfig, level: number): number {
     const atk = Number(this.getStats().attackPower);
-    const attackPower = isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
+    const attackPower =
+      isFinite(atk) && atk > 0 ? atk : GameConfig.PLAYER.baseAttackPower;
     const raw = (config.damage * (1 + level * 0.2) * attackPower) / 10;
     const base = isFinite(raw) && raw > 0 ? raw : config.damage;
     // 角色熟练系别加成（机械师枪械/圣骑士近战范围 +20% 等；数据驱动，公式见 logic/player.calcFavoredDamageMult）
     const character = GameManager.getInstance().getActiveCharacter();
-    const mult = calcFavoredDamageMult(config.tags, character.favoredTags, character.favoredBonus?.damageMult);
+    const mult = calcFavoredDamageMult(
+      config.tags,
+      character.favoredTags,
+      character.favoredBonus?.damageMult,
+    );
     return base * mult;
   }
 
   /** 按武器类型分发攻击逻辑 */
   private fireWeapon(config: WeaponConfig, level: number): void {
     switch (config.type) {
-      case 'melee':
+      case "melee":
         this.fireMelee(config, level);
         break;
-      case 'aoe':
+      case "aoe":
         if (config.nova) {
           this.fireNova(config, level);
         } else if (config.boomerang) {
@@ -313,7 +349,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.fireProjectile(config, level); // 火箭筒走弹道，命中后爆炸
         }
         break;
-      case 'ranged':
+      case "ranged":
       default:
         this.fireProjectile(config, level);
         break;
@@ -344,13 +380,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 枪口闪光（射击瞬间，颜色随武器；霰弹多弹只闪一次）
     scene
       .getFXManager?.()
-      ?.muzzleFlash(this.x + Math.cos(angle) * 18, this.y + Math.sin(angle) * 18, angle, visual.color ?? 0xffffff);
+      ?.muzzleFlash(
+        this.x + Math.cos(angle) * 18,
+        this.y + Math.sin(angle) * 18,
+        angle,
+        visual.color ?? 0xffffff,
+      );
 
     // 发射子弹（霰弹等可随等级增加弹丸数）
     const baseCount = config.projectileCount || 1;
-    const count = baseCount + (config.extraProjectilesPerLevel || 0) * (level - 1);
+    const count =
+      baseCount + (config.extraProjectilesPerLevel || 0) * (level - 1);
     // 保持基础弹数的总扇面宽度，升级加弹只让弹更密集（不扩散到身后）
-    const totalArc = baseCount > 1 ? (config.spread || 0.3) * (baseCount - 1) : 0;
+    const totalArc =
+      baseCount > 1 ? (config.spread || 0.3) * (baseCount - 1) : 0;
     const spread = count > 1 ? totalArc / (count - 1) : 0;
     for (let i = 0; i < count; i++) {
       const bulletAngle = angle + (i - (count - 1) / 2) * spread;
@@ -361,7 +404,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         config.projectileSpeed || 500,
         damage,
         config.range,
-        config.texture || 'bullet',
+        config.texture || "bullet",
         {
           pierce: config.pierce,
           explosive: config.explosive,
@@ -372,7 +415,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           scaleY: visual.scaleY,
           trailColor: visual.trailColor,
           trailEvery: visual.trailEvery,
-        }
+        },
       );
     }
   }
@@ -389,15 +432,39 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     trailEvery?: number;
   } {
     switch (weaponId) {
-      case 'machine_gun':
-        return { color: 0xffcc00, scaleX: 0.7, scaleY: 0.7, trailColor: 0xffaa00, trailEvery: 3 }; // 橙黄小弹+橙黄拖尾
-      case 'shotgun':
-        return { color: 0xff5555, scaleX: 0.9, scaleY: 0.9, trailColor: 0xff5533, trailEvery: 3 }; // 红色散弹+红拖尾
-      case 'laser':
-        return { color: 0x00ffff, scaleX: 2.5, scaleY: 0.4, trailColor: 0x00ffff, trailEvery: 4 }; // 青色细长激光+青拖尾
-      case 'rocket':
-        return { color: 0xff6600, scaleX: 1.5, scaleY: 1.0, trailColor: 0xff8833, trailEvery: 4 }; // 橙色火箭弹+橙拖尾
-      case 'default_gun':
+      case "machine_gun":
+        return {
+          color: 0xffcc00,
+          scaleX: 0.7,
+          scaleY: 0.7,
+          trailColor: 0xffaa00,
+          trailEvery: 3,
+        }; // 橙黄小弹+橙黄拖尾
+      case "shotgun":
+        return {
+          color: 0xff5555,
+          scaleX: 0.9,
+          scaleY: 0.9,
+          trailColor: 0xff5533,
+          trailEvery: 3,
+        }; // 红色散弹+红拖尾
+      case "laser":
+        return {
+          color: 0x00ffff,
+          scaleX: 2.5,
+          scaleY: 0.4,
+          trailColor: 0x00ffff,
+          trailEvery: 4,
+        }; // 青色细长激光+青拖尾
+      case "rocket":
+        return {
+          color: 0xff6600,
+          scaleX: 1.5,
+          scaleY: 1.0,
+          trailColor: 0xff8833,
+          trailEvery: 4,
+        }; // 橙色火箭弹+橙拖尾
+      case "default_gun":
         return { color: 0xffffff, trailColor: 0x88ccff, trailEvery: 3 }; // 白色默认+淡蓝拖尾
       default:
         return {};
@@ -408,25 +475,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private playWeaponSfx(weaponId: string): void {
     const audio = AudioManager.getInstance();
     switch (weaponId) {
-      case 'shotgun':
+      case "shotgun":
         audio.playSfx(SOUND_KEYS.SFX_SHOOT_SHOTGUN, 0.8);
         break;
-      case 'machine_gun':
+      case "machine_gun":
         audio.playSfx(SOUND_KEYS.SFX_SHOOT_MACHINE_GUN, 0.6);
         break;
-      case 'laser':
+      case "laser":
         audio.playSfx(SOUND_KEYS.SFX_SHOOT_LASER, 0.7);
         break;
-      case 'rocket':
+      case "rocket":
         audio.playSfx(SOUND_KEYS.SFX_SHOOT_ROCKET, 1);
         break;
-      case 'boomerang':
+      case "boomerang":
         audio.playSfx(SOUND_KEYS.SFX_BOOMERANG, 0.8);
         break;
-      case 'lightsaber':
+      case "lightsaber":
         audio.playSfx(SOUND_KEYS.SFX_MELEE_SWING, 0.7);
         break;
-      case 'nova':
+      case "nova":
         audio.playSfx(SOUND_KEYS.SFX_EXPLOSION, 0.85);
         break;
       default:
@@ -456,14 +523,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       config.projectileSpeed || 300,
       damage,
       config.range,
-      config.texture || 'bullet',
+      config.texture || "bullet",
       {
         pierce: true,
         boomerang: true,
         aoeRadius: config.aoeRadius,
         trailColor: 0x66ff66,
         trailEvery: 4,
-      }
+      },
     );
   }
 
@@ -479,7 +546,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 360° 全向：范围内所有敌人受伤 + 由内向外递减的击退（贴身敌人被推得最远）
     enemies.children.each((enemy: any) => {
       if (!enemy.active) return true;
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, enemy.x, enemy.y);
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        this.y,
+        enemy.x,
+        enemy.y,
+      );
       if (dist > range) return true;
       enemy.takeDamage(damage, false);
       enemy.applyPlayerEffects?.(damage, this, this.x, this.y);
@@ -513,7 +585,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const halfArc = Math.PI / 3; // 60度半边，总共120度
     enemies.children.each((enemy: any) => {
       if (!enemy.active) return true;
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, enemy.x, enemy.y);
+      const dist = Phaser.Math.Distance.Between(
+        this.x,
+        this.y,
+        enemy.x,
+        enemy.y,
+      );
       if (dist > range) return true;
       const enemyAngle = MathUtils.angle(this.x, this.y, enemy.x, enemy.y);
       let angleDiff = Math.abs(enemyAngle - angle);
@@ -533,8 +610,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** 光剑剑气：远程穿透弹波 */
-  private fireBladeWave(config: WeaponConfig, level: number, angle: number, meleeDamage: number): void {
-    if (config.id !== 'lightsaber') return;
+  private fireBladeWave(
+    config: WeaponConfig,
+    level: number,
+    angle: number,
+    meleeDamage: number,
+  ): void {
+    if (config.id !== "lightsaber") return;
     const scene = this.scene as any;
     if (!scene || !scene.getObjectPool) return;
     const pool = scene.getObjectPool();
@@ -545,7 +627,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       420,
       meleeDamage * 0.7,
       config.range + 200,
-      config.texture || 'bullet',
+      config.texture || "bullet",
       {
         pierce: true,
         color: 0x00ffff,
@@ -553,7 +635,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         scaleY: 0.45,
         trailColor: 0x00ffff,
         trailEvery: 3,
-      }
+      },
     );
   }
 
@@ -606,8 +688,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     let actualDamage = Math.max(1, amount - this.stats.defense);
     // 角色减伤（圣骑士圣盾等，数据驱动：damageReduction=0.2 → ×0.8）
-    const reduction = GameManager.getInstance().getActiveCharacter().damageReduction ?? 0;
-    if (reduction > 0) actualDamage = Math.max(1, Math.floor(actualDamage * (1 - reduction)));
+    const reduction =
+      GameManager.getInstance().getActiveCharacter().damageReduction ?? 0;
+    if (reduction > 0)
+      actualDamage = Math.max(1, Math.floor(actualDamage * (1 - reduction)));
     this.stats.health -= actualDamage;
     // 立即 clamp 到 0：否则广播 player:damage 时 HUD 同步刷新会读到"大负数"
     // （后期 Boss 单次伤害可达数十万，695 血会瞬间被扣成 -999999305 级并显示在血条上）
@@ -619,7 +703,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setTint(0xff4444);
 
     // 被动：荆棘（受击时反弹伤害给最近敌人）
-    const thornsLevel = this.getPassiveLevel('passive_thorns');
+    const thornsLevel = this.getPassiveLevel("passive_thorns");
     if (thornsLevel > 0) {
       const reflectDamage = calcThornsReflect(actualDamage, thornsLevel);
       const nearest = this.findNearestEnemy();
@@ -638,7 +722,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   heal(amount: number): void {
-    this.stats.health = Math.min(this.stats.maxHealth, this.stats.health + amount);
+    this.stats.health = Math.min(
+      this.stats.maxHealth,
+      this.stats.health + amount,
+    );
     EventBus.emit(EventKeys.PLAYER_HEAL, amount);
   }
 
@@ -712,7 +799,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   /** 获得金币（受「金币加成」被动影响） */
   addCoins(amount: number): void {
-    const goldBoostLevel = this.getPassiveLevel('passive_gold_boost');
+    const goldBoostLevel = this.getPassiveLevel("passive_gold_boost");
     if (goldBoostLevel > 0) {
       amount *= 1 + 0.5 + goldBoostLevel * 0.1;
     }
@@ -822,7 +909,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   addExp(amount: number): void {
     // 被动：经验加成（+25% + level*10%）
-    const expBoostLevel = this.getPassiveLevel('passive_exp_boost');
+    const expBoostLevel = this.getPassiveLevel("passive_exp_boost");
     if (expBoostLevel > 0) {
       amount *= 1 + 0.25 + expBoostLevel * 0.1;
     }
@@ -830,7 +917,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.stats.exp += amount;
     this.expFlashTimer = 200;
 
-    while (this.stats.exp >= this.stats.expToNext && this.stats.level < GameConfig.LEVEL.maxLevel) {
+    while (
+      this.stats.exp >= this.stats.expToNext &&
+      this.stats.level < GameConfig.LEVEL.maxLevel
+    ) {
       this.stats.exp -= this.stats.expToNext;
       this.levelUp();
     }
@@ -871,7 +961,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         const oldMax = this.stats.maxHealth;
         this.stats.maxHealth = calcOverflowMaxHealth(this.stats.maxHealth);
         // 保持当前血量比例（不回满，避免超限 = 免费回血）
-        this.stats.health = Math.min(this.stats.maxHealth, this.stats.health + (this.stats.maxHealth - oldMax));
+        this.stats.health = Math.min(
+          this.stats.maxHealth,
+          this.stats.health + (this.stats.maxHealth - oldMax),
+        );
         break;
       }
     }
@@ -919,7 +1012,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   /** 计算指定等级升级所需经验（与 GameConfig.LEVEL 曲线一致） */
   private calcExpToNext(level: number): number {
-    return Math.floor(GameConfig.LEVEL.baseExp * Math.pow(level, GameConfig.LEVEL.expGrowth));
+    return Math.floor(
+      GameConfig.LEVEL.baseExp * Math.pow(level, GameConfig.LEVEL.expGrowth),
+    );
   }
 
   // ========== 武器管理 ==========
@@ -935,7 +1030,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // summon 类型武器：同步无人机数量
-    if (config.type === 'summon') {
+    if (config.type === "summon") {
       this.syncDrones();
     }
   }
@@ -946,7 +1041,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     w.level++;
 
     // summon 类型武器：同步无人机数量
-    if (w.config.type === 'summon') {
+    if (w.config.type === "summon") {
       this.syncDrones();
     }
     return true;
@@ -968,7 +1063,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const merged = { ...this.stats, ...saved.stats };
       (Object.keys(merged) as Array<keyof typeof merged>).forEach((k) => {
         const v = merged[k];
-        if (typeof v === 'number' && !isFinite(v)) {
+        if (typeof v === "number" && !isFinite(v)) {
           (merged as any)[k] = (this.stats as any)[k];
         }
       });
@@ -993,7 +1088,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (saved.passives) {
       for (const p of saved.passives) {
         const opt = UPGRADE_OPTIONS.find((u) => u.id === p.id);
-        this.passives.set(p.id, { id: p.id, name: opt?.name || p.name || p.id, level: p.level, maxLevel: 5 });
+        this.passives.set(p.id, {
+          id: p.id,
+          name: opt?.name || p.name || p.id,
+          level: p.level,
+          maxLevel: 5,
+        });
       }
     }
     // 重建 stat 升级计数（从 UPGRADE_OPTIONS 取 maxLevel 与中文名；旧存档无此字段则跳过）
@@ -1002,7 +1102,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       for (const s of saved.statUpgrades) {
         const opt = UPGRADE_OPTIONS.find((u) => u.id === s.id);
         if (opt?.maxLevel) {
-          this.statUpgrades.set(s.id, { id: s.id, name: opt.name, level: s.level, maxLevel: opt.maxLevel });
+          this.statUpgrades.set(s.id, {
+            id: s.id,
+            name: opt.name,
+            level: s.level,
+            maxLevel: opt.maxLevel,
+          });
         }
       }
     }
@@ -1012,7 +1117,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       for (const b of saved.breakthroughs) {
         const opt = UPGRADE_OPTIONS.find((u) => u.id === b.id);
         if (opt?.maxLevel) {
-          this.breakthroughs.set(b.id, { id: b.id, name: b.name, level: b.level, maxLevel: opt.maxLevel });
+          this.breakthroughs.set(b.id, {
+            id: b.id,
+            name: b.name,
+            level: b.level,
+            maxLevel: opt.maxLevel,
+          });
         }
       }
     }
@@ -1033,7 +1143,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   /** 同步无人机数量和等级（summon 武器升级时调用） */
   private syncDrones(): void {
-    const droneWeapon = Array.from(this.weapons.values()).find((w) => w.config.type === 'summon');
+    const droneWeapon = Array.from(this.weapons.values()).find(
+      (w) => w.config.type === "summon",
+    );
     if (!droneWeapon) return;
 
     const targetCount = droneWeapon.level; // 1级1架，2级2架...
@@ -1041,7 +1153,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // 增加无人机
     for (let i = currentCount; i < targetCount; i++) {
-      const drone = new Drone(this.scene, this, droneWeapon.config, droneWeapon.level, i, targetCount);
+      const drone = new Drone(
+        this.scene,
+        this,
+        droneWeapon.config,
+        droneWeapon.level,
+        i,
+        targetCount,
+      );
       this.drones.push(drone);
     }
 
@@ -1062,7 +1181,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** 获取当前所有武器列表（供 UI 增益列表使用） */
-  getWeapons(): Array<{ id: string; name: string; level: number; maxLevel: number; type: string }> {
+  getWeapons(): Array<{
+    id: string;
+    name: string;
+    level: number;
+    maxLevel: number;
+    type: string;
+  }> {
     return Array.from(this.weapons.values()).map((w) => ({
       id: w.config.id,
       name: w.config.name,
@@ -1117,7 +1242,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** 获取全部 stat 升级（供 HUD 增益列表显示进度） */
-  getStatUpgrades(): Array<{ id: string; name: string; level: number; maxLevel: number }> {
+  getStatUpgrades(): Array<{
+    id: string;
+    name: string;
+    level: number;
+    maxLevel: number;
+  }> {
     return Array.from(this.statUpgrades.values());
   }
 
@@ -1129,15 +1259,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
    * @returns 是否突破成功
    */
   breakthroughStat(option: UpgradeOption): boolean {
-    if (option.type !== 'stat' || !option.effect?.stat) return false;
+    if (option.type !== "stat" || !option.effect?.stat) return false;
     const upgradeMax = option.maxLevel ?? 0;
     if (upgradeMax <= 0) return false;
     // 必须先通过升级满级，才具备突破资格
     if (!this.isStatMaxLevel(option.id, upgradeMax)) return false;
     const cur = this.breakthroughs.get(option.id)?.level ?? 0;
     if (cur >= upgradeMax) return false;
-    this.modifyStat(option.effect.stat, option.effect.value ?? 0, option.effect.isPercent ?? false);
-    this.breakthroughs.set(option.id, { id: option.id, name: option.name, level: cur + 1, maxLevel: upgradeMax });
+    this.modifyStat(
+      option.effect.stat,
+      option.effect.value ?? 0,
+      option.effect.isPercent ?? false,
+    );
+    this.breakthroughs.set(option.id, {
+      id: option.id,
+      name: option.name,
+      level: cur + 1,
+      maxLevel: upgradeMax,
+    });
     return true;
   }
 
@@ -1154,14 +1293,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** 全部突破记录（供存档/HUD） */
-  getBreakthroughs(): Array<{ id: string; name: string; level: number; maxLevel: number }> {
+  getBreakthroughs(): Array<{
+    id: string;
+    name: string;
+    level: number;
+    maxLevel: number;
+  }> {
     return Array.from(this.breakthroughs.values());
   }
 
   /** 可突破的 stat 列表：战斗输出向属性、已通过升级满级且未达突破上限（Boss 突破奖励的候选池） */
   getAvailableBreakthroughs(): UpgradeOption[] {
     return UPGRADE_OPTIONS.filter((o) => {
-      if (o.type !== 'stat' || !o.maxLevel) return false;
+      if (o.type !== "stat" || !o.maxLevel) return false;
       // 仅战斗输出向属性可突破；生存/便利类（护甲/磁力/疾风步等）不参与，避免无意义选择
       if (!BREAKTHROUGH_STATS.includes(o.id)) return false;
       if (!this.isStatMaxLevel(o.id, o.maxLevel)) return false;
@@ -1177,13 +1321,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** 获取所有被动技能列表（供 UI 增益列表使用） */
-  getPassives(): Array<{ id: string; name: string; level: number; maxLevel: number }> {
+  getPassives(): Array<{
+    id: string;
+    name: string;
+    level: number;
+    maxLevel: number;
+  }> {
     return Array.from(this.passives.values());
   }
 
   // ========== 属性修改 ==========
 
-  modifyStat(stat: keyof PlayerStats, value: number, isPercent: boolean = false): void {
+  modifyStat(
+    stat: keyof PlayerStats,
+    value: number,
+    isPercent: boolean = false,
+  ): void {
     if (isPercent) {
       // 加算（2026-09-10 修复）：每次在基准值上叠加 value 比例，而非对当前值乘算。
       // 原 cur*(1+value) 在多级升级+突破下指数爆炸（暴伤 6 次 ×1.5 → 1709%、全属性天文数字）。
@@ -1196,7 +1349,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       (this.stats as any)[stat] = (isFinite(cur) ? cur : 0) + value;
     }
     // 确保生命值不超过上限
-    if (stat === 'maxHealth') {
+    if (stat === "maxHealth") {
       this.stats.health = Math.min(this.stats.health, this.stats.maxHealth);
     }
   }
@@ -1277,7 +1430,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   getPickupRadius(): number {
-    return this.tempPickupRadius > 0 ? this.tempPickupRadius : this.stats.pickupRadius;
+    return this.tempPickupRadius > 0
+      ? this.tempPickupRadius
+      : this.stats.pickupRadius;
   }
 
   /** 临时扩大拾取半径（大磁铁等效果），duration 毫秒后自动恢复 */

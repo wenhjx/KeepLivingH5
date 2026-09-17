@@ -1,7 +1,7 @@
-import { GameConfig } from '../game/GameConfig';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { Logger } from '../utils/Logger';
-import type { GameSaveData } from '../types';
+import { GameConfig } from "../game/GameConfig";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { Logger } from "../utils/Logger";
+import type { GameSaveData } from "../types";
 
 /**
  * 存档系统
@@ -38,7 +38,7 @@ export class SaveSystem {
     }
 
     EventBus.emit(EventKeys.SAVE_COMPLETE);
-    Logger.info('[SaveSystem] 存档保存成功');
+    Logger.info("[SaveSystem] 存档保存成功");
   }
 
   /**
@@ -65,29 +65,29 @@ export class SaveSystem {
 
   private saveToLocal(data: GameSaveData): void {
     try {
-      if (typeof localStorage === 'undefined') return;
+      if (typeof localStorage === "undefined") return;
       const json = JSON.stringify(data);
       localStorage.setItem(this.localStorageKey, json);
     } catch (e) {
-      Logger.error('[SaveSystem] 本地存档失败', e);
-      EventBus.emit(EventKeys.SAVE_ERROR, '本地存储失败');
+      Logger.error("[SaveSystem] 本地存档失败", e);
+      EventBus.emit(EventKeys.SAVE_ERROR, "本地存储失败");
     }
   }
 
   private loadFromLocal(): GameSaveData | null {
     try {
-      if (typeof localStorage === 'undefined') return null;
+      if (typeof localStorage === "undefined") return null;
       const json = localStorage.getItem(this.localStorageKey);
       if (!json) return null;
       const data = JSON.parse(json) as GameSaveData;
       // 版本校验
       if (!this.validateSaveData(data)) {
-        Logger.warn('[SaveSystem] 存档数据版本不兼容，已忽略');
+        Logger.warn("[SaveSystem] 存档数据版本不兼容，已忽略");
         return null;
       }
       return data;
     } catch (e) {
-      Logger.error('[SaveSystem] 读取本地存档失败', e);
+      Logger.error("[SaveSystem] 读取本地存档失败", e);
       return null;
     }
   }
@@ -109,9 +109,9 @@ export class SaveSystem {
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify(data),
       // });
-      Logger.info('[SaveSystem] 云端同步（占位）');
+      Logger.info("[SaveSystem] 云端同步（占位）");
     } catch (e) {
-      Logger.error('[SaveSystem] 云端同步失败', e);
+      Logger.error("[SaveSystem] 云端同步失败", e);
     } finally {
       this.syncInProgress = false;
     }
@@ -128,7 +128,7 @@ export class SaveSystem {
       // return data;
       return null;
     } catch (e) {
-      Logger.error('[SaveSystem] 云端拉取失败', e);
+      Logger.error("[SaveSystem] 云端拉取失败", e);
       return null;
     }
   }
@@ -141,10 +141,10 @@ export class SaveSystem {
    */
   resolveConflict(local: GameSaveData, cloud: GameSaveData): GameSaveData {
     if (local.timestamp >= cloud.timestamp) {
-      Logger.info('[SaveSystem] 冲突解决：使用本地存档（较新）');
+      Logger.info("[SaveSystem] 冲突解决：使用本地存档（较新）");
       return local;
     } else {
-      Logger.info('[SaveSystem] 冲突解决：使用云端存档（较新）');
+      Logger.info("[SaveSystem] 冲突解决：使用云端存档（较新）");
       return cloud;
     }
   }
@@ -152,10 +152,10 @@ export class SaveSystem {
   // ========== 数据校验 ==========
 
   private validateSaveData(data: GameSaveData): boolean {
-    if (!data || typeof data !== 'object') return false;
-    if (typeof data.version !== 'number') return false;
-    if (typeof data.timestamp !== 'number') return false;
-    if (!data.stats || typeof data.stats !== 'object') return false;
+    if (!data || typeof data !== "object") return false;
+    if (typeof data.version !== "number") return false;
+    if (typeof data.timestamp !== "number") return false;
+    if (!data.stats || typeof data.stats !== "object") return false;
     return true;
   }
 
@@ -164,12 +164,12 @@ export class SaveSystem {
   /** 清除本地存档 */
   clearLocalSave(): void {
     try {
-      if (typeof localStorage === 'undefined') return;
+      if (typeof localStorage === "undefined") return;
       localStorage.removeItem(this.localStorageKey);
       this.memoryCache = null;
-      Logger.info('[SaveSystem] 本地存档已清除');
+      Logger.info("[SaveSystem] 本地存档已清除");
     } catch (e) {
-      Logger.error('[SaveSystem] 清除存档失败', e);
+      Logger.error("[SaveSystem] 清除存档失败", e);
     }
   }
 
@@ -188,7 +188,7 @@ export class SaveSystem {
       this.save(data);
       return true;
     } catch (e) {
-      Logger.error('[SaveSystem] 导入存档失败', e);
+      Logger.error("[SaveSystem] 导入存档失败", e);
       return false;
     }
   }
@@ -196,7 +196,7 @@ export class SaveSystem {
   /** 获取存档大小（字节） */
   getSaveSize(): number {
     try {
-      if (typeof localStorage === 'undefined') return 0;
+      if (typeof localStorage === "undefined") return 0;
       const json = localStorage.getItem(this.localStorageKey);
       return json ? new Blob([json]).size : 0;
     } catch {

@@ -1,12 +1,17 @@
-import { GameConfig, QualityLevel } from './GameConfig';
-import { EventBus, EventKeys } from '../utils/EventBus';
-import { SaveSystem } from '../systems/SaveSystem';
-import { AchievementManager } from '../systems/AchievementManager';
-import { AudioManager } from '../systems/AudioManager';
-import type { AchievementSaveData, GameSaveData, SaveStats, SavedRun } from '../types';
-import type { Player } from '../entities/Player';
-import { LEVELS, type QuickStartConfig } from '../data/levels';
-import { CHARACTERS, type CharacterConfig } from '../data/characters';
+import { GameConfig, QualityLevel } from "./GameConfig";
+import { EventBus, EventKeys } from "../utils/EventBus";
+import { SaveSystem } from "../systems/SaveSystem";
+import { AchievementManager } from "../systems/AchievementManager";
+import { AudioManager } from "../systems/AudioManager";
+import type {
+  AchievementSaveData,
+  GameSaveData,
+  SaveStats,
+  SavedRun,
+} from "../types";
+import type { Player } from "../entities/Player";
+import { LEVELS, type QuickStartConfig } from "../data/levels";
+import { CHARACTERS, type CharacterConfig } from "../data/characters";
 
 /**
  * 游戏全局管理器（单例）
@@ -15,7 +20,7 @@ import { CHARACTERS, type CharacterConfig } from '../data/characters';
 export class GameManager {
   private static _instance: GameManager | null = null;
 
-  private _qualityLevel: QualityLevel = 'medium';
+  private _qualityLevel: QualityLevel = "medium";
   private _showFps = false;
   private _isMobile: boolean = false;
   private _stats: SaveStats = {
@@ -61,7 +66,7 @@ export class GameManager {
   /** 试玩场地：复用主场景全部战斗逻辑，但不产生任何收益（不存档/不计统计/不解锁/不触发成就） */
   private _testMode = false;
   /** 当前激活角色 id（默认拓荒者；未来主角选择界面切换此值） */
-  private _activeCharacterId = 'default';
+  private _activeCharacterId = "default";
 
   private constructor() {}
 
@@ -93,22 +98,28 @@ export class GameManager {
 
   private detectMobile(): boolean {
     // 调试/测试：URL 参数 ?mobile=1 强制移动端模式（用于在桌面验证摇杆、物品栏等移动端 UI）
-    if (typeof window !== 'undefined' && /[?&]mobile=1/.test(window.location.search)) {
+    if (
+      typeof window !== "undefined" &&
+      /[?&]mobile=1/.test(window.location.search)
+    ) {
       return true;
     }
 
-    if (typeof navigator === 'undefined') return false;
+    if (typeof navigator === "undefined") return false;
 
     // 1. userAgent 正则匹配（覆盖大多数移动设备和浏览器设备模拟）
-    const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const uaMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent,
+      );
 
     // 2. 触摸点检测（触摸设备至少 1 个点）
     const hasTouch = (navigator.maxTouchPoints || 0) > 0;
 
     // 3. 指针类型检测（coarse = 手指/触控笔，fine = 鼠标）
     let coarsePointer = false;
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    if (typeof window !== "undefined" && window.matchMedia) {
+      coarsePointer = window.matchMedia("(pointer: coarse)").matches;
     }
 
     // 综合判断：userAgent 匹配 或 (触摸 + 粗指针)
@@ -117,12 +128,13 @@ export class GameManager {
   }
 
   private detectQuality(): QualityLevel {
-    if (typeof navigator === 'undefined' || typeof window === 'undefined') return 'medium';
+    if (typeof navigator === "undefined" || typeof window === "undefined")
+      return "medium";
     const memory = (navigator as any).deviceMemory || 4;
     const cores = navigator.hardwareConcurrency || 4;
-    if (memory <= 2 || cores <= 2) return 'low';
-    if (memory >= 8 && cores >= 8) return 'high';
-    return 'medium';
+    if (memory <= 2 || cores <= 2) return "low";
+    if (memory >= 8 && cores >= 8) return "high";
+    return "medium";
   }
 
   /** 开始新对局（可选指定起始关卡，默认第 1 关；直进选关时 level>0 且已 setQuickStart） */
@@ -174,14 +186,17 @@ export class GameManager {
 
   /** 当前激活角色的完整配置（不存在时回退默认角色） */
   getActiveCharacter(): CharacterConfig {
-    return CHARACTERS[this._activeCharacterId] ?? CHARACTERS['default'];
+    return CHARACTERS[this._activeCharacterId] ?? CHARACTERS["default"];
   }
 
   endRun(): void {
     // 试玩场地：不累计统计、不写存档，仅同步对局状态与事件（结算场景依赖）
     if (this._testMode) {
       this._runData.isGameOver = true;
-      EventBus.emit(EventKeys.RUN_END, { ...this._runData, highScore: this._stats.highScore });
+      EventBus.emit(EventKeys.RUN_END, {
+        ...this._runData,
+        highScore: this._stats.highScore,
+      });
       return;
     }
     this._runData.isGameOver = true;
@@ -194,8 +209,14 @@ export class GameManager {
     // 对局结束（死亡），清除可继续的存档
     this.clearSavedRun();
     this.saveProgress();
-    this._lastRunSummary = { ...this._runData, highScore: this._stats.highScore };
-    EventBus.emit(EventKeys.RUN_END, { ...this._runData, highScore: this._stats.highScore });
+    this._lastRunSummary = {
+      ...this._runData,
+      highScore: this._stats.highScore,
+    };
+    EventBus.emit(EventKeys.RUN_END, {
+      ...this._runData,
+      highScore: this._stats.highScore,
+    });
   }
 
   /**
@@ -229,7 +250,10 @@ export class GameManager {
     // pendingRun 分支（跳过 restoreRun），isGameOver=true 残留导致 update 永久短路、游戏静止
     this._pendingRun = null;
     this.saveProgress();
-    this._lastRunSummary = { ...this._runData, highScore: this._stats.highScore };
+    this._lastRunSummary = {
+      ...this._runData,
+      highScore: this._stats.highScore,
+    };
   }
 
   addKill(score: number = 10): void {
@@ -238,7 +262,10 @@ export class GameManager {
     if (this._runData.isGameOver) return;
     this._runData.kills++;
     this._runData.score += score;
-    EventBus.emit(EventKeys.RUN_KILL, { kills: this._runData.kills, score: this._runData.score });
+    EventBus.emit(EventKeys.RUN_KILL, {
+      kills: this._runData.kills,
+      score: this._runData.score,
+    });
   }
 
   addSurvivalTime(delta: number): void {
@@ -318,9 +345,15 @@ export class GameManager {
       player: {
         stats: player.getStats(),
         weapons: player.getWeapons().map((w) => ({ id: w.id, level: w.level })),
-        passives: player.getPassives().map((p) => ({ id: p.id, name: p.name, level: p.level })),
-        statUpgrades: player.getStatUpgrades().map((s) => ({ id: s.id, name: s.name, level: s.level })),
-        breakthroughs: player.getBreakthroughs().map((b) => ({ id: b.id, name: b.name, level: b.level })),
+        passives: player
+          .getPassives()
+          .map((p) => ({ id: p.id, name: p.name, level: p.level })),
+        statUpgrades: player
+          .getStatUpgrades()
+          .map((s) => ({ id: s.id, name: s.name, level: s.level })),
+        breakthroughs: player
+          .getBreakthroughs()
+          .map((b) => ({ id: b.id, name: b.name, level: b.level })),
         inventory: player.getInventory(),
         reviveTokens: player.getReviveTokens(),
       },
@@ -342,7 +375,8 @@ export class GameManager {
   /** 只清空成就相关：解锁记录/加成/称号 + 成就统计（含击杀数，因击杀成就依赖它）；保留最高分/局数/时长 */
   resetAchievements(): void {
     if (!this._saveSystem) return;
-    const data = this._saveSystem.load() || (this.buildSaveData() as GameSaveData);
+    const data =
+      this._saveSystem.load() || (this.buildSaveData() as GameSaveData);
     data.achievements = { unlocked: [], bonuses: {}, titles: [] };
     const s = data.stats || ({} as SaveStats);
     s.totalKills = 0;
@@ -362,7 +396,7 @@ export class GameManager {
     this._stats.wins = 0;
     this._stats.maxWaveReached = 0;
     this._stats.weaponsCollected = [];
-    console.log('[debug] 成就已清空（保留最高分/局数/时长）');
+    console.log("[debug] 成就已清空（保留最高分/局数/时长）");
   }
 
   /** 彻底清空全部存档（成就/全部统计/进行中对局），下次启动从零开始 */
@@ -381,7 +415,7 @@ export class GameManager {
       weaponsCollected: [],
     };
     this._pendingRun = null;
-    console.log('[debug] 全部存档已清空（含成就/统计/最高分）');
+    console.log("[debug] 全部存档已清空（含成就/统计/最高分）");
   }
 
   /** 构造一份基础存档数据（无对局进度） */
@@ -415,15 +449,22 @@ export class GameManager {
       this._stats.maxWaveReached = this._stats.maxWaveReached ?? 0;
       this._stats.weaponsCollected = this._stats.weaponsCollected ?? [];
       // 恢复已解锁关卡（旧存档无 unlocked 时保留默认第 1 关）
-      if (data.unlocked && Array.isArray(data.unlocked) && data.unlocked.length > 0) {
+      if (
+        data.unlocked &&
+        Array.isArray(data.unlocked) &&
+        data.unlocked.length > 0
+      ) {
         this._unlocked = data.unlocked;
       }
       // 恢复设置（画质、音量、静音、激活角色）
       if (data.settings) {
-        this._qualityLevel = data.settings.quality || 'medium';
+        this._qualityLevel = data.settings.quality || "medium";
         this._showFps = data.settings.showFps ?? false;
         // 恢复激活角色（老存档缺省 default；未知 id 回退默认）
-        if (data.settings.activeCharacterId && CHARACTERS[data.settings.activeCharacterId]) {
+        if (
+          data.settings.activeCharacterId &&
+          CHARACTERS[data.settings.activeCharacterId]
+        ) {
           this._activeCharacterId = data.settings.activeCharacterId;
         }
         const audio = AudioManager.getInstance();
@@ -497,7 +538,13 @@ export class GameManager {
         version: 1,
         timestamp: Date.now(),
         stats: this._stats,
-        settings: { quality: this._qualityLevel, soundVolume: 1, musicVolume: 0.7, muted: false, showFps: false },
+        settings: {
+          quality: this._qualityLevel,
+          soundVolume: 1,
+          musicVolume: 0.7,
+          muted: false,
+          showFps: false,
+        },
       }),
       achievements: data,
     });
@@ -570,9 +617,15 @@ export class GameManager {
       player: {
         stats: player.getStats(),
         weapons: player.getWeapons().map((w) => ({ id: w.id, level: w.level })),
-        passives: player.getPassives().map((p) => ({ id: p.id, name: p.name, level: p.level })),
-        statUpgrades: player.getStatUpgrades().map((s) => ({ id: s.id, name: s.name, level: s.level })),
-        breakthroughs: player.getBreakthroughs().map((b) => ({ id: b.id, name: b.name, level: b.level })),
+        passives: player
+          .getPassives()
+          .map((p) => ({ id: p.id, name: p.name, level: p.level })),
+        statUpgrades: player
+          .getStatUpgrades()
+          .map((s) => ({ id: s.id, name: s.name, level: s.level })),
+        breakthroughs: player
+          .getBreakthroughs()
+          .map((b) => ({ id: b.id, name: b.name, level: b.level })),
         inventory: player.getInventory(),
       },
     };

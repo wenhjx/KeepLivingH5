@@ -1,8 +1,8 @@
-import Phaser from 'phaser';
-import type { Player } from '../entities/Player';
-import type { Enemy } from '../entities/Enemy';
-import type { TerrainManager } from '../systems/TerrainManager';
-import { Layers } from '../constants/Layers';
+import Phaser from "phaser";
+import type { Player } from "../entities/Player";
+import type { Enemy } from "../entities/Enemy";
+import type { TerrainManager } from "../systems/TerrainManager";
+import { Layers } from "../constants/Layers";
 
 /**
  * 小地图 UI 组件
@@ -30,7 +30,7 @@ export class Minimap {
     width: number,
     height: number,
     mapWidth: number,
-    mapHeight: number
+    mapHeight: number,
   ) {
     this.x = x;
     this.y = y;
@@ -46,7 +46,7 @@ export class Minimap {
     player: Player,
     enemies: Phaser.GameObjects.GameObject[],
     boss: Enemy | null,
-    terrainManager: TerrainManager | null
+    terrainManager: TerrainManager | null,
   ): void {
     const g = this.graphics;
     g.clear();
@@ -63,7 +63,7 @@ export class Minimap {
     // 障碍物轮廓（可破坏木箱用暖棕色区分）
     if (terrainManager) {
       for (const obs of terrainManager.getObstacles()) {
-        g.fillStyle(obs.type === 'crate' ? 0x8a6a3a : 0x556677, 0.55);
+        g.fillStyle(obs.type === "crate" ? 0x8a6a3a : 0x556677, 0.55);
         const ox = this.x + obs.x * scaleX;
         const oy = this.y + obs.y * scaleY;
         const ow = Math.max(1, obs.width * scaleX);
