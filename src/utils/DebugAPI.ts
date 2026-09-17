@@ -357,14 +357,16 @@ export function initDebugAPI(game: Phaser.Game): void {
 
     spawnBoss: () => {
       const gs = getGameScene();
-      if (!gs || !gs.waveManager)
+      if (!gs || !gs.waveManager) {
         return "需要先进入游戏（调试面板 → 开始游戏/试玩场地）";
+      }
       // 场上残留 Boss（清空敌人/Boss 死亡后标记未重置）先清除，保证调试召唤永远生效
       const enemies = gs.getEnemies?.();
       if (enemies) {
         enemies.children.each((e: any) => {
-          if (e?.active && e.config?.type?.startsWith?.("boss"))
+          if (e?.active && e.config?.type?.startsWith?.("boss")) {
             e.takeDamage?.(999999, false);
+          }
         });
       }
       (gs.waveManager as any).resetBossState?.();
@@ -411,8 +413,9 @@ export function initDebugAPI(game: Phaser.Game): void {
       ];
       gs?.bullets?.children?.each?.((b: any) => {
         if (!b || !b.setTexture || !b.active) return true;
-        if (themedBulletKeys.includes(b.texture?.key))
+        if (themedBulletKeys.includes(b.texture?.key)) {
           b.setTexture(GameConfig.themeKey("bullet"));
+        }
         return true;
       });
       gs?.pickups?.children?.each?.((p: any) => {
@@ -482,8 +485,9 @@ export function initDebugAPI(game: Phaser.Game): void {
           e?.active &&
           typeof e.size === "number" &&
           typeof e.takeDamage === "function"
-        )
+        ) {
           count++;
+        }
       });
       return count;
     },

@@ -552,12 +552,13 @@ export class DebugPanel {
   /** 排一行两个按钮（可缺省一侧），按钮定位到当前游标后推进 */
   private addRow(col: UILayout, left?: BtnSpec, right?: BtnSpec): void {
     const y = col.y;
-    if (left)
+    if (left) {
       this.placeButton(
         this.makeButton(left.text, left.fn, this.btnWidth),
         0,
         y,
       );
+    }
     if (right) {
       this.placeButton(
         this.makeButton(right.text, right.fn, this.btnWidth),
@@ -1010,8 +1011,9 @@ export class DebugPanel {
   }
 
   private refreshSpeedText(): void {
-    if (this.speedText)
+    if (this.speedText) {
       this.speedText.setText(`当前速度 ×${this.getGameSpeed().toFixed(2)}`);
+    }
   }
 
   toggle(): void {

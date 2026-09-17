@@ -78,7 +78,8 @@ export function calcFavoredDamageMult(
     !favoredTags ||
     favoredTags.length === 0 ||
     !damageMult
-  )
+  ) {
     return 1;
+  }
   return favoredTags.some((t) => weaponTags.includes(t)) ? damageMult : 1;
 }

@@ -1214,11 +1214,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   ): { vx: number; vy: number } {
     const gs = this.scene as any;
     const tm = gs?.getTerrainManager?.();
-    if (!tm)
+    if (!tm) {
       return {
         vx: Math.cos(targetAngle) * speed,
         vy: Math.sin(targetAngle) * speed,
       };
+    }
     const obstacles = tm.getObstacles();
     const lookAhead = 55; // 前方探测距离
     const fx = this.x + Math.cos(targetAngle) * lookAhead;

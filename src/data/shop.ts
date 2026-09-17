@@ -230,8 +230,9 @@ function isPurchasable(item: ShopItem, player: Player): boolean {
     if (
       opt?.maxLevel &&
       player.getStatUpgradeLevel?.(item.upgradeId!) >= opt.maxLevel
-    )
+    ) {
       return false;
+    }
     return true;
   }
   return true;

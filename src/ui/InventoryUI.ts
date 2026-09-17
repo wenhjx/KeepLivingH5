@@ -267,8 +267,9 @@ export class InventoryUI {
         !slot.icon.active ||
         !slot.count.scene ||
         !slot.count.active
-      )
+      ) {
         return;
+      }
       const count = player?.getItemCount(slot.itemId) ?? 0;
       if (count > 0) {
         slot.icon.setAlpha(1);

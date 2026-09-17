@@ -322,8 +322,9 @@ export class GameScene extends Phaser.Scene {
     graphics.fillRect(0, 0, this.mapWidth, this.mapHeight);
     // 固定种子（关卡 id 哈希）
     let seed = 0;
-    for (let i = 0; i < cfg.id.length; i++)
+    for (let i = 0; i < cfg.id.length; i++) {
       seed = (seed * 31 + cfg.id.charCodeAt(i)) >>> 0;
+    }
     const rng = (): number => {
       seed = (seed * 1664525 + 1013904223) >>> 0;
       return seed / 4294967296;
@@ -1456,8 +1457,9 @@ export class GameScene extends Phaser.Scene {
     this.pickups.children.each((pickup: any) => {
       if (!pickup.active) return true;
       const t = pickup.getType?.();
-      if (t !== "exp" && t !== "coin" && t !== "health" && t !== "chest")
+      if (t !== "exp" && t !== "coin" && t !== "health" && t !== "chest") {
         return true;
+      }
       const dx = pickup.x - this.player.x;
       const dy = pickup.y - this.player.y;
       const dist = Math.sqrt(dx * dx + dy * dy);

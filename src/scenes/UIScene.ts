@@ -145,8 +145,9 @@ export class UIScene extends Phaser.Scene {
     // 例外：虚拟摇杆容器独立挂场景根（自身做 zoom 换算 + scrollFactor 0），
     // 移入 uiRoot 会被其 pos+scale 二次变换，导致摇杆渲染位置偏离手指。
     this.children.list.slice().forEach((child) => {
-      if (child !== this.uiRoot && child !== this.joystick?.getContainer())
+      if (child !== this.uiRoot && child !== this.joystick?.getContainer()) {
         this.uiRoot.add(child);
+      }
     });
 
     // 本场景晚于 GameScene 启动：开局波次的 wave:start 事件可能在订阅前已发出，
@@ -317,8 +318,9 @@ export class UIScene extends Phaser.Scene {
       EventBus.on(EventKeys.GAMESCENE_READY, () => {
         if (!this.joystick) return;
         const gs = this.scene.get("GameScene") as any;
-        if (gs?.getInputManager)
+        if (gs?.getInputManager) {
           this.joystick.setInputManager(gs.getInputManager());
+        }
       }),
     );
 

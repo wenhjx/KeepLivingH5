@@ -188,16 +188,19 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
         opt.type === "weapon" &&
         opt.effect?.weaponId &&
         player.isWeaponMaxLevel?.(opt.effect.weaponId)
-      )
+      ) {
         continue;
-      if (opt.type === "passive" && player.isPassiveMaxLevel?.(opt.id))
+      }
+      if (opt.type === "passive" && player.isPassiveMaxLevel?.(opt.id)) {
         continue;
+      }
       if (
         opt.type === "stat" &&
         opt.maxLevel &&
         (player.getStatUpgradeLevel?.(opt.id) ?? 0) >= opt.maxLevel
-      )
+      ) {
         continue;
+      }
       applyUpgradeToPlayer(player, opt, scene);
       scene?.spawnEventText?.(
         player.x,

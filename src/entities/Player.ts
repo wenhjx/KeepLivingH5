@@ -690,8 +690,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 角色减伤（圣骑士圣盾等，数据驱动：damageReduction=0.2 → ×0.8）
     const reduction =
       GameManager.getInstance().getActiveCharacter().damageReduction ?? 0;
-    if (reduction > 0)
+    if (reduction > 0) {
       actualDamage = Math.max(1, Math.floor(actualDamage * (1 - reduction)));
+    }
     this.stats.health -= actualDamage;
     // 立即 clamp 到 0：否则广播 player:damage 时 HUD 同步刷新会读到"大负数"
     // （后期 Boss 单次伤害可达数十万，695 血会瞬间被扣成 -999999305 级并显示在血条上）

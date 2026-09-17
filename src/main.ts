@@ -1,29 +1,29 @@
-import Phaser from 'phaser';
-import { GameConfig } from './game/GameConfig';
-import { BootScene } from './scenes/BootScene';
-import { PreloadScene } from './scenes/PreloadScene';
-import { MainMenuScene } from './scenes/MainMenuScene';
-import { CharacterSelectScene } from './scenes/CharacterSelectScene';
-import { GameScene } from './scenes/GameScene';
-import { UIScene } from './scenes/UIScene';
-import { GameOverScene } from './scenes/GameOverScene';
-import { UpgradeScene } from './scenes/UpgradeScene';
-import { ShopScene } from './scenes/ShopScene';
-import { BreakthroughScene } from './scenes/BreakthroughScene';
-import { PlayerInfoScene } from './scenes/PlayerInfoScene';
-import { WeaponSelectScene } from './scenes/WeaponSelectScene';
-import { EndlessChoiceScene } from './scenes/EndlessChoiceScene';
-import { DebugScene } from './scenes/DebugScene';
-import { AchievementScene } from './scenes/AchievementScene';
-import { EnemyCodexScene } from './scenes/EnemyCodexScene';
-import { GameManager } from './game/GameManager';
-import { initDebugAPI } from './utils/DebugAPI';
+import Phaser from "phaser";
+import { GameConfig } from "./game/GameConfig";
+import { BootScene } from "./scenes/BootScene";
+import { PreloadScene } from "./scenes/PreloadScene";
+import { MainMenuScene } from "./scenes/MainMenuScene";
+import { CharacterSelectScene } from "./scenes/CharacterSelectScene";
+import { GameScene } from "./scenes/GameScene";
+import { UIScene } from "./scenes/UIScene";
+import { GameOverScene } from "./scenes/GameOverScene";
+import { UpgradeScene } from "./scenes/UpgradeScene";
+import { ShopScene } from "./scenes/ShopScene";
+import { BreakthroughScene } from "./scenes/BreakthroughScene";
+import { PlayerInfoScene } from "./scenes/PlayerInfoScene";
+import { WeaponSelectScene } from "./scenes/WeaponSelectScene";
+import { EndlessChoiceScene } from "./scenes/EndlessChoiceScene";
+import { DebugScene } from "./scenes/DebugScene";
+import { AchievementScene } from "./scenes/AchievementScene";
+import { EnemyCodexScene } from "./scenes/EnemyCodexScene";
+import { GameManager } from "./game/GameManager";
+import { initDebugAPI } from "./utils/DebugAPI";
 
 // 隐藏加载界面
 const hideLoading = () => {
-  const loading = document.getElementById('loading');
+  const loading = document.getElementById("loading");
   if (loading) {
-    loading.classList.add('hidden');
+    loading.classList.add("hidden");
     setTimeout(() => loading.remove(), 600);
   }
 };
@@ -42,7 +42,10 @@ function computeRenderScale(): number {
   const cap = GameConfig.QUALITY[quality].resolutionScale;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   // Phaser Scale.FIT 下 canvas 的显示放大倍数（相对逻辑分辨率）
-  const fit = Math.min(window.innerWidth / GameConfig.GAME_WIDTH, window.innerHeight / GameConfig.GAME_HEIGHT);
+  const fit = Math.min(
+    window.innerWidth / GameConfig.GAME_WIDTH,
+    window.innerHeight / GameConfig.GAME_HEIGHT,
+  );
   return Math.min(Math.max(fit, 1) * dpr, Math.max(1, cap));
 }
 
@@ -51,7 +54,9 @@ GameConfig.renderScale = computeRenderScale();
 
 // 渲染分辨率（内部画布像素）
 const RENDER_WIDTH = Math.round(GameConfig.GAME_WIDTH * GameConfig.renderScale);
-const RENDER_HEIGHT = Math.round(GameConfig.GAME_HEIGHT * GameConfig.renderScale);
+const RENDER_HEIGHT = Math.round(
+  GameConfig.GAME_HEIGHT * GameConfig.renderScale,
+);
 
 // 真机 UI 缩放：FIT 下画布被压缩到 <0.85 时（横屏手机），整体放大 UI 到可读尺寸。
 // 仅"真机横屏"触发（宽高比≥1.5，?mobile=1 桌面近方窗模拟不受影响）；上限 1.35 由最宽面板（PlayerInfo 700px）约束。
@@ -68,14 +73,16 @@ const RENDER_HEIGHT = Math.round(GameConfig.GAME_HEIGHT * GameConfig.renderScale
 }
 // URL 参数覆盖（真机参数验证用）：?uiscale=1.35 强制指定 UI 缩放，不受触发条件限制
 {
-  const _us = new URLSearchParams(window.location.search).get('uiscale');
-  if (_us) GameConfig.uiScale = Math.min(Math.max(parseFloat(_us) || 1, 1), 1.6);
+  const _us = new URLSearchParams(window.location.search).get("uiscale");
+  if (_us) {
+    GameConfig.uiScale = Math.min(Math.max(parseFloat(_us) || 1, 1), 1.6);
+  }
 }
 
 // Phaser 游戏配置
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  parent: 'game-container',
+  parent: "game-container",
   width: RENDER_WIDTH,
   height: RENDER_HEIGHT,
   backgroundColor: GameConfig.BG_COLOR,
@@ -92,7 +99,7 @@ const config: Phaser.Types.Core.GameConfig = {
     // 切后台击杀数不涨且主循环异常，恢复 Phaser 默认——页面不可见时游戏自动暂停。
   },
   physics: {
-    default: 'arcade',
+    default: "arcade",
     arcade: {
       gravity: { x: 0, y: 0 },
       debug: GameConfig.DEBUG_PHYSICS,
@@ -101,7 +108,7 @@ const config: Phaser.Types.Core.GameConfig = {
   render: {
     antialias: !GameConfig.PIXEL_ART,
     roundPixels: GameConfig.PIXEL_ART,
-    powerPreference: 'high-performance',
+    powerPreference: "high-performance",
   },
   input: {
     activePointers: 3,

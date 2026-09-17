@@ -56,10 +56,12 @@ const RARITY_BG: Record<string, number> = {
 
 /** Boss 机制一句话说明 */
 function describeBossMechanic(type: EnemyType): string {
-  if (type === "boss_summoner")
+  if (type === "boss_summoner") {
     return "机制：持续召唤魔像群增援，先清召唤物再集火本体";
-  if (type === "boss_barrage")
+  }
+  if (type === "boss_barrage") {
     return "机制：环形/扇形弹幕密集铺场（伤害 1.3 倍），找缝隙走位";
+  }
   return "机制：追击近身 + 阶段技能，保持距离风筝输出";
 }
 

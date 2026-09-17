@@ -594,8 +594,9 @@ export class HUD {
     for (const [id, rem] of timedStates) {
       if (rem > 0 && rem <= this.statusFlashBefore) {
         const icon = this.buffIcons.get(id);
-        if (icon)
+        if (icon) {
           icon.setVisible(Math.floor(this.scene.time.now / 150) % 2 === 0);
+        }
       }
     }
   }

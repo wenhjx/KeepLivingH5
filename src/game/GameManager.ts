@@ -128,8 +128,9 @@ export class GameManager {
   }
 
   private detectQuality(): QualityLevel {
-    if (typeof navigator === "undefined" || typeof window === "undefined")
+    if (typeof navigator === "undefined" || typeof window === "undefined") {
       return "medium";
+    }
     const memory = (navigator as any).deviceMemory || 4;
     const cores = navigator.hardwareConcurrency || 4;
     if (memory <= 2 || cores <= 2) return "low";

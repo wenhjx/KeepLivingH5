@@ -159,11 +159,12 @@ export class WaveManager {
     const excl = this.levelConfig.exclusiveEnemies;
     if (excl) {
       for (const [etype, eweight] of Object.entries(excl)) {
-        if (wave >= 2)
+        if (wave >= 2) {
           this.currentSpawnTable.push({
             type: etype as EnemyType,
             weight: eweight,
           });
+        }
       }
     }
   }

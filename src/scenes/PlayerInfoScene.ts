@@ -249,8 +249,9 @@ export class PlayerInfoScene extends Phaser.Scene {
     });
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
       if (!dragging || this.maxScroll <= 0) return;
-      if (!dragMoved && Math.abs(p.y - dragStartY) > DRAG_THRESHOLD)
+      if (!dragMoved && Math.abs(p.y - dragStartY) > DRAG_THRESHOLD) {
         dragMoved = true;
+      }
       if (dragMoved) {
         this.scrollOff = Phaser.Math.Clamp(
           dragStartOff + (dragStartY - p.y) / zoom,
