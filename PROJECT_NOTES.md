@@ -57,6 +57,15 @@
 
 **已迁移（2026-09-15）**：CameraHelper（scroll 居中补偿）、InventoryUI（槽位贴底布局 + applyInverse 命中判定）。
 
+**坐标偏移 5 类根因（排查手册，来自 UI_POSITION_ANALYSIS 归档）**：
+1. 相机 zoom 以画布中心为原点 → zoom>1 时可视区偏移（UI 整体偏左上/底部被裁）→ setupUICamera 做 scroll 补偿
+2. 逻辑坐标（960×640）与画布像素坐标（scale.width/height）混用 → 统一用逻辑坐标布局
+3. 嵌套 Container + 父级 scale 的 setInteractive hitArea 偏移 → 改全局 pointerdown + 手动矩形判定
+4. uiScale 中心缩放导致贴边元素漂移 → anchorX/anchorY 换算
+5. GameScene 滚动相机世界坐标 vs 屏幕坐标混用 → UI 归 UIScene uiRoot（scrollFactor 0）
+
+**统一方案建议（待实施）**：收敛为"一套坐标空间（960×640 逻辑坐标）+ 一套锚点系统（UILayout 扩展 anchor 参数）+ 统一交互（HitRectManager）"；新增 UISafeZone 封装 FIT 模式下黑边内的安全区域，贴边元素基于安全区域定位。
+
 
 
 **1. 「再来一局」后整局停摆（无法移动/无法发射/无怪生成/波次不走）— 最高优先**
