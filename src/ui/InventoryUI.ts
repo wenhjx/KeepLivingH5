@@ -54,22 +54,38 @@ export class InventoryUI {
     parent.add(this.container);
 
     // 4 个固定槽位（从右往左排列在右下角，避开 HUD 区域）
-    // 注意：加入 uiRoot 的组件须用 scene.scale（渲染尺寸）坐标，逻辑 960 尺寸会偏移到中央
+    // 注意：加入 uiRoot 的组件须用 scene.scale（渲染尺寸）坐标，逻辑 960 尺寸会偏移到中央。
+    // 布局公式按 uiRoot 实际变换推导：世界 = rootPos + 局部×(u/z)，rootPos=(S/2)(1-u/z)，
+    // 屏幕 = 世界×z = (S/2)(z-u) + 局部×u（S=画布尺寸，z=renderScale，u=uiScale）。
+    // 故贴边目标：局部 = [目标屏幕 - (S/2)(z-u)]/u。
+    // 不能用 GameConfig.anchorX/Y（其公式假设纯 uiScale 中心缩放，与 uiRoot 的 u/z 变换
+    // 不匹配），移动端 uiScale>1 时槽位会被推出画布底部（2026-09-15 实测 y=899>853）。
     const { width, height } = this.scene.scale;
     const us = GameConfig.uiScale;
-    const totalWidth = (INVENTORY_ORDER.length * this.slotSize + (INVENTORY_ORDER.length - 1) * this.slotSpacing) * us;
-    const startX = GameConfig.anchorX(width - 12 - totalWidth + (this.slotSize * us) / 2, width);
-    const y = GameConfig.anchorY(height - 12 - (this.slotSize * us) / 2, height);
+    const z = GameConfig.renderScale;
+    const slotW = this.slotSize * us;
+    const rightScreenX = width - 12 - slotW / 2;
+    const bottomScreenY = height - 12 - slotW / 2;
+    const startX =
+      (rightScreenX - (width / 2) * (z - us) - (INVENTORY_ORDER.length - 1) * (this.slotSize + this.slotSpacing)) /
+      us;
+    const y = (bottomScreenY - (height / 2) * (z - us)) / us;
 
-    // 点击判定采用手动坐标检测（uiRoot 局部坐标 = pointer.x/y），彻底规避嵌套 Container +
-    // 父级 scale 时 setInteractive hitArea 命中偏移（曾导致点击区域整体偏上一个槽位高度）。
+    // 点击判定采用手动坐标检测：先把指针世界坐标转成容器局部坐标再比对，
+    // 彻底规避嵌套 Container + 父级 scale（uiRoot）时 setInteractive hitArea
+    // 命中偏移（曾导致点击区域整体偏上一个槽位高度）。
+    // 注意：不能直接用 pointer.x/y 与局部坐标比对——uiScale≠renderScale 时
+    // 容器局部坐标 ≠ 屏幕坐标，移动端会整体错位（2026-09-15 实测）。
     this.pointerDownHandler = (pointer: Phaser.Input.Pointer) => {
+      // 指针世界坐标 → 容器局部坐标（考虑 uiRoot 位置/scale 与相机变换）
+      const out = new Phaser.Math.Vector2();
+      this.container.getWorldTransformMatrix().applyInverse(pointer.worldX, pointer.worldY, out);
       for (const r of this.slotHitRects) {
         if (
-          pointer.x >= r.x &&
-          pointer.x <= r.x + this.slotSize &&
-          pointer.y >= r.y &&
-          pointer.y <= r.y + this.slotSize
+          out.x >= r.x &&
+          out.x <= r.x + this.slotSize &&
+          out.y >= r.y &&
+          out.y <= r.y + this.slotSize
         ) {
           this.useSlot(r.index);
           return;
