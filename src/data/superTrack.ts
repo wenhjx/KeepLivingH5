@@ -35,6 +35,17 @@ export function togglePinSuper(id: string): string[] {
   return next;
 }
 
+/** 取消某超武的追踪（进化达成后自动调用，仅移除不添加） */
+export function unpinSuper(id: string): void {
+  const cur = getPinnedSupers();
+  const next = cur.filter((x) => x !== id);
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    /* 忽略存储失败 */
+  }
+}
+
 /** 匹配某升级选项是否为已勾选超武的必要组件（源武器/辅助升级） */
 export function findPinnedSuperForOption(option: {
   kind: string;

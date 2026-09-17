@@ -5,6 +5,7 @@ import { MathUtils } from "../utils/MathUtils";
 import { Drone } from "./Drone";
 import { WEAPONS } from "../data/weapons";
 import { getSuperByWeapon } from "../data/superWeapons";
+import { unpinSuper } from "../data/superTrack";
 import { GameManager } from "../game/GameManager";
 import { UPGRADE_OPTIONS } from "../data/upgrades";
 import { USABLE_ITEMS } from "../data/items";
@@ -1434,9 +1435,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.evolvedSupers.has(id);
   }
 
-  /** 标记超武已进化 */
+  /** 已进化超武数量 */
+  get evolvedSuperCount(): number {
+    return this.evolvedSupers.size;
+  }
+
+  /** 标记超武已进化（达成后自动取消该超武的追踪） */
   evolveSuper(id: string): void {
     this.evolvedSupers.add(id);
+    unpinSuper(id);
   }
 
   /** 获取某武器等级（0 表示未拥有） */

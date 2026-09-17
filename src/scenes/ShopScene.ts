@@ -230,7 +230,8 @@ export class ShopScene extends Phaser.Scene {
         { fontSize: "28px" },
       )
         .setOrigin(0.5)
-        .setDepth(1000);
+        .setDepth(1000)
+        .setData("superTag", true);
       card.add(tag);
     }
     card.setData("isShopCard", true);
@@ -241,6 +242,7 @@ export class ShopScene extends Phaser.Scene {
   private tryBuy(item: ShopItem, card: Phaser.GameObjects.Container): void {
     const player = this.getPlayer();
     if (!player) return;
+    const beforeSuperCount = player.evolvedSuperCount;
     // 防重复购买：卡片已售出后禁止再次点击购买（否则 stat 类商品可反复叠加，如磁力刷到超神）
     if (card.getData("sold")) {
       AudioManager.getInstance().playSfx(SOUND_KEYS.SFX_SHOP_DENY, 0.8);
@@ -258,6 +260,14 @@ export class ShopScene extends Phaser.Scene {
       player.addItem(item.itemId);
     } else {
       applyShopItem(player, item, this.scene.get("GameScene"));
+    }
+    // 购买触发超武进化时：移除所有卡片上的追踪 👍（已达成超武不再高亮）
+    if (player.evolvedSuperCount > beforeSuperCount) {
+      this.cardRefs.forEach(({ card: c }) => {
+        c.list
+          .filter((o) => o.getData("superTag"))
+          .forEach((o) => o.destroy());
+      });
     }
     this.updateCoin();
     // 成就统计：商店累计消费（财迷系列）

@@ -465,6 +465,7 @@ export class DebugPanel {
               p.evolveSuper(s.id);
               EventBus.emit("super:evolved", s);
               refreshSuper();
+              refreshPin();
             }
           },
         },
