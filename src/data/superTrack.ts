@@ -62,6 +62,7 @@ export function findPinnedSuperForOption(option: {
       (s) =>
         option.kind === "weapon"
           ? s.weaponId === option.id ||
+            s.weaponId === option.id.replace(/^weapon_/, "") ||
             s.weaponId === option.effect?.weaponId
           : s.requiredUpgradeId === option.id,
     );
