@@ -23,7 +23,11 @@ export interface SuperWeaponConfig {
   /** 进化后效果描述 */
   effectDesc: string;
   /** 进化后对源武器的属性覆盖（fireWeapon 时应用） */
-  override?: Partial<WeaponConfig> & { bulletColor?: number };
+  override?: Partial<WeaponConfig> & {
+    bulletColor?: number;
+    scatter?: boolean;
+    scatterArc?: number;
+  };
 }
 
 export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
@@ -42,8 +46,9 @@ export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
       attackSpeed: 6,
       damage: 20,
       projectileSpeed: 900,
-      spread: 0.14,
       bulletColor: 0xffd700,
+      scatter: true,
+      scatterArc: 1.1,
     },
   },
 };

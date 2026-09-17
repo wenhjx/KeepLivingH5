@@ -412,7 +412,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       baseCount > 1 ? (config.spread || 0.3) * (baseCount - 1) : 0;
     const spread = count > 1 ? totalArc / (count - 1) : 0;
     for (let i = 0; i < count; i++) {
-      const bulletAngle = angle + (i - (count - 1) / 2) * spread;
+      let bulletAngle = angle + (i - (count - 1) / 2) * spread;
+      if (
+        superCfg &&
+        this.evolvedSupers.has(superCfg.id) &&
+        superCfg.override?.scatter
+      ) {
+        bulletAngle += (Math.random() - 0.5) * (superCfg.override.scatterArc ?? 1);
+      }
       pool.spawnBullet(
         this.x,
         this.y,

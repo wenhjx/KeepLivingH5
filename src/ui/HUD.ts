@@ -1,6 +1,6 @@
 import { createUIText } from "../utils/UIText";
 import Phaser from "phaser";
-import { SUPER_WEAPONS } from "../data/superWeapons";
+import { getSuperByWeapon } from "../data/superWeapons";
 import { GameManager } from "../game/GameManager";
 import {
   UPGRADE_OPTIONS,
@@ -475,6 +475,20 @@ export class HUD {
       });
     });
     weapons.forEach((w: any) => {
+      // 已进化超武：武器条目替换为超武形态（冲锋枪 → 冲锋枪·无限弹幕），避免 buff 栏重复占位
+      const sc = getSuperByWeapon(w.id);
+      if (sc && player.hasSuper?.(sc.id)) {
+        allBuffs.push({
+          id: w.id,
+          name: `${sc.sourceName}·${sc.name}`,
+          level: 1,
+          maxLevel: 1,
+          desc: sc.effectDesc,
+          icon: sc.icon,
+          color: 0xffd700,
+        });
+        return;
+      }
       const opt = UPGRADE_OPTIONS.find(
         (u) => u.type === "weapon" && u.effect?.weaponId === w.id,
       );
@@ -489,21 +503,6 @@ export class HUD {
         icon: vis.icon,
         color: vis.color,
       });
-    });
-
-    // 超武（进化后并入 buff 栏：金色图标 + 效果说明，点击可查看）
-    Object.values(SUPER_WEAPONS).forEach((s) => {
-      if (player.hasSuper?.(s.id)) {
-        allBuffs.push({
-          id: `super:${s.id}`,
-          name: `${s.sourceName}·${s.name}`,
-          level: 1,
-          maxLevel: 1,
-          desc: s.effectDesc,
-          icon: s.icon,
-          color: 0xffd700,
-        });
-      }
     });
 
     // 剧毒减益并入 buff 栏统一渲染：红色卡片 + 剩余秒数（等级位）+ 到期前闪烁
