@@ -16,13 +16,14 @@ export interface SuperWeaponConfig {
   /** 需求辅助升级的满级值（stat 达此等级即满足条件） */
   requiredUpgradeMax: number;
   name: string;
+  sourceName: string;
   icon: string;
   /** 合成条件描述（玩家可见，图鉴/提示展示） */
   conditionDesc: string;
   /** 进化后效果描述 */
   effectDesc: string;
   /** 进化后对源武器的属性覆盖（fireWeapon 时应用） */
-  override?: Partial<WeaponConfig>;
+  override?: Partial<WeaponConfig> & { bulletColor?: number };
 }
 
 export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
@@ -32,6 +33,7 @@ export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
     requiredUpgradeId: "crit_rate",
     requiredUpgradeMax: 5,
     name: "无限弹幕",
+    sourceName: "冲锋枪",
     icon: "🌀",
     conditionDesc: "冲锋枪满级 + 暴击精通满级",
     effectDesc: "弹幕数量 ×3、射速大幅提升",
@@ -41,6 +43,7 @@ export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
       damage: 20,
       projectileSpeed: 900,
       spread: 0.14,
+      bulletColor: 0xffd700,
     },
   },
 };

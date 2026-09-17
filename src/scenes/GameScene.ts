@@ -598,7 +598,7 @@ export class GameScene extends Phaser.Scene {
       EventBus.on("super:evolved", (cfg: SuperWeaponConfig) => {
         this.audioManager.playSfx("sfx_levelup");
         this.cameras.main.shake(300, 0.008);
-        (this.scene.get("UIScene") as any)?.showBanner?.(`⭐ ${cfg.name} 进化！`, true);
+        (this.scene.get("UIScene") as any)?.showBanner?.(`⭐ ${cfg.sourceName} → ${cfg.name} 进化！`, true);
       }),
     );
     // 复活币生效：清空周围敌人 + 震屏反馈，避免复活瞬间被围死

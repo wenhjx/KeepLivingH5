@@ -379,7 +379,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // 获取武器视觉参数
-    const visual = this.getWeaponVisual(config.id);
+    let visual = this.getWeaponVisual(config.id);
+    const superCfg = getSuperByWeapon(config.id);
+    if (superCfg && this.evolvedSupers.has(superCfg.id) && superCfg.override?.bulletColor) {
+      visual = {
+        ...visual,
+        color: superCfg.override.bulletColor,
+        scaleX: (visual.scaleX ?? 1) * 1.3,
+        scaleY: (visual.scaleY ?? 1) * 1.3,
+      };
+    }
 
     // 射击音效（按武器类型区分，资源缺失时静默失败）
     this.playWeaponSfx(config.id);

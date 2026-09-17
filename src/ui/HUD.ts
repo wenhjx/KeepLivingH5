@@ -496,7 +496,7 @@ export class HUD {
       if (player.hasSuper?.(s.id)) {
         allBuffs.push({
           id: `super:${s.id}`,
-          name: s.name,
+          name: `${s.sourceName}·${s.name}`,
           level: 1,
           maxLevel: 1,
           desc: s.effectDesc,

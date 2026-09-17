@@ -437,7 +437,7 @@ export class DebugPanel {
     };
     Object.values(SUPER_WEAPONS).forEach((s) => {
       this.addRow(col, {
-        text: `${s.icon} ${s.name}（${s.conditionDesc}）`,
+        text: `${s.icon} ${s.sourceName}·${s.name}（${s.conditionDesc}）`,
         fn: () => {
           const p = this.getPlayer();
           if (p && !p.hasSuper(s.id)) {
