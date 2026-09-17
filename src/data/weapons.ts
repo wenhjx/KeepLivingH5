@@ -18,7 +18,7 @@ export const WEAPONS: Record<string, WeaponConfig> = {
     projectileCount: 1,
     pierce: true,
     description: "基础远程攻击，稳定输出，可穿透敌人",
-    maxLevel: 8,
+    maxLevel: 6,
     iconTexture: "weapon_icon_default_gun",
   },
   shotgun: {
