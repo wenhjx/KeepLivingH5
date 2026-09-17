@@ -281,7 +281,9 @@ export function generateShopStock(player: Player): ShopItem[] {
     ...PASSIVE_ITEMS.filter(
       (it) => isPurchasable(it, player) && it.id !== premium?.id,
     ),
-    ...STAT_ITEMS.filter((it) => it.id !== premium?.id),
+    ...STAT_ITEMS.filter(
+      (it) => isPurchasable(it, player) && it.id !== premium?.id,
+    ),
     ...CONSUMABLE_ITEMS.filter(
       (it) =>
         it.kind !== "consumable" ||
