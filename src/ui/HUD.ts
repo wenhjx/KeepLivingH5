@@ -1,5 +1,6 @@
 import { createUIText } from "../utils/UIText";
 import Phaser from "phaser";
+import { SUPER_WEAPONS } from "../data/superWeapons";
 import { GameManager } from "../game/GameManager";
 import {
   UPGRADE_OPTIONS,
@@ -488,6 +489,21 @@ export class HUD {
         icon: vis.icon,
         color: vis.color,
       });
+    });
+
+    // 超武（进化后并入 buff 栏：金色图标 + 效果说明，点击可查看）
+    Object.values(SUPER_WEAPONS).forEach((s) => {
+      if (player.hasSuper?.(s.id)) {
+        allBuffs.push({
+          id: `super:${s.id}`,
+          name: s.name,
+          level: 1,
+          maxLevel: 1,
+          desc: s.effectDesc,
+          icon: s.icon,
+          color: 0xffd700,
+        });
+      }
     });
 
     // 剧毒减益并入 buff 栏统一渲染：红色卡片 + 剩余秒数（等级位）+ 到期前闪烁

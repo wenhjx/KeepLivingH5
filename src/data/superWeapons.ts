@@ -35,7 +35,13 @@ export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
     icon: "🌀",
     conditionDesc: "冲锋枪满级 + 暴击精通满级",
     effectDesc: "弹幕数量 ×3、射速大幅提升",
-    override: { projectileCount: 3, attackSpeed: 5, damage: 14 },
+    override: {
+      projectileCount: 6,
+      attackSpeed: 6,
+      damage: 20,
+      projectileSpeed: 900,
+      spread: 0.14,
+    },
   },
 };
 
