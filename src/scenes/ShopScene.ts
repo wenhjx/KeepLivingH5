@@ -8,6 +8,7 @@ import { SOUND_KEYS } from "../data/sounds";
 import { AudioManager } from "../systems/AudioManager";
 import { generateShopStock, applyShopItem, type ShopItem } from "../data/shop";
 import { passiveDescForLevel } from "../data/upgrades";
+import { findPinnedSuperForOption } from "../data/superTrack";
 import { createOptionCard } from "../ui/OptionCard";
 import type { Player } from "../entities/Player";
 /**
@@ -215,6 +216,23 @@ export class ShopScene extends Phaser.Scene {
       footerColor: "#ffcc00",
       onClick: () => this.tryBuy(item, card),
     });
+    // 超武追踪：商品是已勾选目标超武的必要组件时，卡片右上角高亮 👍
+    const pinnedSuper = findPinnedSuperForOption({
+      kind: item.kind,
+      id: item.id,
+    });
+    if (pinnedSuper) {
+      const tag = createUIText(
+        this,
+        this.cardWidth / 2 - 22,
+        -this.cardHeight / 2 + 62,
+        "👍",
+        { fontSize: "28px" },
+      )
+        .setOrigin(0.5)
+        .setDepth(1000);
+      card.add(tag);
+    }
     card.setData("isShopCard", true);
     return card;
   }
