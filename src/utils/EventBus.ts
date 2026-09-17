@@ -83,6 +83,7 @@ export const EventKeys = {
   ENEMY_DEATH: 'enemy:death',
   ENEMY_SPAWN: 'enemy:spawn',
   GAME_INITIALIZED: 'game:initialized',
+  GAMESCENE_READY: 'gamescene:ready',
   GAME_SPEED: 'game:speed',
   LEVEL_CLEAR: 'level:clear',
   PLAYER_COINS: 'player:coins',

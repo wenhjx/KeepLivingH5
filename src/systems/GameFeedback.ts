@@ -59,13 +59,21 @@ export class GameFeedback {
 
   // ========== 基础工具 ==========
 
+  /** 是否有挂起的顿帧恢复（防止连续暴击反复刷新 pause，把物理世界永久卡在暂停态） */
+  private hitStopPending = false;
+
   /** 短顿帧：暂停物理世界一小段时间后恢复（hit-stop 打击感） */
   private hitStop(ms: number): void {
     const scene = this.scene as any;
     // 用 ArcadePhysics 公开的 pause()/resume()（world 属性运行时不可靠）
     if (!scene.physics || typeof scene.physics.pause !== 'function') return;
+    // 已有挂起恢复时直接忽略：物理本来就在顿帧中，恢复定时器已排定，不重复暂停，
+    // 否则高攻速高暴击（伤害 ≥200）会让 pause/resume 竞态刷新，物理永远暂停
+    if (this.hitStopPending) return;
+    this.hitStopPending = true;
     scene.physics.pause();
     scene.time.delayedCall(ms, () => {
+      this.hitStopPending = false;
       if (scene.scene.isActive()) scene.physics.resume();
     });
   }

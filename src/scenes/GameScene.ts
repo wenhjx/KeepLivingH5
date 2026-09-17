@@ -138,6 +138,20 @@ export class GameScene extends Phaser.Scene {
     this.upgradeQueued = false;
     this.activeBoss = null;
     this.initSystems();
+    // 场景重启（下一关/再来一局）后 Arcade 物理世界可能残留暂停态（shutdown 时随场景
+    // 暂停，重启重建的 world 默认停在暂停态），与全局暂停状态对齐：全局未暂停则恢复，
+    // 否则移动端摇杆 / PC 键盘的 velocity 不会生效（"进入下一区域后无法移动"）。
+    // 放在 START 事件里执行：create 阶段 physics.world 尚未就绪，resume 会被覆盖。
+    this.events.once(Phaser.Scenes.Events.START, () => {
+      if (GameManager.getInstance().isPaused) {
+        this.physics.pause();
+      } else {
+        this.physics.resume();
+      }
+    });
+    // 场景就绪通知：UIScene 借此重绑虚拟摇杆等一次性绑定（场景重启后 InputManager 是
+    // 新实例，旧引用会失效——移动端"进入下一区域后无法移动"即此因，autoPlay 走新实例所以正常）
+    EventBus.emit(EventKeys.GAMESCENE_READY);
     // 训练场（试玩场地）：屏蔽 Boss/商店/武器强化/通关结算，波次纯净推进
     if (GameManager.getInstance().testMode) {
       this.waveManager.trainingMode = true;

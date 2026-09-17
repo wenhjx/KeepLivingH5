@@ -276,6 +276,15 @@ export class UIScene extends Phaser.Scene {
   private setupEventListeners(): void {
     const sub = (fn: () => void) => this.eventUnsubscribers.push(fn);
 
+    // GameScene 重启（进入下一区域等）后 InputManager 为新实例，重绑摇杆防止手动输入丢失
+    sub(
+      EventBus.on(EventKeys.GAMESCENE_READY, () => {
+        if (!this.joystick) return;
+        const gs = this.scene.get('GameScene') as any;
+        if (gs?.getInputManager) this.joystick.setInputManager(gs.getInputManager());
+      })
+    );
+
     sub(
       EventBus.on(EventKeys.WAVE_START, (d: { wave: number; isBoss: boolean }) => {
         this.showBanner(d.isBoss ? '⚠ BOSS 来袭 ⚠' : `第 ${d.wave} 波`, d.isBoss);
