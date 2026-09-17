@@ -833,7 +833,7 @@ export class HUD {
       {
         fontSize: "13px",
         color: "#bbbbbb",
-        wordWrap: { width: boxW - 24 },
+        wordWrap: { width: boxW - 24, useAdvancedWrap: true },
         lineSpacing: 4,
       },
     ).setOrigin(0, 0);

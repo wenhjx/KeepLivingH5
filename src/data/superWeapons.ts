@@ -80,7 +80,7 @@ export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
     id: "super_chain_scatter",
     weaponId: "shotgun",
     requiredUpgradeId: "passive_bounce",
-    requiredUpgradeMax: 3,
+    requiredUpgradeMax: 5,
     name: "链式散射",
     rarity: "super",
     sourceName: "霰弹枪",

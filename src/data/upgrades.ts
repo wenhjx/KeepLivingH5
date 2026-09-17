@@ -248,7 +248,7 @@ export const UPGRADE_OPTIONS: UpgradeOption[] = [
     description: "命中后伤害弹射至附近敌人（每级 +1 次，70% 伤害）",
     icon: "🪩",
     rarity: "epic",
-    maxLevel: 3,
+    maxLevel: 5,
     effect: {},
   },
   {
