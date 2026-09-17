@@ -408,8 +408,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
     // 弹射：伤害弹射到附近敌人（不递归触发其他被动）
     const bnc = getLv("passive_bounce");
-    if (bnc > 0) {
-      this.bounceHit(player, amount * 0.7, bnc, sourceX, sourceY);
+    const superBounce = player.hasSuper?.("super_chain_scatter") ? 1 : 0;
+    const bounceJumps = Math.max(bnc, superBounce);
+    if (bounceJumps > 0) {
+      this.bounceHit(player, amount * 0.7, bounceJumps, sourceX, sourceY);
     }
   }
   /** 弹射：从源敌人跳到附近最近的敌人，逐跳递减伤害 */

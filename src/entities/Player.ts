@@ -386,7 +386,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         ...visual,
         color: superCfg.override.bulletColor,
         scaleX: (visual.scaleX ?? 1) * 1.3,
-        scaleY: (visual.scaleY ?? 1) * 1.3,
+        scaleY:
+          superCfg.override.bulletScaleY ??
+          (visual.scaleY ?? 1) * 1.3,
       };
     }
 

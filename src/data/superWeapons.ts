@@ -27,6 +27,7 @@ export interface SuperWeaponConfig {
     bulletColor?: number;
     scatter?: boolean;
     scatterArc?: number;
+    bulletScaleY?: number;
   };
 }
 
@@ -49,6 +50,44 @@ export const SUPER_WEAPONS: Record<string, SuperWeaponConfig> = {
       bulletColor: 0xffd700,
       scatter: true,
       scatterArc: 1.1,
+    },
+  },
+  super_storm: {
+    id: "super_storm",
+    weaponId: "machine_gun",
+    requiredUpgradeId: "attack_speed",
+    requiredUpgradeMax: 5,
+    name: "风暴突突",
+    sourceName: "机枪",
+    icon: "🌪️",
+    conditionDesc: "机枪满级 + 急速满级",
+    effectDesc: "直线光束弹幕墙：双管平行、超高射速、子弹穿透",
+    override: {
+      attackSpeed: 14,
+      projectileCount: 2,
+      damage: 8,
+      spread: 0.04,
+      pierce: true,
+      bulletColor: 0x7ec8ff,
+      bulletScaleY: 3,
+    },
+  },
+  super_chain_scatter: {
+    id: "super_chain_scatter",
+    weaponId: "shotgun",
+    requiredUpgradeId: "passive_bounce",
+    requiredUpgradeMax: 3,
+    name: "链式散射",
+    sourceName: "霰弹枪",
+    icon: "💥",
+    conditionDesc: "霰弹枪满级 + 弹射满级",
+    effectDesc: "弹片扇形爆发并弹射至附近敌人（70% 伤害）",
+    override: {
+      projectileCount: 8,
+      damage: 12,
+      knockback: 120,
+      spread: 0.45,
+      bulletColor: 0xff9a5e,
     },
   },
 };
