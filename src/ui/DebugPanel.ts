@@ -460,7 +460,7 @@ export class DebugPanel {
       this.addRow(
         col,
         {
-          text: `${s.icon} ${s.sourceName}·${s.name}（${s.conditionDesc}）`,
+          text: `${s.icon} ${s.sourceName}→${s.name}`,
           fn: () => {
             const p = this.getPlayer();
             if (p && !p.hasSuper(s.id)) {
