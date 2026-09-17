@@ -8,6 +8,8 @@
 
 > **UI 设计约定（2026-09-12）**：玩家状态图标（减益/限时增益）统一归纳进 HUD buff 栏渲染——同款卡片视觉 + 剩余时间角标 + 到期闪烁 + 点击出说明，不再做独立于 buff 栏的旁挂图标，减少玩家学习成本。当前剧毒已按此并入（HUD.updateBuffs 伪条目 + 到期闪烁），未来新状态沿用同方案。
 
+> **UI 坐标约定（2026-09-15）**：新增 UI 组件一律在锁死设计坐标 960×640 内布局，只声明"逻辑坐标 + 对齐方式"，**禁止直接引用 scene.scale.width/height、禁止使用 GameConfig.anchorX/anchorY**（anchor 公式假定纯 uiScale 中心缩放，与 UIScene.uiRoot 实际变换 scale=u/z 不匹配，uiScale>1 时漂移出屏，已两次踩坑：确认按钮、道具栏）。存量漂移组件见下方"UI 坐标存量迁移"待办，抽空统一迁移。
+
 
 
 > 开发备忘 / 待办记录。已完成的改动均有 git 检查点，可随时回滚。
@@ -40,6 +42,20 @@
 
 
 ### 🔥 待修复问题（✅ 8 条已全部修复并推送，2026-09-10；历史定位记录保留）
+
+### 🔧 UI 坐标存量迁移（2026-09-15 记录，待抽空调整）
+
+**约定**：以后新增 UI 组件严格在 960×640 锁死坐标内布局（只声明逻辑坐标 + 对齐），不再直接引用 scene.scale / anchorX / anchorY（见顶部"UI 坐标约定"）。
+
+**存量漂移组件清单**（代码特征 = anchorX/Y 或 scene.scale 直引用，uiScale>1 时可能漂移出屏/错位）：
+- `src/ui/HUD.ts` — 血条/等级/信息区/buff 栏：`anchorY(…, scene.scale.height)` 布局（105-110 行等），此前"血条忽高忽低/跑上面"即此路径
+- `src/scenes/UIScene.ts` — 小地图(62-63)、暂停按钮(86-87)、设置按钮(109-110)：anchorX/Y + scene.scale
+- `src/ui/GuideCard.ts` — 引导卡贴边坐标(138-165)：anchorX/Y
+- `src/scenes/DebugScene.ts` / `src/ui/DebugPanel.ts` — anchorX/Y + scene.scale（需确认是否走 setupUICamera 的 960×640 布局）
+- `src/ui/VirtualJoystick.ts` — scene.scale.width/height 直接引用（摇杆问题已修，残留引用待复核）
+- `src/scenes/PreloadScene.ts` — 进度条 `scene.scale.height/2`（中心对称，风险低，可不动）
+
+**已迁移（2026-09-15）**：CameraHelper（scroll 居中补偿）、InventoryUI（槽位贴底布局 + applyInverse 命中判定）。
 
 
 
