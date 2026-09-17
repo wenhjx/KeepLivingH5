@@ -1,0 +1,20 @@
+{
+  "name": "Keep Living - 2D 割草生存",
+  "short_name": "Keep Living",
+  "description": "多地图关卡 / 敌人词缀 / 成就图鉴 / 神秘商店 —— 2D 割草生存 H5 游戏，点击即玩。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

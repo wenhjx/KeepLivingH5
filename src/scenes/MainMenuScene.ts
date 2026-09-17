@@ -33,6 +33,7 @@ export class MainMenuScene extends Phaser.Scene {
   >;
   private muteText!: Phaser.GameObjects.Text;
   private showFpsText!: Phaser.GameObjects.Text;
+  private fullscreenText!: Phaser.GameObjects.Text;
   // 关卡选择面板
   private levelSelectOverlay!: Phaser.GameObjects.Container;
 
@@ -563,6 +564,26 @@ export class MainMenuScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     this.showFpsText.on('pointerdown', () => this.toggleShowFps());
     this.settingsOverlay.add(this.showFpsText);
+    // ---------- 全屏 ----------
+    const fullscreenY = cy - panelH / 2 + 346;
+    this.settingsOverlay.add(createUIText(this, cx - 170, fullscreenY, '全屏', labelStyle).setOrigin(0, 0.5));
+    const fsSupported =
+      typeof document !== 'undefined' && !!document.documentElement.requestFullscreen;
+    this.fullscreenText = createUIText(
+      this,
+      cx,
+      fullscreenY,
+      fsSupported ? (document.fullscreenElement ? '开' : '关') : '添加到主屏幕',
+      {
+        fontSize: UIFonts.label,
+        color: fsSupported ? UIColors.textBright : UIColors.text,
+        fontStyle: 'bold',
+      },
+    )
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    this.fullscreenText.on('pointerdown', () => this.toggleFullscreen());
+    this.settingsOverlay.add(this.fullscreenText);
     // ---------- 关闭 ----------
     const closeBtn = createUIButton(this, cx, cy + panelH / 2 - 30, '关闭', () => this.settingsOverlay.setVisible(false), {
       fontSize: UIFonts.body,
@@ -627,6 +648,44 @@ export class MainMenuScene extends Phaser.Scene {
     gm.setShowFps(!gm.showFps);
     this.showFpsText.setText(gm.showFps ? '开' : '关');
     this.showFpsText.setColor(gm.showFps ? UIColors.accent : UIColors.textBright);
+  }
+
+  /**
+   * 切换全屏；不支持全屏 API 的环境（如 iOS Safari）提示添加到主屏幕（PWA display:fullscreen）
+   */
+  private toggleFullscreen(): void {
+    if (typeof document === 'undefined') return;
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    const el = document.documentElement as HTMLElement & {
+      requestFullscreen?: () => Promise<void>;
+      webkitRequestFullscreen?: () => void;
+    };
+    if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+      const exit = document.exitFullscreen?.bind(document) ?? (doc as any).webkitExitFullscreen?.bind(doc);
+      exit?.();
+      this.fullscreenText.setText('关');
+      this.fullscreenText.setColor(UIColors.textBright);
+    } else if (el.requestFullscreen || el.webkitRequestFullscreen) {
+      const req = el.requestFullscreen?.bind(el) ?? el.webkitRequestFullscreen?.bind(el);
+      try {
+        const p = req?.();
+        // 乐观更新；失败时回滚状态
+        this.fullscreenText.setText('开');
+        this.fullscreenText.setColor(UIColors.accent);
+        if (p && typeof p.then === 'function') {
+          p.catch(() => {
+            this.fullscreenText.setText('关');
+            this.fullscreenText.setColor(UIColors.textBright);
+          });
+        }
+      } catch {
+        /* 用户手势限制等，忽略 */
+      }
+    } else {
+      // 不支持全屏 API：直接开启 PWA 提示
+      this.fullscreenText.setText('添加到主屏幕');
+      this.fullscreenText.setColor(UIColors.text);
+    }
   }
 
   private toggleMute(): void {
