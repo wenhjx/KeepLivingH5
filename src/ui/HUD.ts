@@ -849,7 +849,7 @@ export class HUD {
         {
           fontSize: "12px",
           color: "#ffd54f",
-          wordWrap: { width: boxW - 24 },
+          wordWrap: { width: boxW - 24, useAdvancedWrap: true },
           lineSpacing: 4,
         },
       ).setOrigin(0, 0);
