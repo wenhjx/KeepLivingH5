@@ -216,7 +216,7 @@ export class ShopScene extends Phaser.Scene {
   ): void {
     const pinnedSuper = findPinnedSuperForOption({
       kind: item.kind,
-      id: item.id,
+      id: item.upgradeId ?? item.id,
     });
     if (pinnedSuper) {
       const tag = createUIText(
