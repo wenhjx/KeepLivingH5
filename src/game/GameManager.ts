@@ -131,6 +131,11 @@ export class GameManager {
     if (typeof navigator === "undefined" || typeof window === "undefined") {
       return "medium";
     }
+    // 移动端 GPU 填充率有限：即使旗舰手机也最高 medium（避免误判 high 导致发热）
+    if (this._isMobile) {
+      const memory = (navigator as any).deviceMemory || 4;
+      return memory <= 2 ? "low" : "medium";
+    }
     const memory = (navigator as any).deviceMemory || 4;
     const cores = navigator.hardwareConcurrency || 4;
     if (memory <= 2 || cores <= 2) return "low";
