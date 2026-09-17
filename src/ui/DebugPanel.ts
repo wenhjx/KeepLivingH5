@@ -428,6 +428,7 @@ export class DebugPanel {
       { fontSize: "11px", color: "#ffd75e" },
     ).setOrigin(0, 0);
     this.content.add(superState);
+    col.step(18); // “当前超武”与“📌 追踪”分两行展示，避免叠加
     const pinState = createUIText(
       this.scene,
       0,
