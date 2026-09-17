@@ -8,13 +8,16 @@ import { GameConfig } from '../game/GameConfig';
  * 会偏移 (画布宽-逻辑宽)/2，导致用逻辑坐标布局的 UI 整体偏左上、底部被裁。
  * 内置浏览器窗口小（renderScale≈1）时偏移不明显，Chrome 大窗口下暴露。
  *
- * 本函数：setZoom + scroll 补偿，使 960x640 布局区域在扩展世界中居中
- * （世界区域 = [cam.width/zoom × cam.height/zoom]，恒 ≥ 960x640，多出部分为
- * 宽屏/竖屏的扩展视野），返回逻辑分辨率 960x640 供布局使用。
+ * 本函数：setZoom + scroll 补偿，抵消 setZoom 的画布中心缩放偏移，
+ * 使 960x640 布局区域恰好对齐视口（世界 (0,0) 显示在画布左上角），
+ * 返回逻辑分辨率 960x640 供布局使用。
  *
- * 旧实现 scroll = -(cam.width - cam.width/zoom)/2 会把布局区整体推出视口：
- * 宽屏真机（如 16:9，世界宽 1138）时布局左侧被裁，底部/右侧元素（确认按钮、
- * 道具栏等）不可见或不可点（2026-09-15 移动端实测）。
+ * 补偿量推导：画布恒为 4:3（960×renderScale × 640×renderScale），
+ * cam.width/zoom 恒 = 960，故"扩展视野"不存在；(cam.width - cam.width/zoom)/2
+ * 即 zoom 缩放中心偏移 (画布宽-逻辑宽)/2，必须用负 scroll 抵消，否则
+ * 世界 (0,0) 落在画布 (-150,-100)，UI 整体偏左上、底部元素被裁出视口
+ * （2026-09-17 桌面窗口实测：scroll=0 时标题偏左 150px、v0.2.0 被挤离底部）。
+ * 此前曾误删该补偿（commit f9909eb），导致桌面端主菜单整体偏左上。
  *
  * zoom 必须等于 renderScale（含 dpr 的渲染倍率）：相机视口基于画布内部
  * 像素（960×renderScale），只有 zoom=renderScale 时视野才恒为 960x640 世界。
@@ -31,10 +34,7 @@ export function setupUICamera(scene: Phaser.Scene): { width: number; height: num
   const zoom = GameConfig.renderScale;
   const cam = scene.cameras.main;
   cam.setZoom(zoom);
-  // 世界区域（画布物理像素 / zoom），恒 ≥ 960x640；把多出部分左右/上下均分，
-  // 让 960x640 布局区在视口中居中（4:3 时世界恰为 960x640，scroll=0 无影响）。
-  const worldW = cam.width / zoom;
-  const worldH = cam.height / zoom;
-  cam.setScroll((worldW - GameConfig.GAME_WIDTH) / 2, (worldH - GameConfig.GAME_HEIGHT) / 2);
+  // zoom 缩放中心偏移（画布宽-逻辑宽)/2，用负 scroll 抵消，使世界 (0,0) 对齐画布左上。
+  cam.setScroll(-(cam.width - cam.width / zoom) / 2, -(cam.height - cam.height / zoom) / 2);
   return { width: GameConfig.GAME_WIDTH, height: GameConfig.GAME_HEIGHT };
 }

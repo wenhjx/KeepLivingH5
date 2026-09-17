@@ -55,21 +55,24 @@ export class InventoryUI {
 
     // 4 个固定槽位（从右往左排列在右下角，避开 HUD 区域）
     // 注意：加入 uiRoot 的组件须用 scene.scale（渲染尺寸）坐标，逻辑 960 尺寸会偏移到中央。
-    // 布局公式按 uiRoot 实际变换推导：世界 = rootPos + 局部×(u/z)，rootPos=(S/2)(1-u/z)，
-    // 屏幕 = 世界×z = (S/2)(z-u) + 局部×u（S=画布尺寸，z=renderScale，u=uiScale）。
-    // 故贴边目标：局部 = [目标屏幕 - (S/2)(z-u)]/u。
-    // 不能用 GameConfig.anchorX/Y（其公式假设纯 uiScale 中心缩放，与 uiRoot 的 u/z 变换
-    // 不匹配），移动端 uiScale>1 时槽位会被推出画布底部（2026-09-15 实测 y=899>853）。
+    // 布局公式推导（2026-09-17 修正）：
+    //   uiRoot 变换：世界 = rootPos + 局部×(u/z)，rootPos = (S/2)(1-u/z)
+    //   相机渲染：屏幕 = (世界 - scroll)×z - (S/2)(1-1/z)×z（scroll=0，displayOrigin 偏移）
+    //   代入：屏幕 = (S/2)(1-u) + 局部×u → 局部 = [目标 - (S/2)(1-u)]/u
+    //   即 GameConfig.anchorX/Y（旧版公式推导等价，曾于 f9909eb 被误判为不匹配而改坏）。
+    //   f9909eb 误用 (z-u) 替代 (1-u)：uiRoot 的 pos 已含相机 displayOrigin 补偿，
+    //   公式再减 (S/2)(z-1) 属双重补偿，导致槽位整体偏左上 150x100px（2026-09-17 实测）。
     const { width, height } = this.scene.scale;
     const us = GameConfig.uiScale;
-    const z = GameConfig.renderScale;
-    const slotW = this.slotSize * us;
-    const rightScreenX = width - 12 - slotW / 2;
-    const bottomScreenY = height - 12 - slotW / 2;
-    const startX =
-      (rightScreenX - (width / 2) * (z - us) - (INVENTORY_ORDER.length - 1) * (this.slotSize + this.slotSpacing)) /
-      us;
-    const y = (bottomScreenY - (height / 2) * (z - us)) / us;
+    const totalWidth = (INVENTORY_ORDER.length * this.slotSize + (INVENTORY_ORDER.length - 1) * this.slotSpacing) * us;
+    const startX = GameConfig.anchorX(width - 12 - totalWidth + (this.slotSize * us) / 2, width);
+    // 移动端：底部被血条+经验条+buff 栏占据（血条中心=height-40、buff 栏在其上），
+    // 道具栏上移至 buff 栏上方避免与血条重叠；桌面端血条不伸入右下角，保持贴底 12px。
+    // 上移量 124（视觉像素）= 血条半高 15 + buff 栏高 43 + buff 间距 16 + 槽半高 42 + 安全距 8
+    // （HUD 底部垂直布局联动，若调整 HUD 需同步此值；2026-09-17 移动端实测血条宽伸至 x≈856 与槽位重叠）。
+    const isM = GameManager.getInstance().isMobile;
+    const bottomTargetY = isM ? height - 40 - 124 : height - 12 - (this.slotSize * us) / 2;
+    const y = GameConfig.anchorY(bottomTargetY, height);
 
     // 点击判定采用手动坐标检测：先把指针世界坐标转成容器局部坐标再比对，
     // 彻底规避嵌套 Container + 父级 scale（uiRoot）时 setInteractive hitArea

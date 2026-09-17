@@ -254,8 +254,13 @@ export class VirtualJoystick {
     const maxY = this.scene.scale.height - this.baseRadius;
     this.baseX = Math.max(minX, Math.min(maxX, x));
     this.baseY = Math.max(minY, Math.min(maxY, y));
-    // 容器渲染按 world 坐标（scrollFactor 0 → 屏幕位置 = world × zoom），换算回去
-    const w = this.scene.cameras.main.getWorldPoint(this.baseX, this.baseY);
+    // 屏幕逻辑坐标 → 世界坐标（scrollFactor 0 的容器按世界坐标渲染，受相机 zoom 与
+    // displayOrigin 偏移影响）。先 preRender 刷新相机矩阵再 getWorldPoint：
+    // 场景创建首帧前 matrix 尚未含 scroll/displayOrigin，直接 getWorldPoint 会换算
+    // 错误导致容器渲染偏左上（2026-09-17 实测偏 (150,100)）。
+    const cam = this.scene.cameras.main;
+    cam.preRender();
+    const w = cam.getWorldPoint(this.baseX, this.baseY);
     this.container.setPosition(w.x, w.y);
   }
 
