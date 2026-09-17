@@ -5,6 +5,7 @@
  * UpgradePanel 会在卡片上高亮提示（👍）。
  */
 import { SUPER_WEAPONS } from "./superWeapons";
+import { EventBus } from "../utils/EventBus";
 import type { SuperWeaponConfig } from "./superWeapons";
 
 const STORAGE_KEY = "keepLiving.pinnedSupers";
@@ -32,6 +33,7 @@ export function togglePinSuper(id: string): string[] {
   } catch {
     /* 忽略存储失败 */
   }
+  EventBus.emit("super:track-changed");
   return next;
 }
 
@@ -44,6 +46,7 @@ export function unpinSuper(id: string): void {
   } catch {
     /* 忽略存储失败 */
   }
+  EventBus.emit("super:track-changed");
 }
 
 /** 匹配某升级选项是否为已勾选超武的必要组件（源武器/辅助升级） */

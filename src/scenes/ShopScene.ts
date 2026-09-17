@@ -37,6 +37,17 @@ export class ShopScene extends Phaser.Scene {
     super("ShopScene");
   }
 
+  /** 超武追踪变化：重算所有卡片 👍（已售格跳过） */
+  private onTrackChanged = (): void => {
+    this.cardRefs.forEach(({ item, card }) => {
+      card.list
+        .filter((o) => o.getData("superTag"))
+        .forEach((o) => o.destroy());
+      if (card.getData("sold")) return;
+      this.applySuperTag(card, item);
+    });
+  };
+
   create(): void {
     // UI 相机统一设置（zoom + scroll 补偿，返回逻辑分辨率 960x640）
     const { width, height } = setupUICamera(this);
@@ -45,6 +56,11 @@ export class ShopScene extends Phaser.Scene {
     this.refreshCost = 20;
     this.cardRefs = [];
     this.aiShoppingStarted = false;
+    // 超武追踪：勾选状态变化时即时刷新商店卡片 👍
+    EventBus.on("super:track-changed", this.onTrackChanged);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+      EventBus.off("super:track-changed", this.onTrackChanged),
+    );
     // 半透明背景
     this.add
       .rectangle(0, 0, width, height, 0x000000, 0.82)
@@ -193,6 +209,30 @@ export class ShopScene extends Phaser.Scene {
     });
   }
 
+  /** 超武追踪：商品是已勾选目标超武的必要组件时，卡片右上角高亮 👍 */
+  private applySuperTag(
+    card: Phaser.GameObjects.Container,
+    item: ShopItem,
+  ): void {
+    const pinnedSuper = findPinnedSuperForOption({
+      kind: item.kind,
+      id: item.id,
+    });
+    if (pinnedSuper) {
+      const tag = createUIText(
+        this,
+        this.cardWidth / 2 - 22,
+        -this.cardHeight / 2 + 62,
+        "👍",
+        { fontSize: "28px" },
+      )
+        .setOrigin(0.5)
+        .setDepth(1000)
+        .setData("superTag", true);
+      card.add(tag);
+    }
+  }
+
   /** 创建单个商品卡片（整格点击购买），返回卡片 Container 供 AI 引用 */
   private createCard(
     x: number,
@@ -217,23 +257,7 @@ export class ShopScene extends Phaser.Scene {
       onClick: () => this.tryBuy(item, card),
     });
     // 超武追踪：商品是已勾选目标超武的必要组件时，卡片右上角高亮 👍
-    const pinnedSuper = findPinnedSuperForOption({
-      kind: item.kind,
-      id: item.id,
-    });
-    if (pinnedSuper) {
-      const tag = createUIText(
-        this,
-        this.cardWidth / 2 - 22,
-        -this.cardHeight / 2 + 62,
-        "👍",
-        { fontSize: "28px" },
-      )
-        .setOrigin(0.5)
-        .setDepth(1000)
-        .setData("superTag", true);
-      card.add(tag);
-    }
+    this.applySuperTag(card, item);
     card.setData("isShopCard", true);
     return card;
   }

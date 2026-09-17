@@ -5,6 +5,7 @@ import { UPGRADE_OPTIONS, passiveDescForLevel } from "../data/upgrades";
 import { GameConfig } from "../game/GameConfig";
 import { createOptionCard } from "./OptionCard";
 import { Layers } from "../constants/Layers";
+import { EventBus } from "../utils/EventBus";
 import { SUPER_WEAPONS } from "../data/superWeapons";
 import { findPinnedSuperForOption } from "../data/superTrack";
 
@@ -75,6 +76,12 @@ export class UpgradePanel {
     this.onSkipCallback = onSkip ?? null;
     this.selectedIndex = -1;
     this.container.setVisible(true);
+    // 超武追踪：勾选状态变化时即时刷新 👍
+    EventBus.off("super:track-changed", this.onTrackChanged);
+    EventBus.on("super:track-changed", this.onTrackChanged);
+    this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+      EventBus.off("super:track-changed", this.onTrackChanged),
+    );
 
     // 随机选择3个选项
     const pool = availableOptions || UPGRADE_OPTIONS;
@@ -95,6 +102,7 @@ export class UpgradePanel {
 
   /** 隐藏面板 */
   hide(): void {
+    EventBus.off("super:track-changed", this.onTrackChanged);
     this.container.setVisible(false);
     this.onSelectCallback = null;
     this.onSkipCallback = null;
@@ -154,6 +162,35 @@ export class UpgradePanel {
     this.hide();
   }
 
+  /** 超武追踪变化：重算所有卡片 👍（勾选/取消勾选后即时同步） */
+  private onTrackChanged = (): void => {
+    this.options.forEach((option, i) => {
+      const card = this.cardContainers[i];
+      if (!card) return;
+      card.list
+        .filter((o) => o.getData("superTag"))
+        .forEach((o) => o.destroy());
+      const pinnedSuper = findPinnedSuperForOption({
+        kind: option.type,
+        id: option.id,
+        effect: (option as any).effect,
+      });
+      if (pinnedSuper) {
+        const tag = createUIText(
+          this.scene,
+          this.cardWidth / 2 - 22,
+          -this.cardHeight / 2 + 62,
+          "👍",
+          { fontSize: "28px" },
+        )
+          .setOrigin(0.5)
+          .setDepth(1000)
+          .setData("superTag", true);
+        card.add(tag);
+      }
+    });
+  };
+
   /** 渲染选项卡片 */
   private renderOptions(): void {
     // 清除旧卡片
@@ -200,7 +237,8 @@ export class UpgradePanel {
           { fontSize: "28px" },
         )
           .setOrigin(0.5)
-          .setDepth(1000);
+          .setDepth(1000)
+          .setData("superTag", true);
         card.add(tag);
       }
       card.setData("isUpgradeCard", true);
