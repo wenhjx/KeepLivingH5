@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import { UPGRADE_OPTIONS, FALLBACK_UPGRADES } from "../data/upgrades";
 import { applyUpgradeToPlayer } from "../utils/UpgradeApplier";
 import { GameConfig } from "../game/GameConfig";
+import { GameManager } from "../game/GameManager";
 import { UILayout } from "../utils/UILayout";
 import type { UpgradeOption } from "../types";
 import type { Player } from "../entities/Player";
@@ -501,6 +502,17 @@ export class DebugPanel {
 
     // 商店道具（即时生效，方便测试；不叠加属性，不影响玩家状态）
     this.addSectionTitle(col, "🛒 商店道具（即时生效）");
+    this.addRow(col, {
+      text: "🚪 打开商店",
+      fn: () => {
+        const gm = GameManager.getInstance();
+        if (gm.isGameOver) return;
+        const gs = this.scene.scene.get("GameScene") as any;
+        if (gs?.scene?.isActive?.("ShopScene")) return;
+        gm.setPaused(true);
+        gs?.scene?.launch?.("ShopScene");
+      },
+    });
     this.addOptionsRows(col, FALLBACK_UPGRADES);
     // 复活币（商店消耗品，被动触发，不进入物品栏）
     this.addRow(col, {
