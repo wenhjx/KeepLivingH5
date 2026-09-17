@@ -8,6 +8,7 @@ import { UILayout } from "../utils/UILayout";
 import type { UpgradeOption } from "../types";
 import type { Player } from "../entities/Player";
 import { SUPER_WEAPONS } from "../data/superWeapons";
+import { WEAPONS } from "../data/weapons";
 import { getPinnedSupers, togglePinSuper } from "../data/superTrack";
 import { EventBus } from "../utils/EventBus";
 import { Layers } from "../constants/Layers";
@@ -479,6 +480,19 @@ export class DebugPanel {
           },
         },
       );
+      // 条件小字：来源武器满级 + 辅助升级满级（按钮精简后在此补全具体条件）
+      const condTip = createUIText(
+        this.scene,
+        2,
+        col.y,
+        `条件：${s.sourceName}满${WEAPONS[s.weaponId]?.maxLevel ?? "?"}级 + ${
+          UPGRADE_OPTIONS.find((o) => o.id === s.requiredUpgradeId)?.name ??
+          s.requiredUpgradeId
+        }满${s.requiredUpgradeMax}级`,
+        { fontSize: "10px", color: "#8a8a9a" },
+      ).setOrigin(0, 0);
+      this.content.add(condTip);
+      col.step(16);
     });
     refreshPin();
     refreshSuper();
